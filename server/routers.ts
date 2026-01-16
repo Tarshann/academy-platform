@@ -56,6 +56,15 @@ export const appRouter = router({
     upcoming: protectedProcedure.query(async () => {
       return await getUpcomingSchedules();
     }),
+    register: protectedProcedure
+      .input(z.object({ scheduleId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { createSessionRegistration } = await import('./db');
+        
+        await createSessionRegistration(ctx.user.id, input.scheduleId);
+        
+        return { success: true };
+      }),
   }),
 
   contact: router({
@@ -240,66 +249,50 @@ export const appRouter = router({
         productId: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const Stripe = (await import('stripe')).default;
         const { ENV } = await import('./_core/env');
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(ENV.stripeSecretKey);
         const { getProduct } = await import('./products');
-        
-        const stripe = new Stripe(ENV.stripeSecretKey, {
-          apiVersion: '2025-12-15.clover',
-        });
 
         const product = getProduct(input.productId);
         if (!product) {
-          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Invalid product' });
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Product not found' });
         }
 
         const origin = ctx.req.headers.origin || 'http://localhost:3000';
 
         const sessionParams: any = {
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'usd',
+                product_data: {
+                  name: product.name,
+                  description: product.description,
+                },
+                unit_amount: product.priceInCents,
+                ...(product.type === 'recurring' && {
+                  recurring: {
+                    interval: product.interval,
+                  },
+                }),
+              },
+              quantity: 1,
+            },
+          ],
           mode: product.type === 'recurring' ? 'subscription' : 'payment',
-          customer_email: ctx.user.email || undefined,
-          client_reference_id: ctx.user.id.toString(),
           success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${origin}/signup`,
-          allow_promotion_codes: true,
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
           metadata: {
             user_id: ctx.user.id.toString(),
             customer_email: ctx.user.email || '',
             customer_name: ctx.user.name || '',
-            product_id: product.id,
-            product_name: product.name,
-            payment_type: product.type,
           },
+          allow_promotion_codes: true,
         };
-
-        if (product.type === 'recurring') {
-          sessionParams.line_items = [{
-            price_data: {
-              currency: product.currency,
-              product_data: {
-                name: product.name,
-                description: product.description,
-              },
-              recurring: {
-                interval: product.interval,
-              },
-              unit_amount: product.priceInCents,
-            },
-            quantity: 1,
-          }];
-        } else {
-          sessionParams.line_items = [{
-            price_data: {
-              currency: product.currency,
-              product_data: {
-                name: product.name,
-                description: product.description,
-              },
-              unit_amount: product.priceInCents,
-            },
-            quantity: 1,
-          }];
-        }
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 

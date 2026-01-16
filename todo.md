@@ -66,12 +66,12 @@
 - [x] Schedule management interface Admin-only route protection
 
 ## Schedule Management System
-- [ ] Create schedule CRUD operations for admins
-- [ ] Build calendar view for members
-- [ ] Add session registration functionality
+- [x] Create schedule CRUD operations for admins
+- [x] Build calendar view for members
+- [x] Add session registration functionality
 - [ ] Track registration capacity limits
 - [ ] Send confirmation notifications
-- [ ] Display user's registered sessions
+- [x] Display user's registered sessions
 
 ## Content Updates
 - [x] Update homepage hero to reflect multi-sport focus (basketball, football, soccer)
@@ -83,3 +83,14 @@
 - [x] Update Omar Philmore's bio to include Sumner Academy coaching role
 
 - [x] Remove specific age range (8-18) mentions across all pages
+
+## Admin Dashboard UI
+- [x] Create admin dashboard layout with navigation
+- [x] Build schedule management interface (create, edit, delete sessions)
+- [x] Build program management interface (create, edit, toggle visibility)
+- [x] Build announcement management interface (create, publish, delete)
+- [x] Build contact submissions viewer with status updates
+- [x] Add page visibility controls (hide/show pages)
+
+## Visual Updates
+- [x] Switch from dark theme to light theme with better contrast

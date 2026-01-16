@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Calendar, Bell, Users } from "lucide-react";
+import { Loader2, Calendar, Bell, Users, Clock, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { useEffect } from "react";
 
 export default function MemberDashboard() {
@@ -14,10 +16,21 @@ export default function MemberDashboard() {
     undefined,
     { enabled: isAuthenticated }
   );
-  const { data: schedules, isLoading: schedulesLoading } = trpc.schedules.upcoming.useQuery(
+  const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
+  const registerForSession = trpc.schedules.register.useMutation();
+
+  const handleRegister = async (scheduleId: number) => {
+    try {
+      await registerForSession.mutateAsync({ scheduleId });
+      toast.success("Successfully registered for session!");
+      refetchSchedules();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to register for session");
+    }
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {

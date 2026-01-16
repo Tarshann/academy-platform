@@ -47,6 +47,11 @@ export default function Navigation() {
                 <Link href="/member" className="text-foreground hover:text-primary transition-colors">
                   Dashboard
                 </Link>
+                {user?.role === 'admin' && (
+                  <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+                    Admin
+                  </Link>
+                )}
                 <Button variant="outline" size="sm" onClick={handleLogout}>
                   Logout
                 </Button>
@@ -102,6 +107,11 @@ export default function Navigation() {
                   <Link href="/member" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                     Dashboard
                   </Link>
+                  {user?.role === 'admin' && (
+                    <Link href="/admin" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      Admin
+                    </Link>
+                  )}
                   <Button variant="outline" size="sm" onClick={handleLogout} className="w-full">
                     Logout
                   </Button>

@@ -12,6 +12,7 @@ import FAQs from "./pages/FAQs";
 import SignUp from "./pages/SignUp";
 import MemberDashboard from "./pages/MemberDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function Router() {
   return (
@@ -24,6 +25,7 @@ function Router() {
       <Route path={"/signup"} component={SignUp} />
       <Route path={"/member"} component={MemberDashboard} />
       <Route path={"/payment/success"} component={PaymentSuccess} />
+      <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -33,7 +35,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
           <Router />
