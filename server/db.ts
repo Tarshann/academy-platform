@@ -1,11 +1,21 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { 
+  InsertUser, 
+  users, 
+  programs, 
+  InsertProgram,
+  announcements,
+  InsertAnnouncement,
+  contactSubmissions,
+  InsertContactSubmission,
+  schedules,
+  InsertSchedule
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +99,69 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// Program queries
+export async function getAllPrograms() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(programs).where(eq(programs.isActive, 1));
+}
+
+export async function getProgramBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(programs).where(eq(programs.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createProgram(program: InsertProgram) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(programs).values(program);
+  return result;
+}
+
+// Announcement queries
+export async function getPublishedAnnouncements() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(announcements)
+    .where(eq(announcements.isPublished, 1))
+    .orderBy(desc(announcements.publishedAt));
+}
+
+export async function createAnnouncement(announcement: InsertAnnouncement) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(announcements).values(announcement);
+  return result;
+}
+
+// Contact submission queries
+export async function createContactSubmission(submission: InsertContactSubmission) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(contactSubmissions).values(submission);
+  return result;
+}
+
+export async function getContactSubmissions() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contactSubmissions).orderBy(desc(contactSubmissions.createdAt));
+}
+
+// Schedule queries
+export async function getUpcomingSchedules() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(schedules)
+    .where(eq(schedules.startTime, new Date()))
+    .orderBy(schedules.startTime);
+}
+
+export async function createSchedule(schedule: InsertSchedule) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(schedules).values(schedule);
+  return result;
+}

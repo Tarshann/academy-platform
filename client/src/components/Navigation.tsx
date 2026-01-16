@@ -1,0 +1,129 @@
+import { Link } from "wouter";
+import { Button } from "./ui/button";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
+import { Menu, X } from "lucide-react";
+import { useState } from "react";
+
+export default function Navigation() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+  };
+
+  return (
+    <nav className="bg-card border-b border-border sticky top-0 z-50">
+      <div className="container">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/academy-logo.jpeg" alt="The Academy" className="h-10 w-10 rounded-full" />
+            <span className="text-xl font-bold text-foreground">THE ACADEMY</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/" className="text-foreground hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link href="/programs" className="text-foreground hover:text-primary transition-colors">
+              Programs
+            </Link>
+            <Link href="/about" className="text-foreground hover:text-primary transition-colors">
+              About
+            </Link>
+            <Link href="/faqs" className="text-foreground hover:text-primary transition-colors">
+              FAQs
+            </Link>
+            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
+              Contact
+            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link href="/member" className="text-foreground hover:text-primary transition-colors">
+                  Dashboard
+                </Link>
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/signup">
+                  <Button variant="default" size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+                <a href={getLoginUrl()}>
+                  <Button variant="outline" size="sm">
+                    Login
+                  </Button>
+                </a>
+              </>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden text-foreground"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden py-4 border-t border-border">
+            <div className="flex flex-col gap-4">
+              <Link href="/" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Home
+              </Link>
+              <Link href="/programs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Programs
+              </Link>
+              <Link href="/about" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                About
+              </Link>
+              <Link href="/faqs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                FAQs
+              </Link>
+              <Link href="/contact" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Contact
+              </Link>
+              
+              {isAuthenticated ? (
+                <>
+                  <Link href="/member" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                  <Button variant="outline" size="sm" onClick={handleLogout} className="w-full">
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="default" size="sm" className="w-full">
+                      Sign Up
+                    </Button>
+                  </Link>
+                  <a href={getLoginUrl()}>
+                    <Button variant="outline" size="sm" className="w-full">
+                      Login
+                    </Button>
+                  </a>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
