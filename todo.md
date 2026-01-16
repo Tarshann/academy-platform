@@ -104,13 +104,13 @@
 - [ ] Add email notification settings for users
 
 ## Photo Gallery
-- [ ] Create gallery database schema
-- [ ] Build photo upload interface for admins
-- [ ] Implement S3 storage for photos
-- [ ] Create photo categorization (training, teams, events)
-- [ ] Build public gallery page with categories
-- [ ] Add photo captions and descriptions
-- [ ] Implement responsive image grid layout
+- [x] Create gallery database schema
+- [x] Build photo upload interface for admins
+- [x] Implement S3 storage for photos
+- [x] Create photo categorization (training, teams, events)
+- [x] Build public gallery page with categories
+- [x] Add photo captions and descriptions
+- [x] Implement responsive image grid layout
 
 ## Blog/News Section
 - [ ] Create blog posts database schema
@@ -123,14 +123,14 @@
 - [ ] Add featured image support
 
 ## Realtime Chat
-- [ ] Set up Socket.IO for realtime communication
-- [ ] Create chat messages database schema
-- [ ] Build chat interface for members
-- [ ] Implement message sending and receiving
+- [x] Set up Socket.IO for realtime communication
+- [x] Create chat messages database schema
+- [x] Build chat interface for members
+- [x] Implement message sending and receiving
 - [ ] Add online status indicators
-- [ ] Create chat rooms (general, announcements)
-- [ ] Add message history and persistence
-- [ ] Implement typing indicators
+- [x] Create chat rooms (general, announcements)
+- [x] Add message history and persistence
+- [x] Implement typing indicators
 
 ## Visual Adjustments
 - [x] Apply Colorado Buffaloes color scheme (black, gold, silver)

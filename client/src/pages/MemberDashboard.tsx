@@ -134,6 +134,12 @@ export default function MemberDashboard() {
                         Contact Us
                       </a>
                     </Button>
+                    <Button variant="outline" className="w-full justify-start" asChild>
+                      <a href="/chat">
+                        <Users className="mr-2" size={18} />
+                        Member Chat
+                      </a>
+                    </Button>
                   </CardContent>
                 </Card>
 

@@ -35,6 +35,9 @@ export default function Navigation() {
             <Link href="/about" className="text-foreground hover:text-primary transition-colors">
               About
             </Link>
+            <Link href="/gallery" className="text-foreground hover:text-primary transition-colors">
+              Gallery
+            </Link>
             <Link href="/faqs" className="text-foreground hover:text-primary transition-colors">
               FAQs
             </Link>
@@ -94,6 +97,9 @@ export default function Navigation() {
               </Link>
               <Link href="/about" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 About
+              </Link>
+              <Link href="/gallery" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Gallery
               </Link>
               <Link href="/faqs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 FAQs

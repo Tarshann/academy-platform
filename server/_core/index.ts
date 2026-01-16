@@ -31,6 +31,10 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
+  // Setup Socket.IO for realtime chat
+  const { setupChat } = await import("../chat");
+  setupChat(server);
+  
   // Stripe webhook MUST be registered BEFORE express.json() to preserve raw body
   app.post(
     "/api/stripe/webhook",

@@ -29,6 +29,13 @@
       "when": 1768604198432,
       "tag": "0003_simple_lord_tyger",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1768605569762,
+      "tag": "0004_wealthy_iron_monger",
+      "breakpoints": true
     }
   ]
 }

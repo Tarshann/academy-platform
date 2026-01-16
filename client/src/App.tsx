@@ -13,6 +13,8 @@ import SignUp from "./pages/SignUp";
 import MemberDashboard from "./pages/MemberDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
+import Gallery from "./pages/Gallery";
+import Chat from "./pages/Chat";
 
 function Router() {
   return (
@@ -26,6 +28,8 @@ function Router() {
       <Route path={"/member"} component={MemberDashboard} />
       <Route path={"/payment/success"} component={PaymentSuccess} />
       <Route path={"/admin"} component={AdminDashboard} />
+      <Route path={"/gallery"} component={Gallery} />
+      <Route path={"/chat"} component={Chat} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

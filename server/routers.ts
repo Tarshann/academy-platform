@@ -258,6 +258,128 @@ export const appRouter = router({
     }),
   }),
 
+  gallery: router({
+    list: publicProcedure.query(async () => {
+      const { getAllGalleryPhotos } = await import('./db');
+      return await getAllGalleryPhotos();
+    }),
+    
+    byCategory: publicProcedure
+      .input(z.object({ category: z.string() }))
+      .query(async ({ input }) => {
+        const { getGalleryPhotosByCategory } = await import('./db');
+        return await getGalleryPhotosByCategory(input.category);
+      }),
+    
+    admin: router({
+      upload: adminProcedure
+        .input(z.object({
+          title: z.string(),
+          description: z.string().optional(),
+          imageUrl: z.string(),
+          imageKey: z.string(),
+          category: z.enum(["training", "teams", "events", "facilities", "other"]),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const { createGalleryPhoto } = await import('./db');
+          await createGalleryPhoto({
+            ...input,
+            uploadedBy: ctx.user.id,
+          });
+          return { success: true };
+        }),
+      
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { deleteGalleryPhoto } = await import('./db');
+          await deleteGalleryPhoto(input.id);
+          return { success: true };
+        }),
+      
+      toggleVisibility: adminProcedure
+        .input(z.object({ id: z.number(), isVisible: z.boolean() }))
+        .mutation(async ({ input }) => {
+          const { toggleGalleryPhotoVisibility } = await import('./db');
+          await toggleGalleryPhotoVisibility(input.id, input.isVisible);
+          return { success: true };
+        }),
+    }),
+  }),
+  
+  blog: router({
+    list: publicProcedure.query(async () => {
+      const { getAllPublishedBlogPosts } = await import('./db');
+      return await getAllPublishedBlogPosts();
+    }),
+    
+    getBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const { getBlogPostBySlug } = await import('./db');
+        return await getBlogPostBySlug(input.slug);
+      }),
+    
+    admin: router({
+      list: adminProcedure.query(async () => {
+        const { getAllBlogPostsAdmin } = await import('./db');
+        return await getAllBlogPostsAdmin();
+      }),
+      
+      create: adminProcedure
+        .input(z.object({
+          title: z.string(),
+          slug: z.string(),
+          excerpt: z.string().optional(),
+          content: z.string(),
+          featuredImage: z.string().optional(),
+          category: z.enum(["training_tips", "athlete_spotlight", "news", "events", "other"]),
+          tags: z.string().optional(),
+        }))
+        .mutation(async ({ ctx, input }) => {
+          const { createBlogPost } = await import('./db');
+          await createBlogPost({
+            ...input,
+            authorId: ctx.user.id,
+          });
+          return { success: true };
+        }),
+      
+      update: adminProcedure
+        .input(z.object({
+          id: z.number(),
+          title: z.string().optional(),
+          excerpt: z.string().optional(),
+          content: z.string().optional(),
+          featuredImage: z.string().optional(),
+          category: z.enum(["training_tips", "athlete_spotlight", "news", "events", "other"]).optional(),
+          tags: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { updateBlogPost } = await import('./db');
+          const { id, ...updates } = input;
+          await updateBlogPost(id, updates);
+          return { success: true };
+        }),
+      
+      publish: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { publishBlogPost } = await import('./db');
+          await publishBlogPost(input.id);
+          return { success: true };
+        }),
+      
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { deleteBlogPost } = await import('./db');
+          await deleteBlogPost(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
   payment: router({
     createCheckout: protectedProcedure
       .input(z.object({

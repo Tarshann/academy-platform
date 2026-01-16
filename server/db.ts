@@ -336,3 +336,130 @@ export async function getUserById(id: number) {
   const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
+
+
+// Gallery helpers
+export async function getAllGalleryPhotos() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { galleryPhotos } = await import("../drizzle/schema");
+  return db.select().from(galleryPhotos).where(eq(galleryPhotos.isVisible, 1)).orderBy(desc(galleryPhotos.createdAt));
+}
+
+export async function getGalleryPhotosByCategory(category: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { galleryPhotos } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  return db.select().from(galleryPhotos)
+    .where(and(
+      eq(galleryPhotos.category, category as any),
+      eq(galleryPhotos.isVisible, 1)
+    ))
+    .orderBy(desc(galleryPhotos.createdAt));
+}
+
+export async function createGalleryPhoto(photo: {
+  title: string;
+  description?: string;
+  imageUrl: string;
+  imageKey: string;
+  category: string;
+  uploadedBy: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { galleryPhotos } = await import("../drizzle/schema");
+  await db.insert(galleryPhotos).values(photo as any);
+}
+
+export async function deleteGalleryPhoto(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { galleryPhotos } = await import("../drizzle/schema");
+  await db.delete(galleryPhotos).where(eq(galleryPhotos.id, id));
+}
+
+export async function toggleGalleryPhotoVisibility(id: number, isVisible: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { galleryPhotos } = await import("../drizzle/schema");
+  await db.update(galleryPhotos).set({ isVisible: isVisible ? 1 : 0 }).where(eq(galleryPhotos.id, id));
+}
+
+// Blog helpers
+export async function getAllPublishedBlogPosts() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  return db.select().from(blogPosts)
+    .where(eq(blogPosts.isPublished, 1))
+    .orderBy(desc(blogPosts.publishedAt));
+}
+
+export async function getBlogPostBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  const result = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getAllBlogPostsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  return db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+}
+
+export async function createBlogPost(post: {
+  title: string;
+  slug: string;
+  excerpt?: string;
+  content: string;
+  featuredImage?: string;
+  authorId: number;
+  category: string;
+  tags?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  await db.insert(blogPosts).values(post as any);
+}
+
+export async function updateBlogPost(id: number, updates: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  await db.update(blogPosts).set(updates).where(eq(blogPosts.id, id));
+}
+
+export async function publishBlogPost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  await db.update(blogPosts).set({ 
+    isPublished: 1,
+    publishedAt: new Date()
+  }).where(eq(blogPosts.id, id));
+}
+
+export async function deleteBlogPost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { blogPosts } = await import("../drizzle/schema");
+  await db.delete(blogPosts).where(eq(blogPosts.id, id));
+}
