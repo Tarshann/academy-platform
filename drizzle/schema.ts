@@ -156,3 +156,46 @@ export const sessionRegistrations = mysqlTable("sessionRegistrations", {
 
 export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
 export type InsertSessionRegistration = typeof sessionRegistrations.$inferInsert;
+
+/**
+ * Gallery photos table
+ * Stores photos showcasing training sessions, teams, and events
+ */
+export const galleryPhotos = mysqlTable("galleryPhotos", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  imageUrl: text("imageUrl").notNull(),
+  imageKey: varchar("imageKey", { length: 500 }).notNull(),
+  category: mysqlEnum("category", ["training", "teams", "events", "facilities", "other"]).notNull().default("other"),
+  uploadedBy: int("uploadedBy").notNull(),
+  isVisible: int("isVisible").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type GalleryPhoto = typeof galleryPhotos.$inferSelect;
+export type InsertGalleryPhoto = typeof galleryPhotos.$inferInsert;
+
+/**
+ * Blog posts table
+ * Stores training tips, athlete spotlights, and Academy updates
+ */
+export const blogPosts = mysqlTable("blogPosts", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  featuredImage: text("featuredImage"),
+  authorId: int("authorId").notNull(),
+  category: mysqlEnum("category", ["training_tips", "athlete_spotlight", "news", "events", "other"]).notNull().default("other"),
+  tags: text("tags"),
+  isPublished: int("isPublished").notNull().default(0),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;

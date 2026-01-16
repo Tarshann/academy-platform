@@ -59,9 +59,24 @@ export const appRouter = router({
     register: protectedProcedure
       .input(z.object({ scheduleId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const { createSessionRegistration } = await import('./db');
+        const { createSessionRegistration, getScheduleById } = await import('./db');
+        const { sendSessionRegistrationEmail } = await import('./email');
+        
+        // Get schedule details for email
+        const schedule = await getScheduleById(input.scheduleId);
         
         await createSessionRegistration(ctx.user.id, input.scheduleId);
+        
+        // Send confirmation email
+        if (schedule && ctx.user.email) {
+          await sendSessionRegistrationEmail({
+            to: ctx.user.email,
+            userName: ctx.user.name || 'Member',
+            sessionTitle: schedule.title,
+            sessionDate: schedule.startTime,
+            sessionLocation: schedule.location || 'TBA',
+          });
+        }
         
         return { success: true };
       }),

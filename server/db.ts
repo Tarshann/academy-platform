@@ -318,3 +318,21 @@ export async function markContactAsResponded(id: number) {
   
   await db.update(contactSubmissions).set({ status: 'responded' }).where(eq(contactSubmissions.id, id));
 }
+
+
+export async function getScheduleById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(schedules).where(eq(schedules.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}

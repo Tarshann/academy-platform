@@ -22,6 +22,13 @@
       "when": 1768601816588,
       "tag": "0002_kind_amphibian",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1768604198432,
+      "tag": "0003_simple_lord_tyger",
+      "breakpoints": true
     }
   ]
 }

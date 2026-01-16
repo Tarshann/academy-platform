@@ -96,6 +96,22 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     console.error("[Webhook] No user ID in session metadata");
     return;
   }
+  
+  // Send payment confirmation email
+  const { sendPaymentConfirmationEmail } = await import('./email');
+  const { getUserById } = await import('./db');
+  
+  const user = await getUserById(userId);
+  if (user && user.email && session.amount_total) {
+    const productName = session.line_items?.data[0]?.description || 'Academy Program';
+    await sendPaymentConfirmationEmail({
+      to: user.email,
+      userName: user.name || 'Member',
+      productName,
+      amount: session.amount_total,
+      currency: session.currency || 'usd',
+    });
+  }
 
   // Update user's Stripe customer ID if not already set
   if (session.customer && typeof session.customer === 'string') {

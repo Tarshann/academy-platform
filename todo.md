@@ -94,3 +94,43 @@
 
 ## Visual Updates
 - [x] Switch from dark theme to light theme with better contrast
+
+## Email Notifications
+- [x] Set up transactional email service integration
+- [x] Create email templates for session registration confirmations
+- [x] Create email templates for payment confirmations
+- [x] Send confirmation emails on successful registration
+- [x] Send confirmation emails on successful payment
+- [ ] Add email notification settings for users
+
+## Photo Gallery
+- [ ] Create gallery database schema
+- [ ] Build photo upload interface for admins
+- [ ] Implement S3 storage for photos
+- [ ] Create photo categorization (training, teams, events)
+- [ ] Build public gallery page with categories
+- [ ] Add photo captions and descriptions
+- [ ] Implement responsive image grid layout
+
+## Blog/News Section
+- [ ] Create blog posts database schema
+- [ ] Build blog post editor for admins (create, edit, publish)
+- [ ] Add rich text editor for blog content
+- [ ] Create blog listing page with pagination
+- [ ] Build individual blog post pages
+- [ ] Add categories and tags for posts
+- [ ] Implement SEO metadata for blog posts
+- [ ] Add featured image support
+
+## Realtime Chat
+- [ ] Set up Socket.IO for realtime communication
+- [ ] Create chat messages database schema
+- [ ] Build chat interface for members
+- [ ] Implement message sending and receiving
+- [ ] Add online status indicators
+- [ ] Create chat rooms (general, announcements)
+- [ ] Add message history and persistence
+- [ ] Implement typing indicators
+
+## Visual Adjustments
+- [x] Apply Colorado Buffaloes color scheme (black, gold, silver)
