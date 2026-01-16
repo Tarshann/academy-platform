@@ -11,6 +11,7 @@ import Contact from "./pages/Contact";
 import FAQs from "./pages/FAQs";
 import SignUp from "./pages/SignUp";
 import MemberDashboard from "./pages/MemberDashboard";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/faqs"} component={FAQs} />
       <Route path={"/signup"} component={SignUp} />
       <Route path={"/member"} component={MemberDashboard} />
+      <Route path={"/payment/success"} component={PaymentSuccess} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

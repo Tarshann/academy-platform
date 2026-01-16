@@ -15,6 +15,13 @@
       "when": 1768594078646,
       "tag": "0001_warm_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1768601816588,
+      "tag": "0002_kind_amphibian",
+      "breakpoints": true
     }
   ]
 }

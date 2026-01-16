@@ -13,9 +13,8 @@ export default function About() {
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">About The Academy</h1>
-              <p className="text-lg text-muted-foreground">
-                More than just basketball—we're building character, confidence, and champions.
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">About The Academy</h1>              <p className="text-lg text-muted-foreground">
+                More than just sports—we're building complete athletes with character, confidence, and championship mentality.
               </p>
             </div>
           </div>
@@ -27,10 +26,10 @@ export default function About() {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-6 text-center text-foreground">Our Mission</h2>
               <p className="text-lg text-muted-foreground leading-relaxed text-center mb-8">
-                The Academy is a youth basketball program that prioritizes player development in all areas, 
-                including well-being, in a well-structured setting. Our focus is using basketball to develop 
-                youth, ages 8-18. We prioritize long-term development through hard work, accountability, 
-                competitiveness, and sportsmanship. Our programs help athletes excel on and off the court.
+                The Academy is a comprehensive athletic development program serving youth basketball, football, and soccer athletes. 
+                We specialize in speed, agility, and quickness (SAQ) training combined with strength conditioning to build complete athletes. 
+                Our focus extends beyond sport-specific skills to develop character, work ethic, and mental toughness through hard work, 
+                accountability, competitiveness, and sportsmanship.
               </p>
             </div>
           </div>
@@ -115,9 +114,9 @@ export default function About() {
               <h2 className="text-3xl font-bold mb-6 text-center text-foreground">Our Coaching Philosophy</h2>
               <div className="space-y-6 text-muted-foreground">
                 <p className="text-lg leading-relaxed">
-                  At The Academy, we believe in developing the whole player. While basketball skills are 
-                  important, we focus equally on building character, confidence, and life skills that will 
-                  serve our athletes long after their playing days are over.
+                  At The Academy, we believe in developing the complete athlete. Whether training for basketball, football, or soccer, 
+                  we focus on the foundational athletic qualities that translate across all sports: speed, agility, quickness, and strength. 
+                  Beyond physical development, we build character, confidence, and life skills that serve athletes long after their playing days.
                 </p>
                 <p className="text-lg leading-relaxed">
                   Our coaching approach emphasizes individual attention within a team environment. We 
@@ -146,7 +145,7 @@ export default function About() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Dedicated to developing young athletes through structured training and mentorship.
+                    Boys Basketball Coach at Sumner Academy. Dedicated to developing young athletes through structured training and mentorship.
                   </p>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Email: <a href="mailto:omarphilmore@yahoo.com" className="text-primary hover:underline">omarphilmore@yahoo.com</a></p>

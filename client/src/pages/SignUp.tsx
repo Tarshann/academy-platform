@@ -1,4 +1,8 @@
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getLoginUrl } from "@/const";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
@@ -7,6 +11,28 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 
 export default function SignUp() {
+  const { isAuthenticated } = useAuth();
+  const createCheckout = trpc.payment.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        toast.info("Redirecting to checkout...");
+        window.open(data.url, '_blank');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create checkout session");
+    },
+  });
+
+  const handlePurchase = (productId: string) => {
+    if (!isAuthenticated) {
+      toast.info("Please log in to purchase");
+      window.location.href = getLoginUrl();
+      return;
+    }
+    createCheckout.mutate({ productId });
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
@@ -64,8 +90,13 @@ export default function SignUp() {
                       <span className="text-muted-foreground">Ages 8-18</span>
                     </li>
                   </ul>
-                  <Button className="w-full" size="lg">
-                    Register Now
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => handlePurchase('academy-group-membership')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register Now'}
                   </Button>
                 </CardContent>
               </Card>
@@ -101,8 +132,13 @@ export default function SignUp() {
                       <span className="text-muted-foreground">Ages 8-18</span>
                     </li>
                   </ul>
-                  <Button className="w-full" size="lg">
-                    Register Now
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => handlePurchase('complete-player-membership')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register Now'}
                   </Button>
                 </CardContent>
               </Card>
@@ -132,8 +168,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Single session access to group workouts. Develop skills in a competitive environment.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('group-workout')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -151,8 +192,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Personalized training focused on your unique strengths and development goals.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('individual-training')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -170,8 +216,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Build a strong foundation with focused instruction on basketball fundamentals.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('skills-class')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -201,8 +252,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Outdoor conditioning and agility training to complement basketball skills.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('on-field-workouts')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -220,8 +276,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Intensive summer training with full-day sessions, skill work, and competition.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('summer-camp')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -239,8 +300,13 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Join our competitive teams. Includes uniforms, coaching, and tournament fees.
                   </p>
-                  <Button variant="outline" className="w-full">
-                    Register
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => handlePurchase('team-academy')}
+                    disabled={createCheckout.isPending}
+                  >
+                    {createCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>

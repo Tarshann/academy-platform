@@ -165,3 +165,156 @@ export async function createSchedule(schedule: InsertSchedule) {
   const result = await db.insert(schedules).values(schedule);
   return result;
 }
+
+// Payment helpers
+export async function getUserPayments(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { payments } = await import("../drizzle/schema");
+  return db.select().from(payments).where(eq(payments.userId, userId)).orderBy(desc(payments.createdAt));
+}
+
+export async function getUserSubscriptions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { subscriptions } = await import("../drizzle/schema");
+  return db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).orderBy(desc(subscriptions.createdAt));
+}
+
+export async function getActiveSubscriptions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { subscriptions } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  return db.select().from(subscriptions)
+    .where(and(
+      eq(subscriptions.userId, userId),
+      eq(subscriptions.status, "active")
+    ));
+}
+
+// Session registration helpers
+export async function getUserRegistrations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { sessionRegistrations } = await import("../drizzle/schema");
+  return db.select().from(sessionRegistrations)
+    .where(eq(sessionRegistrations.userId, userId))
+    .orderBy(desc(sessionRegistrations.registeredAt));
+}
+
+export async function getScheduleRegistrations(scheduleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { sessionRegistrations } = await import("../drizzle/schema");
+  return db.select().from(sessionRegistrations)
+    .where(eq(sessionRegistrations.scheduleId, scheduleId));
+}
+
+export async function createSessionRegistration(userId: number, scheduleId: number, paymentId?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { sessionRegistrations } = await import("../drizzle/schema");
+  
+  await db.insert(sessionRegistrations).values({
+    userId,
+    scheduleId,
+    paymentId: paymentId || null,
+    status: "registered",
+  });
+}
+
+// Admin helpers for program management
+export async function updateProgram(id: number, updates: Partial<InsertProgram>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(programs).set(updates).where(eq(programs.id, id));
+}
+
+export async function deleteProgram(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  // Soft delete by setting isActive to 0
+  await db.update(programs).set({ isActive: 0 }).where(eq(programs.id, id));
+}
+
+export async function getAllProgramsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(programs).orderBy(desc(programs.createdAt));
+}
+
+// Admin helpers for announcement management
+export async function getAllAnnouncementsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(announcements).orderBy(desc(announcements.createdAt));
+}
+
+export async function updateAnnouncement(id: number, updates: Partial<InsertAnnouncement>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(announcements).set(updates).where(eq(announcements.id, id));
+}
+
+export async function publishAnnouncement(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(announcements).set({
+    isPublished: 1,
+    publishedAt: new Date(),
+  }).where(eq(announcements.id, id));
+}
+
+export async function deleteAnnouncement(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(announcements).where(eq(announcements.id, id));
+}
+
+// Admin helpers for schedule management
+export async function getAllSchedulesAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(schedules).orderBy(desc(schedules.startTime));
+}
+
+export async function updateSchedule(id: number, updates: Partial<InsertSchedule>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(schedules).set(updates).where(eq(schedules.id, id));
+}
+
+export async function deleteSchedule(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.delete(schedules).where(eq(schedules.id, id));
+}
+
+// Admin helpers for contact submissions
+export async function markContactAsRead(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(contactSubmissions).set({ status: 'read' }).where(eq(contactSubmissions.id, id));
+}
+
+export async function markContactAsResponded(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(contactSubmissions).set({ status: 'responded' }).where(eq(contactSubmissions.id, id));
+}

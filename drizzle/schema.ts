@@ -7,6 +7,7 @@ import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal } from "d
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
@@ -93,3 +94,65 @@ export const schedules = mysqlTable("schedules", {
 
 export type Schedule = typeof schedules.$inferSelect;
 export type InsertSchedule = typeof schedules.$inferInsert;
+
+/**
+ * Payment records table
+ * Stores essential Stripe identifiers for payment tracking
+ */
+export const payments = mysqlTable("payments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  productId: varchar("productId", { length: 255 }).notNull(),
+  productName: text("productName").notNull(),
+  amountInCents: int("amountInCents").notNull(),
+  currency: varchar("currency", { length: 10 }).notNull().default("usd"),
+  status: mysqlEnum("status", ["pending", "succeeded", "failed", "refunded"]).notNull().default("pending"),
+  paymentType: mysqlEnum("paymentType", ["one_time", "recurring"]).notNull(),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+/**
+ * Subscriptions table
+ * Tracks active Stripe subscriptions for memberships
+ */
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }).notNull().unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }).notNull(),
+  productId: varchar("productId", { length: 255 }).notNull(),
+  productName: text("productName").notNull(),
+  status: mysqlEnum("status", ["active", "canceled", "past_due", "incomplete"]).notNull(),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  cancelAtPeriodEnd: int("cancelAtPeriodEnd").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+/**
+ * Session registrations table
+ * Tracks user registrations for specific training sessions
+ */
+export const sessionRegistrations = mysqlTable("sessionRegistrations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  scheduleId: int("scheduleId").notNull(),
+  paymentId: int("paymentId"),
+  status: mysqlEnum("status", ["registered", "attended", "canceled", "no_show"]).notNull().default("registered"),
+  registeredAt: timestamp("registeredAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
+export type InsertSessionRegistration = typeof sessionRegistrations.$inferInsert;

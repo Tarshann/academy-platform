@@ -18,7 +18,7 @@ export default function Home() {
               THE BEGINNING OF A NEW CHAPTER IN GALLATIN SPORTS
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-              Using basketball to develop youth, ages 8-18, through hard work, accountability, competitiveness, and sportsmanship.
+              Developing elite youth athletes across basketball, football, and soccer through expert training in speed, agility, quickness, and strength.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/signup">
@@ -42,9 +42,9 @@ export default function Home() {
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">Welcome to The Academy</h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              The Academy is a youth basketball program that prioritizes player development in all areas, 
-              including well-being, in a well-structured setting. We focus on using basketball to develop 
-              youth through long-term development, helping athletes excel on and off the court.
+              The Academy is a comprehensive athletic development program serving youth basketball, football, and soccer athletes. 
+              We prioritize complete player development through specialized training in speed, agility, quickness (SAQ), and strength conditioning, 
+              helping athletes excel in their sport and beyond.
             </p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Home() {
         <div className="container">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground">Our Programs</h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
-            Choose from our range of basketball development programs designed for youth ages 8-18
+            Choose from our range of athletic development programs for youth basketball, football, and soccer athletes
           </p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
