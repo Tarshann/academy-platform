@@ -685,3 +685,104 @@ export async function incrementVideoViewCount(id: number) {
     await db.update(videos).set({ viewCount: (video.viewCount || 0) + 1 }).where(eq(videos.id, id));
   }
 }
+
+
+// ==================== Attendance Tracking ====================
+
+export async function markAttendance(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { attendance } = await import("../drizzle/schema");
+  const [result] = await db.insert(attendance).values(data);
+  return result.insertId;
+}
+
+export async function getAttendanceBySchedule(scheduleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { attendance } = await import("../drizzle/schema");
+  const results = await db
+    .select({
+      id: attendance.id,
+      userId: attendance.userId,
+      userName: users.name,
+      userEmail: users.email,
+      status: attendance.status,
+      notes: attendance.notes,
+      markedBy: attendance.markedBy,
+      markedAt: attendance.markedAt,
+    })
+    .from(attendance)
+    .leftJoin(users, eq(attendance.userId, users.id))
+    .where(eq(attendance.scheduleId, scheduleId));
+  
+  return results;
+}
+
+export async function getAttendanceByUser(userId: number, limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { attendance } = await import("../drizzle/schema");
+  const results = await db
+    .select({
+      id: attendance.id,
+      scheduleId: attendance.scheduleId,
+      scheduleTitle: schedules.title,
+      scheduleDate: schedules.startTime,
+      scheduleLocation: schedules.location,
+      status: attendance.status,
+      notes: attendance.notes,
+      markedAt: attendance.markedAt,
+    })
+    .from(attendance)
+    .leftJoin(schedules, eq(attendance.scheduleId, schedules.id))
+    .where(eq(attendance.userId, userId))
+    .orderBy(desc(schedules.startTime))
+    .limit(limit);
+  
+  return results;
+}
+
+export async function updateAttendance(id: number, data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { attendance } = await import("../drizzle/schema");
+  await db.update(attendance).set(data).where(eq(attendance.id, id));
+}
+
+export async function getAttendanceStats(userId: number, startDate?: Date, endDate?: Date) {
+  const db = await getDb();
+  if (!db) return { total: 0, present: 0, absent: 0, excused: 0, late: 0, attendanceRate: 0 };
+  
+  const { attendance } = await import("../drizzle/schema");
+  const { and, gte, lte } = await import("drizzle-orm");
+  
+  let query = db
+    .select({
+      status: attendance.status,
+    })
+    .from(attendance)
+    .leftJoin(schedules, eq(attendance.scheduleId, schedules.id))
+    .where(eq(attendance.userId, userId));
+  
+  const results = await query;
+  
+  const stats = {
+    total: results.length,
+    present: results.filter(r => r.status === 'present').length,
+    absent: results.filter(r => r.status === 'absent').length,
+    excused: results.filter(r => r.status === 'excused').length,
+    late: results.filter(r => r.status === 'late').length,
+    attendanceRate: 0,
+  };
+  
+  if (stats.total > 0) {
+    stats.attendanceRate = Math.round((stats.present / stats.total) * 100);
+  }
+  
+  return stats;
+}

@@ -337,3 +337,21 @@ export const videos = mysqlTable("videos", {
 
 export type Video = typeof videos.$inferSelect;
 export type InsertVideo = typeof videos.$inferInsert;
+
+/**
+ * Attendance tracking table
+ * Tracks which athletes attended which training sessions
+ */
+export const attendance = mysqlTable("attendance", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleId: int("scheduleId").notNull(), // Link to schedules table
+  userId: int("userId").notNull(), // Link to users table (the athlete)
+  status: mysqlEnum("status", ["present", "absent", "excused", "late"]).notNull().default("present"),
+  notes: text("notes"), // Coach notes about performance, behavior, etc.
+  markedBy: int("markedBy").notNull(), // Coach/admin who marked attendance
+  markedAt: timestamp("markedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Attendance = typeof attendance.$inferSelect;
+export type InsertAttendance = typeof attendance.$inferInsert;

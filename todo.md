@@ -191,3 +191,30 @@
 - [x] Implement embedded video player (YouTube/Vimeo support)
 - [x] Add video search and filtering
 - [x] Create video detail pages with descriptions
+
+## Attendance Tracking System
+- [x] Create attendance database schema
+- [x] Build backend APIs for attendance tracking
+- [ ] Build coach interface for marking attendance
+- [ ] Add attendance marking to schedule sessions
+- [ ] Create parent dashboard for viewing attendance history
+- [x] Generate attendance reports and statistics
+- [ ] Add attendance notifications for parents
+
+## Content & Philosophy Updates
+- [ ] Update locations section with Sumner Academy, Unlimited Potential, RT Fisher
+- [ ] Add maps and directions for each facility
+- [ ] Update program descriptions to emphasize fundamentals, confidence, basketball IQ
+- [ ] Add philosophy section highlighting long-term growth over trophies
+- [ ] Emphasize safe environment to fail and learn
+- [ ] Highlight strong coach-to-player ratios and mentorship
+- [ ] Update schedule display to show Tuesday/Thursday/Sunday structure
+- [ ] Clarify Open Gym game-like experience on Sundays
+- [ ] Add note about seasonal schedule flexibility
+
+## Initial Content Population
+- [ ] Add sample products to merchandise shop
+- [ ] Upload sample videos to video library
+- [ ] Add sample photos to gallery
+- [ ] Create sample blog posts
+- [ ] Add upcoming schedules for current season

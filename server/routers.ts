@@ -709,6 +709,64 @@ export const appRouter = router({
       return await getUserSubscriptions(ctx.user.id);
     }),
   }),
+
+  attendance: router({    
+    markAttendance: adminProcedure
+      .input(z.object({
+        scheduleId: z.number(),
+        userId: z.number(),
+        status: z.enum(['present', 'absent', 'excused', 'late']),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const { markAttendance } = await import('./db');
+        const id = await markAttendance({
+          ...input,
+          markedBy: ctx.user.id,
+        });
+        return { success: true, id };
+      }),
+    
+    getBySchedule: adminProcedure
+      .input(z.object({ scheduleId: z.number() }))
+      .query(async ({ input }) => {
+        const { getAttendanceBySchedule } = await import('./db');
+        return await getAttendanceBySchedule(input.scheduleId);
+      }),
+    
+    getMyAttendance: protectedProcedure
+      .query(async ({ ctx }) => {
+        const { getAttendanceByUser } = await import('./db');
+        return await getAttendanceByUser(ctx.user.id);
+      }),
+    
+    getMyStats: protectedProcedure
+      .input(z.object({
+        startDate: z.date().optional(),
+        endDate: z.date().optional(),
+      }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getAttendanceStats } = await import('./db');
+        return await getAttendanceStats(
+          ctx.user.id,
+          input?.startDate,
+          input?.endDate
+        );
+      }),
+    
+    updateAttendance: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['present', 'absent', 'excused', 'late']).optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { updateAttendance } = await import('./db');
+        const { id, ...updates } = input;
+        await updateAttendance(id, updates);
+        return { success: true };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
