@@ -218,3 +218,11 @@
 - [ ] Add sample photos to gallery
 - [ ] Create sample blog posts
 - [ ] Add upcoming schedules for current season
+
+## Homepage Philosophy Section
+- [x] Create dedicated philosophy and values section on homepage
+- [x] Emphasize fundamentals, confidence, basketball IQ
+- [x] Highlight long-term growth over trophies
+- [x] Communicate safe environment to fail and learn
+- [x] Showcase strong coach-to-player ratios
+- [x] Feature community and mentorship messaging

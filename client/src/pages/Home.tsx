@@ -267,6 +267,100 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Philosophy & Values Section */}
+      <section className="py-32 bg-gradient-to-br from-black via-neutral-900 to-black relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent" />
+        </div>
+        
+        <div className="container px-6 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-20"
+          >
+            <h2 className="text-5xl md:text-6xl font-black mb-6">
+              <span className="bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+                Our Philosophy
+              </span>
+            </h2>
+            <p className="text-2xl text-neutral-300 max-w-4xl mx-auto leading-relaxed">
+              This is a place where your child will be <span className="text-amber-400 font-semibold">seen, developed, and supported</span>
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={containerVariants}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
+          >
+            {[
+              {
+                title: "Fundamentals First",
+                description: "We teach the game correctly from the ground up. Proper technique and basketball IQ are the foundation of every great player.",
+                icon: "🏀",
+              },
+              {
+                title: "Building Confidence",
+                description: "Every athlete deserves to feel capable and empowered. We create an environment where confidence grows through skill mastery and positive reinforcement.",
+                icon: "💪",
+              },
+              {
+                title: "Long-Term Growth",
+                description: "We prioritize sustainable development over short-term wins. Trophies fade, but the skills, character, and love for the game last forever.",
+                icon: "📈",
+              },
+              {
+                title: "Safe to Fail & Learn",
+                description: "Mistakes are part of the journey. Our environment encourages athletes to take risks, learn from failures, and grow stronger.",
+                icon: "🛡️",
+              },
+              {
+                title: "Elite Coach Ratios",
+                description: "Small group sizes mean more attention, better feedback, and stronger relationships between coaches and athletes.",
+                icon: "👥",
+              },
+              {
+                title: "Community & Mentorship",
+                description: "We're building more than athletes—we're building leaders. Our program fosters mentorship, accountability, and lifelong connections.",
+                icon: "🤝",
+              },
+            ].map((value, index) => (
+              <motion.div key={index} variants={itemVariants}>
+                <Card className="group relative overflow-hidden bg-gradient-to-br from-neutral-800/50 to-neutral-900/80 border-neutral-700/50 hover:border-amber-500/50 transition-all duration-500 h-full backdrop-blur-sm hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/20">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-yellow-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <CardContent className="relative z-10 p-8">
+                    <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                      {value.icon}
+                    </div>
+                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-400 transition-colors">
+                      {value.title}
+                    </h3>
+                    <p className="text-neutral-400 leading-relaxed">{value.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="text-center mt-20"
+          >
+            <p className="text-xl text-neutral-300 max-w-3xl mx-auto leading-relaxed">
+              At The Academy, we don't just train athletes—we develop <span className="text-amber-400 font-semibold">confident, skilled, and resilient young people</span> who carry these lessons far beyond the court.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-32 bg-gradient-to-br from-neutral-900 via-black to-neutral-900 relative overflow-hidden">
         <div className="absolute inset-0">
