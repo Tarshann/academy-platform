@@ -36,6 +36,13 @@
       "when": 1768605569762,
       "tag": "0004_wealthy_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1768612050518,
+      "tag": "0005_fixed_sunfire",
+      "breakpoints": true
     }
   ]
 }
