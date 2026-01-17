@@ -181,3 +181,13 @@
 - [ ] Create countdown timers for campaign launches
 - [ ] Add campaign banners and promotional sections
 - [ ] Implement order management and fulfillment tracking
+
+## Video Library
+- [x] Create video library database schema
+- [x] Build video management backend APIs
+- [x] Create admin video upload/embed interface
+- [x] Add video categorization (drills, technique, conditioning, games)
+- [x] Build public video library page with grid layout
+- [x] Implement embedded video player (YouTube/Vimeo support)
+- [x] Add video search and filtering
+- [x] Create video detail pages with descriptions

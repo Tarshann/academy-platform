@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Award, Calendar, TrendingUp, Users, Zap } from "lucide-react";
+import { ArrowRight, Award, TrendingUp, Users } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,12 +61,7 @@ export default function Home() {
     },
   ];
 
-  const stats = [
-    { label: "Youth Athletes Trained", value: "500+", icon: Users },
-    { label: "Training Sessions", value: "2000+", icon: Calendar },
-    { label: "Success Rate", value: "95%", icon: Award },
-    { label: "Years Experience", value: "10+", icon: Zap },
-  ];
+
 
   return (
     <div className="min-h-screen">
@@ -195,32 +190,7 @@ export default function Home() {
         </motion.div>
       </motion.section>
 
-      {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-b from-black to-neutral-900">
-        <div className="container px-6">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={containerVariants}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
-          >
-            {stats.map((stat, index) => (
-              <motion.div key={index} variants={itemVariants} className="text-center">
-                <Card className="bg-gradient-to-br from-neutral-800/50 to-neutral-900/50 border-amber-500/20 backdrop-blur-sm hover:border-amber-500/40 transition-all duration-300 hover:scale-105">
-                  <CardContent className="pt-8 pb-6">
-                    <stat.icon className="w-8 h-8 mx-auto mb-4 text-amber-500" />
-                    <div className="text-4xl md:text-5xl font-black bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent mb-2">
-                      {stat.value}
-                    </div>
-                    <div className="text-neutral-400 font-medium">{stat.label}</div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+
 
       {/* Programs Section */}
       <section className="py-32 bg-gradient-to-b from-neutral-900 to-black relative overflow-hidden">

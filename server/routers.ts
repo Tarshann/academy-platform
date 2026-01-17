@@ -566,6 +566,83 @@ export const appRouter = router({
     }),
   }),
 
+  videos: router({
+    list: publicProcedure.query(async () => {
+      const { getAllVideos } = await import('./db');
+      return await getAllVideos(true); // Only published videos for public
+    }),
+    
+    byId: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const { getVideoById, incrementVideoViewCount } = await import('./db');
+        const video = await getVideoById(input.id);
+        if (video && video.isPublished) {
+          await incrementVideoViewCount(input.id);
+        }
+        return video;
+      }),
+    
+    byCategory: publicProcedure
+      .input(z.object({ category: z.string() }))
+      .query(async ({ input }) => {
+        const { getVideosByCategory } = await import('./db');
+        return await getVideosByCategory(input.category, true);
+      }),
+    
+    admin: router({
+      list: adminProcedure.query(async () => {
+        const { getAllVideos } = await import('./db');
+        return await getAllVideos(false); // All videos for admin
+      }),
+      
+      create: adminProcedure
+        .input(z.object({
+          title: z.string(),
+          description: z.string().optional(),
+          videoUrl: z.string(),
+          thumbnailUrl: z.string().optional(),
+          category: z.enum(["drills", "technique", "conditioning", "games", "other"]),
+          duration: z.number().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { createVideo } = await import('./db');
+          await createVideo(input);
+          return { success: true };
+        }),
+      
+      update: adminProcedure
+        .input(z.object({
+          id: z.number(),
+          title: z.string().optional(),
+          description: z.string().optional(),
+          videoUrl: z.string().optional(),
+          thumbnailUrl: z.string().optional(),
+          category: z.enum(["drills", "technique", "conditioning", "games", "other"]).optional(),
+          duration: z.number().optional(),
+          isPublished: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { updateVideo } = await import('./db');
+          const { id, ...updates } = input;
+          const dbUpdates: any = { ...updates };
+          if (updates.isPublished !== undefined) {
+            dbUpdates.isPublished = updates.isPublished ? 1 : 0;
+          }
+          await updateVideo(id, dbUpdates);
+          return { success: true };
+        }),
+      
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { deleteVideo } = await import('./db');
+          await deleteVideo(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
   payment: router({
     createCheckout: protectedProcedure
       .input(z.object({

@@ -317,3 +317,23 @@ export const campaignProducts = mysqlTable("campaignProducts", {
 
 export type CampaignProduct = typeof campaignProducts.$inferSelect;
 export type InsertCampaignProduct = typeof campaignProducts.$inferInsert;
+
+/**
+ * Video library table for training demonstrations and technique tutorials
+ */
+export const videos = mysqlTable("videos", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  videoUrl: varchar("videoUrl", { length: 500 }).notNull(), // YouTube/Vimeo embed URL
+  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }), // Optional custom thumbnail
+  category: mysqlEnum("category", ["drills", "technique", "conditioning", "games", "other"]).default("other").notNull(),
+  duration: int("duration"), // Duration in seconds
+  isPublished: int("isPublished").notNull().default(0),
+  viewCount: int("viewCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Video = typeof videos.$inferSelect;
+export type InsertVideo = typeof videos.$inferInsert;

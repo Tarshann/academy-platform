@@ -43,6 +43,13 @@
       "when": 1768612050518,
       "tag": "0005_fixed_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1768619714099,
+      "tag": "0006_illegal_killer_shrike",
+      "breakpoints": true
     }
   ]
 }

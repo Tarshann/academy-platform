@@ -17,6 +17,7 @@ import Gallery from "./pages/Gallery";
 import Chat from "./pages/Chat";
 import Shop from "./pages/Shop";
 import ShopOrderSuccess from "./pages/ShopOrderSuccess";
+import Videos from "./pages/Videos";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <Route path={"/chat"} component={Chat} />
       <Route path={"/shop"} component={Shop} />
       <Route path={"/shop/order-success"} component={ShopOrderSuccess} />
+      <Route path={"/videos"} component={Videos} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

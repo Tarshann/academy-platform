@@ -604,3 +604,84 @@ export async function deleteCampaign(id: number) {
   const { campaigns } = await import("../drizzle/schema");
   await db.delete(campaigns).where(eq(campaigns.id, id));
 }
+
+// ==================== Video Library ====================
+
+export async function getAllVideos(publishedOnly: boolean = false) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { videos } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  
+  if (publishedOnly) {
+    return await db.select().from(videos).where(eq(videos.isPublished, 1)).orderBy(desc(videos.createdAt));
+  }
+  
+  return await db.select().from(videos).orderBy(desc(videos.createdAt));
+}
+
+export async function getVideoById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  
+  const { videos } = await import("../drizzle/schema");
+  const result = await db.select().from(videos).where(eq(videos.id, id)).limit(1);
+  return result[0];
+}
+
+export async function getVideosByCategory(category: string, publishedOnly: boolean = true) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const { videos } = await import("../drizzle/schema");
+  const { and } = await import("drizzle-orm");
+  
+  if (publishedOnly) {
+    return await db.select().from(videos)
+      .where(and(
+        eq(videos.category, category as any),
+        eq(videos.isPublished, 1)
+      ))
+      .orderBy(desc(videos.createdAt));
+  }
+  
+  return await db.select().from(videos)
+    .where(eq(videos.category, category as any))
+    .orderBy(desc(videos.createdAt));
+}
+
+export async function createVideo(video: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { videos } = await import("../drizzle/schema");
+  await db.insert(videos).values(video);
+}
+
+export async function updateVideo(id: number, video: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { videos } = await import("../drizzle/schema");
+  await db.update(videos).set({ ...video, updatedAt: new Date() }).where(eq(videos.id, id));
+}
+
+export async function deleteVideo(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const { videos } = await import("../drizzle/schema");
+  await db.delete(videos).where(eq(videos.id, id));
+}
+
+export async function incrementVideoViewCount(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  
+  const { videos } = await import("../drizzle/schema");
+  const video = await getVideoById(id);
+  if (video) {
+    await db.update(videos).set({ viewCount: (video.viewCount || 0) + 1 }).where(eq(videos.id, id));
+  }
+}
