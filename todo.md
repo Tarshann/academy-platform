@@ -226,3 +226,7 @@
 - [x] Communicate safe environment to fail and learn
 - [x] Showcase strong coach-to-player ratios
 - [x] Feature community and mentorship messaging
+
+## Content Updates (User Feedback)
+- [x] Remove coach ratios card from homepage philosophy section
+- [x] Add Academy Summer Camp pricing ($20 registration + $200 for the week) to programs

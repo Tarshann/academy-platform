@@ -320,11 +320,6 @@ export default function Home() {
                 icon: "🛡️",
               },
               {
-                title: "Elite Coach Ratios",
-                description: "Small group sizes mean more attention, better feedback, and stronger relationships between coaches and athletes.",
-                icon: "👥",
-              },
-              {
                 title: "Community & Mentorship",
                 description: "We're building more than athletes—we're building leaders. Our program fosters mentorship, accountability, and lifelong connections.",
                 icon: "🤝",

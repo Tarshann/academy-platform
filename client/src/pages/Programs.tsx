@@ -192,7 +192,8 @@ export default function Programs() {
                     off-season. Full-day sessions with skill work, games, and competition.
                   </p>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$20 <span className="text-sm text-muted-foreground font-normal">per day</span></p>
+                    <p className="text-2xl font-bold text-primary mb-2">$220 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
+                    <p className="text-sm text-muted-foreground mb-4">$20 registration fee + $200 for the week</p>
                     <Link href="/signup">
                       <Button className="w-full">Register Now</Button>
                     </Link>
