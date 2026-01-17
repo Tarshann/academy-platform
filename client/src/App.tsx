@@ -15,6 +15,8 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import Gallery from "./pages/Gallery";
 import Chat from "./pages/Chat";
+import Shop from "./pages/Shop";
+import ShopOrderSuccess from "./pages/ShopOrderSuccess";
 
 function Router() {
   return (
@@ -30,6 +32,8 @@ function Router() {
       <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/gallery"} component={Gallery} />
       <Route path={"/chat"} component={Chat} />
+      <Route path={"/shop"} component={Shop} />
+      <Route path={"/shop/order-success"} component={ShopOrderSuccess} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
