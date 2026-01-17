@@ -380,6 +380,192 @@ export const appRouter = router({
     }),
   }),
 
+  shop: router({
+    // Public shop endpoints
+    products: publicProcedure.query(async () => {
+      const { getAllProducts } = await import('./db');
+      return await getAllProducts();
+    }),
+    
+    productById: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const { getProductById } = await import('./db');
+        return await getProductById(input.id);
+      }),
+    
+    campaigns: publicProcedure.query(async () => {
+      const { getActiveCampaigns } = await import('./db');
+      return await getActiveCampaigns();
+    }),
+    
+    // Protected shop endpoints
+    myOrders: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserOrders } = await import('./db');
+      return await getUserOrders(ctx.user.id);
+    }),
+    
+    createCheckout: protectedProcedure
+      .input(z.object({
+        items: z.array(z.object({
+          productId: z.number(),
+          variantId: z.number().optional(),
+          quantity: z.number().min(1),
+        })),
+        shippingAddress: z.string(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { ENV } = await import('./_core/env');
+        const Stripe = (await import('stripe')).default;
+        const stripe = new Stripe(ENV.stripeSecretKey);
+        const { getProductById, createOrder, createOrderItem } = await import('./db');
+        
+        // Calculate total and prepare line items
+        const lineItems = [];
+        let totalAmount = 0;
+        
+        for (const item of input.items) {
+          const product = await getProductById(item.productId);
+          if (!product) {
+            throw new TRPCError({ code: 'NOT_FOUND', message: `Product ${item.productId} not found` });
+          }
+          
+          lineItems.push({
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: product.name,
+                description: product.description || '',
+              },
+              unit_amount: product.price,
+            },
+            quantity: item.quantity,
+          });
+          
+          totalAmount += product.price * item.quantity;
+        }
+        
+        const origin = ctx.req.headers.origin || 'http://localhost:3000';
+        
+        const session = await stripe.checkout.sessions.create({
+          payment_method_types: ['card'],
+          line_items: lineItems,
+          mode: 'payment',
+          success_url: `${origin}/shop/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${origin}/shop`,
+          customer_email: ctx.user.email || undefined,
+          client_reference_id: ctx.user.id.toString(),
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            customer_email: ctx.user.email || '',
+            customer_name: ctx.user.name || '',
+            order_items: JSON.stringify(input.items),
+            shipping_address: input.shippingAddress,
+          },
+          allow_promotion_codes: true,
+        });
+        
+        return { url: session.url };
+      }),
+    
+    // Admin shop endpoints
+    admin: router({
+      products: router({
+        list: adminProcedure.query(async () => {
+          const { getAllProducts } = await import('./db');
+          return await getAllProducts();
+        }),
+        
+        create: adminProcedure
+          .input(z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            price: z.number().min(0),
+            imageUrl: z.string().optional(),
+            imageKey: z.string().optional(),
+            category: z.enum(["apparel", "accessories", "equipment"]),
+            stock: z.number().min(0),
+          }))
+          .mutation(async ({ input }) => {
+            const { createProduct } = await import('./db');
+            await createProduct(input);
+            return { success: true };
+          }),
+        
+        update: adminProcedure
+          .input(z.object({
+            id: z.number(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            price: z.number().optional(),
+            imageUrl: z.string().optional(),
+            stock: z.number().optional(),
+            isActive: z.boolean().optional(),
+          }))
+          .mutation(async ({ input }) => {
+            const { updateProduct } = await import('./db');
+            const { id, ...updates } = input;
+            await updateProduct(id, updates);
+            return { success: true };
+          }),
+        
+        delete: adminProcedure
+          .input(z.object({ id: z.number() }))
+          .mutation(async ({ input }) => {
+            const { deleteProduct } = await import('./db');
+            await deleteProduct(input.id);
+            return { success: true };
+          }),
+      }),
+      
+      campaigns: router({
+        list: adminProcedure.query(async () => {
+          const { getAllCampaigns } = await import('./db');
+          return await getAllCampaigns();
+        }),
+        
+        create: adminProcedure
+          .input(z.object({
+            name: z.string(),
+            description: z.string().optional(),
+            bannerImageUrl: z.string().optional(),
+            bannerImageKey: z.string().optional(),
+            startDate: z.date(),
+            endDate: z.date(),
+          }))
+          .mutation(async ({ input }) => {
+            const { createCampaign } = await import('./db');
+            await createCampaign(input);
+            return { success: true };
+          }),
+        
+        update: adminProcedure
+          .input(z.object({
+            id: z.number(),
+            name: z.string().optional(),
+            description: z.string().optional(),
+            startDate: z.date().optional(),
+            endDate: z.date().optional(),
+            isActive: z.boolean().optional(),
+          }))
+          .mutation(async ({ input }) => {
+            const { updateCampaign } = await import('./db');
+            const { id, ...updates } = input;
+            await updateCampaign(id, updates);
+            return { success: true };
+          }),
+        
+        delete: adminProcedure
+          .input(z.object({ id: z.number() }))
+          .mutation(async ({ input }) => {
+            const { deleteCampaign } = await import('./db');
+            await deleteCampaign(input.id);
+            return { success: true };
+          }),
+      }),
+    }),
+  }),
+
   payment: router({
     createCheckout: protectedProcedure
       .input(z.object({
