@@ -237,3 +237,6 @@
 - [x] Update Summer Camp details: 3rd annual camp at Sumner Academy, $200 total with $20 deposit included ($180 due after deposit)
 - [x] Remove Omar's contact info from top of contact page (keep forms only)
 - [x] Update Shooting Lab description to mention Dr Dish shooting machine with focus on technique and mechanics
+
+## Gallery Content Population
+- [x] Upload training photos to gallery with S3 storage
