@@ -240,3 +240,10 @@
 
 ## Gallery Content Population
 - [x] Upload training photos to gallery with S3 storage
+
+## Latest Updates
+- [x] Add two new training photos to gallery
+- [x] Add community chat to member dashboard page (already exists with real-time messaging)
+- [x] Update Shooting Lab: $25/session, limited to 8 players, NOT included in memberships
+- [x] Update Academy League: Contact us for availability and pricing
+- [x] Note that Open Gyms are seasonal

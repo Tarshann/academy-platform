@@ -91,7 +91,7 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Shooting Lab</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • Technique & Mechanics Focus</CardDescription>
+                    <CardDescription className="text-muted-foreground">Ages 8-18 • Limited to 8 players per session</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
@@ -102,12 +102,12 @@ export default function Programs() {
                     </p>
                     <p className="text-muted-foreground mb-4">
                       Perfect for developing muscle memory, refining form, and improving shooting consistency through 
-                      focused technical work.
+                      focused technical work. <strong>Not included in memberships.</strong>
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">Included <span className="text-sm text-muted-foreground font-normal">in memberships</span></p>
+                      <p className="text-2xl font-bold text-primary mb-2">$25 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
                       <Link href="/signup">
-                        <Button className="w-full">View Memberships</Button>
+                        <Button className="w-full">Register Now</Button>
                       </Link>
                     </div>
                   </CardContent>
@@ -167,7 +167,7 @@ export default function Programs() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Unlimited access to skills classes and open gyms. The most comprehensive option for 
+                      Unlimited access to skills classes and open gyms (when available seasonally). The most comprehensive option for 
                       serious players committed to year-round development.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
@@ -206,18 +206,18 @@ export default function Programs() {
 
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Team Academy Registration</CardTitle>
-                  <CardDescription className="text-muted-foreground">Ages 8-18 • Competitive teams</CardDescription>
+                  <CardTitle className="text-foreground">Academy League</CardTitle>
+                  <CardDescription className="text-muted-foreground">Ages 8-18 • Competitive league play</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Join our competitive travel teams representing The Academy in tournaments and leagues. 
-                    Includes uniforms, coaching, and tournament fees.
+                    Join our competitive league representing The Academy in organized games and tournaments. 
+                    Includes coaching, game management, and competitive development opportunities.
                   </p>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$300 <span className="text-sm text-muted-foreground font-normal">per season</span></p>
-                    <Link href="/signup">
-                      <Button className="w-full">Register Now</Button>
+                    <p className="text-lg text-muted-foreground mb-4">Contact us for availability and pricing</p>
+                    <Link href="/contact">
+                      <Button className="w-full">Contact Us</Button>
                     </Link>
                   </div>
                 </CardContent>
