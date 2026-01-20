@@ -247,3 +247,7 @@
 - [x] Update Shooting Lab: $25/session, limited to 8 players, NOT included in memberships
 - [x] Update Academy League: Contact us for availability and pricing
 - [x] Note that Open Gyms are seasonal
+
+## Merchandise Store
+- [x] Populate store with Academy branded apparel (t-shirts, hoodies, shorts)
+- [x] Add training equipment products (basketballs, water bottles, bags)
