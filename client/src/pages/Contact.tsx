@@ -9,7 +9,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Mail, Phone, MapPin } from "lucide-react";
+
 
 export default function Contact() {
   const [generalForm, setGeneralForm] = useState({
@@ -75,52 +75,9 @@ export default function Contact() {
           </div>
         </section>
 
-        {/* Contact Info */}
+        {/* Contact Forms */}
         <section className="py-16">
           <div className="container">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-16">
-              <Card className="bg-card border-border text-center">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Mail className="text-primary" size={24} />
-                  </div>
-                  <CardTitle className="text-foreground">Email</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <a href="mailto:omarphilmore@yahoo.com" className="text-primary hover:underline">
-                    omarphilmore@yahoo.com
-                  </a>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border text-center">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Phone className="text-primary" size={24} />
-                  </div>
-                  <CardTitle className="text-foreground">Phone</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <a href="tel:5712920833" className="text-primary hover:underline">
-                    (571) 292-0833
-                  </a>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border text-center">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <MapPin className="text-primary" size={24} />
-                  </div>
-                  <CardTitle className="text-foreground">Location</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">Gallatin, TN</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Contact Forms */}
             <div className="max-w-3xl mx-auto">
               <Tabs defaultValue="general" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">

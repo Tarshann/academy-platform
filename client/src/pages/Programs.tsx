@@ -91,16 +91,18 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Shooting Lab</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • High-volume training</CardDescription>
+                    <CardDescription className="text-muted-foreground">Ages 8-18 • Technique & Mechanics Focus</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Our shooting machine acts as an automatic rebounder, instantly rebounding a made or 
-                      missed shot and giving a return pass for another shot. Fires up to 1800 shots per hour 
-                      and can be used with multiple players to get an intense workout in a short time.
+                      Specialized sessions using our Dr Dish shooting machine focused on proper shooting technique 
+                      and mechanics. The Dr Dish acts as an automatic rebounder, instantly rebounding made or 
+                      missed shots and delivering return passes. Fires up to 1800 shots per hour for high-volume 
+                      repetition.
                     </p>
                     <p className="text-muted-foreground mb-4">
-                      Perfect for developing muscle memory and improving shooting consistency.
+                      Perfect for developing muscle memory, refining form, and improving shooting consistency through 
+                      focused technical work.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">Included <span className="text-sm text-muted-foreground font-normal">in memberships</span></p>
@@ -184,16 +186,17 @@ export default function Programs() {
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="text-foreground">Academy Summer Camp</CardTitle>
-                  <CardDescription className="text-muted-foreground">Ages 8-18 • Seasonal</CardDescription>
+                  <CardDescription className="text-muted-foreground">Ages 8-18 • 3rd Annual at Sumner Academy</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Intensive summer training camps designed to accelerate player development during the 
-                    off-season. Full-day sessions with skill work, games, and competition.
+                    Join us for our 3rd annual summer camp at Sumner Academy! Intensive week-long training 
+                    designed to accelerate player development during the off-season. Full-day sessions with 
+                    skill work, games, and competition.
                   </p>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$220 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
-                    <p className="text-sm text-muted-foreground mb-4">$20 registration fee + $200 for the week</p>
+                    <p className="text-2xl font-bold text-primary mb-2">$200 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
+                    <p className="text-sm text-muted-foreground mb-4">$20 deposit (included in total) • $180 due after deposit</p>
                     <Link href="/signup">
                       <Button className="w-full">Register Now</Button>
                     </Link>

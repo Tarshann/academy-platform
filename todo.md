@@ -230,3 +230,10 @@
 ## Content Updates (User Feedback)
 - [x] Remove coach ratios card from homepage philosophy section
 - [x] Add Academy Summer Camp pricing ($20 registration + $200 for the week) to programs
+
+## Content Updates (Latest User Feedback)
+- [x] Integrate Academy training photos into the platform
+- [x] Add Academy logo to the site
+- [x] Update Summer Camp details: 3rd annual camp at Sumner Academy, $200 total with $20 deposit included ($180 due after deposit)
+- [x] Remove Omar's contact info from top of contact page (keep forms only)
+- [x] Update Shooting Lab description to mention Dr Dish shooting machine with focus on technique and mechanics
