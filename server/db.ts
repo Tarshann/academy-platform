@@ -1,5 +1,6 @@
 import { eq, desc } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { 
   InsertUser, 
   users, 
@@ -19,7 +20,8 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      const client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -78,7 +80,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -103,7 +106,7 @@ export async function getUserByOpenId(openId: string) {
 export async function getAllPrograms() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(programs).where(eq(programs.isActive, 1));
+  return db.select().from(programs).where(eq(programs.isActive, true));
 }
 
 export async function getProgramBySlug(slug: string) {
@@ -125,7 +128,7 @@ export async function getPublishedAnnouncements() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(announcements)
-    .where(eq(announcements.isPublished, 1))
+    .where(eq(announcements.isPublished, true))
     .orderBy(desc(announcements.publishedAt));
 }
 
@@ -154,8 +157,9 @@ export async function getContactSubmissions() {
 export async function getUpcomingSchedules() {
   const db = await getDb();
   if (!db) return [];
+  const { gte } = await import("drizzle-orm");
   return db.select().from(schedules)
-    .where(eq(schedules.startTime, new Date()))
+    .where(gte(schedules.startTime, new Date()))
     .orderBy(schedules.startTime);
 }
 
@@ -242,8 +246,8 @@ export async function deleteProgram(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   
-  // Soft delete by setting isActive to 0
-  await db.update(programs).set({ isActive: 0 }).where(eq(programs.id, id));
+  // Soft delete by setting isActive to false
+  await db.update(programs).set({ isActive: false }).where(eq(programs.id, id));
 }
 
 export async function getAllProgramsAdmin() {
@@ -271,7 +275,7 @@ export async function publishAnnouncement(id: number) {
   if (!db) throw new Error("Database not available");
   
   await db.update(announcements).set({
-    isPublished: 1,
+    isPublished: true,
     publishedAt: new Date(),
   }).where(eq(announcements.id, id));
 }
@@ -344,7 +348,7 @@ export async function getAllGalleryPhotos() {
   if (!db) return [];
   
   const { galleryPhotos } = await import("../drizzle/schema");
-  return db.select().from(galleryPhotos).where(eq(galleryPhotos.isVisible, 1)).orderBy(desc(galleryPhotos.createdAt));
+  return db.select().from(galleryPhotos).where(eq(galleryPhotos.isVisible, true)).orderBy(desc(galleryPhotos.createdAt));
 }
 
 export async function getGalleryPhotosByCategory(category: string) {
@@ -356,7 +360,7 @@ export async function getGalleryPhotosByCategory(category: string) {
   return db.select().from(galleryPhotos)
     .where(and(
       eq(galleryPhotos.category, category as any),
-      eq(galleryPhotos.isVisible, 1)
+      eq(galleryPhotos.isVisible, true)
     ))
     .orderBy(desc(galleryPhotos.createdAt));
 }
@@ -389,7 +393,7 @@ export async function toggleGalleryPhotoVisibility(id: number, isVisible: boolea
   if (!db) throw new Error("Database not available");
   
   const { galleryPhotos } = await import("../drizzle/schema");
-  await db.update(galleryPhotos).set({ isVisible: isVisible ? 1 : 0 }).where(eq(galleryPhotos.id, id));
+  await db.update(galleryPhotos).set({ isVisible: isVisible }).where(eq(galleryPhotos.id, id));
 }
 
 // Blog helpers
@@ -399,7 +403,7 @@ export async function getAllPublishedBlogPosts() {
   
   const { blogPosts } = await import("../drizzle/schema");
   return db.select().from(blogPosts)
-    .where(eq(blogPosts.isPublished, 1))
+    .where(eq(blogPosts.isPublished, true))
     .orderBy(desc(blogPosts.publishedAt));
 }
 
@@ -451,7 +455,7 @@ export async function publishBlogPost(id: number) {
   
   const { blogPosts } = await import("../drizzle/schema");
   await db.update(blogPosts).set({ 
-    isPublished: 1,
+    isPublished: true,
     publishedAt: new Date()
   }).where(eq(blogPosts.id, id));
 }
@@ -473,7 +477,7 @@ export async function getAllProducts() {
   if (!db) return [];
   
   const { products } = await import("../drizzle/schema");
-  return await db.select().from(products).where(eq(products.isActive, 1));
+  return await db.select().from(products).where(eq(products.isActive, true));
 }
 
 export async function getProductById(id: number) {
@@ -506,7 +510,7 @@ export async function deleteProduct(id: number) {
   if (!db) throw new Error("Database not available");
   
   const { products } = await import("../drizzle/schema");
-  await db.update(products).set({ isActive: 0 }).where(eq(products.id, id));
+  await db.update(products).set({ isActive: false }).where(eq(products.id, id));
 }
 
 export async function getProductVariants(productId: number) {
@@ -522,8 +526,8 @@ export async function createOrder(order: any) {
   if (!db) throw new Error("Database not available");
   
   const { orders } = await import("../drizzle/schema");
-  const result = await db.insert(orders).values(order);
-  return result[0].insertId;
+  const result = await db.insert(orders).values(order).returning({ id: orders.id });
+  return result[0].id;
 }
 
 export async function createOrderItem(item: any) {
@@ -569,7 +573,7 @@ export async function getActiveCampaigns() {
   return await db
     .select()
     .from(campaigns)
-    .where(and(eq(campaigns.isActive, 1), lte(campaigns.startDate, now), gte(campaigns.endDate, now)));
+    .where(and(eq(campaigns.isActive, true), lte(campaigns.startDate, now), gte(campaigns.endDate, now)));
 }
 
 export async function getAllCampaigns() {
@@ -585,8 +589,8 @@ export async function createCampaign(campaign: any) {
   if (!db) throw new Error("Database not available");
   
   const { campaigns } = await import("../drizzle/schema");
-  const result = await db.insert(campaigns).values(campaign);
-  return result[0].insertId;
+  const result = await db.insert(campaigns).values(campaign).returning({ id: campaigns.id });
+  return result[0].id;
 }
 
 export async function updateCampaign(id: number, updates: any) {
@@ -615,7 +619,7 @@ export async function getAllVideos(publishedOnly: boolean = false) {
   const { and } = await import("drizzle-orm");
   
   if (publishedOnly) {
-    return await db.select().from(videos).where(eq(videos.isPublished, 1)).orderBy(desc(videos.createdAt));
+    return await db.select().from(videos).where(eq(videos.isPublished, true)).orderBy(desc(videos.createdAt));
   }
   
   return await db.select().from(videos).orderBy(desc(videos.createdAt));
@@ -641,7 +645,7 @@ export async function getVideosByCategory(category: string, publishedOnly: boole
     return await db.select().from(videos)
       .where(and(
         eq(videos.category, category as any),
-        eq(videos.isPublished, 1)
+        eq(videos.isPublished, true)
       ))
       .orderBy(desc(videos.createdAt));
   }
@@ -694,8 +698,8 @@ export async function markAttendance(data: any) {
   if (!db) throw new Error("Database not available");
   
   const { attendance } = await import("../drizzle/schema");
-  const [result] = await db.insert(attendance).values(data);
-  return result.insertId;
+  const result = await db.insert(attendance).values(data).returning({ id: attendance.id });
+  return result[0].id;
 }
 
 export async function getAttendanceBySchedule(scheduleId: number) {

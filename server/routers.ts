@@ -136,7 +136,7 @@ export const appRouter = router({
         }))
         .mutation(async ({ input }) => {
           const { createProgram } = await import('./db');
-          await createProgram({ ...input, isActive: 1 });
+          await createProgram({ ...input, isActive: true });
           return { success: true };
         }),
       update: adminProcedure
@@ -176,7 +176,7 @@ export const appRouter = router({
         }))
         .mutation(async ({ ctx, input }) => {
           const { createAnnouncement } = await import('./db');
-          await createAnnouncement({ ...input, authorId: ctx.user.id, isPublished: 0, publishedAt: null });
+          await createAnnouncement({ ...input, authorId: ctx.user.id, isPublished: false, publishedAt: null });
           return { success: true };
         }),
       publish: adminProcedure
@@ -627,7 +627,7 @@ export const appRouter = router({
           const { id, ...updates } = input;
           const dbUpdates: any = { ...updates };
           if (updates.isPublished !== undefined) {
-            dbUpdates.isPublished = updates.isPublished ? 1 : 0;
+            dbUpdates.isPublished = updates.isPublished;
           }
           await updateVideo(id, dbUpdates);
           return { success: true };

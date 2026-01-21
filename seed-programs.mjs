@@ -1,7 +1,9 @@
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { programs } from "./drizzle/schema.ts";
 
-const db = drizzle(process.env.DATABASE_URL);
+const client = postgres(process.env.DATABASE_URL);
+const db = drizzle(client);
 
 const programData = [
   {
@@ -13,7 +15,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: 8,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Individual Training",
@@ -24,7 +26,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: 1,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Skills Class",
@@ -35,7 +37,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Academy Group Membership",
@@ -46,7 +48,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Complete Player Membership",
@@ -57,7 +59,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Academy Summer Camp",
@@ -68,7 +70,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   },
   {
     name: "Team Academy Registration",
@@ -79,7 +81,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   },
   {
     name: "On Field Workouts",
@@ -90,7 +92,7 @@ const programData = [
     ageMin: 8,
     ageMax: 18,
     maxParticipants: null,
-    isActive: 1
+    isActive: true
   }
 ];
 
