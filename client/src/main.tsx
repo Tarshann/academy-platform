@@ -6,7 +6,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl } from "./const";
+import { getLoginUrl, getClerkPublishableKey } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -53,27 +53,19 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-const clerkPublishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || "";
+const clerkPublishableKey = getClerkPublishableKey();
 
 const root = createRoot(document.getElementById("root")!);
 
-if (clerkPublishableKey) {
-  root.render(
-    <ClerkProvider publishableKey={clerkPublishableKey}>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </trpc.Provider>
-    </ClerkProvider>
-  );
-} else {
-  // Fallback if Clerk not configured
-  root.render(
+// Always render ClerkProvider to avoid hook errors
+// This ensures useUser() hook can always be called without errors
+// If key is empty/invalid, Clerk will handle it gracefully
+root.render(
+  <ClerkProvider publishableKey={clerkPublishableKey || "pk_test_placeholder"}>
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
     </trpc.Provider>
-  );
-}
+  </ClerkProvider>
+);

@@ -1,18 +1,23 @@
 import { Link } from "wouter";
 import { Button } from "./ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
+  const clerkPublishableKey = getClerkPublishableKey();
+  
+  // Always call useUser() unconditionally (hooks rule)
+  // It will work since ClerkProvider is always rendered in main.tsx
   const { user: clerkUser, isSignedIn } = useUser();
+  
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Use Clerk user if available, otherwise fall back to database user
-  const user = clerkUser ? {
+  // Use Clerk user if available and Clerk is configured, otherwise fall back to database user
+  const user = (clerkPublishableKey && clerkUser) ? {
     id: parseInt(clerkUser.id) || 0,
     openId: clerkUser.id,
     name: clerkUser.fullName || clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || null,
@@ -20,7 +25,7 @@ export default function Navigation() {
     role: (clerkUser.publicMetadata?.role as "user" | "admin") || "user",
   } : dbUser;
   
-  const isAuthenticatedFinal = isSignedIn || isAuthenticated;
+  const isAuthenticatedFinal = (clerkPublishableKey && isSignedIn) || isAuthenticated;
 
   const handleLogout = () => {
     logout();
@@ -74,7 +79,7 @@ export default function Navigation() {
                     Admin
                   </Link>
                 )}
-                {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? (
+                {clerkPublishableKey ? (
                   <UserButton afterSignOutUrl="/" />
                 ) : (
                   <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -84,12 +89,7 @@ export default function Navigation() {
               </>
             ) : (
               <>
-                <Link href="/signup">
-                  <Button variant="default" size="sm">
-                    Sign Up
-                  </Button>
-                </Link>
-                {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? (
+                {clerkPublishableKey ? (
                   <>
                     <SignInButton mode="modal">
                       <Button variant="outline" size="sm">Login</Button>
@@ -169,11 +169,6 @@ export default function Navigation() {
                 </>
               ) : (
                 <>
-                  <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="default" size="sm" className="w-full">
-                      Sign Up
-                    </Button>
-                  </Link>
                   <a href={getLoginUrl()}>
                     <Button variant="outline" size="sm" className="w-full">
                       Login

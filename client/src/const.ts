@@ -1,8 +1,15 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+// Helper to get Clerk publishable key - supports both VITE_ and NEXT_PUBLIC_ naming conventions
+export const getClerkPublishableKey = (): string => {
+  return import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 
+         import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 
+         "";
+};
+
 // Generate login URL - supports both Clerk and legacy OAuth
 export const getLoginUrl = () => {
-  const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const clerkKey = getClerkPublishableKey();
   
   // If Clerk is configured, use Clerk's sign-in
   if (clerkKey) {

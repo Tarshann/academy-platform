@@ -11,7 +11,11 @@ export const ENV = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   // Clerk authentication
-  clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? "",
+  // Support multiple naming conventions for flexibility
+  clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? 
+                        process.env.VITE_CLERK_PUBLISHABLE_KEY ?? 
+                        process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ?? 
+                        "",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkAdminEmail: process.env.CLERK_ADMIN_EMAIL ?? "",
 };

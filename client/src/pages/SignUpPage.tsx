@@ -1,9 +1,10 @@
 import { SignUp } from "@clerk/clerk-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { getClerkPublishableKey } from "@/const";
 
 export default function SignUpPage() {
-  const clerkKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  const clerkKey = getClerkPublishableKey();
   
   if (!clerkKey) {
     return (
