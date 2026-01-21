@@ -91,10 +91,10 @@ export default function Navigation() {
               <>
                 {clerkPublishableKey ? (
                   <>
-                    <SignInButton mode="modal">
+                    <SignInButton mode="modal" afterSignInUrl="/">
                       <Button variant="outline" size="sm">Login</Button>
                     </SignInButton>
-                    <SignUpButton mode="modal">
+                    <SignUpButton mode="modal" afterSignUpUrl="/">
                       <Button variant="default" size="sm">Sign Up</Button>
                     </SignUpButton>
                   </>

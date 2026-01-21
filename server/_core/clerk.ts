@@ -1,4 +1,4 @@
-import { clerkClient } from "@clerk/clerk-sdk-node";
+import { createClerkClient } from "@clerk/backend";
 import { getAuth } from "@clerk/express";
 import { ENV } from "./env";
 import * as db from "../db";
@@ -12,8 +12,21 @@ import type { Request } from "express";
  */
 
 // Initialize Clerk client
-if (!ENV.clerkSecretKey) {
+let clerkClient: ReturnType<typeof createClerkClient> | null = null;
+
+if (ENV.clerkSecretKey) {
+  clerkClient = createClerkClient({
+    secretKey: ENV.clerkSecretKey,
+    publishableKey: ENV.clerkPublishableKey,
+  });
+  console.log("[Clerk] Client initialized");
+} else {
   console.warn("[Clerk] CLERK_SECRET_KEY not configured. Authentication will not work.");
+}
+
+// Export getter function for the client
+export function getClerkClient() {
+  return clerkClient;
 }
 
 /**
@@ -73,6 +86,10 @@ export async function verifySessionToken(
  * Get user info from Clerk and sync to database
  */
 export async function syncClerkUserToDatabase(clerkUserId: string) {
+  if (!clerkClient) {
+    throw new Error("Clerk client not initialized");
+  }
+  
   try {
     const user = await clerkClient.users.getUser(clerkUserId);
     
@@ -112,7 +129,7 @@ export async function syncClerkUserToDatabase(clerkUserId: string) {
  * Clerk middleware adds auth info to req.auth
  */
 export async function authenticateClerkRequest(req: Request & { auth?: any }) {
-  if (!ENV.clerkSecretKey) {
+  if (!ENV.clerkSecretKey || !clerkClient) {
     return null;
   }
 
@@ -121,6 +138,7 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
     const auth = getAuth(req);
     
     if (!auth?.userId) {
+      // Auth object exists but no userId - user is not authenticated
       return null;
     }
 
