@@ -1,6 +1,12 @@
+import "dotenv/config";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { programs } from "./drizzle/schema.ts";
+import { programs } from "./drizzle/schema.js";
+
+if (!process.env.DATABASE_URL) {
+  console.error("Error: DATABASE_URL is not set in environment variables");
+  process.exit(1);
+}
 
 const client = postgres(process.env.DATABASE_URL);
 const db = drizzle(client);
