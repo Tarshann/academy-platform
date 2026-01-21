@@ -4,10 +4,23 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 
 export default function Navigation() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user: dbUser, isAuthenticated, logout } = useAuth();
+  const { user: clerkUser, isSignedIn } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Use Clerk user if available, otherwise fall back to database user
+  const user = clerkUser ? {
+    id: parseInt(clerkUser.id) || 0,
+    openId: clerkUser.id,
+    name: clerkUser.fullName || clerkUser.firstName || clerkUser.emailAddresses[0]?.emailAddress || null,
+    email: clerkUser.emailAddresses[0]?.emailAddress || null,
+    role: (clerkUser.publicMetadata?.role as "user" | "admin") || "user",
+  } : dbUser;
+  
+  const isAuthenticatedFinal = isSignedIn || isAuthenticated;
 
   const handleLogout = () => {
     logout();
@@ -51,7 +64,7 @@ export default function Navigation() {
               Contact
             </Link>
             
-            {isAuthenticated ? (
+            {isAuthenticatedFinal ? (
               <>
                 <Link href="/member" className="text-foreground hover:text-primary transition-colors">
                   Dashboard
@@ -61,9 +74,13 @@ export default function Navigation() {
                     Admin
                   </Link>
                 )}
-                <Button variant="outline" size="sm" onClick={handleLogout}>
-                  Logout
-                </Button>
+                {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? (
+                  <UserButton afterSignOutUrl="/" />
+                ) : (
+                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                    Logout
+                  </Button>
+                )}
               </>
             ) : (
               <>
@@ -72,11 +89,27 @@ export default function Navigation() {
                     Sign Up
                   </Button>
                 </Link>
-                <a href={getLoginUrl()}>
-                  <Button variant="outline" size="sm">
-                    Login
-                  </Button>
-                </a>
+                {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ? (
+                  <>
+                    <SignInButton mode="modal">
+                      <Button variant="outline" size="sm">Login</Button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <Button variant="default" size="sm">Sign Up</Button>
+                    </SignUpButton>
+                  </>
+                ) : (
+                  <a href={getLoginUrl()} onClick={(e) => {
+                    if (getLoginUrl() === "#") {
+                      e.preventDefault();
+                      alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                    }
+                  }}>
+                    <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>
+                      Login
+                    </Button>
+                  </a>
+                )}
               </>
             )}
           </div>
@@ -120,7 +153,7 @@ export default function Navigation() {
                 Contact
               </Link>
               
-              {isAuthenticated ? (
+              {isAuthenticatedFinal ? (
                 <>
                   <Link href="/member" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                     Dashboard

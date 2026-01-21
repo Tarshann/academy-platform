@@ -333,7 +333,7 @@ function ProgramsManager() {
 
   const handleToggleVisibility = async (id: number, currentStatus: number) => {
     try {
-      await updateProgram.mutateAsync({ id, isActive: currentStatus === 1 ? 0 : 1 });
+      await updateProgram.mutateAsync({ id, isActive: !currentStatus });
       toast.success("Program visibility updated");
       refetch();
     } catch (error) {
@@ -469,8 +469,8 @@ function ProgramsManager() {
                   <TableCell className="capitalize">{program.category}</TableCell>
                   <TableCell>{program.price}</TableCell>
                   <TableCell>
-                    <Badge variant={program.isActive === 1 ? "default" : "secondary"}>
-                      {program.isActive === 1 ? "Visible" : "Hidden"}
+                    <Badge variant={program.isActive ? "default" : "secondary"}>
+                      {program.isActive ? "Visible" : "Hidden"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -480,7 +480,7 @@ function ProgramsManager() {
                         size="sm" 
                         onClick={() => handleToggleVisibility(program.id, program.isActive)}
                       >
-                        {program.isActive === 1 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {program.isActive ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(program.id)}>
                         <Trash2 className="h-4 w-4" />
@@ -621,8 +621,8 @@ function AnnouncementsManager() {
                 <TableRow key={announcement.id}>
                   <TableCell className="font-medium">{announcement.title}</TableCell>
                   <TableCell>
-                    <Badge variant={announcement.isPublished === 1 ? "default" : "secondary"}>
-                      {announcement.isPublished === 1 ? "Published" : "Draft"}
+                    <Badge variant={announcement.isPublished ? "default" : "secondary"}>
+                      {announcement.isPublished ? "Published" : "Draft"}
                     </Badge>
                   </TableCell>
                   <TableCell>{new Date(announcement.createdAt).toLocaleDateString()}</TableCell>

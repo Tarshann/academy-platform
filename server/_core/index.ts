@@ -3,6 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { clerkMiddleware, requireAuth } from "@clerk/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -45,11 +46,20 @@ async function startServer() {
     }
   );
   
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+  // Configure Clerk middleware (if configured)
+  const { ENV } = await import("./env");
+  if (ENV.clerkSecretKey) {
+    app.use(clerkMiddleware({
+      secretKey: ENV.clerkSecretKey,
+      publishableKey: ENV.clerkPublishableKey,
+    }));
+    console.log("[Clerk] Middleware initialized");
+  } else {
+    // Fallback to old OAuth if Clerk not configured
+    registerOAuthRoutes(app);
+  }
+  
+  // Body parser already configured above
   // tRPC API
   app.use(
     "/api/trpc",

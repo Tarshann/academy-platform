@@ -10,4 +10,8 @@ export const ENV = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
+  // Clerk authentication
+  clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? "",
+  clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
+  clerkAdminEmail: process.env.CLERK_ADMIN_EMAIL ?? "",
 };

@@ -10,6 +10,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQs from "./pages/FAQs";
 import SignUp from "./pages/SignUp";
+import SignInPage from "./pages/SignIn";
+import SignUpPage from "./pages/SignUpPage";
 import MemberDashboard from "./pages/MemberDashboard";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -28,6 +30,8 @@ function Router() {
       <Route path={"/contact"} component={Contact} />
       <Route path={"/faqs"} component={FAQs} />
       <Route path={"/signup"} component={SignUp} />
+      <Route path={"/sign-in"} component={SignInPage} />
+      <Route path={"/sign-up"} component={SignUpPage} />
       <Route path={"/member"} component={MemberDashboard} />
       <Route path={"/payment/success"} component={PaymentSuccess} />
       <Route path={"/admin"} component={AdminDashboard} />

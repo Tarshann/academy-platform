@@ -146,7 +146,7 @@ export const appRouter = router({
           description: z.string().optional(),
           pricePerSession: z.number().nullable().optional(),
           pricePerMonth: z.number().nullable().optional(),
-          isActive: z.number().optional(),
+          isActive: z.boolean().optional(),
         }))
         .mutation(async ({ input }) => {
           const { id, ...updates } = input;
