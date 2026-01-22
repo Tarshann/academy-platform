@@ -194,7 +194,9 @@ export default function ComponentsShowcase() {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const handleDialogSubmit = () => {
-    console.log("Dialog submitted with value:", dialogInput);
+    if (process.env.NODE_ENV === "development") {
+      console.log("Dialog submitted with value:", dialogInput);
+    }
     sonnerToast.success("Submitted successfully", {
       description: `Input: ${dialogInput}`,
     });

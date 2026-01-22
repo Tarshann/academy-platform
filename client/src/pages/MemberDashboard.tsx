@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Calendar, Bell, Users, Clock, MapPin } from "lucide-react";
+import { Loader2, Calendar, Bell, Users, Clock, MapPin, CheckCircle2, XCircle, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useEffect } from "react";
@@ -17,6 +17,14 @@ export default function MemberDashboard() {
     { enabled: isAuthenticated }
   );
   const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+  const { data: myAttendance, isLoading: attendanceLoading } = trpc.attendance.getMyAttendance.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
+  const { data: attendanceStats } = trpc.attendance.getMyStats.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
@@ -140,8 +148,39 @@ export default function MemberDashboard() {
                         Member Chat
                       </a>
                     </Button>
+                    <Button variant="outline" className="w-full justify-start" asChild>
+                      <a href="/settings">
+                        <Settings className="mr-2" size={18} />
+                        Notification Settings
+                      </a>
+                    </Button>
                   </CardContent>
                 </Card>
+
+                {/* Attendance Stats */}
+                {attendanceStats && (
+                  <Card className="bg-card border-border">
+                    <CardHeader>
+                      <CardTitle className="text-foreground">Attendance Stats</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Total Sessions:</span>
+                          <span className="font-semibold">{attendanceStats.total}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Present:</span>
+                          <span className="font-semibold text-green-600">{attendanceStats.present}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Attendance Rate:</span>
+                          <span className="font-semibold">{attendanceStats.attendanceRate}%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {user.role === 'admin' && (
                   <Card className="bg-primary/10 border-primary">
@@ -186,13 +225,34 @@ export default function MemberDashboard() {
                           {schedule.description && (
                             <p className="text-muted-foreground text-sm mb-2">{schedule.description}</p>
                           )}
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-2">
                             <span>
+                              {new Date(schedule.startTime).toLocaleDateString('en-US', { weekday: 'long' })} -{' '}
                               {new Date(schedule.startTime).toLocaleDateString()} at{' '}
                               {new Date(schedule.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {schedule.location && <span>📍 {schedule.location}</span>}
+                            {(schedule as any).sessionType && (
+                              <Badge variant="outline">
+                                {(schedule as any).sessionType === 'open_gym' ? 'Open Gym' : 
+                                 (schedule as any).sessionType === 'special' ? 'Special Event' : 'Regular Training'}
+                              </Badge>
+                            )}
+                            {(schedule as any).maxParticipants && (
+                              <span className="text-xs">
+                                Capacity: {((schedule as any).maxParticipants || 'Unlimited')}
+                              </span>
+                            )}
                           </div>
+                          {myAttendance && myAttendance.find((a: any) => a.scheduleId === schedule.id) && (
+                            <div className="mt-2">
+                              <Badge variant="secondary" className="text-xs">
+                                {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
+                                Attendance: {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status || 'Not marked'}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -209,6 +269,43 @@ export default function MemberDashboard() {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Attendance History */}
+            {myAttendance && myAttendance.length > 0 && (
+              <div className="mt-8">
+                <Card className="bg-card border-border">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Attendance History</CardTitle>
+                    <CardDescription className="text-muted-foreground">
+                      Your attendance record for training sessions
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {myAttendance.slice(0, 10).map((record: any) => (
+                        <div key={record.id} className="flex items-center justify-between border-b border-border pb-2">
+                          <div>
+                            <p className="text-sm font-medium text-foreground">
+                              {new Date(record.markedAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Session ID: {record.scheduleId}</p>
+                          </div>
+                          <Badge variant={
+                            record.status === 'present' ? 'default' :
+                            record.status === 'absent' ? 'destructive' :
+                            record.status === 'late' ? 'secondary' : 'outline'
+                          }>
+                            {record.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                            {record.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
+                            {record.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
         </section>
       </main>

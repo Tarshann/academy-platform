@@ -114,7 +114,7 @@ export default function Home() {
               transition={{ delay: 0.2, duration: 0.6 }}
               className="inline-block mb-6 px-6 py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 rounded-full"
             >
-              <span className="text-amber-400 font-semibold tracking-wide">ELITE ATHLETIC DEVELOPMENT</span>
+              <span className="text-amber-300 font-semibold tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">ELITE ATHLETIC DEVELOPMENT</span>
             </motion.div>
 
             <motion.h1
@@ -123,13 +123,13 @@ export default function Home() {
               transition={{ delay: 0.4, duration: 0.8 }}
               className="text-6xl md:text-8xl font-black mb-8 leading-tight"
             >
-              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 THE BEGINNING
               </span>
               <br />
-              <span className="text-white">OF A NEW CHAPTER</span>
+              <span className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">OF A NEW CHAPTER</span>
               <br />
-              <span className="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
                 IN GALLATIN SPORTS
               </span>
             </motion.h1>
@@ -141,9 +141,9 @@ export default function Home() {
               className="text-xl md:text-2xl text-neutral-300 mb-12 max-w-3xl mx-auto leading-relaxed"
             >
               Developing elite youth athletes across{" "}
-              <span className="text-amber-400 font-semibold">basketball</span>,{" "}
-              <span className="text-amber-400 font-semibold">football</span>, and{" "}
-              <span className="text-amber-400 font-semibold">soccer</span> through expert training in speed, agility,
+              <span className="text-amber-300 font-semibold">basketball</span>,{" "}
+              <span className="text-amber-300 font-semibold">football</span>, and{" "}
+              <span className="text-amber-300 font-semibold">soccer</span> through expert training in speed, agility,
               quickness, and strength.
             </motion.p>
 
@@ -207,7 +207,7 @@ export default function Home() {
             className="text-center mb-20"
           >
             <h2 className="text-5xl md:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                 Our Programs
               </span>
             </h2>
@@ -229,9 +229,9 @@ export default function Home() {
                   <div className={`absolute inset-0 bg-gradient-to-br ${program.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   <CardContent className="relative z-10 p-8">
                     <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${program.color} border ${program.borderColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <program.icon className="w-8 h-8 text-amber-400" />
+                      <program.icon className="w-8 h-8 text-amber-300" />
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-400 transition-colors">
+                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-300 transition-colors">
                       {program.title}
                     </h3>
                     <p className="text-neutral-400 leading-relaxed mb-6">{program.description}</p>
@@ -284,12 +284,12 @@ export default function Home() {
             className="text-center mb-20"
           >
             <h2 className="text-5xl md:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                 Our Philosophy
               </span>
             </h2>
             <p className="text-2xl text-neutral-300 max-w-4xl mx-auto leading-relaxed">
-              This is a place where your child will be <span className="text-amber-400 font-semibold">seen, developed, and supported</span>
+              This is a place where your child will be <span className="text-amber-300 font-semibold">seen, developed, and supported</span>
             </p>
           </motion.div>
 
@@ -334,7 +334,7 @@ export default function Home() {
                     <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
                       {value.icon}
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-400 transition-colors">
+                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-300 transition-colors">
                       {value.title}
                     </h3>
                     <p className="text-neutral-400 leading-relaxed">{value.description}</p>
@@ -373,11 +373,11 @@ export default function Home() {
             className="max-w-4xl mx-auto text-center"
           >
             <h2 className="text-5xl md:text-6xl font-black mb-8">
-              <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                 Ready to Transform
               </span>
               <br />
-              <span className="text-white">Your Athletic Journey?</span>
+              <span className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Your Athletic Journey?</span>
             </h2>
             <p className="text-xl text-neutral-300 mb-12 leading-relaxed">
               Join hundreds of youth athletes who have elevated their game with The Academy's proven training methods

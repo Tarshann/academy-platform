@@ -157,6 +157,9 @@ export default function Navigation() {
               <Link href="/shop" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Shop
               </Link>
+              <Link href="/blog" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Blog
+              </Link>
               <Link href="/faqs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 FAQs
               </Link>

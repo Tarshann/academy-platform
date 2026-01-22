@@ -47,7 +47,9 @@ export default function Chat() {
     });
 
     newSocket.on("connect", () => {
-      console.log("Connected to chat server");
+      if (process.env.NODE_ENV === "development") {
+        console.log("Connected to chat server");
+      }
       newSocket.emit("join_room", {
         room: currentRoom,
         userId: user.id,

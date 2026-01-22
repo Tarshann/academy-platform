@@ -24,6 +24,9 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Shop = lazy(() => import("./pages/Shop"));
 const ShopOrderSuccess = lazy(() => import("./pages/ShopOrderSuccess"));
 const Videos = lazy(() => import("./pages/Videos"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Settings = lazy(() => import("./pages/Settings"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -42,7 +45,7 @@ function Router() {
           <Home />
         </Route>
         <Route path={"/programs"}>
-          <SEO title="Programs" description="Comprehensive basketball development programs for youth ages 8-18. Group sessions, individual workouts, and shooting lab." />
+          <SEO title="Programs" description="Comprehensive athletic development programs for basketball, football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development." />
           <Programs />
         </Route>
         <Route path={"/about"}>
@@ -100,6 +103,16 @@ function Router() {
         <Route path={"/videos"}>
           <SEO title="Videos" description="Watch training videos and highlights from The Academy." />
           <Videos />
+        </Route>
+        <Route path={"/blog"}>
+          <Blog />
+        </Route>
+        <Route path={"/blog/:slug">
+          {(params) => <BlogPost params={params} />}
+        </Route>
+        <Route path={"/settings"}>
+          <SEO title="Settings" description="Manage your notification preferences and account settings." />
+          <Settings />
         </Route>
         <Route path={"/404"}>
           <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />

@@ -110,6 +110,9 @@ export const schedules = pgTable("schedules", {
   startTime: timestamp("startTime").notNull(),
   endTime: timestamp("endTime").notNull(),
   location: varchar("location", { length: 255 }),
+  locationId: integer("locationId"), // Reference to locations table
+  maxParticipants: integer("maxParticipants"), // Capacity limit for this session
+  sessionType: varchar("sessionType", { length: 50 }), // "regular", "open_gym", "special"
   isRecurring: boolean("isRecurring").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
@@ -378,3 +381,79 @@ export const attendance = pgTable("attendance", {
 
 export type Attendance = typeof attendance.$inferSelect;
 export type InsertAttendance = typeof attendance.$inferInsert;
+
+/**
+ * Training locations table
+ * Stores structured location data for The Academy facilities
+ */
+export const locations = pgTable("locations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zipCode", { length: 20 }),
+  description: text("description"),
+  latitude: numeric("latitude", { precision: 10, scale: 7 }),
+  longitude: numeric("longitude", { precision: 10, scale: 7 }),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Location = typeof locations.$inferSelect;
+export type InsertLocation = typeof locations.$inferInsert;
+
+/**
+ * Coaches and staff table
+ * Tracks coaching staff and their assignments
+ */
+export const coaches = pgTable("coaches", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(), // Link to users table
+  bio: text("bio"),
+  specialties: text("specialties"), // Comma-separated or JSON
+  certifications: text("certifications"),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Coach = typeof coaches.$inferSelect;
+export type InsertCoach = typeof coaches.$inferInsert;
+
+/**
+ * Coach assignments table
+ * Links coaches to programs and schedules
+ */
+export const coachAssignments = pgTable("coachAssignments", {
+  id: serial("id").primaryKey(),
+  coachId: integer("coachId").notNull(),
+  programId: integer("programId"), // Optional: assign to program
+  scheduleId: integer("scheduleId"), // Optional: assign to specific session
+  role: varchar("role", { length: 50 }), // "lead", "assistant", "specialist"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type CoachAssignment = typeof coachAssignments.$inferSelect;
+export type InsertCoachAssignment = typeof coachAssignments.$inferInsert;
+
+/**
+ * User notification preferences table
+ * Stores email notification preferences for users
+ */
+export const notificationPreferences = pgTable("notificationPreferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  sessionRegistrations: boolean("sessionRegistrations").notNull().default(true),
+  paymentConfirmations: boolean("paymentConfirmations").notNull().default(true),
+  announcements: boolean("announcements").notNull().default(true),
+  attendanceUpdates: boolean("attendanceUpdates").notNull().default(true),
+  blogPosts: boolean("blogPosts").notNull().default(false),
+  marketing: boolean("marketing").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;

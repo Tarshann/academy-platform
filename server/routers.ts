@@ -59,23 +59,51 @@ export const appRouter = router({
     register: protectedProcedure
       .input(z.object({ scheduleId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        const { createSessionRegistration, getScheduleById } = await import('./db');
+        const { createSessionRegistration, getScheduleById, getScheduleRegistrations } = await import('./db');
         const { sendSessionRegistrationEmail } = await import('./email');
+        const { TRPCError } = await import('@trpc/server');
         
-        // Get schedule details for email
+        // Get schedule details
         const schedule = await getScheduleById(input.scheduleId);
+        if (!schedule) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Schedule not found' });
+        }
+        
+        // Check capacity limits
+        if (schedule.maxParticipants !== null && schedule.maxParticipants !== undefined) {
+          const currentRegistrations = await getScheduleRegistrations(input.scheduleId);
+          const registeredCount = currentRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length;
+          
+          if (registeredCount >= schedule.maxParticipants) {
+            throw new TRPCError({ 
+              code: 'CONFLICT', 
+              message: `This session is full. Capacity: ${schedule.maxParticipants}, Registered: ${registeredCount}` 
+            });
+          }
+        }
+        
+        // Check if user is already registered
+        const existingRegistration = await getScheduleRegistrations(input.scheduleId);
+        const isAlreadyRegistered = existingRegistration.some(r => r.userId === ctx.user.id);
+        if (isAlreadyRegistered) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'You are already registered for this session' });
+        }
         
         await createSessionRegistration(ctx.user.id, input.scheduleId);
         
-        // Send confirmation email
+        // Send confirmation email (check notification preferences)
         if (schedule && ctx.user.email) {
-          await sendSessionRegistrationEmail({
-            to: ctx.user.email,
-            userName: ctx.user.name || 'Member',
-            sessionTitle: schedule.title,
-            sessionDate: schedule.startTime,
-            sessionLocation: schedule.location || 'TBA',
-          });
+          const { getUserNotificationPreferences } = await import('./db');
+          const preferences = await getUserNotificationPreferences(ctx.user.id);
+          if (preferences?.sessionRegistrations !== false) {
+            await sendSessionRegistrationEmail({
+              to: ctx.user.email,
+              userName: ctx.user.name || 'Member',
+              sessionTitle: schedule.title,
+              sessionDate: schedule.startTime,
+              sessionLocation: schedule.location || 'TBA',
+            });
+          }
         }
         
         return { success: true };
@@ -203,13 +231,16 @@ export const appRouter = router({
       }),
       create: adminProcedure
         .input(z.object({
-          programId: z.number(),
+          programId: z.number().optional(),
           title: z.string().min(1),
           description: z.string().optional(),
           startTime: z.date(),
           endTime: z.date(),
-          location: z.string(),
-          maxParticipants: z.number().nullable(),
+          location: z.string().optional(),
+          locationId: z.number().optional(),
+          maxParticipants: z.number().nullable().optional(),
+          sessionType: z.enum(['regular', 'open_gym', 'special']).optional(),
+          isRecurring: z.boolean().optional(),
         }))
         .mutation(async ({ input }) => {
           const { createSchedule } = await import('./db');
@@ -220,9 +251,14 @@ export const appRouter = router({
         .input(z.object({
           id: z.number(),
           title: z.string().optional(),
+          description: z.string().optional(),
           startTime: z.date().optional(),
           endTime: z.date().optional(),
           location: z.string().optional(),
+          locationId: z.number().optional(),
+          maxParticipants: z.number().nullable().optional(),
+          sessionType: z.enum(['regular', 'open_gym', 'special']).optional(),
+          isRecurring: z.boolean().optional(),
         }))
         .mutation(async ({ input }) => {
           const { id, ...updates } = input;
@@ -764,6 +800,244 @@ export const appRouter = router({
         const { updateAttendance } = await import('./db');
         const { id, ...updates } = input;
         await updateAttendance(id, updates);
+        return { success: true };
+      }),
+  }),
+
+  // Location management
+  locations: router({
+    list: publicProcedure.query(async () => {
+      const { getAllLocations } = await import('./db');
+      return await getAllLocations();
+    }),
+    admin: router({
+      list: adminProcedure.query(async () => {
+        const { getAllLocationsAdmin } = await import('./db');
+        return await getAllLocationsAdmin();
+      }),
+      create: adminProcedure
+        .input(z.object({
+          name: z.string().min(1),
+          address: z.string().optional(),
+          city: z.string().optional(),
+          state: z.string().optional(),
+          zipCode: z.string().optional(),
+          description: z.string().optional(),
+          latitude: z.string().optional(),
+          longitude: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { createLocation } = await import('./db');
+          const id = await createLocation({
+            ...input,
+            latitude: input.latitude ? parseFloat(input.latitude) : null,
+            longitude: input.longitude ? parseFloat(input.longitude) : null,
+          });
+          return { success: true, id };
+        }),
+      update: adminProcedure
+        .input(z.object({
+          id: z.number(),
+          name: z.string().optional(),
+          address: z.string().optional(),
+          city: z.string().optional(),
+          state: z.string().optional(),
+          zipCode: z.string().optional(),
+          description: z.string().optional(),
+          latitude: z.string().optional(),
+          longitude: z.string().optional(),
+          isActive: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...updates } = input;
+          const { updateLocation } = await import('./db');
+          await updateLocation(id, {
+            ...updates,
+            latitude: updates.latitude ? parseFloat(updates.latitude) : undefined,
+            longitude: updates.longitude ? parseFloat(updates.longitude) : undefined,
+          });
+          return { success: true };
+        }),
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { deleteLocation } = await import('./db');
+          await deleteLocation(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // Coach management
+  coaches: router({
+    list: publicProcedure.query(async () => {
+      const { getAllCoaches } = await import('./db');
+      return await getAllCoaches();
+    }),
+    admin: router({
+      list: adminProcedure.query(async () => {
+        const { getAllCoachesAdmin } = await import('./db');
+        return await getAllCoachesAdmin();
+      }),
+      create: adminProcedure
+        .input(z.object({
+          userId: z.number(),
+          bio: z.string().optional(),
+          specialties: z.string().optional(),
+          certifications: z.string().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { createCoach } = await import('./db');
+          const id = await createCoach(input);
+          return { success: true, id };
+        }),
+      update: adminProcedure
+        .input(z.object({
+          id: z.number(),
+          bio: z.string().optional(),
+          specialties: z.string().optional(),
+          certifications: z.string().optional(),
+          isActive: z.boolean().optional(),
+        }))
+        .mutation(async ({ input }) => {
+          const { id, ...updates } = input;
+          const { updateCoach } = await import('./db');
+          await updateCoach(id, updates);
+          return { success: true };
+        }),
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          const { deleteCoach } = await import('./db');
+          await deleteCoach(input.id);
+          return { success: true };
+        }),
+      assignments: router({
+        list: adminProcedure
+          .input(z.object({
+            coachId: z.number().optional(),
+            programId: z.number().optional(),
+            scheduleId: z.number().optional(),
+          }).optional())
+          .query(async ({ input }) => {
+            const { getCoachAssignments } = await import('./db');
+            return await getCoachAssignments(input?.coachId, input?.programId, input?.scheduleId);
+          }),
+        create: adminProcedure
+          .input(z.object({
+            coachId: z.number(),
+            programId: z.number().optional(),
+            scheduleId: z.number().optional(),
+            role: z.string().optional(),
+          }))
+          .mutation(async ({ input }) => {
+            const { createCoachAssignment } = await import('./db');
+            const id = await createCoachAssignment(input);
+            return { success: true, id };
+          }),
+        delete: adminProcedure
+          .input(z.object({ id: z.number() }))
+          .mutation(async ({ input }) => {
+            const { deleteCoachAssignment } = await import('./db');
+            await deleteCoachAssignment(input.id);
+            return { success: true };
+          }),
+      }),
+    }),
+  }),
+
+  // Notification preferences
+  notifications: router({
+    getPreferences: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserNotificationPreferences } = await import('./db');
+      return await getUserNotificationPreferences(ctx.user.id);
+    }),
+    updatePreferences: protectedProcedure
+      .input(z.object({
+        sessionRegistrations: z.boolean().optional(),
+        paymentConfirmations: z.boolean().optional(),
+        announcements: z.boolean().optional(),
+        attendanceUpdates: z.boolean().optional(),
+        blogPosts: z.boolean().optional(),
+        marketing: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createOrUpdateNotificationPreferences } = await import('./db');
+        await createOrUpdateNotificationPreferences(ctx.user.id, input);
+        return { success: true };
+      }),
+  }),
+
+  // Blog routes (public)
+  blog: router({
+    list: publicProcedure
+      .input(z.object({
+        category: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        const { getAllPublishedBlogPosts } = await import('./db');
+        return await getAllPublishedBlogPosts();
+      }),
+    getBySlug: publicProcedure
+      .input(z.object({ slug: z.string() }))
+      .query(async ({ input }) => {
+        const { getBlogPostBySlug } = await import('./db');
+        return await getBlogPostBySlug(input.slug);
+      }),
+  }),
+
+  // Blog admin routes
+  blogAdmin: router({
+    list: adminProcedure.query(async () => {
+      const { getAllBlogPostsAdmin } = await import('./db');
+      return await getAllBlogPostsAdmin();
+    }),
+    create: adminProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        slug: z.string().min(1),
+        excerpt: z.string().optional(),
+        content: z.string().min(1),
+        featuredImage: z.string().optional(),
+        category: z.enum(['training_tips', 'athlete_spotlight', 'news', 'events', 'other']),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { createBlogPost } = await import('./db');
+        await createBlogPost({ ...input, authorId: ctx.user.id, isPublished: false });
+        return { success: true };
+      }),
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().optional(),
+        slug: z.string().optional(),
+        excerpt: z.string().optional(),
+        content: z.string().optional(),
+        featuredImage: z.string().optional(),
+        category: z.enum(['training_tips', 'athlete_spotlight', 'news', 'events', 'other']).optional(),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...updates } = input;
+        const { updateBlogPost } = await import('./db');
+        await updateBlogPost(id, updates);
+        return { success: true };
+      }),
+    publish: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { publishBlogPost } = await import('./db');
+        await publishBlogPost(input.id);
+        return { success: true };
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { deleteBlogPost } = await import('./db');
+        await deleteBlogPost(input.id);
         return { success: true };
       }),
   }),

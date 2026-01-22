@@ -1,12 +1,12 @@
 # Academy Platform
 
-A full-stack platform for The Academy - a youth sports training organization. Built with React, TypeScript, Express, tRPC, and MySQL.
+A full-stack platform for The Academy - a youth sports training organization. Built with React, TypeScript, Express, tRPC, and PostgreSQL.
 
 ## 🏗️ Architecture
 
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
 - **Backend**: Express.js + tRPC + TypeScript
-- **Database**: MySQL with Drizzle ORM
+- **Database**: PostgreSQL with Drizzle ORM
 - **Authentication**: Custom OAuth system
 - **Payments**: Stripe integration
 - **Realtime**: Socket.IO for chat
@@ -63,7 +63,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 
 | Variable | Description | Where to Get |
 |----------|-------------|--------------|
-| `DATABASE_URL` | MySQL connection string | Your database provider |
+| `DATABASE_URL` | PostgreSQL connection string | Your database provider |
 | `VITE_APP_ID` | OAuth application ID | OAuth provider |
 | `VITE_OAUTH_PORTAL_URL` | OAuth portal URL | OAuth provider |
 | `OAUTH_SERVER_URL` | OAuth API server URL | OAuth provider |

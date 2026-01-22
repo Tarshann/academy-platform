@@ -14,7 +14,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Calendar, Users, MessageSquare, Settings, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Calendar, Users, MessageSquare, Settings, Plus, Edit, Trash2, Eye, EyeOff, MapPin, FileText, BookOpen, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function AdminDashboard() {
@@ -51,7 +51,7 @@ export default function AdminDashboard() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-7 lg:w-auto lg:inline-grid">
               <TabsTrigger value="schedules" className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Schedules</span>
@@ -63,6 +63,18 @@ export default function AdminDashboard() {
               <TabsTrigger value="announcements" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">Announcements</span>
+              </TabsTrigger>
+              <TabsTrigger value="blog" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">Blog</span>
+              </TabsTrigger>
+              <TabsTrigger value="attendance" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">Attendance</span>
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">Locations</span>
               </TabsTrigger>
               <TabsTrigger value="contacts" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />
@@ -82,6 +94,15 @@ export default function AdminDashboard() {
               <AnnouncementsManager />
             </TabsContent>
 
+            <TabsContent value="blog">
+              <BlogManager />
+            </TabsContent>
+            <TabsContent value="attendance">
+              <AttendanceManager />
+            </TabsContent>
+            <TabsContent value="locations">
+              <LocationsManager />
+            </TabsContent>
             <TabsContent value="contacts">
               <ContactsManager />
             </TabsContent>
@@ -112,22 +133,24 @@ function SchedulesManager() {
     endTime: "",
     location: "",
     maxParticipants: "",
+    sessionType: "regular" as "regular" | "open_gym" | "special",
   });
 
   const handleCreate = async () => {
     try {
       await createSchedule.mutateAsync({
-        programId: parseInt(formData.programId),
+        programId: formData.programId ? parseInt(formData.programId) : undefined,
         title: formData.title,
         description: formData.description || undefined,
         startTime: new Date(formData.startTime),
         endTime: new Date(formData.endTime),
-        location: formData.location,
+        location: formData.location || undefined,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : null,
+        sessionType: formData.sessionType,
       });
       toast.success("Schedule created successfully");
       setIsCreateOpen(false);
-      setFormData({ programId: "", title: "", description: "", startTime: "", endTime: "", location: "", maxParticipants: "" });
+      setFormData({ programId: "", title: "", description: "", startTime: "", endTime: "", location: "", maxParticipants: "", sessionType: "regular" });
       refetch();
     } catch (error) {
       toast.error("Failed to create schedule");
@@ -222,13 +245,24 @@ function SchedulesManager() {
                   </div>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">Location (Text)</Label>
                   <Input
                     id="location"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="Training location"
                   />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sessionType">Session Type</Label>
+                  <Select value={formData.sessionType || "regular"} onValueChange={(v: any) => setFormData({ ...formData, sessionType: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="regular">Regular Training</SelectItem>
+                      <SelectItem value="open_gym">Open Gym</SelectItem>
+                      <SelectItem value="special">Special Event</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="maxParticipants">Max Participants (optional)</Label>
@@ -243,7 +277,7 @@ function SchedulesManager() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-                <Button onClick={handleCreate} disabled={!formData.programId || !formData.title || !formData.startTime || !formData.endTime || !formData.location}>
+                <Button onClick={handleCreate} disabled={!formData.title || !formData.startTime || !formData.endTime}>
                   Create Schedule
                 </Button>
               </DialogFooter>

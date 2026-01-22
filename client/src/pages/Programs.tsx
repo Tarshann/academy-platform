@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
+import { ProgramStructuredData } from "@/components/StructuredData";
 
 export default function Programs() {
   const { data: programs, isLoading } = trpc.programs.list.useQuery();
@@ -13,8 +14,8 @@ export default function Programs() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       <ProgramStructuredData 
-        name="The Academy Basketball Programs"
-        description="Comprehensive basketball development programs for youth ages 8-18. Group sessions, individual workouts, and shooting lab."
+        name="The Academy Athletic Development Programs"
+        description="Comprehensive athletic development programs for basketball, football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development."
       />
       <main id="main-content" className="flex-1">
         {/* Hero */}
@@ -23,7 +24,9 @@ export default function Programs() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">Our Programs</h1>
               <p className="text-lg text-muted-foreground">
-                Comprehensive basketball development programs for youth ages 8-18. Choose the program 
+                Comprehensive athletic development programs for basketball, football, and soccer athletes. 
+                Our focus on SAQ (Speed, Agility, Quickness) training and strength conditioning builds 
+                foundational athletic qualities that translate across all sports. Choose the program 
                 that fits your goals and schedule.
               </p>
             </div>
@@ -47,14 +50,14 @@ export default function Programs() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Group workouts are designed to bring together a collective of players, fostering an 
-                      environment that combines friendly competition and skill development. These sessions 
-                      offer young athletes the opportunity to familiarize themselves with the game and its 
-                      dynamics, all while focusing on enhancing their abilities through targeted training exercises.
+                      Group training sessions focus on foundational athletic development through SAQ (Speed, 
+                      Agility, Quickness) training and strength conditioning. These sessions build the core 
+                      athletic qualities that translate across basketball, football, and soccer - improving 
+                      acceleration, change of direction, and overall athleticism.
                     </p>
                     <p className="text-muted-foreground mb-4">
-                      Players will improve their individual skills and compete to outwork, outrun and 
-                      outperform each other in our weekly group workouts.
+                      Players develop fundamental movement patterns, build confidence through proper technique, 
+                      and compete in a supportive environment that emphasizes long-term growth over short-term results.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$25 <span className="text-sm text-muted-foreground font-normal">per session</span></p>

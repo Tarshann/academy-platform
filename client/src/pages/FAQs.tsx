@@ -19,7 +19,8 @@ export default function FAQs() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">Frequently Asked Questions</h1>
               <p className="text-lg text-muted-foreground">
-                Find answers to common questions about The Academy's programs and policies.
+                Find answers to common questions about The Academy's multi-sport athletic development programs, 
+                SAQ training, and policies.
               </p>
             </div>
           </div>
@@ -42,12 +43,13 @@ export default function FAQs() {
 
                 <AccordionItem value="item-2" className="bg-card border border-border rounded-lg px-6">
                   <AccordionTrigger className="text-foreground hover:text-primary">
-                    Do I need prior basketball experience to join?
+                    Do I need prior experience to join?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
-                    No prior experience is required! We welcome players of all skill levels, from beginners 
-                    to advanced athletes. Our coaches will assess each player's abilities and provide 
-                    appropriate instruction and challenges.
+                    No prior experience is required! We welcome athletes of all skill levels in basketball, 
+                    football, and soccer. Our programs focus on foundational athletic development through 
+                    SAQ (Speed, Agility, Quickness) training and strength conditioning that benefits all sports. 
+                    Our coaches will assess each athlete's abilities and provide appropriate instruction.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -56,9 +58,10 @@ export default function FAQs() {
                     What should my child bring to training sessions?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
-                    Players should bring athletic shoes (basketball shoes preferred), comfortable athletic 
-                    clothing, a water bottle, and a positive attitude. We provide basketballs and other 
-                    training equipment.
+                    Athletes should bring athletic shoes appropriate for their sport, comfortable athletic 
+                    clothing suitable for movement and conditioning work, a water bottle, and a positive attitude. 
+                    We provide all training equipment including balls, cones, agility equipment, and strength 
+                    training tools.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -90,10 +93,11 @@ export default function FAQs() {
                     What makes The Academy different from other programs?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
-                    The Academy focuses on holistic player development, not just basketball skills. We 
-                    emphasize character building, accountability, and long-term growth. Our coaches provide 
-                    individualized attention within a structured environment, and we maintain small group 
-                    sizes to ensure quality instruction.
+                    The Academy focuses on holistic athletic development across basketball, football, and soccer. 
+                    We emphasize foundational athletic qualities (SAQ and strength) that translate across all 
+                    sports, not just sport-specific skills. We prioritize character building, accountability, 
+                    and long-term growth over short-term results. Our coaches provide individualized attention 
+                    within a structured environment, and we maintain small group sizes to ensure quality instruction.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -126,8 +130,9 @@ export default function FAQs() {
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
                     We offer both! In addition to individual workouts, we have group sessions that develop 
-                    teamwork skills, and we also offer Team Academy Registration for players interested in 
-                    competitive travel teams representing The Academy in tournaments and leagues.
+                    teamwork skills and competitive environments. We also offer Team Academy Registration for 
+                    players interested in competitive travel teams. Our training benefits athletes in basketball, 
+                    football, and soccer through our focus on foundational athletic development.
                   </AccordionContent>
                 </AccordionItem>
 

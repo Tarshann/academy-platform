@@ -27,7 +27,9 @@ queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("[API Query Error]", error);
+    }
   }
 });
 
@@ -35,7 +37,9 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("[API Mutation Error]", error);
+    }
   }
 });
 
@@ -57,7 +61,9 @@ function createTrpcClient(getToken?: () => Promise<string | null>) {
                 headers.Authorization = `Bearer ${token}`;
               }
             } catch (error) {
-              console.warn("[tRPC] Failed to get Clerk token:", error);
+              if (process.env.NODE_ENV === "development") {
+                console.warn("[tRPC] Failed to get Clerk token:", error);
+              }
             }
           }
           
@@ -97,10 +103,14 @@ if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
     navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
-        console.log("Service Worker registered:", registration.scope);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Service Worker registered:", registration.scope);
+        }
       })
       .catch((error) => {
-        console.log("Service Worker registration failed:", error);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Service Worker registration failed:", error);
+        }
       });
   });
 }

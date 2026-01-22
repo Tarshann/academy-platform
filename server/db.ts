@@ -11,7 +11,15 @@ import {
   contactSubmissions,
   InsertContactSubmission,
   schedules,
-  InsertSchedule
+  InsertSchedule,
+  locations,
+  InsertLocation,
+  coaches,
+  InsertCoach,
+  coachAssignments,
+  InsertCoachAssignment,
+  notificationPreferences,
+  InsertNotificationPreference
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -789,4 +797,172 @@ export async function getAttendanceStats(userId: number, startDate?: Date, endDa
   }
   
   return stats;
+}
+
+// ==================== Location Management ====================
+
+export async function getAllLocations() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(locations).where(eq(locations.isActive, true)).orderBy(locations.name);
+}
+
+export async function getAllLocationsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(locations).orderBy(locations.name);
+}
+
+export async function getLocationById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createLocation(location: InsertLocation) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(locations).values(location).returning({ id: locations.id });
+  return result[0].id;
+}
+
+export async function updateLocation(id: number, updates: Partial<InsertLocation>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(locations).set({ ...updates, updatedAt: new Date() }).where(eq(locations.id, id));
+}
+
+export async function deleteLocation(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Soft delete
+  await db.update(locations).set({ isActive: false, updatedAt: new Date() }).where(eq(locations.id, id));
+}
+
+// ==================== Coach Management ====================
+
+export async function getAllCoaches() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(coaches)
+    .leftJoin(users, eq(coaches.userId, users.id))
+    .where(eq(coaches.isActive, true));
+}
+
+export async function getAllCoachesAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(coaches)
+    .leftJoin(users, eq(coaches.userId, users.id));
+}
+
+export async function getCoachById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(coaches)
+    .leftJoin(users, eq(coaches.userId, users.id))
+    .where(eq(coaches.id, id))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getCoachByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(coaches)
+    .leftJoin(users, eq(coaches.userId, users.id))
+    .where(eq(coaches.userId, userId))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createCoach(coach: InsertCoach) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(coaches).values(coach).returning({ id: coaches.id });
+  return result[0].id;
+}
+
+export async function updateCoach(id: number, updates: Partial<InsertCoach>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(coaches).set({ ...updates, updatedAt: new Date() }).where(eq(coaches.id, id));
+}
+
+export async function deleteCoach(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Soft delete
+  await db.update(coaches).set({ isActive: false, updatedAt: new Date() }).where(eq(coaches.id, id));
+}
+
+// ==================== Coach Assignments ====================
+
+export async function getCoachAssignments(coachId?: number, programId?: number, scheduleId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  let query = db.select().from(coachAssignments)
+    .leftJoin(coaches, eq(coachAssignments.coachId, coaches.id))
+    .leftJoin(users, eq(coaches.userId, users.id));
+  
+  if (coachId) {
+    query = query.where(eq(coachAssignments.coachId, coachId));
+  }
+  if (programId) {
+    query = query.where(eq(coachAssignments.programId, programId));
+  }
+  if (scheduleId) {
+    query = query.where(eq(coachAssignments.scheduleId, scheduleId));
+  }
+  
+  return query;
+}
+
+export async function createCoachAssignment(assignment: InsertCoachAssignment) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(coachAssignments).values(assignment).returning({ id: coachAssignments.id });
+  return result[0].id;
+}
+
+export async function deleteCoachAssignment(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(coachAssignments).where(eq(coachAssignments.id, id));
+}
+
+// ==================== Notification Preferences ====================
+
+export async function getUserNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(notificationPreferences)
+    .where(eq(notificationPreferences.userId, userId))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createOrUpdateNotificationPreferences(userId: number, preferences: Partial<InsertNotificationPreference>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const existing = await getUserNotificationPreferences(userId);
+  
+  if (existing) {
+    await db.update(notificationPreferences)
+      .set({ ...preferences, updatedAt: new Date() })
+      .where(eq(notificationPreferences.userId, userId));
+  } else {
+    await db.insert(notificationPreferences).values({
+      userId,
+      sessionRegistrations: preferences.sessionRegistrations ?? true,
+      paymentConfirmations: preferences.paymentConfirmations ?? true,
+      announcements: preferences.announcements ?? true,
+      attendanceUpdates: preferences.attendanceUpdates ?? true,
+      blogPosts: preferences.blogPosts ?? false,
+      marketing: preferences.marketing ?? false,
+    });
+  }
 }
