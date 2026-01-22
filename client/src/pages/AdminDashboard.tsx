@@ -20,6 +20,10 @@ import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
 import { AttendanceManager } from "@/components/admin/managers/AttendanceManager";
 import { LocationsManager } from "@/components/admin/managers/LocationsManager";
+import { SchedulesManager } from "@/components/admin/managers/SchedulesManager";
+import { ProgramsManager } from "@/components/admin/managers/ProgramsManager";
+import { AnnouncementsManager } from "@/components/admin/managers/AnnouncementsManager";
+import { ContactsManager } from "@/components/admin/managers/ContactsManager";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -128,10 +132,6 @@ export default function AdminDashboard() {
     </div>
   );
 }
-
-// Schedules Manager Component
-function SchedulesManager() {
-  const { data: schedules, isLoading, refetch } = trpc.admin.schedules.list.useQuery();
   const { data: programs } = trpc.programs.list.useQuery();
   const createSchedule = trpc.admin.schedules.create.useMutation();
   const updateSchedule = trpc.admin.schedules.update.useMutation();
@@ -338,8 +338,6 @@ function SchedulesManager() {
     </Card>
   );
 }
-
-// Programs Manager Component
 function ProgramsManager() {
   const { data: programs, isLoading, refetch } = trpc.admin.programs.list.useQuery();
   const createProgram = trpc.admin.programs.create.useMutation();
