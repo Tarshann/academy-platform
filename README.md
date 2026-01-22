@@ -19,7 +19,7 @@ A full-stack platform for The Academy - a youth sports training organization. Bu
 
 - Node.js 18+ 
 - pnpm 10+
-- MySQL 8+
+- PostgreSQL 12+
 - Git
 
 ### Installation
@@ -44,7 +44,7 @@ A full-stack platform for The Academy - a youth sports training organization. Bu
 
 4. **Set up the database**
    ```bash
-   # Make sure MySQL is running and DATABASE_URL is set in .env
+   # Make sure PostgreSQL is running and DATABASE_URL is set in .env
    pnpm db:push
    ```
 
@@ -148,12 +148,14 @@ Resend is used for transactional emails:
 
 ## 🗄️ Database
 
-The database uses Drizzle ORM with MySQL. Schema is defined in `drizzle/schema.ts`.
+The database uses Drizzle ORM with PostgreSQL. Schema is defined in `drizzle/schema.ts`.
 
 To create a new migration:
 ```bash
 pnpm db:push
 ```
+
+**Note**: For production deployments, use Drizzle Kit migrations instead of `db:push` to track migration history and enable rollbacks.
 
 ## 🧪 Testing
 
