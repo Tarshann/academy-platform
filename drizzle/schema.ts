@@ -103,7 +103,7 @@ export type ContactSubmission = typeof contactSubmissions.$inferSelect;
 export type InsertContactSubmission = typeof contactSubmissions.$inferInsert;
 
 /**
- * Schedules for programs and events
+ * Training schedules and sessions
  */
 export const schedules = pgTable("schedules", {
   id: serial("id").primaryKey(),
@@ -126,53 +126,7 @@ export type Schedule = typeof schedules.$inferSelect;
 export type InsertSchedule = typeof schedules.$inferInsert;
 
 /**
- * Payment records table
- * Stores essential Stripe identifiers for payment tracking
- */
-export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).notNull().unique(),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
-  productId: varchar("productId", { length: 255 }).notNull(),
-  productName: text("productName").notNull(),
-  amountInCents: integer("amountInCents").notNull(),
-  currency: varchar("currency", { length: 10 }).notNull().default("usd"),
-  status: paymentStatusEnum("status").notNull().default("pending"),
-  paymentType: paymentTypeEnum("paymentType").notNull(),
-  metadata: text("metadata"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Payment = typeof payments.$inferSelect;
-export type InsertPayment = typeof payments.$inferInsert;
-
-/**
- * Subscriptions table
- * Tracks active Stripe subscriptions for memberships
- */
-export const subscriptions = pgTable("subscriptions", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }).notNull().unique(),
-  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }).notNull(),
-  productId: varchar("productId", { length: 255 }).notNull(),
-  productName: text("productName").notNull(),
-  status: subscriptionStatusEnum("status").notNull(),
-  currentPeriodStart: timestamp("currentPeriodStart"),
-  currentPeriodEnd: timestamp("currentPeriodEnd"),
-  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Subscription = typeof subscriptions.$inferSelect;
-export type InsertSubscription = typeof subscriptions.$inferInsert;
-
-/**
- * Session registrations table
- * Tracks user registrations for specific training sessions
+ * Session registrations (user enrollments in specific sessions)
  */
 export const sessionRegistrations = pgTable("sessionRegistrations", {
   id: serial("id").primaryKey(),
@@ -181,35 +135,188 @@ export const sessionRegistrations = pgTable("sessionRegistrations", {
   paymentId: integer("paymentId"),
   status: registrationStatusEnum("status").notNull().default("registered"),
   registeredAt: timestamp("registeredAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
 export type InsertSessionRegistration = typeof sessionRegistrations.$inferInsert;
 
 /**
- * Gallery photos table
- * Stores photos showcasing training sessions, teams, and events
+ * Payments table
+ */
+export const payments = pgTable("payments", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
+  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("usd"),
+  status: paymentStatusEnum("status").notNull().default("pending"),
+  type: paymentTypeEnum("type").notNull().default("one_time"),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;
+
+/**
+ * Subscriptions table
+ */
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  status: subscriptionStatusEnum("status").notNull().default("active"),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+/**
+ * Gallery photos
  */
 export const galleryPhotos = pgTable("galleryPhotos", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  imageUrl: text("imageUrl").notNull(),
-  imageKey: varchar("imageKey", { length: 500 }).notNull(),
+  imageUrl: varchar("imageUrl", { length: 500 }).notNull(),
+  imageKey: varchar("imageKey", { length: 500 }),
   category: galleryCategoryEnum("category").notNull().default("other"),
   uploadedBy: integer("uploadedBy").notNull(),
   isVisible: boolean("isVisible").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
 export type GalleryPhoto = typeof galleryPhotos.$inferSelect;
 export type InsertGalleryPhoto = typeof galleryPhotos.$inferInsert;
 
 /**
+ * Videos table
+ */
+export const videos = pgTable("videos", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  videoUrl: varchar("videoUrl", { length: 500 }).notNull(),
+  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
+  category: videoCategoryEnum("category").notNull().default("other"),
+  viewCount: integer("viewCount").default(0),
+  duration: integer("duration"), // in seconds
+  isPublished: boolean("isPublished").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Video = typeof videos.$inferSelect;
+export type InsertVideo = typeof videos.$inferInsert;
+
+/**
+ * Products table (shop/merchandise)
+ */
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  imageKey: varchar("imageKey", { length: 500 }),
+  category: productCategoryEnum("category").notNull(),
+  stock: integer("stock").default(0),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Product = typeof products.$inferSelect;
+export type InsertProduct = typeof products.$inferInsert;
+
+/**
+ * Orders table
+ */
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  stripeCheckoutSessionId: varchar("stripeCheckoutSessionId", { length: 255 }),
+  totalAmount: numeric("totalAmount", { precision: 10, scale: 2 }).notNull(),
+  status: orderStatusEnum("status").notNull().default("pending"),
+  shippingAddress: text("shippingAddress"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Order = typeof orders.$inferSelect;
+export type InsertOrder = typeof orders.$inferInsert;
+
+/**
+ * Order items table
+ */
+export const orderItems = pgTable("orderItems", {
+  id: serial("id").primaryKey(),
+  orderId: integer("orderId").notNull(),
+  productId: integer("productId").notNull(),
+  quantity: integer("quantity").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type OrderItem = typeof orderItems.$inferSelect;
+export type InsertOrderItem = typeof orderItems.$inferInsert;
+
+/**
+ * Campaigns table (promotions/discounts)
+ */
+export const campaigns = pgTable("campaigns", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  discountPercent: numeric("discountPercent", { precision: 5, scale: 2 }),
+  startDate: timestamp("startDate").notNull(),
+  endDate: timestamp("endDate").notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Campaign = typeof campaigns.$inferSelect;
+export type InsertCampaign = typeof campaigns.$inferInsert;
+
+/**
+ * Chat messages table
+ */
+export const chatMessages = pgTable("chatMessages", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  userName: varchar("userName", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  room: varchar("room", { length: 100 }).default("general"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+/**
+ * Attendance records table
+ */
+export const attendanceRecords = pgTable("attendanceRecords", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  scheduleId: integer("scheduleId").notNull(),
+  status: attendanceStatusEnum("status").notNull().default("present"),
+  markedBy: integer("markedBy"), // Coach/admin who marked attendance
+  markedAt: timestamp("markedAt").defaultNow().notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
+export type InsertAttendanceRecord = typeof attendanceRecords.$inferInsert;
+
+/**
  * Blog posts table
- * Stores training tips, athlete spotlights, and Academy updates
  */
 export const blogPosts = pgTable("blogPosts", {
   id: serial("id").primaryKey(),
@@ -217,10 +324,10 @@ export const blogPosts = pgTable("blogPosts", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   excerpt: text("excerpt"),
   content: text("content").notNull(),
-  featuredImage: text("featuredImage"),
+  featuredImage: varchar("featuredImage", { length: 500 }),
   authorId: integer("authorId").notNull(),
-  category: blogCategoryEnum("category").notNull().default("other"),
-  tags: text("tags"),
+  category: blogCategoryEnum("category").notNull(),
+  tags: text("tags"), // Comma-separated tags
   isPublished: boolean("isPublished").notNull().default(false),
   publishedAt: timestamp("publishedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -231,164 +338,7 @@ export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = typeof blogPosts.$inferInsert;
 
 /**
- * Chat messages table
- * Stores realtime chat messages for member communication
- */
-export const chatMessages = pgTable("chatMessages", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  userName: varchar("userName", { length: 255 }).notNull(),
-  message: text("message").notNull(),
-  room: varchar("room", { length: 100 }).notNull().default("general"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type ChatMessage = typeof chatMessages.$inferSelect;
-export type InsertChatMessage = typeof chatMessages.$inferInsert;
-
-/**
- * Merchandise products table
- */
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  price: integer("price").notNull(), // Price in cents
-  imageUrl: text("imageUrl"),
-  imageKey: varchar("imageKey", { length: 255 }),
-  category: productCategoryEnum("category").notNull(),
-  stock: integer("stock").default(0).notNull(),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = typeof products.$inferInsert;
-
-/**
- * Product variants (sizes, colors, etc.)
- */
-export const productVariants = pgTable("productVariants", {
-  id: serial("id").primaryKey(),
-  productId: integer("productId").notNull(),
-  name: varchar("name", { length: 100 }).notNull(), // e.g., "Small", "Medium", "Large"
-  sku: varchar("sku", { length: 100 }),
-  stock: integer("stock").default(0).notNull(),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type ProductVariant = typeof productVariants.$inferSelect;
-export type InsertProductVariant = typeof productVariants.$inferInsert;
-
-/**
- * Merchandise orders
- */
-export const orders = pgTable("orders", {
-  id: serial("id").primaryKey(),
-  userId: integer("userId").notNull(),
-  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
-  totalAmount: integer("totalAmount").notNull(), // Total in cents
-  status: orderStatusEnum("status").default("pending").notNull(),
-  shippingAddress: text("shippingAddress"),
-  trackingNumber: varchar("trackingNumber", { length: 255 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Order = typeof orders.$inferSelect;
-export type InsertOrder = typeof orders.$inferInsert;
-
-/**
- * Order items
- */
-export const orderItems = pgTable("orderItems", {
-  id: serial("id").primaryKey(),
-  orderId: integer("orderId").notNull(),
-  productId: integer("productId").notNull(),
-  variantId: integer("variantId"),
-  quantity: integer("quantity").notNull(),
-  priceAtPurchase: integer("priceAtPurchase").notNull(), // Price in cents at time of purchase
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type OrderItem = typeof orderItems.$inferSelect;
-export type InsertOrderItem = typeof orderItems.$inferInsert;
-
-/**
- * Campaigns for limited-time drops and promotions
- */
-export const campaigns = pgTable("campaigns", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
-  description: text("description"),
-  bannerImageUrl: text("bannerImageUrl"),
-  bannerImageKey: varchar("bannerImageKey", { length: 255 }),
-  startDate: timestamp("startDate").notNull(),
-  endDate: timestamp("endDate").notNull(),
-  isActive: boolean("isActive").default(true).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Campaign = typeof campaigns.$inferSelect;
-export type InsertCampaign = typeof campaigns.$inferInsert;
-
-/**
- * Campaign products (products associated with campaigns)
- */
-export const campaignProducts = pgTable("campaignProducts", {
-  id: serial("id").primaryKey(),
-  campaignId: integer("campaignId").notNull(),
-  productId: integer("productId").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type CampaignProduct = typeof campaignProducts.$inferSelect;
-export type InsertCampaignProduct = typeof campaignProducts.$inferInsert;
-
-/**
- * Video library table for training demonstrations and technique tutorials
- */
-export const videos = pgTable("videos", {
-  id: serial("id").primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  videoUrl: varchar("videoUrl", { length: 500 }).notNull(), // YouTube/Vimeo embed URL
-  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }), // Optional custom thumbnail
-  category: videoCategoryEnum("category").default("other").notNull(),
-  duration: integer("duration"), // Duration in seconds
-  isPublished: boolean("isPublished").notNull().default(false),
-  viewCount: integer("viewCount").default(0).notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
-});
-
-export type Video = typeof videos.$inferSelect;
-export type InsertVideo = typeof videos.$inferInsert;
-
-/**
- * Attendance tracking table
- * Tracks which athletes attended which training sessions
- */
-export const attendance = pgTable("attendance", {
-  id: serial("id").primaryKey(),
-  scheduleId: integer("scheduleId").notNull(), // Link to schedules table
-  userId: integer("userId").notNull(), // Link to users table (the athlete)
-  status: attendanceStatusEnum("status").notNull().default("present"),
-  notes: text("notes"), // Coach notes about performance, behavior, etc.
-  markedBy: integer("markedBy").notNull(), // Coach/admin who marked attendance
-  markedAt: timestamp("markedAt").defaultNow().notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type Attendance = typeof attendance.$inferSelect;
-export type InsertAttendance = typeof attendance.$inferInsert;
-
-/**
- * Training locations table
- * Stores structured location data for The Academy facilities
+ * Locations table
  */
 export const locations = pgTable("locations", {
   id: serial("id").primaryKey(),
@@ -428,7 +378,7 @@ export type InsertCoach = typeof coaches.$inferInsert;
 
 /**
  * Coach assignments table
- * Links coaches to programs and schedules
+ * Links coaches to programs or specific sessions
  */
 export const coachAssignments = pgTable("coachAssignments", {
   id: serial("id").primaryKey(),
@@ -443,8 +393,8 @@ export type CoachAssignment = typeof coachAssignments.$inferSelect;
 export type InsertCoachAssignment = typeof coachAssignments.$inferInsert;
 
 /**
- * User notification preferences table
- * Stores email notification preferences for users
+ * Notification preferences table
+ * User preferences for email notifications
  */
 export const notificationPreferences = pgTable("notificationPreferences", {
   id: serial("id").primaryKey(),
@@ -461,3 +411,19 @@ export const notificationPreferences = pgTable("notificationPreferences", {
 
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+
+/**
+ * User relations table
+ * Links parent accounts to child athlete accounts
+ */
+export const userRelations = pgTable("userRelations", {
+  id: serial("id").primaryKey(),
+  parentId: integer("parentId").notNull(), // Parent user ID
+  childId: integer("childId").notNull(), // Child user ID
+  relationshipType: varchar("relationshipType", { length: 50 }).notNull().default("parent"), // "parent", "guardian"
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type UserRelation = typeof userRelations.$inferSelect;
+export type InsertUserRelation = typeof userRelations.$inferInsert;
