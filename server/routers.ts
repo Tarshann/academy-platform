@@ -63,47 +63,31 @@ export const appRouter = router({
         const { sendSessionRegistrationEmail } = await import('./email');
         const { TRPCError } = await import('@trpc/server');
         
-        // Get schedule details
-        const schedule = await getScheduleById(input.scheduleId);
-        if (!schedule) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Schedule not found' });
-        }
+        // Use service layer for business logic
+        const { ScheduleService } = await import('./services/ScheduleService');
+        const { NotificationService } = await import('./services/NotificationService');
+        const { transformError } = await import('./_core/errorHandler');
         
-        // Check capacity limits
-        if (schedule.maxParticipants !== null && schedule.maxParticipants !== undefined) {
-          const currentRegistrations = await getScheduleRegistrations(input.scheduleId);
-          const registeredCount = currentRegistrations.filter(r => r.status === 'registered' || r.status === 'attended').length;
+        try {
+          // Register user (service handles validation)
+          await ScheduleService.registerUser(ctx.user.id, input.scheduleId);
           
-          if (registeredCount >= schedule.maxParticipants) {
-            throw new TRPCError({ 
-              code: 'CONFLICT', 
-              message: `This session is full. Capacity: ${schedule.maxParticipants}, Registered: ${registeredCount}` 
-            });
+          // Get schedule for email
+          const schedule = await getScheduleById(input.scheduleId);
+          
+          // Send confirmation email if preferences allow
+          if (schedule && ctx.user.email) {
+            await NotificationService.sendSessionRegistrationIfAllowed(
+              ctx.user.id,
+              ctx.user.email,
+              ctx.user.name || 'Member',
+              schedule.title,
+              schedule.startTime,
+              schedule.location || 'TBA'
+            );
           }
-        }
-        
-        // Check if user is already registered
-        const existingRegistration = await getScheduleRegistrations(input.scheduleId);
-        const isAlreadyRegistered = existingRegistration.some(r => r.userId === ctx.user.id);
-        if (isAlreadyRegistered) {
-          throw new TRPCError({ code: 'CONFLICT', message: 'You are already registered for this session' });
-        }
-        
-        await createSessionRegistration(ctx.user.id, input.scheduleId);
-        
-        // Send confirmation email (check notification preferences)
-        if (schedule && ctx.user.email) {
-          const { getUserNotificationPreferences } = await import('./db');
-          const preferences = await getUserNotificationPreferences(ctx.user.id);
-          if (preferences?.sessionRegistrations !== false) {
-            await sendSessionRegistrationEmail({
-              to: ctx.user.email,
-              userName: ctx.user.name || 'Member',
-              sessionTitle: schedule.title,
-              sessionDate: schedule.startTime,
-              sessionLocation: schedule.location || 'TBA',
-            });
-          }
+        } catch (error) {
+          throw transformError(error);
         }
         
         return { success: true };
@@ -158,6 +142,7 @@ export const appRouter = router({
           description: z.string(),
           price: z.string(),
           category: z.enum(['group', 'individual', 'shooting', 'league', 'camp', 'membership']),
+          sport: z.enum(['basketball', 'football', 'soccer', 'multi_sport', 'saq']).optional(),
           ageMin: z.number().default(8),
           ageMax: z.number().default(18),
           maxParticipants: z.number().nullable(),
@@ -236,6 +221,7 @@ export const appRouter = router({
           description: z.string().optional(),
           startTime: z.date(),
           endTime: z.date(),
+          dayOfWeek: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']).optional(),
           location: z.string().optional(),
           locationId: z.number().optional(),
           maxParticipants: z.number().nullable().optional(),
