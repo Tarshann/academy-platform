@@ -16,6 +16,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Calendar, Users, MessageSquare, Settings, Plus, Edit, Trash2, Eye, EyeOff, MapPin, FileText, BookOpen, CheckCircle2, UserPlus } from "lucide-react";
 import { useLocation } from "wouter";
+import { CoachesManager } from "@/components/admin/managers/CoachesManager";
+import { BlogManager } from "@/components/admin/managers/BlogManager";
+import { AttendanceManager } from "@/components/admin/managers/AttendanceManager";
+import { LocationsManager } from "@/components/admin/managers/LocationsManager";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -106,6 +110,9 @@ export default function AdminDashboard() {
             </TabsContent>
             <TabsContent value="coaches">
               <CoachesManager />
+            </TabsContent>
+            <TabsContent value="blog">
+              <BlogManager />
             </TabsContent>
             <TabsContent value="locations">
               <LocationsManager />

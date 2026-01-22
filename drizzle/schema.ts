@@ -6,6 +6,7 @@ import { pgTable, serial, text, timestamp, varchar, numeric, integer, boolean, p
 
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
 export const programCategoryEnum = pgEnum("program_category", ["group", "individual", "shooting", "league", "camp", "membership"]);
+export const programSportEnum = pgEnum("program_sport", ["basketball", "football", "soccer", "multi_sport", "saq"]);
 export const contactTypeEnum = pgEnum("contact_type", ["general", "volunteer"]);
 export const contactStatusEnum = pgEnum("contact_status", ["new", "read", "responded"]);
 export const paymentStatusEnum = pgEnum("payment_status", ["pending", "succeeded", "failed", "refunded"]);
@@ -18,6 +19,7 @@ export const productCategoryEnum = pgEnum("product_category", ["apparel", "acces
 export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]);
 export const videoCategoryEnum = pgEnum("video_category", ["drills", "technique", "conditioning", "games", "other"]);
 export const attendanceStatusEnum = pgEnum("attendance_status", ["present", "absent", "excused", "late"]);
+export const dayOfWeekEnum = pgEnum("day_of_week", ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
 
 // ============================================================================
 // TABLES
@@ -53,6 +55,7 @@ export const programs = pgTable("programs", {
   description: text("description").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   category: programCategoryEnum("category").notNull(),
+  sport: programSportEnum("sport"), // Optional: basketball, football, soccer, multi_sport, saq
   ageMin: integer("ageMin").notNull().default(8),
   ageMax: integer("ageMax").notNull().default(18),
   maxParticipants: integer("maxParticipants"),
@@ -109,6 +112,7 @@ export const schedules = pgTable("schedules", {
   description: text("description"),
   startTime: timestamp("startTime").notNull(),
   endTime: timestamp("endTime").notNull(),
+  dayOfWeek: dayOfWeekEnum("dayOfWeek"), // Day of week for schedule structure (Tuesday/Thursday/Sunday)
   location: varchar("location", { length: 255 }),
   locationId: integer("locationId"), // Reference to locations table
   maxParticipants: integer("maxParticipants"), // Capacity limit for this session
