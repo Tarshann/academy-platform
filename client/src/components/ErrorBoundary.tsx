@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
-import { AlertTriangle, RotateCcw } from "lucide-react";
+import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 import { Component, ReactNode } from "react";
+import { Link } from "wouter";
 
 interface Props {
   children: ReactNode;
@@ -9,17 +10,28 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  errorInfo: React.ErrorInfo | null;
 }
 
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // Log error to console for debugging
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
 
   render() {
     if (this.state.hasError) {
@@ -29,27 +41,69 @@ class ErrorBoundary extends Component<Props, State> {
             <AlertTriangle
               size={48}
               className="text-destructive mb-6 flex-shrink-0"
+              aria-hidden="true"
             />
 
-            <h2 className="text-xl mb-4">An unexpected error occurred.</h2>
+            <h1 className="text-2xl font-bold mb-2">An unexpected error occurred</h1>
+            <p className="text-muted-foreground mb-6 text-center">
+              We're sorry for the inconvenience. You can try reloading the page or return to the homepage.
+            </p>
 
-            <div className="p-4 w-full rounded bg-muted overflow-auto mb-6">
-              <pre className="text-sm text-muted-foreground whitespace-break-spaces">
-                {this.state.error?.stack}
-              </pre>
+            {process.env.NODE_ENV === "development" && this.state.error && (
+              <details className="p-4 w-full rounded bg-muted overflow-auto mb-6">
+                <summary className="cursor-pointer text-sm font-semibold mb-2">
+                  Error Details (Development Only)
+                </summary>
+                <pre className="text-xs text-muted-foreground whitespace-break-spaces mt-2">
+                  {this.state.error.toString()}
+                  {this.state.error.stack && `\n\n${this.state.error.stack}`}
+                  {this.state.errorInfo && `\n\nComponent Stack:\n${this.state.errorInfo.componentStack}`}
+                </pre>
+              </details>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button
+                onClick={this.handleReset}
+                className={cn(
+                  "flex items-center justify-center gap-2 px-6 py-3 rounded-lg",
+                  "bg-primary text-primary-foreground",
+                  "hover:opacity-90 cursor-pointer transition-opacity",
+                  "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                )}
+                aria-label="Try again"
+              >
+                <RotateCcw size={16} aria-hidden="true" />
+                Try Again
+              </button>
+              <Link href="/">
+                <button
+                  className={cn(
+                    "flex items-center justify-center gap-2 px-6 py-3 rounded-lg",
+                    "bg-secondary text-secondary-foreground border border-border",
+                    "hover:bg-secondary/80 cursor-pointer transition-colors",
+                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  )}
+                  aria-label="Go to homepage"
+                >
+                  <Home size={16} aria-hidden="true" />
+                  Go to Homepage
+                </button>
+              </Link>
+              <button
+                onClick={() => window.location.reload()}
+                className={cn(
+                  "flex items-center justify-center gap-2 px-6 py-3 rounded-lg",
+                  "bg-outline text-foreground border border-border",
+                  "hover:bg-accent cursor-pointer transition-colors",
+                  "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                )}
+                aria-label="Reload page"
+              >
+                <RotateCcw size={16} aria-hidden="true" />
+                Reload Page
+              </button>
             </div>
-
-            <button
-              onClick={() => window.location.reload()}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-lg",
-                "bg-primary text-primary-foreground",
-                "hover:opacity-90 cursor-pointer"
-              )}
-            >
-              <RotateCcw size={16} />
-              Reload Page
-            </button>
           </div>
         </div>
       );

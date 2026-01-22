@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { Link } from "wouter";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,11 +21,27 @@ interface CartItem {
   imageUrl?: string;
 }
 
+const CART_STORAGE_KEY = "academy-shop-cart";
+
 export default function Shop() {
   const { user, isAuthenticated } = useAuth();
-  const [cart, setCart] = useState<CartItem[]>([]);
+  // Load cart from localStorage on mount
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [shippingAddress, setShippingAddress] = useState("");
+
+  // Persist cart to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    }
+  }, [cart]);
 
   const { data: products = [], isLoading } = trpc.shop.products.useQuery();
   const { data: campaigns = [] } = trpc.shop.campaigns.useQuery();
@@ -43,37 +60,53 @@ export default function Shop() {
   const addToCart = (product: any) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.productId === product.id);
-      if (existing) {
-        return prev.map((item) =>
-          item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+      const newCart = existing
+        ? prev.map((item) =>
+            item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          )
+        : [
+            ...prev,
+            {
+              productId: product.id,
+              name: product.name,
+              price: product.price,
+              quantity: 1,
+              imageUrl: product.imageUrl,
+            },
+          ];
+      // Persist to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
       }
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          imageUrl: product.imageUrl,
-        },
-      ];
+      return newCart;
     });
     toast.success(`${product.name} added to cart`);
   };
 
   const updateQuantity = (productId: number, delta: number) => {
-    setCart((prev) =>
-      prev
+    setCart((prev) => {
+      const newCart = prev
         .map((item) =>
           item.productId === productId ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
         )
-        .filter((item) => item.quantity > 0)
-    );
+        .filter((item) => item.quantity > 0);
+      // Persist to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
+      }
+      return newCart;
+    });
   };
 
   const removeFromCart = (productId: number) => {
-    setCart((prev) => prev.filter((item) => item.productId !== productId));
+    setCart((prev) => {
+      const newCart = prev.filter((item) => item.productId !== productId);
+      // Persist to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
+      }
+      return newCart;
+    });
     toast.success("Item removed from cart");
   };
 
@@ -130,6 +163,8 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <Navigation />
+      <main id="main-content">
       {/* Header */}
       <section className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-black py-20">
         <div className="container px-6">
@@ -197,9 +232,19 @@ export default function Shop() {
           {isLoading ? (
             <div className="text-center text-neutral-600">Loading products...</div>
           ) : products.length === 0 ? (
-            <div className="text-center">
-              <p className="text-xl text-neutral-600 mb-4">No products available yet</p>
-              <p className="text-neutral-500">Check back soon for Academy merchandise!</p>
+            <div className="text-center py-20">
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
+                  <ShoppingCart className="w-12 h-12 text-neutral-400" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">No products available yet</h3>
+                <p className="text-neutral-500 mb-6">
+                  We're working on adding Academy merchandise. Check back soon for official gear and equipment!
+                </p>
+                <Link href="/programs">
+                  <Button variant="outline">Explore Programs</Button>
+                </Link>
+              </div>
             </div>
           ) : (
             <motion.div
@@ -283,7 +328,12 @@ export default function Shop() {
                   <div key={item.productId} className="flex gap-4 p-4 bg-neutral-50 rounded-lg">
                     <div className="w-20 h-20 bg-neutral-200 rounded flex-shrink-0">
                       {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover rounded" />
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.name || "Cart item"} 
+                          loading="lazy"
+                          className="w-full h-full object-cover rounded" 
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <ShoppingCart size={32} className="text-neutral-400" />
@@ -356,6 +406,8 @@ export default function Shop() {
           )}
         </DialogContent>
       </Dialog>
+      </main>
+      <Footer />
     </div>
   );
 }

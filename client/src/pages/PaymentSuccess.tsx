@@ -24,7 +24,7 @@ export default function PaymentSuccess() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      <main className="flex-1 flex items-center justify-center py-16">
+      <main id="main-content" className="flex-1 flex items-center justify-center py-16">
         <div className="container max-w-2xl">
           {loading ? (
             <Card className="bg-card border-border text-center py-12">

@@ -25,7 +25,7 @@ export default function Gallery() {
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
         <section className="bg-primary/10 py-16">
           <div className="container">
@@ -77,7 +77,8 @@ export default function Gallery() {
                     <div className="aspect-video relative overflow-hidden bg-muted">
                       <img
                         src={photo.imageUrl}
-                        alt={photo.title}
+                        alt={photo.title || `Gallery photo in ${photo.category} category`}
+                        loading="lazy"
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       />
                     </div>
@@ -96,10 +97,31 @@ export default function Gallery() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  No photos in this category yet. Check back soon!
-                </p>
+              <div className="text-center py-16">
+                <div className="max-w-md mx-auto">
+                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+                    <svg
+                      className="w-12 h-12 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">No photos yet</h3>
+                  <p className="text-muted-foreground mb-6">
+                    We're working on adding photos to this category. Check back soon for updates!
+                  </p>
+                  <Link href="/gallery">
+                    <Button variant="outline">View All Photos</Button>
+                  </Link>
+                </div>
               </div>
             )}
           </div>

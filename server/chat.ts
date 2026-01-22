@@ -13,6 +13,9 @@ export function setupChat(httpServer: HTTPServer) {
     path: "/socket.io/",
   });
 
+  // Track online users
+  const onlineUsers = new Map<string, { userId: number; userName: string; socketId: string; room: string }>();
+
   io.on("connection", (socket) => {
     console.log(`[Chat] User connected: ${socket.id}`);
 
@@ -20,6 +23,16 @@ export function setupChat(httpServer: HTTPServer) {
     socket.on("join_room", async ({ room, userId, userName }) => {
       socket.join(room);
       console.log(`[Chat] User ${userName} (${userId}) joined room: ${room}`);
+
+      // Track online user
+      const userKey = `${userId}-${room}`;
+      onlineUsers.set(userKey, { userId, userName, socketId: socket.id, room });
+      
+      // Broadcast online users list to room
+      const roomUsers = Array.from(onlineUsers.values())
+        .filter(u => u.room === room)
+        .map(u => ({ userId: u.userId, userName: u.userName }));
+      io.to(room).emit("online_users", roomUsers);
 
       // Send recent messages from this room
       try {
@@ -84,6 +97,19 @@ export function setupChat(httpServer: HTTPServer) {
     // Handle disconnect
     socket.on("disconnect", () => {
       console.log(`[Chat] User disconnected: ${socket.id}`);
+      
+      // Remove from online users
+      for (const [key, user] of onlineUsers.entries()) {
+        if (user.socketId === socket.id) {
+          onlineUsers.delete(key);
+          // Broadcast updated online users list
+          const roomUsers = Array.from(onlineUsers.values())
+            .filter(u => u.room === user.room)
+            .map(u => ({ userId: u.userId, userName: u.userName }));
+          io.to(user.room).emit("online_users", roomUsers);
+          break;
+        }
+      }
     });
   });
 

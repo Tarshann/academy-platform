@@ -60,6 +60,10 @@ async function startServer() {
   }
   
   // Body parser already configured above
+  // Rate limiting middleware
+  const { apiRateLimiter } = await import("./rateLimiter");
+  app.use("/api/trpc", apiRateLimiter);
+
   // tRPC API
   app.use(
     "/api/trpc",

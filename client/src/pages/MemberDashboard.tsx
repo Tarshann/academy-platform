@@ -54,7 +54,7 @@ export default function MemberDashboard() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Header */}
         <section className="py-12 bg-gradient-to-br from-background via-card to-background">
           <div className="container">

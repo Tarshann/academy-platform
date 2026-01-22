@@ -10,6 +10,92 @@ import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
+interface FormErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  subject?: string;
+  message?: string;
+}
+
+function validateEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function validatePhone(phone: string): boolean {
+  if (!phone) return true; // Phone is optional
+  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+  return phoneRegex.test(phone) && phone.replace(/\D/g, "").length >= 10;
+}
+
+function validateGeneralForm(form: { name: string; email: string; phone: string; subject: string; message: string }): FormErrors {
+  const errors: FormErrors = {};
+  
+  if (!form.name.trim()) {
+    errors.name = "Name is required";
+  } else if (form.name.trim().length < 2) {
+    errors.name = "Name must be at least 2 characters";
+  }
+  
+  if (!form.email.trim()) {
+    errors.email = "Email is required";
+  } else if (!validateEmail(form.email)) {
+    errors.email = "Please enter a valid email address";
+  }
+  
+  if (form.phone && !validatePhone(form.phone)) {
+    errors.phone = "Please enter a valid phone number";
+  }
+  
+  if (!form.subject.trim()) {
+    errors.subject = "Subject is required";
+  } else if (form.subject.trim().length < 3) {
+    errors.subject = "Subject must be at least 3 characters";
+  }
+  
+  if (!form.message.trim()) {
+    errors.message = "Message is required";
+  } else if (form.message.trim().length < 10) {
+    errors.message = "Message must be at least 10 characters";
+  } else if (form.message.trim().length > 2000) {
+    errors.message = "Message must be less than 2000 characters";
+  }
+  
+  return errors;
+}
+
+function validateVolunteerForm(form: { name: string; email: string; phone: string; message: string }): FormErrors {
+  const errors: FormErrors = {};
+  
+  if (!form.name.trim()) {
+    errors.name = "Name is required";
+  } else if (form.name.trim().length < 2) {
+    errors.name = "Name must be at least 2 characters";
+  }
+  
+  if (!form.email.trim()) {
+    errors.email = "Email is required";
+  } else if (!validateEmail(form.email)) {
+    errors.email = "Please enter a valid email address";
+  }
+  
+  if (!form.phone.trim()) {
+    errors.phone = "Phone is required";
+  } else if (!validatePhone(form.phone)) {
+    errors.phone = "Please enter a valid phone number";
+  }
+  
+  if (!form.message.trim()) {
+    errors.message = "Please tell us about your experience";
+  } else if (form.message.trim().length < 20) {
+    errors.message = "Please provide more details (at least 20 characters)";
+  } else if (form.message.trim().length > 2000) {
+    errors.message = "Message must be less than 2000 characters";
+  }
+  
+  return errors;
+}
 
 export default function Contact() {
   const [generalForm, setGeneralForm] = useState({
@@ -20,6 +106,8 @@ export default function Contact() {
     message: "",
   });
 
+  const [generalErrors, setGeneralErrors] = useState<FormErrors>({});
+
   const [volunteerForm, setVolunteerForm] = useState({
     name: "",
     email: "",
@@ -27,6 +115,8 @@ export default function Contact() {
     subject: "Volunteer Application",
     message: "",
   });
+
+  const [volunteerErrors, setVolunteerErrors] = useState<FormErrors>({});
 
   const submitContact = trpc.contact.submit.useMutation({
     onSuccess: () => {
@@ -50,19 +140,49 @@ export default function Contact() {
 
   const handleGeneralSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    submitContact.mutate({ ...generalForm, type: "general" });
+    const errors = validateGeneralForm(generalForm);
+    setGeneralErrors(errors);
+    
+    if (Object.keys(errors).length === 0) {
+      submitContact.mutate({ ...generalForm, type: "general" });
+    } else {
+      toast.error("Please fix the errors in the form");
+    }
   };
 
   const handleVolunteerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    submitVolunteer.mutate({ ...volunteerForm, type: "volunteer" });
+    const errors = validateVolunteerForm(volunteerForm);
+    setVolunteerErrors(errors);
+    
+    if (Object.keys(errors).length === 0) {
+      submitVolunteer.mutate({ ...volunteerForm, type: "volunteer" });
+    } else {
+      toast.error("Please fix the errors in the form");
+    }
+  };
+
+  const handleGeneralFieldChange = (field: keyof typeof generalForm, value: string) => {
+    setGeneralForm({ ...generalForm, [field]: value });
+    // Clear error when user starts typing
+    if (generalErrors[field]) {
+      setGeneralErrors({ ...generalErrors, [field]: undefined });
+    }
+  };
+
+  const handleVolunteerFieldChange = (field: keyof typeof volunteerForm, value: string) => {
+    setVolunteerForm({ ...volunteerForm, [field]: value });
+    // Clear error when user starts typing
+    if (volunteerErrors[field]) {
+      setVolunteerErrors({ ...volunteerErrors, [field]: undefined });
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero */}
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">
@@ -101,10 +221,17 @@ export default function Contact() {
                             <Input
                               id="general-name"
                               value={generalForm.name}
-                              onChange={(e) => setGeneralForm({ ...generalForm, name: e.target.value })}
+                              onChange={(e) => handleGeneralFieldChange("name", e.target.value)}
                               required
-                              className="bg-background border-border text-foreground"
+                              className={`bg-background border-border text-foreground ${generalErrors.name ? "border-destructive" : ""}`}
+                              aria-invalid={!!generalErrors.name}
+                              aria-describedby={generalErrors.name ? "general-name-error" : undefined}
                             />
+                            {generalErrors.name && (
+                              <p id="general-name-error" className="text-sm text-destructive" role="alert">
+                                {generalErrors.name}
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="general-email" className="text-foreground">Email *</Label>
@@ -112,10 +239,17 @@ export default function Contact() {
                               id="general-email"
                               type="email"
                               value={generalForm.email}
-                              onChange={(e) => setGeneralForm({ ...generalForm, email: e.target.value })}
+                              onChange={(e) => handleGeneralFieldChange("email", e.target.value)}
                               required
-                              className="bg-background border-border text-foreground"
+                              className={`bg-background border-border text-foreground ${generalErrors.email ? "border-destructive" : ""}`}
+                              aria-invalid={!!generalErrors.email}
+                              aria-describedby={generalErrors.email ? "general-email-error" : undefined}
                             />
+                            {generalErrors.email && (
+                              <p id="general-email-error" className="text-sm text-destructive" role="alert">
+                                {generalErrors.email}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -125,9 +259,16 @@ export default function Contact() {
                             id="general-phone"
                             type="tel"
                             value={generalForm.phone}
-                            onChange={(e) => setGeneralForm({ ...generalForm, phone: e.target.value })}
-                            className="bg-background border-border text-foreground"
+                            onChange={(e) => handleGeneralFieldChange("phone", e.target.value)}
+                            className={`bg-background border-border text-foreground ${generalErrors.phone ? "border-destructive" : ""}`}
+                            aria-invalid={!!generalErrors.phone}
+                            aria-describedby={generalErrors.phone ? "general-phone-error" : undefined}
                           />
+                          {generalErrors.phone && (
+                            <p id="general-phone-error" className="text-sm text-destructive" role="alert">
+                              {generalErrors.phone}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -135,10 +276,17 @@ export default function Contact() {
                           <Input
                             id="general-subject"
                             value={generalForm.subject}
-                            onChange={(e) => setGeneralForm({ ...generalForm, subject: e.target.value })}
+                            onChange={(e) => handleGeneralFieldChange("subject", e.target.value)}
                             required
-                            className="bg-background border-border text-foreground"
+                            className={`bg-background border-border text-foreground ${generalErrors.subject ? "border-destructive" : ""}`}
+                            aria-invalid={!!generalErrors.subject}
+                            aria-describedby={generalErrors.subject ? "general-subject-error" : undefined}
                           />
+                          {generalErrors.subject && (
+                            <p id="general-subject-error" className="text-sm text-destructive" role="alert">
+                              {generalErrors.subject}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -146,11 +294,21 @@ export default function Contact() {
                           <Textarea
                             id="general-message"
                             value={generalForm.message}
-                            onChange={(e) => setGeneralForm({ ...generalForm, message: e.target.value })}
+                            onChange={(e) => handleGeneralFieldChange("message", e.target.value)}
                             required
                             rows={6}
-                            className="bg-background border-border text-foreground"
+                            className={`bg-background border-border text-foreground ${generalErrors.message ? "border-destructive" : ""}`}
+                            aria-invalid={!!generalErrors.message}
+                            aria-describedby={generalErrors.message ? "general-message-error" : undefined}
                           />
+                          {generalErrors.message && (
+                            <p id="general-message-error" className="text-sm text-destructive" role="alert">
+                              {generalErrors.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {generalForm.message.length}/2000 characters
+                          </p>
                         </div>
 
                         <Button type="submit" disabled={submitContact.isPending} className="w-full">

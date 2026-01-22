@@ -43,7 +43,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      <main className="flex-1 py-8">
+      <main id="main-content" className="flex-1 py-8">
         <div className="container">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2 text-foreground">Admin Dashboard</h1>

@@ -45,7 +45,7 @@ export default function Videos() {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <Navigation />
       
-      <main className="pt-24 pb-20">
+      <main id="main-content" className="pt-24 pb-20">
         <div className="container px-6">
           {/* Header */}
           <motion.div
@@ -100,7 +100,8 @@ export default function Videos() {
                       {video.thumbnailUrl ? (
                         <img
                           src={video.thumbnailUrl}
-                          alt={video.title}
+                          alt={video.title || `Video: ${video.category}`}
+                          loading="lazy"
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -133,7 +134,18 @@ export default function Videos() {
             </motion.div>
           ) : (
             <div className="text-center py-20">
-              <p className="text-neutral-500 text-lg">No videos available yet. Check back soon!</p>
+              <div className="max-w-md mx-auto">
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
+                  <Play className="w-12 h-12 text-neutral-400" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">No videos available yet</h3>
+                <p className="text-neutral-500 mb-6">
+                  We're working on adding training videos and highlights. Check back soon!
+                </p>
+                <Link href="/programs">
+                  <Button variant="outline">Explore Programs</Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

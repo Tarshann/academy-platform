@@ -5,6 +5,7 @@ import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
+import { SearchBar } from "./SearchBar";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
@@ -119,6 +120,8 @@ export default function Navigation() {
             className="md:hidden text-foreground"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -126,8 +129,16 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border">
+          <div 
+            id="mobile-menu"
+            className="md:hidden py-4 border-t border-border"
+            role="menu"
+            aria-label="Main navigation"
+          >
             <div className="flex flex-col gap-4">
+              <div className="px-4 pb-2">
+                <SearchBar />
+              </div>
               <Link href="/" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
                 Home
               </Link>

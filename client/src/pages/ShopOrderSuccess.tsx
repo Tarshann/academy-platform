@@ -2,10 +2,21 @@ import { motion } from "framer-motion";
 import { CheckCircle, Package } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function ShopOrderSuccess() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 flex items-center justify-center px-6">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-neutral-50 to-neutral-100">
+      <Navigation />
+      <main id="main-content" className="flex-1 flex items-center justify-center px-6 py-16">
+        <div className="container max-w-2xl">
+          <Breadcrumbs items={[
+            { label: "Shop", href: "/shop" },
+            { label: "Order Success" }
+          ]} />
+        </div>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -57,6 +68,8 @@ export default function ShopOrderSuccess() {
           </div>
         </div>
       </motion.div>
+      </main>
+      <Footer />
     </div>
   );
 }

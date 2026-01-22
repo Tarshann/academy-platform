@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send } from "lucide-react";
+import { Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -24,6 +24,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Array<{ userId: number; userName: string }>>([]);
   const [currentRoom] = useState("general");
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,6 +76,10 @@ export default function Chat() {
 
     newSocket.on("user_stop_typing", ({ userName }: { userName: string }) => {
       setTypingUsers((prev) => prev.filter((u) => u !== userName));
+    });
+
+    newSocket.on("online_users", (users: Array<{ userId: number; userName: string }>) => {
+      setOnlineUsers(users);
     });
 
     setSocket(newSocket);
@@ -189,6 +194,7 @@ export default function Chat() {
                   );
                 })}
               </div>
+              )}
             </ScrollArea>
 
             {/* Typing Indicator */}

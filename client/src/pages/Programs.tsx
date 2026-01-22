@@ -12,8 +12,11 @@ export default function Programs() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
-      
-      <main className="flex-1">
+      <ProgramStructuredData 
+        name="The Academy Basketball Programs"
+        description="Comprehensive basketball development programs for youth ages 8-18. Group sessions, individual workouts, and shooting lab."
+      />
+      <main id="main-content" className="flex-1">
         {/* Hero */}
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">

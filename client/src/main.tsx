@@ -91,6 +91,20 @@ function TrpcProviderWithClerk({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Register Service Worker for PWA
+if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((registration) => {
+        console.log("Service Worker registered:", registration.scope);
+      })
+      .catch((error) => {
+        console.log("Service Worker registration failed:", error);
+      });
+  });
+}
+
 const root = createRoot(document.getElementById("root")!);
 
 // Always render ClerkProvider to avoid hook errors
