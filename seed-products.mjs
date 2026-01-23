@@ -85,7 +85,7 @@ const productData = [
     category: "equipment",
     stock: 60,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?jump-rope,fitness",
+    imageUrl: "https://images.unsplash.com/photo-7QYd1VxLRbM?w=800&h=800&fit=crop&auto=format",
   },
   {
     name: "Academy Resistance Bands Set",
@@ -94,7 +94,7 @@ const productData = [
     category: "equipment",
     stock: 30,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?resistance-bands,fitness",
+    imageUrl: "https://images.unsplash.com/photo-1UwtOlER8Fo?w=800&h=800&fit=crop&auto=format",
   },
   // Accessories (6 items)
   {
@@ -113,7 +113,7 @@ const productData = [
     category: "accessories",
     stock: 80,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?wristband,fitness",
+    imageUrl: "https://images.unsplash.com/photo-YIviYiVIINc?w=800&h=800&fit=crop&auto=format",
   },
   {
     name: "Academy Headband",
@@ -122,7 +122,7 @@ const productData = [
     category: "accessories",
     stock: 70,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?headband,fitness",
+    imageUrl: "https://images.unsplash.com/photo-vMsEBCvxHU0?w=800&h=800&fit=crop&auto=format",
   },
   {
     name: "Academy Backpack",
@@ -140,7 +140,7 @@ const productData = [
     category: "accessories",
     stock: 50,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?compression-sleeve,athlete",
+    imageUrl: "https://images.unsplash.com/photo-Clv9DfJLwac?w=800&h=800&fit=crop&auto=format",
   },
   {
     name: "Academy Sweat Towel",
@@ -149,7 +149,7 @@ const productData = [
     category: "accessories",
     stock: 90,
     isActive: true,
-    imageUrl: "https://source.unsplash.com/800x800/?sports-towel,fitness",
+    imageUrl: "https://images.unsplash.com/photo-IrJVpN-hme4?w=800&h=800&fit=crop&auto=format",
   },
 ];
 
