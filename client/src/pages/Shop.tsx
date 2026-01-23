@@ -69,7 +69,7 @@ export default function Shop() {
             {
               productId: product.id,
               name: product.name,
-              price: product.price,
+              price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
               quantity: 1,
               imageUrl: product.imageUrl,
             },
@@ -110,7 +110,10 @@ export default function Shop() {
     toast.success("Item removed from cart");
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => {
+    const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price / 100);
+    return sum + price * item.quantity;
+  }, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleCheckout = () => {
@@ -284,7 +287,7 @@ export default function Shop() {
                       <p className="text-neutral-600 mb-4 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-black text-amber-600">
-                          ${(product.price / 100).toFixed(2)}
+                          ${typeof product.price === 'string' ? parseFloat(product.price).toFixed(2) : (product.price / 100).toFixed(2)}
                         </span>
                         <Button
                           onClick={() => addToCart(product)}
@@ -342,7 +345,7 @@ export default function Shop() {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-bold text-neutral-900">{item.name}</h4>
-                      <p className="text-amber-600 font-semibold">${(item.price / 100).toFixed(2)}</p>
+                      <p className="text-amber-600 font-semibold">${typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : (item.price / 100).toFixed(2)}</p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           size="sm"

@@ -85,7 +85,7 @@ const productData = [
     category: "equipment",
     stock: 60,
     isActive: true,
-    imageUrl: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=800&h=800&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1598289431512-b97b0917affc?w=800&h=800&fit=crop",
   },
   {
     name: "Academy Resistance Bands Set",
@@ -94,7 +94,7 @@ const productData = [
     category: "equipment",
     stock: 30,
     isActive: true,
-    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=800&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=800&fit=crop&q=80",
   },
   // Accessories (6 items)
   {
@@ -140,7 +140,7 @@ const productData = [
     category: "accessories",
     stock: 50,
     isActive: true,
-    imageUrl: "https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=800&h=800&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=800&h=800&fit=crop",
   },
   {
     name: "Academy Sweat Towel",
