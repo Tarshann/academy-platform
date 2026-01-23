@@ -599,6 +599,14 @@ export async function updateOrderStatus(id: number, status: "pending" | "paid" |
   await db.update(orders).set({ status }).where(eq(orders.id, id));
 }
 
+export async function getUserOrders(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
+}
+
 // ============================================================================
 // LOCATION FUNCTIONS
 // ============================================================================
