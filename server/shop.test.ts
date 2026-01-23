@@ -10,7 +10,7 @@ function createAuthContext(role: "user" | "admin" = "user"): { ctx: TrpcContext 
     openId: "test-user",
     email: "test@example.com",
     name: "Test User",
-    loginMethod: "manus",
+    loginMethod: "oauth",
     role,
     createdAt: new Date(),
     updatedAt: new Date(),
