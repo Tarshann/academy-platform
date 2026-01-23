@@ -1,16 +1,5 @@
 import "dotenv/config";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import { products } from "./drizzle/schema.js";
-import { eq, sql } from "drizzle-orm";
-
-if (!process.env.DATABASE_URL) {
-  console.error("Error: DATABASE_URL is not set in environment variables");
-  process.exit(1);
-}
-
-const client = postgres(process.env.DATABASE_URL);
-const db = drizzle(client);
+import { createProduct } from "./server/db.ts";
 
 const productData = [
   // Apparel (5 items)
@@ -156,11 +145,10 @@ const productData = [
 try {
   console.log("Starting product seeding...");
   
-  // Check if products already exist
-  const existingProducts = await db.select().from(products);
+  const { getAllProducts } = await import("./server/db.ts");
+  const existingProducts = await getAllProducts();
   console.log(`Found ${existingProducts.length} existing products`);
   
-  // Insert products (skip if they already exist by name)
   let inserted = 0;
   let skipped = 0;
   
@@ -170,11 +158,7 @@ try {
       console.log(`⏭️  Skipped: ${product.name} (already exists)`);
       skipped++;
     } else {
-      // Use raw SQL to insert with proper numeric type handling
-      await db.execute(sql`
-        INSERT INTO products (name, description, price, "imageUrl", category, stock, "isActive")
-        VALUES (${product.name}, ${product.description}, ${product.price}::numeric, ${product.imageUrl}, ${product.category}, ${product.stock}, ${product.isActive})
-      `);
+      await createProduct(product);
       console.log(`✓ Added: ${product.name} - $${product.price}`);
       inserted++;
     }
