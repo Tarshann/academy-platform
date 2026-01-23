@@ -92,6 +92,10 @@ export function SchedulesManager() {
       refetch();
     } catch (error: any) {
       toast.error(error?.message || "Failed to delete schedule.");
+      toast.success("Schedule deleted successfully");
+      refetch();
+    } catch (error: any) {
+      toast.error("Failed to delete schedule");
     }
   };
 
@@ -104,6 +108,7 @@ export function SchedulesManager() {
           <div>
             <CardTitle>Schedule Management</CardTitle>
             <CardDescription>Manage upcoming sessions and recurring events</CardDescription>
+            <CardDescription>Create and manage training sessions and events</CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -151,6 +156,61 @@ export function SchedulesManager() {
                     <Label htmlFor="schedule-end">End Time *</Label>
                     <Input
                       id="schedule-end"
+                <DialogDescription>Add a new training session or event</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="program">Program</Label>
+                  <Select value={formData.programId} onValueChange={(value) => setFormData({ ...formData, programId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select program (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {programs?.map((program) => (
+                        <SelectItem key={program.id} value={program.id.toString()}>
+                          {program.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Session title"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Session description (optional)"
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="startTime">Start Time *</Label>
+                    <Input
+                      id="startTime"
+                      type="datetime-local"
+                      value={formData.startTime}
+                      onChange={(e) => {
+                        const dayOfWeek = getDayOfWeek(e.target.value);
+                        setFormData({ ...formData, startTime: e.target.value, dayOfWeek });
+                      }}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="endTime">End Time *</Label>
+                    <Input
+                      id="endTime"
                       type="datetime-local"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
@@ -281,6 +341,63 @@ export function SchedulesManager() {
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
                   Cancel
                 </Button>
+                {formData.dayOfWeek && (
+                  <div className="grid gap-2">
+                    <Label>Day of Week (auto-detected)</Label>
+                    <Badge variant="outline" className="w-fit capitalize">
+                      {formData.dayOfWeek}
+                    </Badge>
+                  </div>
+                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="locationId">Location</Label>
+                  <Select value={formData.locationId} onValueChange={(value) => setFormData({ ...formData, locationId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {locations?.map((location: any) => (
+                        <SelectItem key={location.id} value={location.id.toString()}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="location">Location (Text Fallback)</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Training location (if not using location dropdown)"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="sessionType">Session Type</Label>
+                  <Select value={formData.sessionType || "regular"} onValueChange={(v: any) => setFormData({ ...formData, sessionType: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="regular">Regular Training</SelectItem>
+                      <SelectItem value="open_gym">Open Gym</SelectItem>
+                      <SelectItem value="special">Special Event</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="maxParticipants">Max Participants (optional)</Label>
+                  <Input
+                    id="maxParticipants"
+                    type="number"
+                    value={formData.maxParticipants}
+                    onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                    placeholder="Leave empty for unlimited"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                 <Button onClick={handleCreate} disabled={!formData.title || !formData.startTime || !formData.endTime}>
                   Create Schedule
                 </Button>
@@ -297,6 +414,11 @@ export function SchedulesManager() {
               <TableHead>Time</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Recurring</TableHead>
+              <TableHead>Program</TableHead>
+              <TableHead>Day</TableHead>
+              <TableHead>Start Time</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -324,6 +446,35 @@ export function SchedulesManager() {
                   </TableCell>
                 </TableRow>
               ))
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  No schedules yet. Create your first one!
+                </TableCell>
+              </TableRow>
+            ) : (
+              schedules?.map((schedule: any) => {
+                const dayOfWeek = schedule.startTime ? getDayOfWeek(schedule.startTime.toString()) : null;
+                return (
+                  <TableRow key={schedule.id}>
+                    <TableCell className="font-medium">{schedule.title}</TableCell>
+                    <TableCell>{programs?.find(p => p.id === schedule.programId)?.name || 'N/A'}</TableCell>
+                    <TableCell>
+                      {dayOfWeek && <Badge variant="outline" className="capitalize">{dayOfWeek}</Badge>}
+                    </TableCell>
+                    <TableCell>{new Date(schedule.startTime).toLocaleString()}</TableCell>
+                    <TableCell>{schedule.location || 'TBA'}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="capitalize">
+                        {schedule.sessionType || 'regular'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(schedule.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
