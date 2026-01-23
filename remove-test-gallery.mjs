@@ -15,13 +15,13 @@ try {
   console.log("Removing test gallery photos...");
 
   const testPhotos = await db.execute(sql`
-    SELECT id, title, imageKey, imageUrl
+    SELECT id, title, imagekey, imageurl
     FROM "galleryPhotos"
     WHERE
       title ILIKE '%test%' OR
       description ILIKE '%test%' OR
-      "imageKey" ILIKE '%test%' OR
-      "imageUrl" ILIKE '%test%'
+      imagekey ILIKE '%test%' OR
+      imageurl ILIKE '%test%'
   `);
 
   if (testPhotos.length === 0) {
