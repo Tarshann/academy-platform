@@ -24,9 +24,9 @@ You need to fill in the following environment variables in your `.env` file:
 
 ### 1. Database Configuration
 ```env
-DATABASE_URL=mysql://user:password@host:port/database
+DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 ```
-**Action Required**: Set up your MySQL database and provide the connection string.
+**Action Required**: Set up your PostgreSQL database and provide the connection string.
 
 ### 2. Authentication & OAuth
 ```env
