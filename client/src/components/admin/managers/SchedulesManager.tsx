@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus } from "lucide-react";
@@ -54,6 +55,12 @@ export function SchedulesManager() {
   const locationOptions = useMemo(() => locations ?? [], [locations]);
 
   const resetForm = () => setFormData(initialForm);
+  const getDayOfWeek = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    return days[date.getDay()];
+  };
 
   const handleCreate = async () => {
     if (!formData.title || !formData.startTime || !formData.endTime) {
@@ -104,7 +111,6 @@ export function SchedulesManager() {
           <div>
             <CardTitle>Schedule Management</CardTitle>
             <CardDescription>Manage upcoming sessions and recurring events</CardDescription>
-            <CardDescription>Create and manage training sessions and events</CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -119,6 +125,27 @@ export function SchedulesManager() {
                 <DialogDescription>Set up a training session or event</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="schedule-program">Program</Label>
+                  <Select
+                    value={formData.programId || "none"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, programId: value === "none" ? "" : value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select program (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {programOptions.map((program: any) => (
+                        <SelectItem key={program.id} value={String(program.id)}>
+                          {program.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="schedule-title">Title *</Label>
                   <Input
@@ -138,63 +165,11 @@ export function SchedulesManager() {
                     rows={3}
                   />
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="schedule-start">Start Time *</Label>
                     <Input
                       id="schedule-start"
-                      type="datetime-local"
-                      value={formData.startTime}
-                      onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="schedule-end">End Time *</Label>
-                    <Input
-                      id="schedule-end"
-                <DialogDescription>Add a new training session or event</DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="program">Program</Label>
-                  <Select value={formData.programId} onValueChange={(value) => setFormData({ ...formData, programId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select program (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {programs?.map((program) => (
-                        <SelectItem key={program.id} value={program.id.toString()}>
-                          {program.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Session title"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Session description (optional)"
-                    rows={3}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="startTime">Start Time *</Label>
-                    <Input
-                      id="startTime"
                       type="datetime-local"
                       value={formData.startTime}
                       onChange={(e) => {
@@ -204,60 +179,37 @@ export function SchedulesManager() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="endTime">End Time *</Label>
+                    <Label htmlFor="schedule-end">End Time *</Label>
                     <Input
-                      id="endTime"
+                      id="schedule-end"
                       type="datetime-local"
                       value={formData.endTime}
                       onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     />
                   </div>
                 </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="grid gap-2">
-                    <Label>Program</Label>
-                    <Select
-                      value={formData.programId || "none"}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, programId: value === "none" ? "" : value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select program" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {programOptions.map((program: any) => (
-                          <SelectItem key={program.id} value={String(program.id)}>
-                            {program.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Day of Week</Label>
-                    <Select
-                      value={formData.dayOfWeek || "none"}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, dayOfWeek: value === "none" ? "" : value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select day" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="monday">Monday</SelectItem>
-                        <SelectItem value="tuesday">Tuesday</SelectItem>
-                        <SelectItem value="wednesday">Wednesday</SelectItem>
-                        <SelectItem value="thursday">Thursday</SelectItem>
-                        <SelectItem value="friday">Friday</SelectItem>
-                        <SelectItem value="saturday">Saturday</SelectItem>
-                        <SelectItem value="sunday">Sunday</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="grid gap-2">
+                  <Label>Day of Week</Label>
+                  <Select
+                    value={formData.dayOfWeek || "none"}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, dayOfWeek: value === "none" ? "" : value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="monday">Monday</SelectItem>
+                      <SelectItem value="tuesday">Tuesday</SelectItem>
+                      <SelectItem value="wednesday">Wednesday</SelectItem>
+                      <SelectItem value="thursday">Thursday</SelectItem>
+                      <SelectItem value="friday">Friday</SelectItem>
+                      <SelectItem value="saturday">Saturday</SelectItem>
+                      <SelectItem value="sunday">Sunday</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="grid gap-2">
@@ -345,55 +297,6 @@ export function SchedulesManager() {
                     </Badge>
                   </div>
                 )}
-                <div className="grid gap-2">
-                  <Label htmlFor="locationId">Location</Label>
-                  <Select value={formData.locationId} onValueChange={(value) => setFormData({ ...formData, locationId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location (optional)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">None</SelectItem>
-                      {locations?.map((location: any) => (
-                        <SelectItem key={location.id} value={location.id.toString()}>
-                          {location.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="location">Location (Text Fallback)</Label>
-                  <Input
-                    id="location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    placeholder="Training location (if not using location dropdown)"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="sessionType">Session Type</Label>
-                  <Select value={formData.sessionType || "regular"} onValueChange={(v: any) => setFormData({ ...formData, sessionType: v })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="regular">Regular Training</SelectItem>
-                      <SelectItem value="open_gym">Open Gym</SelectItem>
-                      <SelectItem value="special">Special Event</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="maxParticipants">Max Participants (optional)</Label>
-                  <Input
-                    id="maxParticipants"
-                    type="number"
-                    value={formData.maxParticipants}
-                    onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
-                    placeholder="Leave empty for unlimited"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                 <Button onClick={handleCreate} disabled={!formData.title || !formData.startTime || !formData.endTime}>
                   Create Schedule
                 </Button>
@@ -407,62 +310,48 @@ export function SchedulesManager() {
           <TableHeader>
             <TableRow>
               <TableHead>Title</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Recurring</TableHead>
               <TableHead>Program</TableHead>
               <TableHead>Day</TableHead>
-              <TableHead>Start Time</TableHead>
+              <TableHead>Start</TableHead>
+              <TableHead>End</TableHead>
               <TableHead>Location</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Recurring</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {schedules?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No schedules yet. Create your first session.
                 </TableCell>
               </TableRow>
             ) : (
-              schedules?.map((schedule: any) => (
-                <TableRow key={schedule.id}>
-                  <TableCell className="font-medium">{schedule.title}</TableCell>
-                  <TableCell>
-                    {new Date(schedule.startTime).toLocaleString()} -{" "}
-                    {new Date(schedule.endTime).toLocaleString()}
-                  </TableCell>
-                  <TableCell>{schedule.location || "—"}</TableCell>
-                  <TableCell>{schedule.isRecurring ? "Yes" : "No"}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(schedule.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  No schedules yet. Create your first one!
-                </TableCell>
-              </TableRow>
-            ) : (
               schedules?.map((schedule: any) => {
-                const dayOfWeek = schedule.startTime ? getDayOfWeek(schedule.startTime.toString()) : null;
+                const dayOfWeek = schedule.dayOfWeek || getDayOfWeek(schedule.startTime.toString());
                 return (
                   <TableRow key={schedule.id}>
                     <TableCell className="font-medium">{schedule.title}</TableCell>
-                    <TableCell>{programs?.find(p => p.id === schedule.programId)?.name || 'N/A'}</TableCell>
+                    <TableCell>{programs?.find((program) => program.id === schedule.programId)?.name || "—"}</TableCell>
                     <TableCell>
-                      {dayOfWeek && <Badge variant="outline" className="capitalize">{dayOfWeek}</Badge>}
+                      {dayOfWeek ? (
+                        <Badge variant="outline" className="capitalize">
+                          {dayOfWeek}
+                        </Badge>
+                      ) : (
+                        "—"
+                      )}
                     </TableCell>
                     <TableCell>{new Date(schedule.startTime).toLocaleString()}</TableCell>
-                    <TableCell>{schedule.location || 'TBA'}</TableCell>
+                    <TableCell>{new Date(schedule.endTime).toLocaleString()}</TableCell>
+                    <TableCell>{schedule.location || "—"}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">
-                        {schedule.sessionType || 'regular'}
+                        {schedule.sessionType || "regular"}
                       </Badge>
                     </TableCell>
+                    <TableCell>{schedule.isRecurring ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(schedule.id)}>
                         <Trash2 className="h-4 w-4" />
