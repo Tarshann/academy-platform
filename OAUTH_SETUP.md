@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application uses a **custom OAuth system** (Manus OAuth) for authentication. The OAuth flow works as follows:
+This application uses a **custom OAuth system** for authentication. The OAuth flow works as follows:
 
 1. User clicks "Login" → Redirected to OAuth Portal
 2. User authenticates → OAuth Portal redirects back with authorization code
@@ -26,13 +26,13 @@ OWNER_OPEN_ID=your_admin_user_openid_here
 
 ### 1. Get OAuth Credentials from Your Provider
 
-You need to obtain these from your OAuth provider (Manus or your custom OAuth service):
+You need to obtain these from your OAuth provider:
 
 - **VITE_APP_ID**: Your application's unique identifier
 - **VITE_OAUTH_PORTAL_URL**: The URL where users will be redirected to log in
-  - Example: `https://oauth.example.com` or `https://auth.manus.computer`
+  - Example: `https://oauth.example.com`
 - **OAUTH_SERVER_URL**: The API endpoint for OAuth operations
-  - Example: `https://api.oauth.example.com` or `https://api.manus.computer`
+  - Example: `https://api.oauth.example.com`
 
 **Where to find these:**
 - Check your OAuth provider's dashboard/console

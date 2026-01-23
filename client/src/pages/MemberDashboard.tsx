@@ -1,6 +1,13 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
@@ -8,7 +15,7 @@ import { Loader2, Calendar, Bell, Users, Clock, MapPin, Settings } from "lucide-
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ScheduleItemSkeleton } from "@/components/skeletons/ScheduleItemSkeleton";
 
 // Helper to get day of week from schedule
@@ -22,12 +29,43 @@ const getDayOfWeek = (schedule: any): string | null => {
   return null;
 };
 
+const buildDirectionsUrl = (location: {
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  name?: string | null;
+}) => {
+  if (location.latitude && location.longitude) {
+    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  }
+
+  const addressParts = [
+    location.address,
+    location.city,
+    location.state,
+    location.zipCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  const query = addressParts || location.name;
+  if (!query) return null;
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+};
+
 export default function MemberDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
+  const { data: locations } = trpc.locations.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
   const { data: myAttendance, isLoading: attendanceLoading } = trpc.attendance.getMyAttendance.useQuery(
     undefined,
     { enabled: isAuthenticated }
@@ -37,12 +75,30 @@ export default function MemberDashboard() {
     { enabled: isAuthenticated }
   );
   const registerForSession = trpc.schedules.register.useMutation();
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
+
+  const locationLookup = useMemo(() => {
+    const lookup = new Map<number, any>();
+    locations?.forEach((location: any) => {
+      lookup.set(location.id, location);
+    });
+    return lookup;
+  }, [locations]);
 
   // Group schedules by day of week
   const schedulesByDay = useMemo(() => {
     if (!schedules) return {};
     const grouped: Record<string, any[]> = {};
-    schedules.forEach((schedule: any) => {
+    schedules
+      .filter((schedule: any) => {
+        if (selectedLocation === "all") return true;
+        const locationId = schedule.locationId?.toString();
+        if (locationId) {
+          return locationId === selectedLocation;
+        }
+        return schedule.location === selectedLocation;
+      })
+      .forEach((schedule: any) => {
       const day = getDayOfWeek(schedule);
       if (day) {
         if (!grouped[day]) grouped[day] = [];
@@ -53,7 +109,7 @@ export default function MemberDashboard() {
       }
     });
     return grouped;
-  }, [schedules]);
+  }, [schedules, selectedLocation]);
 
   const dayOrder = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'other'];
   const dayLabels: Record<string, string> = {
@@ -188,6 +244,26 @@ export default function MemberDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {locations && locations.length > 0 && (
+                    <div className="mb-6">
+                      <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                        Filter by location
+                      </label>
+                      <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                        <SelectTrigger className="w-full sm:w-[320px]">
+                          <SelectValue placeholder="All locations" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All locations</SelectItem>
+                          {locations.map((location: any) => (
+                            <SelectItem key={location.id} value={location.id.toString()}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   {schedulesLoading ? (
                     <div className="space-y-4">
                       <ScheduleItemSkeleton />
@@ -213,6 +289,21 @@ export default function MemberDashboard() {
                             </h3>
                             {daySchedules.map((schedule: any) => {
                               const isOpenGym = schedule.sessionType === 'open_gym' || (day === 'sunday' && !schedule.sessionType);
+                              const locationDetails = schedule.locationId
+                                ? locationLookup.get(schedule.locationId)
+                                : null;
+                              const addressParts = [
+                                locationDetails?.address,
+                                locationDetails?.city,
+                                locationDetails?.state,
+                                locationDetails?.zipCode,
+                              ]
+                                .filter(Boolean)
+                                .join(", ");
+                              const directionsUrl = buildDirectionsUrl({
+                                ...locationDetails,
+                                name: schedule.location,
+                              });
                               return (
                                 <div key={schedule.id} className="border border-border rounded-lg p-4 hover:bg-card/50 transition-colors">
                                   <div className="flex items-start justify-between gap-4">
@@ -226,10 +317,11 @@ export default function MemberDashboard() {
                                           <Clock className="h-4 w-4" />
                                           {new Date(schedule.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(schedule.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
-                                        {schedule.location && (
+                                        {(schedule.location || locationDetails?.name) && (
                                           <span className="flex items-center gap-1">
                                             <MapPin className="h-4 w-4" />
-                                            {schedule.location}
+                                            {locationDetails?.name || schedule.location}
+                                            {addressParts ? ` · ${addressParts}` : ""}
                                           </span>
                                         )}
                                         {schedule.sessionType && (
@@ -244,6 +336,16 @@ export default function MemberDashboard() {
                                           </span>
                                         )}
                                       </div>
+                                      {directionsUrl && (
+                                        <a
+                                          href={directionsUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+                                        >
+                                          Get directions
+                                        </a>
+                                      )}
                                       {myAttendance && myAttendance.find((a: any) => a.scheduleId === schedule.id) && (
                                         <div className="mt-2">
                                           <Badge variant="secondary" className="text-xs">

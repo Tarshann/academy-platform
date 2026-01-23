@@ -2,7 +2,7 @@
 
 ## What You Need
 
-This app uses a **custom OAuth system** (appears to be Manus OAuth based on the code). You need 5 values:
+This app uses a **custom OAuth system**. You need 5 values:
 
 1. **VITE_APP_ID** - Your app's ID from OAuth provider
 2. **VITE_OAUTH_PORTAL_URL** - Where users log in (e.g., `https://oauth.example.com`)

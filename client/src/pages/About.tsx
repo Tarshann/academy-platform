@@ -1,9 +1,39 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Users, Target, Trophy, Heart } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { Loader2, MapPin, Users, Target, Trophy, Heart } from "lucide-react";
+
+const buildDirectionsUrl = (location: {
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}) => {
+  if (location.latitude && location.longitude) {
+    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  }
+
+  const addressParts = [
+    location.address,
+    location.city,
+    location.state,
+    location.zipCode,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  if (!addressParts) return null;
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressParts)}`;
+};
 
 export default function About() {
+  const { data: locations, isLoading: locationsLoading } =
+    trpc.locations.list.useQuery();
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
@@ -177,63 +207,62 @@ export default function About() {
         <section className="py-16 bg-card">
           <div className="container">
             <h2 className="text-3xl font-bold mb-12 text-center text-foreground">Our Training Locations</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Sumner Academy Gym</CardTitle>
-                  <p className="text-sm text-muted-foreground">Primary Training Facility</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Our main training facility where most group sessions and individual workouts take place. 
-                    State-of-the-art basketball courts with excellent lighting and climate control.
-                  </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Programs:</strong> Group Training, Individual Workouts, Shooting Lab</p>
-                    <p><strong>Schedule:</strong> Tuesday, Thursday, Sunday sessions</p>
-                  </div>
-                </CardContent>
-              </Card>
+            {locationsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="animate-spin text-primary" size={32} />
+              </div>
+            ) : locations && locations.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                {locations.map((location) => {
+                  const directionsUrl = buildDirectionsUrl(location);
+                  const addressParts = [
+                    location.address,
+                    location.city,
+                    location.state,
+                    location.zipCode,
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
 
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Unlimited Potential Gym</CardTitle>
-                  <p className="text-sm text-muted-foreground">Gallatin, TN</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Our Gallatin location offers convenient access for families in the area. 
-                    Full-size courts perfect for competitive training and open gym sessions.
-                  </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Programs:</strong> Group Training, Open Gym</p>
-                    <p><strong>Schedule:</strong> Sunday Open Gym sessions</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">RT Fisher Gym</CardTitle>
-                  <p className="text-sm text-muted-foreground">Additional Training Facility</p>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4">
-                    Secondary training location used for specialized sessions and overflow capacity. 
-                    Quality facility supporting our growing program needs.
-                  </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Programs:</strong> Group Training, Special Events</p>
-                    <p><strong>Schedule:</strong> Varies by season</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                  return (
+                    <Card key={location.id} className="bg-background border-border">
+                      <CardHeader>
+                        <CardTitle className="text-foreground">{location.name}</CardTitle>
+                        {addressParts && (
+                          <p className="text-sm text-muted-foreground">{addressParts}</p>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        {location.description && (
+                          <p className="text-muted-foreground mb-4">
+                            {location.description}
+                          </p>
+                        )}
+                        {directionsUrl && (
+                          <a
+                            href={directionsUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center text-sm font-medium text-primary hover:underline"
+                          >
+                            <MapPin className="mr-2" size={16} />
+                            Get directions
+                          </a>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground">
+                Locations will be published soon. Please check back for updates.
+              </div>
+            )}
             <div className="mt-12 text-center">
               <p className="text-muted-foreground max-w-3xl mx-auto">
-                <strong>Note:</strong> Training schedules and locations may change seasonally to best serve our athletes. 
-                Current members receive schedule updates via email and the member portal. Specific addresses and directions 
-                are provided upon registration.
+                <strong>Note:</strong> Training schedules and locations may change seasonally to best serve our athletes.
+                Current members receive schedule updates via email and the member portal.
               </p>
             </div>
           </div>
