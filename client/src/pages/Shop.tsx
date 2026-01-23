@@ -47,6 +47,16 @@ export default function Shop() {
 
   const { data: products = [], isLoading } = trpc.shop.products.useQuery();
   const { data: campaigns = [] } = trpc.shop.campaigns.useQuery();
+  const visibleProducts = products.filter(
+    (product: any) =>
+      !String(product.name || "").toLowerCase().includes("test") &&
+      !String(product.description || "").toLowerCase().includes("test")
+  );
+  const visibleCampaigns = campaigns.filter(
+    (campaign: any) =>
+      !String(campaign.name || "").toLowerCase().includes("test") &&
+      !String(campaign.description || "").toLowerCase().includes("test")
+  );
   const checkoutMutation = trpc.shop.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
@@ -213,10 +223,10 @@ export default function Shop() {
       </section>
 
       {/* Active Campaigns */}
-      {campaigns.length > 0 && (
+      {visibleCampaigns.length > 0 && (
         <section className="py-12 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-y border-amber-500/20">
           <div className="container px-6">
-            {campaigns.map((campaign) => (
+            {visibleCampaigns.map((campaign) => (
               <motion.div
                 key={campaign.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -236,7 +246,7 @@ export default function Shop() {
         <div className="container px-6">
           {isLoading ? (
             <div className="text-center text-neutral-600">Loading products...</div>
-          ) : products.length === 0 ? (
+          ) : visibleProducts.length === 0 ? (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
@@ -258,7 +268,7 @@ export default function Shop() {
               animate="visible"
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {products.map((product) => (
+              {visibleProducts.map((product) => (
                 <motion.div key={product.id} variants={itemVariants}>
                   <Card className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border-neutral-200">
                     <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 relative overflow-hidden">

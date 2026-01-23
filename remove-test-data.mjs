@@ -15,32 +15,32 @@ const db = drizzle(client);
 try {
   console.log("Removing test data...");
   
-  // Remove test products (using raw SQL)
-  const testProductsResult = await db.execute(sql`
-    SELECT id, name FROM products 
-    WHERE name ILIKE '%Test%' OR description ILIKE '%Test%'
+  // Remove test products (direct delete)
+  const deletedProducts = await db.execute(sql`
+    DELETE FROM products
+    WHERE name ILIKE '%test%' OR description ILIKE '%test%'
+    RETURNING id, name
   `);
-  
-  if (testProductsResult.length > 0) {
-    for (const product of testProductsResult) {
-      await db.execute(sql`DELETE FROM products WHERE id = ${product.id}`);
+
+  if (deletedProducts.length > 0) {
+    deletedProducts.forEach((product) => {
       console.log(`✓ Removed test product: ${product.name}`);
-    }
+    });
   } else {
     console.log("No test products found");
   }
-  
-  // Remove test campaigns (using raw SQL to avoid schema mismatch)
-  const testCampaignsResult = await db.execute(sql`
-    SELECT id, name FROM campaigns 
-    WHERE name ILIKE '%Test%' OR description ILIKE '%Test%'
+
+  // Remove test campaigns (direct delete)
+  const deletedCampaigns = await db.execute(sql`
+    DELETE FROM campaigns
+    WHERE name ILIKE '%test%' OR description ILIKE '%test%'
+    RETURNING id, name
   `);
-  
-  if (testCampaignsResult.length > 0) {
-    for (const campaign of testCampaignsResult) {
-      await db.execute(sql`DELETE FROM campaigns WHERE id = ${campaign.id}`);
+
+  if (deletedCampaigns.length > 0) {
+    deletedCampaigns.forEach((campaign) => {
       console.log(`✓ Removed test campaign: ${campaign.name}`);
-    }
+    });
   } else {
     console.log("No test campaigns found");
   }
