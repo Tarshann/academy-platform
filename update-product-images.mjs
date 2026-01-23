@@ -13,11 +13,12 @@ const client = postgres(process.env.DATABASE_URL);
 const db = drizzle(client);
 
 const imageUpdates = {
-  "Academy Wristbands Pair": "https://source.unsplash.com/800x800/?wristband,fitness",
-  "Academy Headband": "https://source.unsplash.com/800x800/?headband,fitness",
-  "Academy Compression Sleeve": "https://source.unsplash.com/800x800/?compression-sleeve,athlete",
-  "Academy Jump Rope": "https://source.unsplash.com/800x800/?jump-rope,fitness",
-  "Academy Resistance Bands Set": "https://source.unsplash.com/800x800/?resistance-bands,fitness",
+  "Academy Wristbands Pair": "https://images.unsplash.com/photo-YIviYiVIINc?w=800&h=800&fit=crop&auto=format",
+  "Academy Headband": "https://images.unsplash.com/photo-vMsEBCvxHU0?w=800&h=800&fit=crop&auto=format",
+  "Academy Compression Sleeve": "https://images.unsplash.com/photo-Clv9DfJLwac?w=800&h=800&fit=crop&auto=format",
+  "Academy Jump Rope": "https://images.unsplash.com/photo-7QYd1VxLRbM?w=800&h=800&fit=crop&auto=format",
+  "Academy Resistance Bands Set": "https://images.unsplash.com/photo-1UwtOlER8Fo?w=800&h=800&fit=crop&auto=format",
+  "Academy Sweat Towel": "https://images.unsplash.com/photo-IrJVpN-hme4?w=800&h=800&fit=crop&auto=format",
 };
 
 try {
