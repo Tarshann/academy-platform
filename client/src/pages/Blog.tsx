@@ -5,6 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { Loader2, Calendar, User } from "lucide-react";
+import { BlogPostCardSkeleton } from "@/components/skeletons/BlogPostCardSkeleton";
 import { SEO } from "@/components/SEO";
 
 const categoryLabels: Record<string, string> = {
@@ -42,11 +43,13 @@ export default function Blog() {
         {/* Blog Posts */}
         <section className="py-16">
           <div className="container">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-primary" size={48} />
-              </div>
-            ) : !posts || posts.length === 0 ? (
+                  {isLoading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      <BlogPostCardSkeleton />
+                      <BlogPostCardSkeleton />
+                      <BlogPostCardSkeleton />
+                    </div>
+                  ) : !posts || posts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground text-lg">No blog posts yet. Check back soon!</p>
               </div>
