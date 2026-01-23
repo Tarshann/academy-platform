@@ -1,10 +1,9 @@
 // Export all manager components for easy importing
+export { SchedulesManager } from "./SchedulesManager";
+export { ProgramsManager } from "./ProgramsManager";
+export { AnnouncementsManager } from "./AnnouncementsManager";
+export { ContactsManager } from "./ContactsManager";
+export { AttendanceManager } from "./AttendanceManager";
+export { LocationsManager } from "./LocationsManager";
 export { CoachesManager } from "./CoachesManager";
 export { BlogManager } from "./BlogManager";
-
-// Placeholder exports for managers that will be extracted
-// These will be replaced as we extract them from AdminDashboard.tsx
-export { default as SchedulesManager } from "../../../pages/AdminDashboard";
-export { default as ProgramsManager } from "../../../pages/AdminDashboard";
-export { default as AnnouncementsManager } from "../../../pages/AdminDashboard";
-export { default as ContactsManager } from "../../../pages/AdminDashboard";

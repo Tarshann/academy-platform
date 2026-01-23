@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import * as postgres from "postgres";
+import postgres from "postgres";
 import { ENV } from "./_core/env";
 import { eq, and, or, desc, asc, inArray, gte, lte, sql } from "drizzle-orm";
 import {
