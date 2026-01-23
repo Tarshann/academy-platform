@@ -37,6 +37,7 @@ The Academy Platform is a **full-stack web application** designed to support a y
   - Video library with embedded players
   - E-commerce shop with cart and checkout
   - Blog listing and individual post pages
+  - Location cards with directions links
   - Contact forms (general and volunteer)
   - Search functionality across content
 
@@ -45,6 +46,7 @@ The Academy Platform is a **full-stack web application** designed to support a y
 - **Purpose**: Authenticated member experience
 - **Features**:
   - Dashboard with announcements and schedules grouped by day
+  - Location filtering and directions links for upcoming sessions
   - Session registration functionality with capacity enforcement
   - Attendance stats and history for members
   - Real-time chat with online status indicators
@@ -167,6 +169,10 @@ The Academy operates at **three locations** and should provide location-based sc
 
 **Current Reality:**
 - Locations exist as structured entities with admin management.
+- Member schedules include location filters and directions links.
+- Public-facing pages surface location cards with directions links.
+
+**Gap:** Location details are available, but embedded maps and route previews are not yet part of the public experience.
 - Member schedules show location text but do not provide map links or directions.
 - Public pages do not surface location maps or route guidance.
 

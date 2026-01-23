@@ -92,10 +92,6 @@ export function SchedulesManager() {
       refetch();
     } catch (error: any) {
       toast.error(error?.message || "Failed to delete schedule.");
-      toast.success("Schedule deleted successfully");
-      refetch();
-    } catch (error: any) {
-      toast.error("Failed to delete schedule");
     }
   };
 
