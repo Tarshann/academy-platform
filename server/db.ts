@@ -324,9 +324,46 @@ export async function markContactAsResponded(id: number) {
 export async function getAllGalleryPhotos() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(galleryPhotos)
-    .where(eq(galleryPhotos.isVisible, true))
-    .orderBy(desc(galleryPhotos.createdAt));
+  const photos = await db.select().from(galleryPhotos)
+    .where(eq(galleryPhotos.isVisible, true));
+  
+  // Sort: populated images (with imageUrl) first, then by creation date (newest first)
+  return photos.sort((a, b) => {
+    const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
+    const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
+    
+    if (aHasImage && !bHasImage) return -1;
+    if (!aHasImage && bHasImage) return 1;
+    
+    // Both have images or both don't - sort by date (newest first)
+    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bDate - aDate;
+  });
+}
+
+export async function getGalleryPhotosByCategory(category: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const photos = await db.select().from(galleryPhotos)
+    .where(and(
+      eq(galleryPhotos.isVisible, true),
+      eq(galleryPhotos.category, category as any)
+    ));
+  
+  // Sort: populated images (with imageUrl) first, then by creation date (newest first)
+  return photos.sort((a, b) => {
+    const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
+    const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
+    
+    if (aHasImage && !bHasImage) return -1;
+    if (!aHasImage && bHasImage) return 1;
+    
+    // Both have images or both don't - sort by date (newest first)
+    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bDate - aDate;
+  });
 }
 
 export async function createGalleryPhoto(photoData: InsertGalleryPhoto) {
@@ -560,6 +597,14 @@ export async function updateOrderStatus(id: number, status: "pending" | "paid" |
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(orders).set({ status }).where(eq(orders.id, id));
+}
+
+export async function getUserOrders(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db.select().from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
 }
 
 // ============================================================================
