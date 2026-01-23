@@ -13,8 +13,8 @@ The following environment variables have been configured in your `.env` file:
 - ✅ **RESEND_API_KEY** - Configured
 
 ### Forge API
-- ✅ **VITE_FRONTEND_FORGE_API_URL** - Set to `https://forge.manus.ai`
-- ✅ **BUILT_IN_FORGE_API_URL** - Set to `https://forge.manus.ai`
+- ✅ **VITE_FRONTEND_FORGE_API_URL** - Set to `https://forge.example.com`
+- ✅ **BUILT_IN_FORGE_API_URL** - Set to `https://forge.example.com`
 - ⚠️ **VITE_FRONTEND_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
 - ⚠️ **BUILT_IN_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
 
@@ -24,9 +24,9 @@ You need to fill in the following environment variables in your `.env` file:
 
 ### 1. Database Configuration
 ```env
-DATABASE_URL=mysql://user:password@host:port/database
+DATABASE_URL=postgresql://user:password@host:port/database?sslmode=require
 ```
-**Action Required**: Set up your MySQL database and provide the connection string.
+**Action Required**: Set up your PostgreSQL database and provide the connection string.
 
 ### 2. Authentication & OAuth
 ```env

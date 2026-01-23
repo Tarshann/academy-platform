@@ -445,13 +445,12 @@ client/src/components/admin/
 
 ---
 
-### 5.2 Fix README Documentation Inconsistencies
+### 5.2 Keep Database Documentation Consistent
 
-**Issue Area:** README still mentions MySQL in prerequisites section (line 22) despite using PostgreSQL.
+**Issue Area:** Auxiliary setup guides can drift from the PostgreSQL implementation if not updated together.
 
 **Proposed Fix/Enhancement:**
-- Update README to consistently reference PostgreSQL
-- Add comprehensive setup guide
+- Keep README, setup, and quick-start docs aligned with PostgreSQL
 - Document all environment variables with examples
 - Add troubleshooting section
 - Include architecture diagram
