@@ -133,6 +133,7 @@ The Academy Platform is a **full-stack web application** designed to support a y
 
 **Partially Implemented:**
 - Multi-sport content alignment (data/content still needs consistent tagging and narrative emphasis)
+- Location-based filtering and mapping in member-facing views
 
 **Not Implemented:**
 - Parent dashboard for attendance viewing
@@ -172,6 +173,10 @@ The Academy operates at **three locations** and should provide location-based sc
 - Public-facing pages surface location cards with directions links.
 
 **Gap:** Location details are available, but embedded maps and route previews are not yet part of the public experience.
+- Member schedules show location text but do not provide map links or directions.
+- Public pages do not surface location maps or route guidance.
+
+**Gap:** Location-aware member filtering and public maps/directions are not surfaced in the UI.
 
 ---
 
