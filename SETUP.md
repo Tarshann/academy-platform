@@ -13,8 +13,8 @@ The following environment variables have been configured in your `.env` file:
 - ✅ **RESEND_API_KEY** - Configured
 
 ### Forge API
-- ✅ **VITE_FRONTEND_FORGE_API_URL** - Set to `https://forge.manus.ai`
-- ✅ **BUILT_IN_FORGE_API_URL** - Set to `https://forge.manus.ai`
+- ✅ **VITE_FRONTEND_FORGE_API_URL** - Set to `https://forge.example.com`
+- ✅ **BUILT_IN_FORGE_API_URL** - Set to `https://forge.example.com`
 - ⚠️ **VITE_FRONTEND_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
 - ⚠️ **BUILT_IN_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
 
