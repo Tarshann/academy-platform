@@ -196,7 +196,6 @@ export default function Chat() {
                   );
                 })}
               </div>
-              )}
             </ScrollArea>
 
             {/* Typing Indicator */}

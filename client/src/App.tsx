@@ -107,7 +107,7 @@ function Router() {
         <Route path={"/blog"}>
           <Blog />
         </Route>
-        <Route path={"/blog/:slug">
+        <Route path={"/blog/:slug"}>
           {(params) => <BlogPost params={params} />}
         </Route>
         <Route path={"/settings"}>

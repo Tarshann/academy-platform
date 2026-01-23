@@ -82,6 +82,22 @@ function createTrpcClient(getToken?: () => Promise<string | null>) {
 
 const clerkPublishableKey = getClerkPublishableKey();
 
+const injectAnalyticsScript = () => {
+  const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT;
+  const websiteId = import.meta.env.VITE_ANALYTICS_WEBSITE_ID;
+
+  if (!endpoint || !websiteId) return;
+  if (document.querySelector("script[data-website-id]")) return;
+
+  const script = document.createElement("script");
+  script.defer = true;
+  script.src = `${endpoint.replace(/\/$/, "")}/umami`;
+  script.setAttribute("data-website-id", websiteId);
+  document.head.appendChild(script);
+};
+
+injectAnalyticsScript();
+
 // Component to create tRPC client with Clerk token access
 function TrpcProviderWithClerk({ children }: { children: React.ReactNode }) {
   const { getToken } = useClerkAuth();

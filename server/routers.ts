@@ -61,35 +61,34 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { createSessionRegistration, getScheduleById, getScheduleRegistrations } = await import('./db');
         const { sendSessionRegistrationEmail } = await import('./email');
-        const { TRPCError } = await import('@trpc/server');
-        
-        // Use service layer for business logic
-        const { ScheduleService } = await import('./services/ScheduleService');
-        const { NotificationService } = await import('./services/NotificationService');
-        const { transformError } = await import('./_core/errorHandler');
-        
-        try {
-          // Register user (service handles validation)
-          await ScheduleService.registerUser(ctx.user.id, input.scheduleId);
-          
-          // Get schedule for email
-          const schedule = await getScheduleById(input.scheduleId);
-          
-          // Send confirmation email if preferences allow
-          if (schedule && ctx.user.email) {
-            await NotificationService.sendSessionRegistrationIfAllowed(
-              ctx.user.id,
-              ctx.user.email,
-              ctx.user.name || 'Member',
-              schedule.title,
-              schedule.startTime,
-              schedule.location || 'TBA'
-            );
-          }
-        } catch (error) {
-          throw transformError(error);
+
+        const schedule = await getScheduleById(input.scheduleId);
+        if (!schedule) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Schedule not found' });
         }
-        
+
+        const registrations = await getScheduleRegistrations(input.scheduleId);
+        const alreadyRegistered = registrations.some((registration) => registration.userId === ctx.user.id);
+        if (alreadyRegistered) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'Already registered for this session' });
+        }
+
+        if (schedule.maxParticipants && registrations.length >= schedule.maxParticipants) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'This session is full' });
+        }
+
+        await createSessionRegistration(ctx.user.id, input.scheduleId);
+
+        if (ctx.user.email) {
+          await sendSessionRegistrationEmail({
+            to: ctx.user.email,
+            userName: ctx.user.name || 'Member',
+            sessionTitle: schedule.title,
+            sessionDate: schedule.startTime,
+            sessionLocation: schedule.location || 'TBA',
+          });
+        }
+
         return { success: true };
       }),
   }),
@@ -329,79 +328,6 @@ export const appRouter = router({
     }),
   }),
   
-  blog: router({
-    list: publicProcedure.query(async () => {
-      const { getAllPublishedBlogPosts } = await import('./db');
-      return await getAllPublishedBlogPosts();
-    }),
-    
-    getBySlug: publicProcedure
-      .input(z.object({ slug: z.string() }))
-      .query(async ({ input }) => {
-        const { getBlogPostBySlug } = await import('./db');
-        return await getBlogPostBySlug(input.slug);
-      }),
-    
-    admin: router({
-      list: adminProcedure.query(async () => {
-        const { getAllBlogPostsAdmin } = await import('./db');
-        return await getAllBlogPostsAdmin();
-      }),
-      
-      create: adminProcedure
-        .input(z.object({
-          title: z.string(),
-          slug: z.string(),
-          excerpt: z.string().optional(),
-          content: z.string(),
-          featuredImage: z.string().optional(),
-          category: z.enum(["training_tips", "athlete_spotlight", "news", "events", "other"]),
-          tags: z.string().optional(),
-        }))
-        .mutation(async ({ ctx, input }) => {
-          const { createBlogPost } = await import('./db');
-          await createBlogPost({
-            ...input,
-            authorId: ctx.user.id,
-          });
-          return { success: true };
-        }),
-      
-      update: adminProcedure
-        .input(z.object({
-          id: z.number(),
-          title: z.string().optional(),
-          excerpt: z.string().optional(),
-          content: z.string().optional(),
-          featuredImage: z.string().optional(),
-          category: z.enum(["training_tips", "athlete_spotlight", "news", "events", "other"]).optional(),
-          tags: z.string().optional(),
-        }))
-        .mutation(async ({ input }) => {
-          const { updateBlogPost } = await import('./db');
-          const { id, ...updates } = input;
-          await updateBlogPost(id, updates);
-          return { success: true };
-        }),
-      
-      publish: adminProcedure
-        .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
-          const { publishBlogPost } = await import('./db');
-          await publishBlogPost(input.id);
-          return { success: true };
-        }),
-      
-      delete: adminProcedure
-        .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
-          const { deleteBlogPost } = await import('./db');
-          await deleteBlogPost(input.id);
-          return { success: true };
-        }),
-    }),
-  }),
-
   shop: router({
     // Public shop endpoints
     products: publicProcedure.query(async () => {
