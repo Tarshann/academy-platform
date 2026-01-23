@@ -325,7 +325,11 @@ export async function getAllGalleryPhotos() {
   const db = await getDb();
   if (!db) return [];
   const photos = await db.select().from(galleryPhotos)
-    .where(eq(galleryPhotos.isVisible, true));
+    .where(and(
+      eq(galleryPhotos.isVisible, true),
+      sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
+      sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
+    ));
   
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
   return photos.sort((a, b) => {
@@ -348,7 +352,9 @@ export async function getGalleryPhotosByCategory(category: string) {
   const photos = await db.select().from(galleryPhotos)
     .where(and(
       eq(galleryPhotos.isVisible, true),
-      eq(galleryPhotos.category, category as any)
+      eq(galleryPhotos.category, category as any),
+      sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
+      sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
     ));
   
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
@@ -481,7 +487,11 @@ export async function getAllProducts() {
   const db = await getDb();
   if (!db) return [];
   return await db.select().from(products)
-    .where(eq(products.isActive, true))
+    .where(and(
+      eq(products.isActive, true),
+      sql`lower(${products.name}) NOT LIKE '%test%'`,
+      sql`lower(coalesce(${products.description}, '')) NOT LIKE '%test%'`
+    ))
     .orderBy(asc(products.name));
 }
 
@@ -519,7 +529,26 @@ export async function getAllCampaigns() {
   const db = await getDb();
   if (!db) return [];
   return await db.select().from(campaigns)
-    .where(eq(campaigns.isActive, true))
+    .where(and(
+      eq(campaigns.isActive, true),
+      sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
+      sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
+    ))
+    .orderBy(desc(campaigns.startDate));
+}
+
+export async function getActiveCampaigns() {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  return await db.select().from(campaigns)
+    .where(and(
+      eq(campaigns.isActive, true),
+      lte(campaigns.startDate, now),
+      gte(campaigns.endDate, now),
+      sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
+      sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
+    ))
     .orderBy(desc(campaigns.startDate));
 }
 

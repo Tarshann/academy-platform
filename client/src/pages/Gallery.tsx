@@ -21,6 +21,10 @@ export default function Gallery() {
   const { data: photos, isLoading } = selectedCategory === "all"
     ? trpc.gallery.list.useQuery()
     : trpc.gallery.byCategory.useQuery({ category: selectedCategory });
+  const visiblePhotos = (photos ?? []).filter((photo: any) =>
+    !String(photo.title || "").toLowerCase().includes("test") &&
+    !String(photo.description || "").toLowerCase().includes("test")
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -71,9 +75,9 @@ export default function Gallery() {
                   </Card>
                 ))}
               </div>
-            ) : photos && photos.length > 0 ? (
+            ) : visiblePhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {photos.map((photo) => (
+                {visiblePhotos.map((photo) => (
                   <Card key={photo.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                     <div className="aspect-video relative overflow-hidden bg-muted">
                       <img
