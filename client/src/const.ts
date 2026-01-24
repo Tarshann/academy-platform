@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
 // Helper to get Clerk publishable key - supports both VITE_ and NEXT_PUBLIC_ naming conventions
@@ -21,9 +22,7 @@ export const getLoginUrl = () => {
   const appId = import.meta.env.VITE_APP_ID;
   
   if (!oauthPortalUrl || !appId) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] No authentication configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
-    }
+    logger.warn("[Auth] No authentication configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
     return "#";
   }
   
@@ -39,9 +38,7 @@ export const getLoginUrl = () => {
 
     return url.toString();
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Auth] Failed to create login URL:", error);
-    }
+    logger.error("[Auth] Failed to create login URL:", error);
     return "#";
   }
 };
