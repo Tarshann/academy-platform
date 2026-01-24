@@ -9,7 +9,6 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { logger } from "./logger";
-import { validateEnv } from "./validateEnv";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
