@@ -3,6 +3,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { getDb } from "./db";
 import { chatMessages } from "../drizzle/schema";
 import { desc } from "drizzle-orm";
+import { logger } from "./_core/logger";
 
 export function setupChat(httpServer: HTTPServer) {
   const io = new SocketIOServer(httpServer, {
@@ -17,12 +18,12 @@ export function setupChat(httpServer: HTTPServer) {
   const onlineUsers = new Map<string, { userId: number; userName: string; socketId: string; room: string }>();
 
   io.on("connection", (socket) => {
-    console.log(`[Chat] User connected: ${socket.id}`);
+    logger.info(`[Chat] User connected: ${socket.id}`);
 
     // Join a room
     socket.on("join_room", async ({ room, userId, userName }) => {
       socket.join(room);
-      console.log(`[Chat] User ${userName} (${userId}) joined room: ${room}`);
+      logger.info(`[Chat] User ${userName} (${userId}) joined room: ${room}`);
 
       // Track online user
       const userKey = `${userId}-${room}`;
@@ -49,7 +50,7 @@ export function setupChat(httpServer: HTTPServer) {
           socket.emit("message_history", recentMessages.reverse());
         }
       } catch (error) {
-        console.error("[Chat] Error loading message history:", error);
+        logger.error("[Chat] Error loading message history:", error);
       }
 
       // Notify room
@@ -81,7 +82,7 @@ export function setupChat(httpServer: HTTPServer) {
           io.to(room).emit("receive_message", messageData);
         }
       } catch (error) {
-        console.error("[Chat] Error saving message:", error);
+        logger.error("[Chat] Error saving message:", error);
       }
     });
 
@@ -96,7 +97,7 @@ export function setupChat(httpServer: HTTPServer) {
 
     // Handle disconnect
     socket.on("disconnect", () => {
-      console.log(`[Chat] User disconnected: ${socket.id}`);
+      logger.info(`[Chat] User disconnected: ${socket.id}`);
       
       // Remove from online users
       for (const [key, user] of onlineUsers.entries()) {

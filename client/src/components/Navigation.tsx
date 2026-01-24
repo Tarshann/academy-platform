@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
+import { logger } from "@/lib/logger";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
@@ -103,7 +104,10 @@ export default function Navigation() {
                   <a href={getLoginUrl()} onClick={(e) => {
                     if (getLoginUrl() === "#") {
                       e.preventDefault();
-                      alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+                      if (import.meta.env.DEV) {
+                        alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      }
                     }
                   }}>
                     <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>

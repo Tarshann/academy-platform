@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { logger } from "@/lib/logger";
 
 interface Message {
   id?: number;
@@ -47,9 +48,7 @@ export default function Chat() {
     });
 
     newSocket.on("connect", () => {
-      if (process.env.NODE_ENV === "development") {
-        console.log("Connected to chat server");
-      }
+      logger.info("Connected to chat server");
       newSocket.emit("join_room", {
         room: currentRoom,
         userId: user.id,
