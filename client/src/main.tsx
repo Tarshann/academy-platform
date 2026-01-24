@@ -8,6 +8,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl, getClerkPublishableKey } from "./const";
+import { logger } from "@/lib/logger";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -27,9 +28,7 @@ queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
-    if (process.env.NODE_ENV === "development") {
-      console.error("[API Query Error]", error);
-    }
+    logger.error("[API Query Error]", error);
   }
 });
 
@@ -37,9 +36,7 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
-    if (process.env.NODE_ENV === "development") {
-      console.error("[API Mutation Error]", error);
-    }
+    logger.error("[API Mutation Error]", error);
   }
 });
 
@@ -61,9 +58,7 @@ function createTrpcClient(getToken?: () => Promise<string | null>) {
                 headers.Authorization = `Bearer ${token}`;
               }
             } catch (error) {
-              if (process.env.NODE_ENV === "development") {
-                console.warn("[tRPC] Failed to get Clerk token:", error);
-              }
+              logger.warn("[tRPC] Failed to get Clerk token:", error);
             }
           }
           
@@ -114,19 +109,15 @@ function TrpcProviderWithClerk({ children }: { children: React.ReactNode }) {
 }
 
 // Register Service Worker for PWA
-if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
+if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("Service Worker registered:", registration.scope);
-        }
+        logger.info("Service Worker registered:", registration.scope);
       })
       .catch((error) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("Service Worker registration failed:", error);
-        }
+        logger.warn("Service Worker registration failed:", error);
       });
   });
 }
