@@ -76,6 +76,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `BUILT_IN_FORGE_API_KEY` | Forge API key for backend | Forge service |
 | `VITE_FRONTEND_FORGE_API_URL` | Forge API URL for frontend | Forge service |
 | `VITE_FRONTEND_FORGE_API_KEY` | Forge API key for frontend | Forge service |
+| `VITE_SITE_URL` | Public site URL for SEO/canonical tags | Deployment URL |
 
 ### Optional Variables
 
@@ -84,6 +85,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment mode | `development` |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (for future frontend use) | - |
+| `VITE_SITE_URL` | Public site URL for SEO/canonical tags | `window.location.origin` |
 
 ## 🛠️ Available Scripts
 

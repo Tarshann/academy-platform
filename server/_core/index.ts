@@ -8,6 +8,8 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { logger } from "./logger";
+import { validateEnv } from "./validateEnv";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -29,6 +31,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  validateEnv();
   const app = express();
   const server = createServer(app);
   
@@ -53,7 +56,7 @@ async function startServer() {
       secretKey: ENV.clerkSecretKey,
       publishableKey: ENV.clerkPublishableKey,
     }));
-    console.log("[Clerk] Middleware initialized");
+    logger.info("[Clerk] Middleware initialized");
   } else {
     // Fallback to old OAuth if Clerk not configured
     registerOAuthRoutes(app);
@@ -83,11 +86,11 @@ async function startServer() {
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    logger.warn(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
   server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+    logger.info(`Server running on http://localhost:${port}/`);
   });
 }
 
