@@ -64,11 +64,14 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | Variable | Description | Where to Get |
 |----------|-------------|--------------|
 | `DATABASE_URL` | PostgreSQL connection string | Your database provider |
-| `VITE_APP_ID` | OAuth application ID | OAuth provider |
-| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL | OAuth provider |
-| `OAUTH_SERVER_URL` | OAuth API server URL | OAuth provider |
 | `JWT_SECRET` | Secret key for JWT tokens | Generate a secure random string |
-| `OWNER_OPEN_ID` | OpenID of the admin user | OAuth provider |
+| `CLERK_SECRET_KEY` | Clerk secret key (if using Clerk) | Clerk dashboard |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (if using Clerk) | Clerk dashboard |
+| `CLERK_ADMIN_EMAIL` | Admin email for Clerk role assignment | Your admin user |
+| `VITE_APP_ID` | OAuth application ID (if using OAuth) | OAuth provider |
+| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (if using OAuth) | OAuth provider |
+| `OAUTH_SERVER_URL` | OAuth API server URL (if using OAuth) | OAuth provider |
+| `OWNER_OPEN_ID` | OpenID of the admin user (OAuth flow) | OAuth provider |
 | `STRIPE_SECRET_KEY` | Stripe secret key | [Stripe Dashboard](https://dashboard.stripe.com/apikeys) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | [Stripe Dashboard](https://dashboard.stripe.com/webhooks) |
 | `RESEND_API_KEY` | Resend API key for emails | [Resend Dashboard](https://resend.com/api-keys) |

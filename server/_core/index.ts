@@ -93,4 +93,6 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(error => {
+  logger.error("Server failed to start:", error);
+});
