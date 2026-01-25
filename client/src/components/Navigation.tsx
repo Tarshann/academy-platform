@@ -7,7 +7,6 @@ import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
 import { logger } from "@/lib/logger";
-import { useClerkState } from "@/contexts/ClerkStateContext";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();

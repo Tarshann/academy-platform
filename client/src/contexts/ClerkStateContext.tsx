@@ -8,7 +8,6 @@ type ClerkState = {
   user: UserResource | null;
 };
 
-// Default Clerk state when Clerk is not enabled.
 const ClerkStateContext = createContext<ClerkState>({
   isEnabled: false,
   isSignedIn: false,
@@ -24,6 +23,24 @@ export function ClerkStateProvider({ children }: { children: React.ReactNode }) 
         isEnabled: true,
         isSignedIn: Boolean(isSignedIn),
         user: user ?? null,
+      }}
+    >
+      {children}
+    </ClerkStateContext.Provider>
+  );
+}
+
+export function ClerkStateFallbackProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ClerkStateContext.Provider
+      value={{
+        isEnabled: false,
+        isSignedIn: false,
+        user: null,
       }}
     >
       {children}

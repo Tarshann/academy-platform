@@ -88,6 +88,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `PORT` | Server port | `3000` |
 | `NODE_ENV` | Environment mode | `development` |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (for future frontend use) | - |
+| `VITE_SITE_URL` | Public site URL for SEO/canonical tags | `window.location.origin` |
 
 ## 🛠️ Available Scripts
 
