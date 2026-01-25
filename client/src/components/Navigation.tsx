@@ -4,20 +4,19 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
+import { SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
+import { logger } from "@/lib/logger";
+import { useClerkState } from "@/contexts/ClerkStateContext";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
   const clerkPublishableKey = getClerkPublishableKey();
-  
-  // Always call useUser() unconditionally (hooks rule)
-  // It will work since ClerkProvider is always rendered in main.tsx
-  const { user: clerkUser, isSignedIn } = useUser();
+  const { user: clerkUser, isSignedIn, isEnabled: isClerkEnabled } = useClerkState();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Use Clerk user if available and Clerk is configured, otherwise fall back to database user
+  // Prefer Clerk user when enabled; otherwise fall back to database user
   const user = (clerkPublishableKey && clerkUser) ? {
     id: parseInt(clerkUser.id) || 0,
     openId: clerkUser.id,
@@ -26,7 +25,8 @@ export default function Navigation() {
     role: (clerkUser.publicMetadata?.role as "user" | "admin") || "user",
   } : dbUser;
   
-  const isAuthenticatedFinal = (clerkPublishableKey && isSignedIn) || isAuthenticated;
+  const isAuthenticatedFinal =
+    (clerkPublishableKey && isClerkEnabled && isSignedIn) || isAuthenticated;
 
   const handleLogout = () => {
     logout();
@@ -80,7 +80,7 @@ export default function Navigation() {
                     Admin
                   </Link>
                 )}
-                {clerkPublishableKey ? (
+                {clerkPublishableKey && isClerkEnabled ? (
                   <UserButton afterSignOutUrl="/" />
                 ) : (
                   <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -90,7 +90,7 @@ export default function Navigation() {
               </>
             ) : (
               <>
-                {clerkPublishableKey ? (
+                {clerkPublishableKey && isClerkEnabled ? (
                   <>
                     <SignInButton mode="modal" afterSignInUrl="/">
                       <Button variant="outline" size="sm">Login</Button>
@@ -103,7 +103,10 @@ export default function Navigation() {
                   <a href={getLoginUrl()} onClick={(e) => {
                     if (getLoginUrl() === "#") {
                       e.preventDefault();
-                      alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+                      if (import.meta.env.DEV) {
+                        alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      }
                     }
                   }}>
                     <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>

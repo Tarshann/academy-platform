@@ -1,18 +1,9 @@
 // Service Worker for The Academy Platform
-const CACHE_NAME = "academy-platform-v1";
-const RUNTIME_CACHE = "academy-runtime-v1";
+const CACHE_NAME = "academy-platform-v2";
+const RUNTIME_CACHE = "academy-runtime-v2";
 
 // Assets to cache on install
-const PRECACHE_ASSETS = [
-  "/",
-  "/programs",
-  "/about",
-  "/contact",
-  "/faqs",
-  "/gallery",
-  "/videos",
-  "/shop",
-];
+const PRECACHE_ASSETS = ["/", "/manifest.json", "/academy-logo.jpeg"];
 
 // Install event - cache assets
 self.addEventListener("install", (event) => {
@@ -38,7 +29,7 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - serve from cache with safe network fallback
 self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (event.request.method !== "GET") {
@@ -55,6 +46,26 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    return;
+  }
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const responseToCache = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put("/", responseToCache);
+          });
+          return response;
+        })
+        .catch(() => caches.match("/"))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
@@ -62,15 +73,12 @@ self.addEventListener("fetch", (event) => {
       }
 
       return fetch(event.request).then((response) => {
-        // Don't cache if not a valid response
         if (!response || response.status !== 200 || response.type !== "basic") {
           return response;
         }
 
-        // Clone the response
         const responseToCache = response.clone();
 
-        // Cache the response
         caches.open(RUNTIME_CACHE).then((cache) => {
           cache.put(event.request, responseToCache);
         });
