@@ -11,7 +11,9 @@ interface SEOProps {
 const SITE_NAME = "The Academy";
 const DEFAULT_DESCRIPTION = "Elite youth basketball program prioritizing player development in all areas, ages 8-18. Expert training in speed, agility, quickness, and strength.";
 const DEFAULT_IMAGE = "/academy-logo.jpeg";
-const SITE_URL = typeof window !== "undefined" ? window.location.origin : "";
+const SITE_URL =
+  import.meta.env.VITE_SITE_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "");
 
 export function SEO({ 
   title, 
