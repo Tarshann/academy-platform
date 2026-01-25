@@ -1,10 +1,11 @@
 import { Resend } from 'resend';
+import { logger } from "./_core/logger";
 
 let resend: Resend | null = null;
 
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY) {
-    console.warn('[Email] RESEND_API_KEY not configured. Email notifications disabled.');
+    logger.warn('[Email] RESEND_API_KEY not configured. Email notifications disabled.');
     return null;
   }
   
@@ -30,7 +31,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
   const client = getResend();
   
   if (!client) {
-    console.warn('[Email] Skipping email send - service not configured');
+    logger.warn('[Email] Skipping email send - service not configured');
     return false;
   }
 
@@ -44,7 +45,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
       html: options.html,
     });
     
-    console.log(`[Email] Sent to ${options.to}: ${options.subject}`);
+    logger.info(`[Email] Sent to ${options.to}: ${options.subject}`);
     return true;
   } catch (error) {
     console.error('[Email] Failed to send:', error);
