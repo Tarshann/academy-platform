@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
+import { logger } from "./_core/logger";
 import { getDb } from "./db";
 import { payments, subscriptions, users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
@@ -17,7 +18,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {
-    console.error("[Webhook] No signature provided");
+    logger.error("[Webhook] No signature provided");
     return res.status(400).send("No signature");
   }
 
@@ -30,19 +31,19 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       ENV.stripeWebhookSecret
     );
   } catch (err) {
-    console.error("[Webhook] Signature verification failed:", err);
+    logger.error("[Webhook] Signature verification failed:", err);
     return res.status(400).send(`Webhook Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
 
   // Handle test events
   if (event.id.startsWith('evt_test_')) {
-    console.log("[Webhook] Test event detected, returning verification response");
+    logger.info("[Webhook] Test event detected, returning verification response");
     return res.json({ 
       verified: true,
     });
   }
 
-  console.log(`[Webhook] Processing event: ${event.type} (${event.id})`);
+  logger.info(`[Webhook] Processing event: ${event.type} (${event.id})`);
 
   try {
     switch (event.type) {
@@ -72,28 +73,28 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         break;
 
       default:
-        console.log(`[Webhook] Unhandled event type: ${event.type}`);
+        logger.info(`[Webhook] Unhandled event type: ${event.type}`);
     }
 
     res.json({ received: true });
   } catch (error) {
-    console.error("[Webhook] Error processing event:", error);
+    logger.error("[Webhook] Error processing event:", error);
     res.status(500).json({ error: "Webhook processing failed" });
   }
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  console.log(`[Webhook] Checkout session completed: ${session.id}`);
+  logger.info(`[Webhook] Checkout session completed: ${session.id}`);
   
   const db = await getDb();
   if (!db) {
-    console.error("[Webhook] Database not available");
+    logger.error("[Webhook] Database not available");
     return;
   }
 
   const userId = session.client_reference_id ? parseInt(session.client_reference_id) : null;
   if (!userId) {
-    console.error("[Webhook] No user ID in session metadata");
+    logger.error("[Webhook] No user ID in session metadata");
     return;
   }
   
@@ -124,11 +125,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[Webhook] Payment intent succeeded: ${paymentIntent.id}`);
+  logger.info(`[Webhook] Payment intent succeeded: ${paymentIntent.id}`);
   
   const db = await getDb();
   if (!db) {
-    console.error("[Webhook] Database not available");
+    logger.error("[Webhook] Database not available");
     return;
   }
 
@@ -136,7 +137,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
   const userId = metadata.user_id ? parseInt(metadata.user_id) : null;
   
   if (!userId) {
-    console.error("[Webhook] No user ID in payment intent metadata");
+    logger.error("[Webhook] No user ID in payment intent metadata");
     return;
   }
 
@@ -172,7 +173,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
-  console.log(`[Webhook] Payment intent failed: ${paymentIntent.id}`);
+  logger.info(`[Webhook] Payment intent failed: ${paymentIntent.id}`);
   
   const db = await getDb();
   if (!db) return;
@@ -186,7 +187,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  console.log(`[Webhook] Subscription updated: ${subscription.id}`);
+  logger.info(`[Webhook] Subscription updated: ${subscription.id}`);
   
   const db = await getDb();
   if (!db) return;
@@ -195,7 +196,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   const userId = metadata.user_id ? parseInt(metadata.user_id) : null;
   
   if (!userId) {
-    console.error("[Webhook] No user ID in subscription metadata");
+    logger.error("[Webhook] No user ID in subscription metadata");
     return;
   }
 
@@ -227,7 +228,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  console.log(`[Webhook] Subscription deleted: ${subscription.id}`);
+  logger.info(`[Webhook] Subscription deleted: ${subscription.id}`);
   
   const db = await getDb();
   if (!db) return;
@@ -241,7 +242,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  console.log(`[Webhook] Invoice paid: ${invoice.id}`);
+  logger.info(`[Webhook] Invoice paid: ${invoice.id}`);
   // Invoice payments are already tracked via payment_intent.succeeded
   // This is here for logging and potential future use
 }
