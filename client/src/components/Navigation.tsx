@@ -4,17 +4,14 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
+import { SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
 import { logger } from "@/lib/logger";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
   const clerkPublishableKey = getClerkPublishableKey();
-  
-  // Always call useUser() unconditionally (hooks rule)
-  // It will work since ClerkProvider is always rendered in main.tsx
-  const { user: clerkUser, isSignedIn } = useUser();
+  const { user: clerkUser, isSignedIn, isEnabled: isClerkEnabled } = useClerkState();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -27,7 +24,8 @@ export default function Navigation() {
     role: (clerkUser.publicMetadata?.role as "user" | "admin") || "user",
   } : dbUser;
   
-  const isAuthenticatedFinal = (clerkPublishableKey && isSignedIn) || isAuthenticated;
+  const isAuthenticatedFinal =
+    (clerkPublishableKey && isClerkEnabled && isSignedIn) || isAuthenticated;
 
   const handleLogout = () => {
     logout();
@@ -81,7 +79,7 @@ export default function Navigation() {
                     Admin
                   </Link>
                 )}
-                {clerkPublishableKey ? (
+                {clerkPublishableKey && isClerkEnabled ? (
                   <UserButton afterSignOutUrl="/" />
                 ) : (
                   <Button variant="outline" size="sm" onClick={handleLogout}>
@@ -91,7 +89,7 @@ export default function Navigation() {
               </>
             ) : (
               <>
-                {clerkPublishableKey ? (
+                {clerkPublishableKey && isClerkEnabled ? (
                   <>
                     <SignInButton mode="modal" afterSignInUrl="/">
                       <Button variant="outline" size="sm">Login</Button>

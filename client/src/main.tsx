@@ -76,6 +76,7 @@ function createTrpcClient(getToken?: () => Promise<string | null>) {
 }
 
 const clerkPublishableKey = getClerkPublishableKey();
+const isValidClerkKey = /^pk_(test|live)_/.test(clerkPublishableKey);
 
 const injectAnalyticsScript = () => {
   const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT;
@@ -108,6 +109,16 @@ function TrpcProviderWithClerk({ children }: { children: React.ReactNode }) {
   );
 }
 
+function TrpcProviderWithoutClerk({ children }: { children: React.ReactNode }) {
+  const trpcClient = React.useMemo(() => createTrpcClient(), []);
+
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      {children}
+    </trpc.Provider>
+  );
+}
+
 // Register Service Worker for PWA
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
@@ -128,11 +139,23 @@ const root = createRoot(document.getElementById("root")!);
 // This ensures useUser() hook can always be called without errors
 // If key is empty/invalid, Clerk will handle it gracefully
 root.render(
-  <ClerkProvider publishableKey={clerkPublishableKey || "pk_test_placeholder"}>
-    <TrpcProviderWithClerk>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </TrpcProviderWithClerk>
-  </ClerkProvider>
+  isValidClerkKey ? (
+    <ClerkProvider publishableKey={clerkPublishableKey}>
+      <ClerkStateProvider>
+        <TrpcProviderWithClerk>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </TrpcProviderWithClerk>
+      </ClerkStateProvider>
+    </ClerkProvider>
+  ) : (
+    <ClerkStateFallbackProvider>
+      <TrpcProviderWithoutClerk>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </TrpcProviderWithoutClerk>
+    </ClerkStateFallbackProvider>
+  )
 );
