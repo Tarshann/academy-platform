@@ -9,7 +9,6 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl, getClerkPublishableKey } from "./const";
 import { logger } from "@/lib/logger";
-import { ClerkStateProvider } from "@/contexts/ClerkStateContext";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -151,10 +150,12 @@ root.render(
       </ClerkStateProvider>
     </ClerkProvider>
   ) : (
-    <TrpcProviderWithoutClerk>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
-    </TrpcProviderWithoutClerk>
+    <ClerkStateFallbackProvider>
+      <TrpcProviderWithoutClerk>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </TrpcProviderWithoutClerk>
+    </ClerkStateFallbackProvider>
   )
 );
