@@ -9,10 +9,6 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl, getClerkPublishableKey } from "./const";
 import { logger } from "@/lib/logger";
-import {
-  ClerkStateFallbackProvider,
-  ClerkStateProvider,
-} from "@/contexts/ClerkStateContext";
 import "./index.css";
 
 const queryClient = new QueryClient();
