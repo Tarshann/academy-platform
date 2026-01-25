@@ -15,7 +15,7 @@ export default function Navigation() {
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Use Clerk user if available and Clerk is configured, otherwise fall back to database user
+  // Prefer Clerk user when enabled; otherwise fall back to database user
   const user = (clerkPublishableKey && clerkUser) ? {
     id: parseInt(clerkUser.id) || 0,
     openId: clerkUser.id,

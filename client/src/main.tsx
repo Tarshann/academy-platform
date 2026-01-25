@@ -135,7 +135,7 @@ if ("serviceWorker" in navigator && import.meta.env.PROD) {
 
 const root = createRoot(document.getElementById("root")!);
 
-// Always render ClerkProvider to avoid hook errors
+// Render ClerkProvider only when a valid publishable key is present
 // This ensures useUser() hook can always be called without errors
 // If key is empty/invalid, Clerk will handle it gracefully
 root.render(
