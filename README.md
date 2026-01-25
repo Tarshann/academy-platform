@@ -164,6 +164,10 @@ pnpm db:push
 
 ## 🧪 Testing
 
+## 🚢 Deployment Notes (Vercel)
+
+If the deployed site renders a blank page, ensure the Vercel project is set to **Public** (no password protection or SSO gate). Vercel protections can return a 401 and prevent the SPA from loading. Disable deployment protection for production or add the correct access configuration before launch.
+
 Run tests with:
 ```bash
 pnpm test
