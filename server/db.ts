@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { ENV } from "./_core/env";
+import { logger } from "./_core/logger";
 import { eq, and, or, desc, asc, inArray, gte, lte, sql } from "drizzle-orm";
 import {
   users,
@@ -52,7 +53,7 @@ let _client: ReturnType<typeof postgres> | null = null;
 
 export async function getDb() {
   if (!ENV.databaseUrl) {
-    console.error("[DB] DATABASE_URL not set");
+    logger.error("[DB] DATABASE_URL not set");
     return null;
   }
 
@@ -61,11 +62,14 @@ export async function getDb() {
   }
 
   try {
-    _client = postgres(ENV.databaseUrl);
+    _client = postgres(ENV.databaseUrl, {
+      ssl: ENV.isProduction ? "require" : undefined,
+      max: ENV.isProduction ? 10 : 5,
+    });
     _db = drizzle(_client);
     return _db;
   } catch (error) {
-    console.error("[DB] Failed to connect:", error);
+    logger.error("[DB] Failed to connect:", error);
     return null;
   }
 }
