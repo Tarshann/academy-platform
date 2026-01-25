@@ -64,11 +64,14 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | Variable | Description | Where to Get |
 |----------|-------------|--------------|
 | `DATABASE_URL` | PostgreSQL connection string | Your database provider |
-| `VITE_APP_ID` | OAuth application ID | OAuth provider |
-| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL | OAuth provider |
-| `OAUTH_SERVER_URL` | OAuth API server URL | OAuth provider |
 | `JWT_SECRET` | Secret key for JWT tokens | Generate a secure random string |
-| `OWNER_OPEN_ID` | OpenID of the admin user | OAuth provider |
+| `CLERK_SECRET_KEY` | Clerk secret key (if using Clerk) | Clerk dashboard |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (if using Clerk, must be valid `pk_test_` or `pk_live_`) | Clerk dashboard |
+| `CLERK_ADMIN_EMAIL` | Admin email for Clerk role assignment | Your admin user |
+| `VITE_APP_ID` | OAuth application ID (if using OAuth) | OAuth provider |
+| `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (if using OAuth) | OAuth provider |
+| `OAUTH_SERVER_URL` | OAuth API server URL (if using OAuth) | OAuth provider |
+| `OWNER_OPEN_ID` | OpenID of the admin user (OAuth flow) | OAuth provider |
 | `STRIPE_SECRET_KEY` | Stripe secret key | [Stripe Dashboard](https://dashboard.stripe.com/apikeys) |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | [Stripe Dashboard](https://dashboard.stripe.com/webhooks) |
 | `RESEND_API_KEY` | Resend API key for emails | [Resend Dashboard](https://resend.com/api-keys) |
@@ -76,6 +79,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `BUILT_IN_FORGE_API_KEY` | Forge API key for backend | Forge service |
 | `VITE_FRONTEND_FORGE_API_URL` | Forge API URL for frontend | Forge service |
 | `VITE_FRONTEND_FORGE_API_KEY` | Forge API key for frontend | Forge service |
+| `VITE_SITE_URL` | Public site URL for SEO/canonical tags | Deployment URL |
 
 ### Optional Variables
 
@@ -158,6 +162,10 @@ pnpm db:push
 **Note**: For production deployments, use Drizzle Kit migrations instead of `db:push` to track migration history and enable rollbacks.
 
 ## 🧪 Testing
+
+## 🚢 Deployment Notes (Vercel)
+
+If the deployed site renders a blank page, ensure the Vercel project is set to **Public** (no password protection or SSO gate). Vercel protections can return a 401 and prevent the SPA from loading. Disable deployment protection for production or add the correct access configuration before launch. Also verify `VITE_CLERK_PUBLISHABLE_KEY` is a valid Clerk publishable key; an invalid key will stop the app from rendering.
 
 Run tests with:
 ```bash

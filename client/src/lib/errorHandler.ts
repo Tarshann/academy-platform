@@ -1,5 +1,6 @@
 import { TRPCClientError } from "@trpc/client";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 
 /**
  * Get user-friendly error message from tRPC error
@@ -23,10 +24,7 @@ export function handleError(error: unknown, context?: string) {
   
   toast.error(fullMessage);
   
-  // Log to console in development
-  if (process.env.NODE_ENV === "development") {
-    console.error(`[ErrorHandler] ${context || "Error"}:`, error);
-  }
+  logger.error(`[ErrorHandler] ${context || "Error"}:`, error);
 }
 
 /**

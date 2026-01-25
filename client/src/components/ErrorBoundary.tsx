@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { AlertTriangle, RotateCcw, Home } from "lucide-react";
 import { Component, ReactNode } from "react";
 import { Link } from "wouter";
+import { logger } from "@/lib/logger";
 
 interface Props {
   children: ReactNode;
@@ -26,7 +27,7 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console for debugging (always log errors, even in production)
     // Consider sending to error tracking service in production
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    logger.error("ErrorBoundary caught an error:", error, errorInfo);
     this.setState({ errorInfo });
   }
 
@@ -50,7 +51,7 @@ class ErrorBoundary extends Component<Props, State> {
               We're sorry for the inconvenience. You can try reloading the page or return to the homepage.
             </p>
 
-            {process.env.NODE_ENV === "development" && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="p-4 w-full rounded bg-muted overflow-auto mb-6">
                 <summary className="cursor-pointer text-sm font-semibold mb-2">
                   Error Details (Development Only)

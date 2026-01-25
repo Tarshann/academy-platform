@@ -1,10 +1,25 @@
+import { logger } from "@/lib/logger";
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+
+const CLERK_KEY_REGEX = /^pk_(test|live)_[a-zA-Z0-9]+$/;
 
 // Helper to get Clerk publishable key - supports both VITE_ and NEXT_PUBLIC_ naming conventions
 export const getClerkPublishableKey = (): string => {
-  return import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || 
-         import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || 
-         "";
+  const key =
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+    import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    "";
+
+  if (!key) return "";
+
+  if (!CLERK_KEY_REGEX.test(key)) {
+    logger.warn(
+      "[Auth] Clerk publishable key is invalid. Falling back to OAuth."
+    );
+    return "";
+  }
+
+  return key;
 };
 
 // Generate login URL - supports both Clerk and legacy OAuth
@@ -21,9 +36,7 @@ export const getLoginUrl = () => {
   const appId = import.meta.env.VITE_APP_ID;
   
   if (!oauthPortalUrl || !appId) {
-    if (process.env.NODE_ENV === "development") {
-      console.warn("[Auth] No authentication configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
-    }
+    logger.warn("[Auth] No authentication configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
     return "#";
   }
   
@@ -39,9 +52,7 @@ export const getLoginUrl = () => {
 
     return url.toString();
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Auth] Failed to create login URL:", error);
-    }
+    logger.error("[Auth] Failed to create login URL:", error);
     return "#";
   }
 };

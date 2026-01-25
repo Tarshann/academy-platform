@@ -6,13 +6,11 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
+import { logger } from "@/lib/logger";
 
-export default function Navigation() {
+function NavigationWithClerk() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
   const clerkPublishableKey = getClerkPublishableKey();
-  
-  // Always call useUser() unconditionally (hooks rule)
-  // It will work since ClerkProvider is always rendered in main.tsx
   const { user: clerkUser, isSignedIn } = useUser();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -103,7 +101,10 @@ export default function Navigation() {
                   <a href={getLoginUrl()} onClick={(e) => {
                     if (getLoginUrl() === "#") {
                       e.preventDefault();
-                      alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+                      if (import.meta.env.DEV) {
+                        alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      }
                     }
                   }}>
                     <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>
@@ -196,4 +197,178 @@ export default function Navigation() {
       </div>
     </nav>
   );
+}
+
+function NavigationWithoutClerk() {
+  const { user: dbUser, isAuthenticated, logout } = useAuth();
+  const clerkPublishableKey = getClerkPublishableKey();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setMobileMenuOpen(false);
+  };
+
+  return (
+    <nav className="bg-card border-b border-border sticky top-0 z-50">
+      <div className="container">
+        <div className="flex items-center justify-between h-16">
+          <Link href="/" className="flex items-center gap-3">
+            <img src="/academy-logo.jpeg" alt="The Academy" className="h-10 w-10 rounded-full" />
+            <span className="text-xl font-bold text-foreground">THE ACADEMY</span>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-6">
+            <Link href="/" className="text-foreground hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link href="/programs" className="text-foreground hover:text-primary transition-colors">
+              Programs
+            </Link>
+            <Link href="/about" className="text-foreground hover:text-primary transition-colors">
+              About
+            </Link>
+            <Link href="/gallery" className="text-foreground hover:text-primary transition-colors">
+              Gallery
+            </Link>
+            <Link href="/videos" className="text-foreground hover:text-primary transition-colors">
+              Videos
+            </Link>
+            <Link href="/shop" className="text-foreground hover:text-primary transition-colors">
+              Shop
+            </Link>
+            <Link href="/faqs" className="text-foreground hover:text-primary transition-colors">
+              FAQs
+            </Link>
+            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
+              Contact
+            </Link>
+
+            {isAuthenticated ? (
+              <>
+                <Link href="/member" className="text-foreground hover:text-primary transition-colors">
+                  Dashboard
+                </Link>
+                {dbUser?.role === "admin" && (
+                  <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+                    Admin
+                  </Link>
+                )}
+                <Button variant="outline" size="sm" onClick={handleLogout}>
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <a href={getLoginUrl()} onClick={(e) => {
+                if (getLoginUrl() === "#") {
+                  e.preventDefault();
+                  logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+                  if (import.meta.env.DEV) {
+                    alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                  }
+                }
+              }}>
+                <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>
+                  Login
+                </Button>
+              </a>
+            )}
+          </div>
+
+          <button
+            className="md:hidden text-foreground"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {mobileMenuOpen && (
+          <div
+            id="mobile-menu"
+            className="md:hidden py-4 border-t border-border"
+            role="menu"
+            aria-label="Main navigation"
+          >
+            <div className="flex flex-col gap-4">
+              <div className="px-4 pb-2">
+                <SearchBar />
+              </div>
+              <Link href="/" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Home
+              </Link>
+              <Link href="/programs" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Programs
+              </Link>
+              <Link href="/about" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                About
+              </Link>
+              <Link href="/gallery" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Gallery
+              </Link>
+              <Link href="/videos" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Videos
+              </Link>
+              <Link href="/shop" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Shop
+              </Link>
+              <Link href="/faqs" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                FAQs
+              </Link>
+              <Link href="/contact" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Contact
+              </Link>
+
+              {isAuthenticated ? (
+                <>
+                  <Link href="/member" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                  {dbUser?.role === "admin" && (
+                    <Link href="/admin" className="px-4 text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                      Admin
+                    </Link>
+                  )}
+                  <div className="px-4">
+                    <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
+                      Logout
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="px-4">
+                  <a href={getLoginUrl()} onClick={(e) => {
+                    if (getLoginUrl() === "#") {
+                      e.preventDefault();
+                      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+                      if (import.meta.env.DEV) {
+                        alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
+                      }
+                    }
+                  }}>
+                    <Button variant="outline" size="sm" className="w-full" disabled={getLoginUrl() === "#"}>
+                      Login
+                    </Button>
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+}
+
+export default function Navigation() {
+  const clerkPublishableKey = getClerkPublishableKey();
+
+  if (clerkPublishableKey) {
+    return <NavigationWithClerk />;
+  }
+
+  return <NavigationWithoutClerk />;
 }

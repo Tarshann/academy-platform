@@ -3,7 +3,7 @@ import { trpc } from "@/lib/trpc";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Calendar, Users, MessageSquare, Settings, UserPlus } from "lucide-react";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
@@ -20,9 +20,13 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("schedules");
 
-  // Redirect non-admin users
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'admin')) {
+      setLocation('/');
+    }
+  }, [loading, user, setLocation]);
+
   if (!loading && (!user || user.role !== 'admin')) {
-    setLocation('/');
     return null;
   }
 

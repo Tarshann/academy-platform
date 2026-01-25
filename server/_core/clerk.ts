@@ -1,6 +1,7 @@
 import { createClerkClient } from "@clerk/backend";
 import { getAuth } from "@clerk/express";
 import { ENV } from "./env";
+import { logger } from "./logger";
 import * as db from "../db";
 import { ONE_YEAR_MS } from "@shared/const";
 import { SignJWT, jwtVerify } from "jose";
@@ -19,9 +20,9 @@ if (ENV.clerkSecretKey) {
     secretKey: ENV.clerkSecretKey,
     publishableKey: ENV.clerkPublishableKey,
   });
-  console.log("[Clerk] Client initialized");
+  logger.info("[Clerk] Client initialized");
 } else {
-  console.warn("[Clerk] CLERK_SECRET_KEY not configured. Authentication will not work.");
+  logger.warn("[Clerk] CLERK_SECRET_KEY not configured. Authentication will not work.");
 }
 
 // Export getter function for the client
@@ -77,7 +78,7 @@ export async function verifySessionToken(
 
     return { openId, appId, name };
   } catch (error) {
-    console.warn("[Clerk] Session verification failed:", error);
+    logger.warn("[Clerk] Session verification failed:", error);
     return null;
   }
 }
@@ -119,7 +120,7 @@ export async function syncClerkUserToDatabase(clerkUserId: string) {
 
     return await db.getUserByOpenId(openId);
   } catch (error) {
-    console.error("[Clerk] Failed to sync user:", error);
+    logger.error("[Clerk] Failed to sync user:", error);
     throw error;
   }
 }
@@ -153,7 +154,7 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
       try {
         user = await syncClerkUserToDatabase(clerkUserId);
       } catch (error) {
-        console.error("[Clerk] Failed to sync user:", error);
+        logger.error("[Clerk] Failed to sync user:", error);
         return null;
       }
     }
@@ -169,7 +170,7 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
     return user;
   } catch (error) {
     // Authentication is optional for public routes
-    console.warn("[Clerk] Authentication failed:", error);
+    logger.warn("[Clerk] Authentication failed:", error);
     return null;
   }
 }
