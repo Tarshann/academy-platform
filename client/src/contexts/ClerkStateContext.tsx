@@ -30,6 +30,24 @@ export function ClerkStateProvider({ children }: { children: React.ReactNode }) 
   );
 }
 
+export function ClerkStateFallbackProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ClerkStateContext.Provider
+      value={{
+        isEnabled: false,
+        isSignedIn: false,
+        user: null,
+      }}
+    >
+      {children}
+    </ClerkStateContext.Provider>
+  );
+}
+
 export function useClerkState() {
   return useContext(ClerkStateContext);
 }
