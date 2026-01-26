@@ -41,7 +41,7 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path={"/"}>
-          <SEO title="Home" description="Elite youth multi-sport training for basketball, football, and soccer athletes ages 8-18." />
+          <SEO title="Home" description="Elite youth multi-sport training for basketball, football, and soccer athletes." />
           <Home />
         </Route>
         <Route path={"/programs"}>

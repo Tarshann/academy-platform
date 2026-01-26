@@ -137,7 +137,7 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Group Sessions</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • Limited to 8 players</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
@@ -163,17 +163,17 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Individual Workouts</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • One-on-one training</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • One-on-one training</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Whether you're actively taking part in summer basketball camps to get better at playing 
-                      or if you're working hard on your own to improve your skills, it's important to give 
-                      players personalized basketball drills that will effectively enhance their abilities.
+                      One-on-one sessions are tailored to each athlete's sport, position, and performance goals.
+                      Training plans blend SAQ work, strength fundamentals, and skill development to build complete
+                      athletes across basketball, football, and soccer.
                     </p>
                     <p className="text-muted-foreground mb-4">
-                      Our coaches focus on each player's unique strengths, ensuring maximum improvement 
-                      through customized training plans.
+                      Coaches focus on each athlete's unique strengths, ensuring meaningful progress through
+                      personalized programming and targeted feedback.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$60 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
@@ -188,7 +188,7 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Shooting Lab</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • Limited to 8 players per session</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players per session</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
@@ -214,12 +214,12 @@ export default function Programs() {
                 <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Skills Class</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • Fundamentals focus</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • Fundamentals focus</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Focused skill development sessions covering ball handling, shooting form, footwork, 
-                      and defensive fundamentals. Perfect for players looking to build a strong foundation.
+                      Focused development sessions covering footwork, balance, coordination, and sport-specific
+                      fundamentals. Perfect for athletes looking to build a strong foundation across multiple sports.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$15 <span className="text-sm text-muted-foreground font-normal">per class</span></p>
@@ -237,7 +237,7 @@ export default function Programs() {
                       POPULAR
                     </div>
                     <CardTitle className="text-foreground">Academy Group Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • Best value</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • Best value</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
@@ -260,7 +260,7 @@ export default function Programs() {
                       BEST VALUE
                     </div>
                     <CardTitle className="text-foreground">Complete Player Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Ages 8-18 • All-access</CardDescription>
+                    <CardDescription className="text-muted-foreground">Youth athletes • All-access</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
@@ -283,7 +283,7 @@ export default function Programs() {
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="text-foreground">Academy Summer Camp</CardTitle>
-                  <CardDescription className="text-muted-foreground">Ages 8-18 • 3rd Annual at Sumner Academy</CardDescription>
+                  <CardDescription className="text-muted-foreground">Youth athletes • 3rd Annual at Sumner Academy</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
@@ -304,7 +304,7 @@ export default function Programs() {
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="text-foreground">Academy League</CardTitle>
-                  <CardDescription className="text-muted-foreground">Ages 8-18 • Competitive league play</CardDescription>
+                  <CardDescription className="text-muted-foreground">Youth athletes • Competitive league play</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">

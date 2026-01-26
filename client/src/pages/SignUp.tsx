@@ -87,7 +87,7 @@ export default function SignUp() {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Ages 8-18</span>
+                      <span className="text-muted-foreground">Youth athletes of all levels</span>
                     </li>
                   </ul>
                   <Button 
@@ -129,7 +129,7 @@ export default function SignUp() {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Ages 8-18</span>
+                      <span className="text-muted-foreground">Youth athletes of all levels</span>
                     </li>
                   </ul>
                   <Button 
@@ -214,7 +214,7 @@ export default function SignUp() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-6">
-                    Build a strong foundation with focused instruction on basketball fundamentals.
+                    Build a strong foundation with focused instruction on multi-sport fundamentals, footwork, and body control.
                   </p>
                   <Button 
                     variant="outline" 

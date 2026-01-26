@@ -41,21 +41,21 @@ export default function Home() {
   const programs = [
     {
       title: "Group Training Sessions",
-      description: "High-energy group workouts focusing on basketball fundamentals, conditioning, and team dynamics.",
+      description: "High-energy group workouts focused on SAQ training, conditioning, and multi-sport fundamentals.",
       icon: Users,
       color: "from-amber-500/20 to-yellow-600/20",
       borderColor: "border-amber-500/30",
     },
     {
       title: "Individual Workouts",
-      description: "Personalized one-on-one training tailored to your specific goals and skill development needs.",
+      description: "Personalized one-on-one training tailored to sport-specific goals and athletic development.",
       icon: Award,
       color: "from-amber-600/20 to-orange-600/20",
       borderColor: "border-amber-600/30",
     },
     {
       title: "Shooting Lab",
-      description: "Specialized shooting mechanics training with video analysis and data-driven feedback.",
+      description: "Skill labs that sharpen technique, confidence, and repetition-based performance habits.",
       icon: TrendingUp,
       color: "from-yellow-500/20 to-amber-500/20",
       borderColor: "border-yellow-500/30",
