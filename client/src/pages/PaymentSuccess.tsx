@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function PaymentSuccess() {
-  const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
@@ -26,6 +26,10 @@ export default function PaymentSuccess() {
       
       <main id="main-content" className="flex-1 flex items-center justify-center py-16">
         <div className="container max-w-2xl">
+          <Breadcrumbs items={[
+            { label: "Programs", href: "/programs" },
+            { label: "Payment Success" }
+          ]} />
           {loading ? (
             <Card className="bg-card border-border text-center py-12">
               <CardContent>
@@ -59,9 +63,9 @@ export default function PaymentSuccess() {
                 )}
 
                 <div className="space-y-3 pt-4">
-                  <Link href="/dashboard">
+                  <Link href="/member">
                     <Button className="w-full" size="lg">
-                      Go to Dashboard
+                      Go to Member Dashboard
                     </Button>
                   </Link>
                   <Link href="/signup">

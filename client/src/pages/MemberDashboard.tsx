@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import { ScheduleItemSkeleton } from "@/components/skeletons/ScheduleItemSkeleton";
+import { buildDirectionsUrl } from "@/lib/locations";
 
 // Helper to get day of week from schedule
 const getDayOfWeek = (schedule: any): string | null => {
@@ -27,34 +28,6 @@ const getDayOfWeek = (schedule: any): string | null => {
     return days[date.getDay()];
   }
   return null;
-};
-
-const buildDirectionsUrl = (location: {
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zipCode?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-  name?: string | null;
-}) => {
-  if (location.latitude && location.longitude) {
-    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
-  }
-
-  const addressParts = [
-    location.address,
-    location.city,
-    location.state,
-    location.zipCode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  const query = addressParts || location.name;
-  if (!query) return null;
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
 
 export default function MemberDashboard() {
@@ -84,6 +57,13 @@ export default function MemberDashboard() {
     });
     return lookup;
   }, [locations]);
+  const attendanceLookup = useMemo(() => {
+    const lookup = new Map<number, any>();
+    myAttendance?.forEach((record: any) => {
+      lookup.set(record.scheduleId, record);
+    });
+    return lookup;
+  }, [myAttendance]);
 
   // Group schedules by day of week
   const schedulesByDay = useMemo(() => {
@@ -292,6 +272,7 @@ export default function MemberDashboard() {
                               const locationDetails = schedule.locationId
                                 ? locationLookup.get(schedule.locationId)
                                 : null;
+                              const attendanceRecord = attendanceLookup.get(schedule.id);
                               const addressParts = [
                                 locationDetails?.address,
                                 locationDetails?.city,
@@ -346,12 +327,12 @@ export default function MemberDashboard() {
                                           Get directions
                                         </a>
                                       )}
-                                      {myAttendance && myAttendance.find((a: any) => a.scheduleId === schedule.id) && (
+                                      {attendanceRecord && (
                                         <div className="mt-2">
                                           <Badge variant="secondary" className="text-xs">
-                                            {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
-                                            {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
-                                            Attendance: {myAttendance.find((a: any) => a.scheduleId === schedule.id)?.status || 'Not marked'}
+                                            {attendanceRecord.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
+                                            {attendanceRecord.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
+                                            Attendance: {attendanceRecord.status || 'Not marked'}
                                           </Badge>
                                         </div>
                                       )}

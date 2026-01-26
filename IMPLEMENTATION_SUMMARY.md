@@ -8,6 +8,12 @@
 
 ## ✅ Completed Implementations
 
+### January 2025 UX & Architecture Alignments ✅
+- **Unified location directions helper**: Centralized map URL generation for location cards and member schedules.
+- **Member dashboard performance**: Memoized attendance lookups to reduce repeated filtering in schedule views.
+- **Payment success flow polish**: Added breadcrumb context and corrected member dashboard navigation.
+- **Shop UX improvements**: Added "Continue Shopping" CTA for empty cart and lazy loading for product images.
+
 ### 1. Documentation Fixes ✅
 - **Fixed README.md**: Updated all references from MySQL to PostgreSQL
   - Prerequisites section
