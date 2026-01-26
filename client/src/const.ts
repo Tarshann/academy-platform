@@ -1,5 +1,6 @@
 import { logger } from "@/lib/logger";
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+export const CART_STORAGE_KEY = "academy-shop-cart";
 
 // Helper to get Clerk publishable key - supports both VITE_ and NEXT_PUBLIC_ naming conventions
 export const getClerkPublishableKey = (): string => {

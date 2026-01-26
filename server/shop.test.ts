@@ -63,7 +63,7 @@ describe("Shop Features", () => {
     const result = await caller.shop.admin.products.create({
       name: "Test Product",
       description: "Test description",
-      price: 2999,
+      price: 29.99,
       category: "apparel",
       stock: 10,
     });
