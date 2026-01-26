@@ -19,7 +19,10 @@ interface ShopProductCardProps {
 
 export function ShopProductCard({ product, onAddToCart }: ShopProductCardProps) {
   return (
-    <Card className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border-neutral-200">
+    <Card
+      id={`product-${product.id}`}
+      className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border-neutral-200 scroll-mt-24"
+    >
       <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 relative overflow-hidden">
         {product.imageUrl ? (
           <img

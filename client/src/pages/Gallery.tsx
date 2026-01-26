@@ -78,7 +78,11 @@ export default function Gallery() {
             ) : visiblePhotos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {visiblePhotos.map((photo) => (
-                  <Card key={photo.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                  <Card
+                    key={photo.id}
+                    id={`photo-${photo.id}`}
+                    className="overflow-hidden hover:shadow-lg transition-shadow scroll-mt-24"
+                  >
                     <div className="aspect-video relative overflow-hidden bg-muted">
                       <img
                         src={photo.imageUrl}

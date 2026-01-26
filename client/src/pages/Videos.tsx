@@ -92,8 +92,9 @@ export default function Videos() {
               {filteredVideos.map((video: any) => (
                 <motion.div
                   key={video.id}
+                  id={`video-${video.id}`}
                   whileHover={{ scale: 1.03 }}
-                  className="cursor-pointer"
+                  className="cursor-pointer scroll-mt-24"
                   onClick={() => setSelectedVideo(video)}
                 >
                   <Card className="overflow-hidden hover:shadow-2xl transition-shadow duration-300">
