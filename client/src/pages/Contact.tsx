@@ -107,6 +107,7 @@ export default function Contact() {
   });
 
   const [generalErrors, setGeneralErrors] = useState<FormErrors>({});
+  const [generalSuccess, setGeneralSuccess] = useState(false);
 
   const [volunteerForm, setVolunteerForm] = useState({
     name: "",
@@ -117,11 +118,13 @@ export default function Contact() {
   });
 
   const [volunteerErrors, setVolunteerErrors] = useState<FormErrors>({});
+  const [volunteerSuccess, setVolunteerSuccess] = useState(false);
 
   const submitContact = trpc.contact.submit.useMutation({
     onSuccess: () => {
       toast.success("Message sent successfully! We'll get back to you soon.");
       setGeneralForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      setGeneralSuccess(true);
     },
     onError: (error) => {
       toast.error(`Failed to send message: ${error.message}`);
@@ -132,6 +135,7 @@ export default function Contact() {
     onSuccess: () => {
       toast.success("Volunteer application submitted! We'll contact you soon.");
       setVolunteerForm({ name: "", email: "", phone: "", subject: "Volunteer Application", message: "" });
+      setVolunteerSuccess(true);
     },
     onError: (error) => {
       toast.error(`Failed to submit application: ${error.message}`);
@@ -168,6 +172,9 @@ export default function Contact() {
     if (generalErrors[field]) {
       setGeneralErrors({ ...generalErrors, [field]: undefined });
     }
+    if (generalSuccess) {
+      setGeneralSuccess(false);
+    }
   };
 
   const handleVolunteerFieldChange = (field: keyof typeof volunteerForm, value: string) => {
@@ -175,6 +182,9 @@ export default function Contact() {
     // Clear error when user starts typing
     if (volunteerErrors[field]) {
       setVolunteerErrors({ ...volunteerErrors, [field]: undefined });
+    }
+    if (volunteerSuccess) {
+      setVolunteerSuccess(false);
     }
   };
 
@@ -214,6 +224,14 @@ export default function Contact() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
+                      {generalSuccess && (
+                        <div
+                          className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                          role="status"
+                        >
+                          Thanks for reaching out! Your message is on its way to our team.
+                        </div>
+                      )}
                       <form onSubmit={handleGeneralSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -328,6 +346,14 @@ export default function Contact() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
+                      {volunteerSuccess && (
+                        <div
+                          className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+                          role="status"
+                        >
+                          Thanks for volunteering! We've received your application and will follow up soon.
+                        </div>
+                      )}
                       <form onSubmit={handleVolunteerSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
@@ -335,10 +361,17 @@ export default function Contact() {
                             <Input
                               id="volunteer-name"
                               value={volunteerForm.name}
-                              onChange={(e) => setVolunteerForm({ ...volunteerForm, name: e.target.value })}
+                              onChange={(e) => handleVolunteerFieldChange("name", e.target.value)}
                               required
-                              className="bg-background border-border text-foreground"
+                              className={`bg-background border-border text-foreground ${volunteerErrors.name ? "border-destructive" : ""}`}
+                              aria-invalid={!!volunteerErrors.name}
+                              aria-describedby={volunteerErrors.name ? "volunteer-name-error" : undefined}
                             />
+                            {volunteerErrors.name && (
+                              <p id="volunteer-name-error" className="text-sm text-destructive" role="alert">
+                                {volunteerErrors.name}
+                              </p>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="volunteer-email" className="text-foreground">Email *</Label>
@@ -346,10 +379,17 @@ export default function Contact() {
                               id="volunteer-email"
                               type="email"
                               value={volunteerForm.email}
-                              onChange={(e) => setVolunteerForm({ ...volunteerForm, email: e.target.value })}
+                              onChange={(e) => handleVolunteerFieldChange("email", e.target.value)}
                               required
-                              className="bg-background border-border text-foreground"
+                              className={`bg-background border-border text-foreground ${volunteerErrors.email ? "border-destructive" : ""}`}
+                              aria-invalid={!!volunteerErrors.email}
+                              aria-describedby={volunteerErrors.email ? "volunteer-email-error" : undefined}
                             />
+                            {volunteerErrors.email && (
+                              <p id="volunteer-email-error" className="text-sm text-destructive" role="alert">
+                                {volunteerErrors.email}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -359,10 +399,17 @@ export default function Contact() {
                             id="volunteer-phone"
                             type="tel"
                             value={volunteerForm.phone}
-                            onChange={(e) => setVolunteerForm({ ...volunteerForm, phone: e.target.value })}
+                            onChange={(e) => handleVolunteerFieldChange("phone", e.target.value)}
                             required
-                            className="bg-background border-border text-foreground"
+                            className={`bg-background border-border text-foreground ${volunteerErrors.phone ? "border-destructive" : ""}`}
+                            aria-invalid={!!volunteerErrors.phone}
+                            aria-describedby={volunteerErrors.phone ? "volunteer-phone-error" : undefined}
                           />
+                          {volunteerErrors.phone && (
+                            <p id="volunteer-phone-error" className="text-sm text-destructive" role="alert">
+                              {volunteerErrors.phone}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -372,12 +419,22 @@ export default function Contact() {
                           <Textarea
                             id="volunteer-message"
                             value={volunteerForm.message}
-                            onChange={(e) => setVolunteerForm({ ...volunteerForm, message: e.target.value })}
+                            onChange={(e) => handleVolunteerFieldChange("message", e.target.value)}
                             required
                             rows={6}
-                            placeholder="Please include your basketball experience, coaching background (if any), and availability..."
-                            className="bg-background border-border text-foreground"
+                            placeholder="Please include your sports experience, coaching background (if any), and availability..."
+                            className={`bg-background border-border text-foreground ${volunteerErrors.message ? "border-destructive" : ""}`}
+                            aria-invalid={!!volunteerErrors.message}
+                            aria-describedby={volunteerErrors.message ? "volunteer-message-error" : undefined}
                           />
+                          {volunteerErrors.message && (
+                            <p id="volunteer-message-error" className="text-sm text-destructive" role="alert">
+                              {volunteerErrors.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {volunteerForm.message.length}/2000 characters
+                          </p>
                         </div>
 
                         <Button type="submit" disabled={submitVolunteer.isPending} className="w-full">

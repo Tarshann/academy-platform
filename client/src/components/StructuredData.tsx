@@ -34,7 +34,7 @@ interface ProgramStructuredData {
 
 export function OrganizationStructuredData({
   name = "The Academy",
-  description = "Elite youth basketball program prioritizing player development in all areas, ages 8-18.",
+  description = "Elite youth multi-sport training for basketball, football, and soccer athletes ages 8-18.",
   url,
   logo,
   phone = "(571) 292-0833",

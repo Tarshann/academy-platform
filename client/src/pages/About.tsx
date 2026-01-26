@@ -81,7 +81,7 @@ export default function About() {
                   <p className="text-muted-foreground">
                     We believe that success comes from dedication and consistent effort. Every practice, 
                     every drill, and every game is an opportunity to improve. We instill a strong work 
-                    ethic that translates beyond basketball into all areas of life.
+                    ethic that translates beyond sports into all areas of life.
                   </p>
                 </CardContent>
               </Card>
@@ -155,7 +155,7 @@ export default function About() {
                 </p>
                 <p className="text-lg leading-relaxed">
                   We prioritize long-term development over short-term results. Rather than focusing solely 
-                  on winning games, we concentrate on building fundamental skills, basketball IQ, and mental 
+                  on winning games, we concentrate on building fundamental skills, sport IQ, and mental 
                   toughness that will help players succeed at higher levels of competition.
                 </p>
               </div>
@@ -191,7 +191,7 @@ export default function About() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Committed to creating opportunities for youth development through basketball.
+                    Committed to creating opportunities for youth development through sport.
                   </p>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Email: <a href="mailto:Tarshann@gmail.com" className="text-primary hover:underline">Tarshann@gmail.com</a></p>

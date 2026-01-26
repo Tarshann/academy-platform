@@ -1,13 +1,13 @@
 # Academy Platform
 
-A full-stack platform for The Academy - a youth sports training organization. Built with React, TypeScript, Express, tRPC, and PostgreSQL.
+A full-stack platform for The Academy - a youth multi-sport training organization serving basketball, football, and soccer athletes. Built with React, TypeScript, Express, tRPC, and PostgreSQL.
 
 ## 🏗️ Architecture
 
 - **Frontend**: React 19 + TypeScript + Vite + Tailwind CSS
 - **Backend**: Express.js + tRPC + TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Custom OAuth system
+- **Authentication**: Clerk (primary) with OAuth fallback
 - **Payments**: Stripe integration
 - **Realtime**: Socket.IO for chat
 - **Storage**: AWS S3 via Forge API

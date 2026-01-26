@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Link } from "wouter";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { CART_STORAGE_KEY, getLoginUrl } from "@/const";
+import { CART_STORAGE_KEY, SHOP_SHIPPING_STORAGE_KEY, getLoginUrl } from "@/const";
+import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatUsd, normalizeAmount } from "@shared/money";
@@ -26,23 +27,12 @@ interface CartItem {
 
 export default function Shop() {
   const { isAuthenticated } = useAuth();
-  // Load cart from localStorage on mount
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      return saved ? JSON.parse(saved) : [];
-    }
-    return [];
-  });
+  const [cart, setCart] = useLocalStorageState<CartItem[]>(CART_STORAGE_KEY, []);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [shippingAddress, setShippingAddress] = useState("");
-
-  // Persist cart to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-    }
-  }, [cart]);
+  const [shippingAddress, setShippingAddress] = useLocalStorageState(
+    SHOP_SHIPPING_STORAGE_KEY,
+    ""
+  );
 
   const { data: products = [], isLoading } = trpc.shop.products.useQuery();
   const { data: campaigns = [] } = trpc.shop.campaigns.useQuery();
@@ -85,10 +75,6 @@ export default function Shop() {
               imageUrl: product.imageUrl,
             },
           ];
-      // Persist to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
-      }
       return newCart;
     });
     toast.success(`${product.name} added to cart`);
@@ -101,10 +87,6 @@ export default function Shop() {
           item.productId === productId ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
         )
         .filter((item) => item.quantity > 0);
-      // Persist to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
-      }
       return newCart;
     });
   };
@@ -112,10 +94,6 @@ export default function Shop() {
   const removeFromCart = (productId: number) => {
     setCart((prev) => {
       const newCart = prev.filter((item) => item.productId !== productId);
-      // Persist to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(newCart));
-      }
       return newCart;
     });
     toast.success("Item removed from cart");
