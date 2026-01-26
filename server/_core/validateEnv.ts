@@ -49,4 +49,10 @@ export function validateEnv() {
       "[Env] RESEND_API_KEY not configured. Email notifications will be disabled."
     );
   }
+
+  if (ENV.storageMaxBytes > 0 && ENV.storageAllowedContentTypes.length === 0) {
+    logger.warn(
+      "[Env] STORAGE_ALLOWED_CONTENT_TYPES not configured. Storage uploads may accept unsafe content types."
+    );
+  }
 }

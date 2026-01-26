@@ -23,22 +23,34 @@ export function SearchBar() {
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: programs } = trpc.programs.list.useQuery(undefined, { enabled: isOpen && query.length > 0 });
-  const { data: products } = trpc.shop.products.useQuery(undefined, { enabled: isOpen && query.length > 0 });
-  const { data: photos } = trpc.gallery.list.useQuery(undefined, { enabled: isOpen && query.length > 0 });
-  const { data: videos } = trpc.videos.list.useQuery(undefined, { enabled: isOpen && query.length > 0 });
+  const { data: programs } = trpc.programs.list.useQuery(undefined, {
+    enabled: isOpen && query.length > 0,
+  });
+  const { data: products } = trpc.shop.products.useQuery(undefined, {
+    enabled: isOpen && query.length > 0,
+  });
+  const { data: photos } = trpc.gallery.list.useQuery(undefined, {
+    enabled: isOpen && query.length > 0,
+  });
+  const { data: videos } = trpc.videos.list.useQuery(undefined, {
+    enabled: isOpen && query.length > 0,
+  });
 
   // Close search when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: globalThis.MouseEvent) => {
+      if (
+        searchRef.current &&
+        !searchRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -56,18 +68,22 @@ export function SearchBar() {
 
     // Search programs
     if (programs) {
-      programs.forEach((program) => {
+      programs.forEach(program => {
         if (
           program.name.toLowerCase().includes(searchTerm) ||
           program.description?.toLowerCase().includes(searchTerm) ||
-          String(program.slug ?? "").toLowerCase().includes(searchTerm)
+          String(program.slug ?? "")
+            .toLowerCase()
+            .includes(searchTerm)
         ) {
-          const anchorId = program.slug ? `program-${program.slug}` : `program-${program.id}`;
+          const anchorId = program.slug
+            ? `program-${program.slug}`
+            : `program-${program.id}`;
           searchResults.push({
             type: "program",
             id: program.id,
             title: program.name,
-            description: program.description,
+            description: program.description ?? undefined,
             url: `/programs#${anchorId}`,
           });
         }
@@ -76,7 +92,7 @@ export function SearchBar() {
 
     // Search products
     if (products) {
-      products.forEach((product) => {
+      products.forEach(product => {
         if (
           product.name.toLowerCase().includes(searchTerm) ||
           product.description?.toLowerCase().includes(searchTerm) ||
@@ -86,9 +102,9 @@ export function SearchBar() {
             type: "product",
             id: product.id,
             title: product.name,
-            description: product.description,
+            description: product.description ?? undefined,
             url: `/shop#product-${product.id}`,
-            imageUrl: product.imageUrl,
+            imageUrl: product.imageUrl ?? undefined,
           });
         }
       });
@@ -96,7 +112,7 @@ export function SearchBar() {
 
     // Search gallery photos
     if (photos) {
-      photos.forEach((photo) => {
+      photos.forEach(photo => {
         if (
           photo.title.toLowerCase().includes(searchTerm) ||
           photo.description?.toLowerCase().includes(searchTerm) ||
@@ -106,9 +122,9 @@ export function SearchBar() {
             type: "gallery",
             id: photo.id,
             title: photo.title,
-            description: photo.description,
+            description: photo.description ?? undefined,
             url: `/gallery#photo-${photo.id}`,
-            imageUrl: photo.imageUrl,
+            imageUrl: photo.imageUrl ?? undefined,
           });
         }
       });
@@ -126,9 +142,9 @@ export function SearchBar() {
             type: "video",
             id: video.id,
             title: video.title,
-            description: video.description,
+            description: video.description ?? undefined,
             url: `/videos#video-${video.id}`,
-            imageUrl: video.thumbnailUrl,
+            imageUrl: video.thumbnailUrl ?? undefined,
           });
         }
       });
@@ -160,7 +176,7 @@ export function SearchBar() {
           type="text"
           placeholder="Search programs, products, gallery..."
           value={query}
-          onChange={(e) => {
+          onChange={e => {
             setQuery(e.target.value);
             setIsOpen(e.target.value.length >= 2);
           }}
@@ -199,10 +215,12 @@ export function SearchBar() {
         <Card className="absolute top-full mt-2 w-full z-50 max-h-96 overflow-y-auto shadow-lg">
           <CardContent className="p-0">
             {isSearching ? (
-              <div className="p-4 text-center text-muted-foreground">Searching...</div>
+              <div className="p-4 text-center text-muted-foreground">
+                Searching...
+              </div>
             ) : results.length > 0 ? (
               <div className="divide-y">
-                {results.map((result) => (
+                {results.map(result => (
                   <Link
                     key={`${result.type}-${result.id}`}
                     href={result.url}
@@ -226,7 +244,9 @@ export function SearchBar() {
                           <span className="text-xs font-semibold px-2 py-0.5 rounded bg-primary/10 text-primary capitalize">
                             {result.type}
                           </span>
-                          <p className="font-semibold text-sm truncate">{result.title}</p>
+                          <p className="font-semibold text-sm truncate">
+                            {result.title}
+                          </p>
                         </div>
                         {result.description && (
                           <p className="text-xs text-muted-foreground line-clamp-2">

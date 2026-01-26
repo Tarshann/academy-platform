@@ -3,6 +3,8 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+const describeDb = hasDatabase ? describe : describe.skip;
 
 function createAuthContext(role: "user" | "admin" = "user"): TrpcContext {
   const user: AuthenticatedUser = {
@@ -27,7 +29,7 @@ function createAuthContext(role: "user" | "admin" = "user"): TrpcContext {
   };
 }
 
-describe("Gallery Features", () => {
+describeDb("Gallery Features", () => {
   it("allows public users to list gallery photos", async () => {
     const ctx: TrpcContext = {
       user: null,
@@ -83,7 +85,7 @@ describe("Gallery Features", () => {
   });
 });
 
-describe("Blog Features", () => {
+describeDb("Blog Features", () => {
   it("allows public users to list published blog posts", async () => {
     const ctx: TrpcContext = {
       user: null,
@@ -100,7 +102,7 @@ describe("Blog Features", () => {
     const ctx = createAuthContext("admin");
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.blog.admin.create({
+    const result = await caller.blogAdmin.create({
       title: "Test Post",
       slug: "test-post-" + Date.now(),
       excerpt: "Test excerpt",
@@ -116,7 +118,7 @@ describe("Blog Features", () => {
     const caller = appRouter.createCaller(ctx);
 
     await expect(
-      caller.blog.admin.create({
+      caller.blogAdmin.create({
         title: "Test Post",
         slug: "test-post",
         excerpt: "Test excerpt",
@@ -129,7 +131,7 @@ describe("Blog Features", () => {
 
 // Payment features are tested in admin.test.ts
 
-describe("Schedule Features", () => {
+describeDb("Schedule Features", () => {
   it("allows members to view upcoming schedules", async () => {
     const ctx = createAuthContext("user");
     const caller = appRouter.createCaller(ctx);
