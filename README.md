@@ -67,7 +67,6 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `JWT_SECRET` | Secret key for JWT tokens | Generate a secure random string |
 | `CLERK_SECRET_KEY` | Clerk secret key (if using Clerk) | Clerk dashboard |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the frontend (Vite) | Clerk dashboard |
-| `CLERK_PUBLISHABLE_KEY` | Optional Clerk publishable key for server-side fallback | Clerk dashboard |
 | `CLERK_ADMIN_EMAIL` | Admin email for Clerk role assignment | Your admin user |
 | `VITE_APP_ID` | OAuth application ID (if using OAuth) | OAuth provider |
 | `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (if using OAuth) | OAuth provider |
@@ -80,8 +79,6 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `BUILT_IN_FORGE_API_KEY` | Forge API key for backend | Forge service |
 | `VITE_FRONTEND_FORGE_API_URL` | Forge API URL for frontend | Forge service |
 | `VITE_FRONTEND_FORGE_API_KEY` | Forge API key for frontend | Forge service |
-| `VITE_SITE_URL` | Public site URL for SEO/canonical tags | Deployment URL |
-
 ### Optional Variables
 
 | Variable | Description | Default |
@@ -90,6 +87,7 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `NODE_ENV` | Environment mode | `development` |
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (for future frontend use) | - |
 | `VITE_SITE_URL` | Public site URL for SEO/canonical tags | `window.location.origin` |
+| `CLERK_PUBLISHABLE_KEY` | Optional server-side fallback if your runtime cannot read Vite envs | - |
 
 ## 🛠️ Available Scripts
 
@@ -181,11 +179,6 @@ pnpm check
 ## 🚢 Deployment Notes (Vercel)
 
 If the deployed site renders a blank page, ensure the Vercel project is set to **Public** (no password protection or SSO gate). Vercel protections can return a 401 and prevent the SPA from loading. Disable deployment protection for production or add the correct access configuration before launch.
-
-Run tests with:
-```bash
-pnpm test
-```
 
 ## 🩺 Health Checks
 

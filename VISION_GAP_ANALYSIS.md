@@ -111,8 +111,9 @@ The Academy Platform is a **full-stack web application** designed to support a y
 - Notification Preferences (per-user email preferences)
 
 ### Current Feature Completeness
+This section reflects **reported** implementation status from documentation and requires validation against code and tests.
 
-**Fully Implemented:**
+**Reported as Implemented (verification required):**
 - Public website with all core pages
 - Program management and display (including sport filtering)
 - Payment processing (programs and shop)
@@ -131,11 +132,11 @@ The Academy Platform is a **full-stack web application** designed to support a y
 - Blog frontend and admin management
 - Location and coach management
 
-**Partially Implemented:**
+**Partially Implemented (verification required):**
 - Multi-sport content alignment (data/content still needs consistent tagging and narrative emphasis)
 - Location-based filtering and mapping in member-facing views
 
-**Not Implemented:**
+**Not Implemented (or not yet verified):**
 - Parent dashboard for attendance viewing
 - Parent/guardian account linkage
 - Location maps/directions on public pages
