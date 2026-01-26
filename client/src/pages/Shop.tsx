@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
@@ -16,6 +14,8 @@ import { useLocalStorageState } from "@/hooks/useLocalStorageState";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatUsd, normalizeAmount } from "@shared/money";
+import { ShopProductCard } from "@/components/shop/ShopProductCard";
+import { ShopProductCardSkeleton } from "@/components/skeletons/ShopProductCardSkeleton";
 
 interface CartItem {
   productId: number;
@@ -36,15 +36,16 @@ export default function Shop() {
 
   const { data: products = [], isLoading } = trpc.shop.products.useQuery();
   const { data: campaigns = [] } = trpc.shop.campaigns.useQuery();
-  const visibleProducts = products.filter(
-    (product: any) =>
-      !String(product.name || "").toLowerCase().includes("test") &&
-      !String(product.description || "").toLowerCase().includes("test")
+  const isVisibleEntry = (entry: { name?: string | null; description?: string | null }) =>
+    !String(entry.name || "").toLowerCase().includes("test") &&
+    !String(entry.description || "").toLowerCase().includes("test");
+  const visibleProducts = useMemo(
+    () => products.filter((product: any) => isVisibleEntry(product)),
+    [products]
   );
-  const visibleCampaigns = campaigns.filter(
-    (campaign: any) =>
-      !String(campaign.name || "").toLowerCase().includes("test") &&
-      !String(campaign.description || "").toLowerCase().includes("test")
+  const visibleCampaigns = useMemo(
+    () => campaigns.filter((campaign: any) => isVisibleEntry(campaign)),
+    [campaigns]
   );
   const checkoutMutation = trpc.shop.createCheckout.useMutation({
     onSuccess: (data) => {
@@ -99,11 +100,11 @@ export default function Shop() {
     toast.success("Item removed from cart");
   };
 
-  const cartTotal = cart.reduce(
-    (sum, item) => sum + normalizeAmount(item.price) * item.quantity,
-    0
+  const cartTotal = useMemo(
+    () => cart.reduce((sum, item) => sum + normalizeAmount(item.price) * item.quantity, 0),
+    [cart]
   );
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
   const isCheckoutDisabled =
     checkoutMutation.isPending || cart.length === 0 || !shippingAddress.trim();
 
@@ -131,6 +132,11 @@ export default function Shop() {
       })),
       shippingAddress,
     });
+  };
+
+  const handleClearCart = () => {
+    setCart([]);
+    toast.success("Cart cleared");
   };
 
   const containerVariants = {
@@ -224,7 +230,11 @@ export default function Shop() {
       <section className="py-20">
         <div className="container px-6">
           {isLoading ? (
-            <div className="text-center text-neutral-600">Loading products...</div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <ShopProductCardSkeleton />
+              <ShopProductCardSkeleton />
+              <ShopProductCardSkeleton />
+            </div>
           ) : visibleProducts.length === 0 ? (
             <div className="text-center py-20">
               <div className="max-w-md mx-auto">
@@ -249,49 +259,7 @@ export default function Shop() {
             >
               {visibleProducts.map((product) => (
                 <motion.div key={product.id} variants={itemVariants}>
-                  <Card className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-105 border-neutral-200">
-                    <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 relative overflow-hidden">
-                      {product.imageUrl ? (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          loading="lazy"
-                          decoding="async"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingCart size={64} className="text-neutral-400" />
-                        </div>
-                      )}
-                      {product.stock <= 5 && product.stock > 0 && (
-                        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                          Only {product.stock} left!
-                        </div>
-                      )}
-                      {product.stock === 0 && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <span className="text-white text-2xl font-bold">Out of Stock</span>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-bold text-neutral-900 mb-2">{product.name}</h3>
-                      <p className="text-neutral-600 mb-4 line-clamp-2">{product.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-black text-amber-600">
-                          {formatUsd(product.price)}
-                        </span>
-                        <Button
-                          onClick={() => addToCart(product)}
-                          disabled={product.stock === 0}
-                          className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
-                        >
-                          Add to Cart
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ShopProductCard product={product} onAddToCart={addToCart} />
                 </motion.div>
               ))}
             </motion.div>
@@ -395,6 +363,11 @@ export default function Shop() {
 
               {/* Total */}
               <div className="border-t pt-4">
+                <div className="flex justify-end mb-4">
+                  <Button variant="outline" onClick={handleClearCart}>
+                    Clear Cart
+                  </Button>
+                </div>
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-xl font-bold">Total:</span>
                   <span className="text-3xl font-black text-amber-600">

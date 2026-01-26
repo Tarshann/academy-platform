@@ -8,6 +8,11 @@
 
 ## ✅ Completed Implementations
 
+### April 2025 Commerce & Navigation Refinements ✅
+- **Shop loading polish**: Added skeleton cards for shop product loading to keep the storefront visually consistent during fetches.
+- **Shop cart utility**: Added a clear-cart action to reset carts quickly when shoppers want to start over.
+- **Navigation resiliency**: Standardized login link handling on mobile when auth is not configured and exposed Blog in the desktop nav.
+
 ### March 2025 Visual & Navigation Polish ✅
 - **Navigation clarity**: Added active route styling and `aria-current` states for primary navigation links.
 - **Skip link coverage**: Ensured skip-to-content target exists on Home, Chat, and Not Found screens.
