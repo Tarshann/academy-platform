@@ -1,12 +1,20 @@
 import { motion } from "framer-motion";
 import { CheckCircle, Package } from "lucide-react";
 import { Link } from "wouter";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CART_STORAGE_KEY } from "@/const";
 
 export default function ShopOrderSuccess() {
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(CART_STORAGE_KEY);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-neutral-50 to-neutral-100">
       <Navigation />

@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { CART_STORAGE_KEY, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { formatUsd, normalizeAmount } from "@shared/money";
 
 interface CartItem {
   productId: number;
@@ -23,10 +24,8 @@ interface CartItem {
   imageUrl?: string;
 }
 
-const CART_STORAGE_KEY = "academy-shop-cart";
-
 export default function Shop() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   // Load cart from localStorage on mount
   const [cart, setCart] = useState<CartItem[]>(() => {
     if (typeof window !== "undefined") {
@@ -81,7 +80,7 @@ export default function Shop() {
             {
               productId: product.id,
               name: product.name,
-              price: typeof product.price === 'string' ? parseFloat(product.price) : product.price,
+              price: normalizeAmount(product.price),
               quantity: 1,
               imageUrl: product.imageUrl,
             },
@@ -122,11 +121,13 @@ export default function Shop() {
     toast.success("Item removed from cart");
   };
 
-  const cartTotal = cart.reduce((sum, item) => {
-    const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price / 100);
-    return sum + price * item.quantity;
-  }, 0);
+  const cartTotal = cart.reduce(
+    (sum, item) => sum + normalizeAmount(item.price) * item.quantity,
+    0
+  );
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const isCheckoutDisabled =
+    checkoutMutation.isPending || cart.length === 0 || !shippingAddress.trim();
 
   const handleCheckout = () => {
     if (!isAuthenticated) {
@@ -299,7 +300,7 @@ export default function Shop() {
                       <p className="text-neutral-600 mb-4 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-black text-amber-600">
-                          ${typeof product.price === 'string' ? parseFloat(product.price).toFixed(2) : (product.price / 100).toFixed(2)}
+                          {formatUsd(product.price)}
                         </span>
                         <Button
                           onClick={() => addToCart(product)}
@@ -357,7 +358,9 @@ export default function Shop() {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-bold text-neutral-900">{item.name}</h4>
-                      <p className="text-amber-600 font-semibold">${typeof item.price === 'string' ? parseFloat(item.price).toFixed(2) : (item.price / 100).toFixed(2)}</p>
+                      <p className="text-amber-600 font-semibold">
+                        {formatUsd(item.price)}
+                      </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Button
                           size="sm"
@@ -398,6 +401,9 @@ export default function Shop() {
                   onChange={(e) => setShippingAddress(e.target.value)}
                   rows={3}
                 />
+                <p className="text-sm text-neutral-500">
+                  Shipping address is required for checkout.
+                </p>
               </div>
 
               {/* Total */}
@@ -405,14 +411,14 @@ export default function Shop() {
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-xl font-bold">Total:</span>
                   <span className="text-3xl font-black text-amber-600">
-                    ${(cartTotal / 100).toFixed(2)}
+                    {formatUsd(cartTotal)}
                   </span>
                 </div>
                 <Button
                   size="lg"
                   className="w-full bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold text-lg"
                   onClick={handleCheckout}
-                  disabled={checkoutMutation.isPending}
+                  disabled={isCheckoutDisabled}
                 >
                   {checkoutMutation.isPending ? "Processing..." : "Proceed to Checkout"}
                 </Button>

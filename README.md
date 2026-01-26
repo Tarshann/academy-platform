@@ -144,6 +144,8 @@ Stripe is integrated for:
 
 Webhook endpoint: `/api/stripe/webhook`
 
+**Shop pricing note:** merchandise prices are stored in the database as decimal USD (e.g., `29.99`). Stripe checkout converts these values to cents at runtime for accurate charges. Keep admin-entered prices in dollars to avoid double conversion.
+
 ## 📧 Email Notifications
 
 Resend is used for transactional emails:

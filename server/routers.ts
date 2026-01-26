@@ -1,4 +1,5 @@
 import { COOKIE_NAME } from "@shared/const";
+import { toCents } from "@shared/money";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -377,7 +378,8 @@ export const appRouter = router({
           if (!product) {
             throw new TRPCError({ code: 'NOT_FOUND', message: `Product ${item.productId} not found` });
           }
-          
+          const unitAmount = toCents(product.price);
+
           lineItems.push({
             price_data: {
               currency: 'usd',
@@ -385,12 +387,12 @@ export const appRouter = router({
                 name: product.name,
                 description: product.description || '',
               },
-              unit_amount: product.price,
+              unit_amount: unitAmount,
             },
             quantity: item.quantity,
           });
-          
-          totalAmount += product.price * item.quantity;
+
+          totalAmount += unitAmount * item.quantity;
         }
         
         const origin = ctx.req.headers.origin || 'http://localhost:3000';
@@ -409,6 +411,7 @@ export const appRouter = router({
             customer_name: ctx.user.name || '',
             order_items: JSON.stringify(input.items),
             shipping_address: input.shippingAddress,
+            order_total_cents: totalAmount.toString(),
           },
           allow_promotion_codes: true,
         });
