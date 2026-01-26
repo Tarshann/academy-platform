@@ -22,7 +22,9 @@ import { useState, useEffect } from "react";
 import { SEO } from "@/components/SEO";
 
 export default function Settings() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth({
+    redirectOnUnauthenticated: true,
+  });
   const { data: preferences, isLoading, refetch } = trpc.notifications.getPreferences.useQuery(
     undefined,
     { enabled: isAuthenticated }
@@ -71,7 +73,11 @@ export default function Settings() {
   }
 
   if (!isAuthenticated || !user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Redirecting to sign in...
+      </div>
+    );
   }
 
   return (

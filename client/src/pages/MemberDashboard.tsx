@@ -15,7 +15,7 @@ import { Loader2, Calendar, Bell, Users, Clock, MapPin, Settings } from "lucide-
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ScheduleItemSkeleton } from "@/components/skeletons/ScheduleItemSkeleton";
 import { buildDirectionsUrl } from "@/lib/locations";
 
@@ -31,7 +31,9 @@ const getDayOfWeek = (schedule: any): string | null => {
 };
 
 export default function MemberDashboard() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth({
+    redirectOnUnauthenticated: true,
+  });
   const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
     undefined,
     { enabled: isAuthenticated }
@@ -113,16 +115,18 @@ export default function MemberDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = '/';
-    }
-  }, [isAuthenticated, loading]);
-
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
+        Redirecting to sign in...
       </div>
     );
   }
