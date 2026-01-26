@@ -3,32 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { Loader2, MapPin, Users, Target, Trophy, Heart } from "lucide-react";
-
-const buildDirectionsUrl = (location: {
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zipCode?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-}) => {
-  if (location.latitude && location.longitude) {
-    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
-  }
-
-  const addressParts = [
-    location.address,
-    location.city,
-    location.state,
-    location.zipCode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  if (!addressParts) return null;
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressParts)}`;
-};
+import { buildDirectionsUrl } from "@/lib/locations";
 
 export default function About() {
   const { data: locations, isLoading: locationsLoading } =

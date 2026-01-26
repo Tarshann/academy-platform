@@ -255,6 +255,8 @@ export default function Shop() {
                         <img
                           src={product.imageUrl}
                           alt={product.name}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         />
                       ) : (
@@ -313,6 +315,13 @@ export default function Shop() {
             <div className="text-center py-12">
               <ShoppingCart size={64} className="mx-auto text-neutral-400 mb-4" />
               <p className="text-xl text-neutral-600">Your cart is empty</p>
+              <Button
+                variant="outline"
+                className="mt-6"
+                onClick={() => setIsCartOpen(false)}
+              >
+                Continue Shopping
+              </Button>
             </div>
           ) : (
             <div className="space-y-6">
