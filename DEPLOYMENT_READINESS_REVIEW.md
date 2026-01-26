@@ -3,7 +3,7 @@
 
 **Review Date:** December 2024  
 **Reviewer:** Pre-Deployment Gatekeeper AI  
-**Site URL:** $SITE_URL  
+**Site URL:** https://your-domain.example  
 **Review Type:** Comprehensive Pre-Launch Assessment
 
 ---

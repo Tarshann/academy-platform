@@ -7,19 +7,14 @@ This app uses a **custom OAuth system**. You need 5 values:
 1. **VITE_APP_ID** - Your app's ID from OAuth provider
 2. **VITE_OAUTH_PORTAL_URL** - Where users log in (e.g., `https://oauth.example.com`)
 3. **OAUTH_SERVER_URL** - OAuth API endpoint (e.g., `https://api.oauth.example.com`)
-4. **JWT_SECRET** - A secure random string (I'll generate one for you)
+4. **JWT_SECRET** - A secure random string
 5. **OWNER_OPEN_ID** - Your user's OpenID for admin access
 
 ## Quick Setup
 
 ### Step 1: Generate JWT Secret
 
-I've generated one for you:
-```
-gbI1K8l6t4MFjxI7GKM5t3xHm1Wn/sLlG41wPFG2RJk=
-```
-
-Or generate a new one:
+Generate a secure random secret:
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
@@ -62,7 +57,7 @@ Add these to your `.env`:
 VITE_APP_ID=your_app_id_from_provider
 VITE_OAUTH_PORTAL_URL=https://your-oauth-portal.com
 OAUTH_SERVER_URL=https://your-oauth-api-server.com
-JWT_SECRET=gbI1K8l6t4MFjxI7GKM5t3xHm1Wn/sLlG41wPFG2RJk=
+JWT_SECRET=your_generated_secret_here
 OWNER_OPEN_ID=your_openid_here
 ```
 
