@@ -60,14 +60,15 @@ export function SearchBar() {
         if (
           program.name.toLowerCase().includes(searchTerm) ||
           program.description?.toLowerCase().includes(searchTerm) ||
-          program.slug.toLowerCase().includes(searchTerm)
+          String(program.slug ?? "").toLowerCase().includes(searchTerm)
         ) {
+          const anchorId = program.slug ? `program-${program.slug}` : `program-${program.id}`;
           searchResults.push({
             type: "program",
             id: program.id,
             title: program.name,
             description: program.description,
-            url: `/programs#${program.slug}`,
+            url: `/programs#${anchorId}`,
           });
         }
       });

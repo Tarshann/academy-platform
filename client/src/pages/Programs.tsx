@@ -83,8 +83,10 @@ export default function Programs() {
               </div>
             ) : filteredPrograms && filteredPrograms.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredPrograms.map((program: any) => (
-                  <Card key={program.id} className="bg-card border-border">
+                {filteredPrograms.map((program: any) => {
+                  const anchorId = program.slug ? `program-${program.slug}` : `program-${program.id}`;
+                  return (
+                    <Card key={program.id} id={anchorId} className="bg-card border-border scroll-mt-24">
                     <CardHeader>
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
@@ -109,13 +111,14 @@ export default function Programs() {
                         <p className="text-2xl font-bold text-primary mb-2">
                           ${program.price} <span className="text-sm text-muted-foreground font-normal">per {program.category === 'membership' ? 'month' : 'session'}</span>
                         </p>
-                        <Link href={`/signup?program=${program.slug}`}>
+                        <Link href="/signup">
                           <Button className="w-full">Register Now</Button>
                         </Link>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12">
@@ -134,7 +137,7 @@ export default function Programs() {
             {(!filteredPrograms || filteredPrograms.length === 0) && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {/* Group Sessions */}
-                <Card className="bg-card border-border">
+                <Card id="program-group-sessions" className="bg-card border-border scroll-mt-24">
                   <CardHeader>
                     <CardTitle className="text-foreground">Group Sessions</CardTitle>
                     <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players</CardDescription>
@@ -160,7 +163,7 @@ export default function Programs() {
                 </Card>
 
                 {/* Individual Workouts */}
-                <Card className="bg-card border-border">
+                <Card id="program-individual-workouts" className="bg-card border-border scroll-mt-24">
                   <CardHeader>
                     <CardTitle className="text-foreground">Individual Workouts</CardTitle>
                     <CardDescription className="text-muted-foreground">Youth athletes • One-on-one training</CardDescription>
@@ -185,7 +188,7 @@ export default function Programs() {
                 </Card>
 
                 {/* Shooting Lab */}
-                <Card className="bg-card border-border">
+                <Card id="program-shooting-lab" className="bg-card border-border scroll-mt-24">
                   <CardHeader>
                     <CardTitle className="text-foreground">Shooting Lab</CardTitle>
                     <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players per session</CardDescription>
@@ -211,7 +214,7 @@ export default function Programs() {
                 </Card>
 
                 {/* Skills Class */}
-                <Card className="bg-card border-border">
+                <Card id="program-skills-class" className="bg-card border-border scroll-mt-24">
                   <CardHeader>
                     <CardTitle className="text-foreground">Skills Class</CardTitle>
                     <CardDescription className="text-muted-foreground">Youth athletes • Fundamentals focus</CardDescription>
@@ -231,7 +234,7 @@ export default function Programs() {
                 </Card>
 
                 {/* Academy Group Membership */}
-                <Card className="bg-card border-border border-primary">
+                <Card id="program-academy-group-membership" className="bg-card border-border border-primary scroll-mt-24">
                   <CardHeader>
                     <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-2">
                       POPULAR
@@ -254,7 +257,7 @@ export default function Programs() {
                 </Card>
 
                 {/* Complete Player Membership */}
-                <Card className="bg-card border-border border-primary">
+                <Card id="program-complete-player-membership" className="bg-card border-border border-primary scroll-mt-24">
                   <CardHeader>
                     <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-2">
                       BEST VALUE
@@ -280,7 +283,7 @@ export default function Programs() {
 
             {/* Additional Programs */}
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card className="bg-card border-border">
+              <Card id="program-academy-summer-camp" className="bg-card border-border scroll-mt-24">
                 <CardHeader>
                   <CardTitle className="text-foreground">Academy Summer Camp</CardTitle>
                   <CardDescription className="text-muted-foreground">Youth athletes • 3rd Annual at Sumner Academy</CardDescription>
@@ -301,7 +304,7 @@ export default function Programs() {
                 </CardContent>
               </Card>
 
-              <Card className="bg-card border-border">
+              <Card id="program-academy-league" className="bg-card border-border scroll-mt-24">
                 <CardHeader>
                   <CardTitle className="text-foreground">Academy League</CardTitle>
                   <CardDescription className="text-muted-foreground">Youth athletes • Competitive league play</CardDescription>
