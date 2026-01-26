@@ -175,6 +175,16 @@ Run tests with:
 pnpm test
 ```
 
+## 🩺 Health Checks
+
+For production monitoring and load balancers, the server exposes a JSON health endpoint:
+
+```
+GET /api/health
+```
+
+It returns overall status, uptime, and a database connectivity check. A non-200 response indicates a dependency issue that should block traffic until resolved.
+
 ## 🚢 Deployment
 
 1. Build the application:

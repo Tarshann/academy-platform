@@ -15,6 +15,41 @@ import {
 import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+
+const normalizePriceInput = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value.toFixed(2);
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return value;
+};
+
+const priceSchema = z.preprocess(
+  normalizePriceInput,
+  z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must be a valid amount")
+);
+
+const textSchema = z.string().trim().min(1);
+const slugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .transform(slugify)
+  .refine(value => value.length > 0, "Slug must include letters or numbers");
+
+const ageSchema = z.number().int().min(1).max(99);
+const maxParticipantsSchema = z.number().int().min(1).nullable();
+
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== 'admin') {
     throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin access required' });
@@ -137,15 +172,18 @@ export const appRouter = router({
       }),
       create: adminProcedure
         .input(z.object({
-          name: z.string().min(1),
-          slug: z.string().min(1),
-          description: z.string(),
-          price: z.string(),
+          name: textSchema,
+          slug: slugSchema,
+          description: textSchema,
+          price: priceSchema,
           category: z.enum(['group', 'individual', 'shooting', 'league', 'camp', 'membership']),
           sport: z.enum(['basketball', 'football', 'soccer', 'multi_sport', 'saq']).optional(),
-          ageMin: z.number().default(8),
-          ageMax: z.number().default(18),
-          maxParticipants: z.number().nullable(),
+          ageMin: ageSchema.default(8),
+          ageMax: ageSchema.default(18),
+          maxParticipants: maxParticipantsSchema.optional(),
+        }).refine(data => data.ageMin <= data.ageMax, {
+          message: "Minimum age must be less than or equal to maximum age",
+          path: ["ageMin"],
         }))
         .mutation(async ({ input }) => {
           const { createProgram } = await import('./db');
@@ -155,16 +193,30 @@ export const appRouter = router({
       update: adminProcedure
         .input(z.object({
           id: z.number(),
-          name: z.string().optional(),
-          description: z.string().optional(),
-          pricePerSession: z.number().nullable().optional(),
-          pricePerMonth: z.number().nullable().optional(),
+          name: textSchema.optional(),
+          slug: slugSchema.optional(),
+          description: textSchema.optional(),
+          price: priceSchema.optional(),
+          category: z.enum(['group', 'individual', 'shooting', 'league', 'camp', 'membership']).optional(),
+          sport: z.enum(['basketball', 'football', 'soccer', 'multi_sport', 'saq']).optional().nullable(),
+          ageMin: ageSchema.optional(),
+          ageMax: ageSchema.optional(),
+          maxParticipants: maxParticipantsSchema.optional(),
           isActive: z.boolean().optional(),
+        }).refine(data => {
+          if (data.ageMin === undefined || data.ageMax === undefined) return true;
+          return data.ageMin <= data.ageMax;
+        }, {
+          message: "Minimum age must be less than or equal to maximum age",
+          path: ["ageMin"],
         }))
         .mutation(async ({ input }) => {
           const { id, ...updates } = input;
+          const normalizedUpdates = Object.fromEntries(
+            Object.entries(updates).filter(([, value]) => value !== undefined)
+          );
           const { updateProgram } = await import('./db');
-          await updateProgram(id, updates);
+          await updateProgram(id, normalizedUpdates);
           return { success: true };
         }),
       delete: adminProcedure
