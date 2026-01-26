@@ -9,6 +9,7 @@ import { trpc } from "@/lib/trpc";
 import { Loader2 } from "lucide-react";
 import { ProgramStructuredData } from "@/components/StructuredData";
 import { ProgramCardSkeleton } from "@/components/skeletons/ProgramCardSkeleton";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 const sportLabels: Record<string, string> = {
   basketball: "Basketball",
@@ -43,6 +44,9 @@ export default function Programs() {
         description="Comprehensive athletic development programs for basketball, football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development."
       />
       <main id="main-content" className="flex-1">
+        <div className="container pt-6">
+          <Breadcrumbs items={[{ label: "Programs" }]} />
+        </div>
         {/* Hero */}
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">

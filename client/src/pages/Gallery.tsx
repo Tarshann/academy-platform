@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 const categories = [
   { value: "all", label: "All Photos" },
@@ -31,6 +32,9 @@ export default function Gallery() {
       <Navigation />
       
       <main id="main-content" className="flex-1">
+        <div className="container pt-6">
+          <Breadcrumbs items={[{ label: "Gallery" }]} />
+        </div>
         {/* Hero Section */}
         <section className="bg-primary/10 py-16">
           <div className="container">

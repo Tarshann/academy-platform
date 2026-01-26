@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { trpc } from "@/lib/trpc";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 export default function Videos() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -48,6 +49,7 @@ export default function Videos() {
       
       <main id="main-content" className="pt-24 pb-20">
         <div className="container px-6">
+          <Breadcrumbs items={[{ label: "Videos" }]} />
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
