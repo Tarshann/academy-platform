@@ -2,7 +2,7 @@
 
 ## ✅ Completed Configuration
 
-The following environment variables have been configured in your `.env` file:
+Configure the following environment variables in your `.env` file:
 
 ### Stripe Payment Integration
 - ✅ **STRIPE_SECRET_KEY** - Configured (test key)

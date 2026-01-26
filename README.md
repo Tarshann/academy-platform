@@ -66,8 +66,8 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `DATABASE_URL` | PostgreSQL connection string | Your database provider |
 | `JWT_SECRET` | Secret key for JWT tokens | Generate a secure random string |
 | `CLERK_SECRET_KEY` | Clerk secret key (if using Clerk) | Clerk dashboard |
-| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (server-side usage, if applicable) | Clerk dashboard |
 | `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the frontend (Vite) | Clerk dashboard |
+| `CLERK_PUBLISHABLE_KEY` | Optional Clerk publishable key for server-side fallback | Clerk dashboard |
 | `CLERK_ADMIN_EMAIL` | Admin email for Clerk role assignment | Your admin user |
 | `VITE_APP_ID` | OAuth application ID (if using OAuth) | OAuth provider |
 | `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (if using OAuth) | OAuth provider |
@@ -170,6 +170,13 @@ pnpm db:push
 **Note**: For production deployments, use Drizzle Kit migrations instead of `db:push` to track migration history and enable rollbacks.
 
 ## 🧪 Testing
+
+Run tests with:
+```bash
+pnpm test
+pnpm test:e2e
+pnpm check
+```
 
 ## 🚢 Deployment Notes (Vercel)
 

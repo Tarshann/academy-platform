@@ -32,7 +32,7 @@ Add these to your `.env` file:
 
 ```env
 # Clerk Authentication
-CLERK_PUBLISHABLE_KEY=pk_test_...
+VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 CLERK_ADMIN_EMAIL=your-email@example.com
 ```
@@ -91,7 +91,7 @@ The implementation now uses Clerk instead of the custom OAuth system:
 ## Troubleshooting
 
 ### "Clerk not configured"
-- Check that `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` are set in `.env`
+- Check that `VITE_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` are set in `.env`
 - Restart dev server after adding env vars
 
 ### "Invalid session"

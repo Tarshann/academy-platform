@@ -30,3 +30,5 @@ CLERK_ADMIN_EMAIL=your-email@example.com
 ## Note
 
 If Clerk is configured, it will be used instead of the legacy OAuth system. The app automatically detects which one to use based on environment variables.
+
+**Optional server fallback:** If your deployment environment requires a non-Vite variable, you may also set `CLERK_PUBLISHABLE_KEY`, but `VITE_CLERK_PUBLISHABLE_KEY` is the primary source for the frontend.
