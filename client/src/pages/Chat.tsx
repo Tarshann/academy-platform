@@ -200,6 +200,11 @@ export default function Chat() {
               <p className="text-sm text-muted-foreground">
                 Connect with other Academy members and coaches
               </p>
+              <p className="text-xs text-muted-foreground">
+                {onlineUsers.length > 0
+                  ? `Online now (${onlineUsers.length}): ${onlineUsers.map((user) => user.userName).join(", ")}`
+                  : "No members online yet."}
+              </p>
             </CardHeader>
             <CardContent className="flex flex-col h-[calc(100%-6rem)]">
               {/* Messages Area */}

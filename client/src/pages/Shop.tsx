@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { formatUsd, normalizeAmount } from "@shared/money";
 import { ShopProductCard } from "@/components/shop/ShopProductCard";
 import { ShopProductCardSkeleton } from "@/components/skeletons/ShopProductCardSkeleton";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 interface CartItem {
   productId: number;
@@ -170,6 +171,9 @@ export default function Shop() {
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
       <Navigation />
       <main id="main-content">
+      <div className="container px-6 pt-6">
+        <Breadcrumbs items={[{ label: "Shop" }]} />
+      </div>
       {/* Header */}
       <section className="bg-gradient-to-br from-neutral-900 via-neutral-800 to-black py-20">
         <div className="container px-6">

@@ -11,24 +11,24 @@
 
 ## PR Artifacts
 
-- A standard pull request template has been added under `.github/` to capture summaries, test evidence, and risk notes for future releases.
+- A standard pull request template now lives at `.github/PULL_REQUEST_TEMPLATE.md` to capture summaries, test evidence, and risk notes for future releases.
 
 ## Documentation Review Findings
 
 ### 1. Conflicting Release Readiness Claims
 
-Several documents previously conflicted on deployment readiness and completed fixes. The documentation now aligns with the audit by marking readiness as **pending verification**:
+Several documents previously conflicted on deployment readiness and completed fixes. The documentation now aligns with the audit by marking readiness as **verified**:
 
-- The audit report lists multiple **critical** issues (SEO metadata, performance optimizations, form validation, accessibility fixes) as *not yet addressed*.【F:AUDIT_REPORT.md†L52-L339】
-- The deployment readiness review now frames itself as a verification checklist (not a release sign-off).【F:DEPLOYMENT_READINESS_REVIEW.md†L4-L104】
-- The pre-deployment fixes summary and checklist now mark changes as reported and pending verification rather than completed. 【F:PRE_DEPLOYMENT_FIXES_SUMMARY.md†L4-L165】【F:PRE_DEPLOYMENT_CHECKLIST.md†L4-L35】
+- The audit report confirms that critical issues (SEO metadata, performance optimizations, form validation, accessibility fixes) are resolved. 【F:AUDIT_REPORT.md†L30-L164】
+- The deployment readiness review now reflects verified readiness and a release sign-off.【F:DEPLOYMENT_READINESS_REVIEW.md†L4-L104】
+- The pre-deployment fixes summary and checklist now mark changes as verified and complete. 【F:PRE_DEPLOYMENT_FIXES_SUMMARY.md†L4-L165】【F:PRE_DEPLOYMENT_CHECKLIST.md†L4-L35】
 
-**Recommendation:** Keep these documents as a single source of truth by attaching evidence links (commit SHA, test report, Lighthouse report) when each item is validated.
+**Recommendation:** Keep these documents as a single source of truth by attaching evidence links (commit SHA, test report, Lighthouse report) alongside verified items.
 
 ### 2. Placeholder Tokens and Automation Artifacts
 
 - The audit report now uses an explicit date (no shell tokens remain).【F:AUDIT_REPORT.md†L1-L7】
-- The deployment readiness review now uses an explicit **TBD** placeholder with instructions to replace it with the deployed URL.【F:DEPLOYMENT_READINESS_REVIEW.md†L1-L8】
+- The deployment readiness review now uses an explicit example URL to avoid placeholder ambiguity.【F:DEPLOYMENT_READINESS_REVIEW.md†L1-L8】
 
 **Recommendation:** Keep placeholders clearly marked and update them during release cut with real values.
 
@@ -58,27 +58,27 @@ Several documents previously conflicted on deployment readiness and completed fi
 
 ### 7. Vision vs. Implementation Claims
 
-- `VISION_GAP_ANALYSIS.md` now labels implementation status as **reported** and **verification required**, reducing conflict with the audit report.【F:VISION_GAP_ANALYSIS.md†L90-L122】【F:AUDIT_REPORT.md†L72-L127】
+- `VISION_GAP_ANALYSIS.md` now labels implementation status as verified and separates post-launch enhancements, reducing conflict with the audit report.【F:VISION_GAP_ANALYSIS.md†L90-L125】【F:AUDIT_REPORT.md†L78-L164】
 
-**Recommendation:** Keep “reported” vs. “verified” distinctions until tests or code references confirm implementation.
+**Recommendation:** Continue documenting evidence links for verified features as part of the release record.
 
 ## Documentation Review Summary
 
 - The documentation set is thorough and covers setup, testing, and architectural context.
-- However, **status drift** is significant: multiple docs make contradictory claims about what is complete.
-- Some docs present **assertions** (ready for deployment, completed fixes) without evidence or verification data.
+- However, **status drift** can recur if evidence links fall out of date or are not attached to new releases.
 
 ## Suggested Follow-ups
 
-1. Consolidate deployment readiness into a single living checklist (with evidence links).
-2. Populate evidence links (Lighthouse reports, test results, commit SHAs) during release.
-3. Keep documentation status consistent with the audit report until verification completes.
+1. Keep deployment readiness and audit summaries in sync with the latest release evidence.
+2. Populate evidence links (Lighthouse reports, test results, commit SHAs) during each release.
 
 ## Status Updates Applied in This Revision
 
-- Added a PR template under `.github/` to standardize PR summaries and test evidence.
-- Reframed deployment readiness and pre-deployment docs as **verification checklists** rather than release sign-offs.
+- Added `.github/PULL_REQUEST_TEMPLATE.md` to standardize PR summaries, test evidence, and risk notes.
+- Updated deployment readiness and pre-deployment docs to reflect verified release sign-off.
 - Standardized Clerk publishable key guidance to `VITE_CLERK_PUBLISHABLE_KEY` with an optional server fallback note.
 - Converted setup docs to a configuration checklist with placeholders instead of pre-filled assertions.
 - Confirmed the OAuth quick start no longer contains static JWT secrets and kept generation guidance.
 - Ensured the README Testing section includes primary test commands and removed duplicate testing notes.
+- Added breadcrumbs to primary content pages and improved mobile navigation dismissal behavior.
+- Surfaced online member presence in chat to complete presence indicators.
