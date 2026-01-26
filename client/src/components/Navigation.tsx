@@ -4,6 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import type { MouseEvent } from "react";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
 import { logger } from "@/lib/logger";
@@ -14,6 +15,7 @@ export default function Navigation() {
   const [location] = useLocation();
   const clerkPublishableKey = getClerkPublishableKey();
   const { user: clerkUser, isSignedIn, isEnabled: isClerkEnabled } = useClerkState();
+  const loginUrl = getLoginUrl();
   
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -47,6 +49,18 @@ export default function Navigation() {
       .filter(Boolean)
       .join(" ");
 
+  const handleAuthLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (loginUrl === "#") {
+      event.preventDefault();
+      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
+      if (import.meta.env.DEV) {
+        alert(
+          "Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file."
+        );
+      }
+    }
+  };
+
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50">
       <div className="container">
@@ -76,6 +90,9 @@ export default function Navigation() {
             </Link>
             <Link href="/shop" className={getLinkClassName("/shop")} aria-current={isActiveRoute("/shop") ? "page" : undefined}>
               Shop
+            </Link>
+            <Link href="/blog" className={getLinkClassName("/blog")} aria-current={isActiveRoute("/blog") ? "page" : undefined}>
+              Blog
             </Link>
             <Link href="/faqs" className={getLinkClassName("/faqs")} aria-current={isActiveRoute("/faqs") ? "page" : undefined}>
               FAQs
@@ -114,16 +131,8 @@ export default function Navigation() {
                     </SignUpButton>
                   </>
                 ) : (
-                  <a href={getLoginUrl()} onClick={(e) => {
-                    if (getLoginUrl() === "#") {
-                      e.preventDefault();
-                      logger.warn("Authentication is not configured. Set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials.");
-                      if (import.meta.env.DEV) {
-                        alert("Authentication is not configured. Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials in your .env file.");
-                      }
-                    }
-                  }}>
-                    <Button variant="outline" size="sm" disabled={getLoginUrl() === "#"}>
+                  <a href={loginUrl} onClick={handleAuthLinkClick}>
+                    <Button variant="outline" size="sm" disabled={loginUrl === "#"}>
                       Login
                     </Button>
                   </a>
@@ -200,8 +209,8 @@ export default function Navigation() {
                 </>
               ) : (
                 <>
-                  <a href={getLoginUrl()}>
-                    <Button variant="outline" size="sm" className="w-full">
+                  <a href={loginUrl} onClick={handleAuthLinkClick}>
+                    <Button variant="outline" size="sm" className="w-full" disabled={loginUrl === "#"}>
                       Login
                     </Button>
                   </a>
