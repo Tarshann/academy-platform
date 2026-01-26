@@ -6,11 +6,16 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { getClerkPublishableKey, getLoginUrl } from "@/const";
 
 export default function PaymentSuccess() {
   const searchParams = new URLSearchParams(window.location.search);
   const sessionId = searchParams.get('session_id');
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+  const clerkPublishableKey = getClerkPublishableKey();
+  const loginUrl = getLoginUrl();
 
   useEffect(() => {
     // Simulate verification delay
@@ -63,11 +68,32 @@ export default function PaymentSuccess() {
                 )}
 
                 <div className="space-y-3 pt-4">
-                  <Link href="/member">
-                    <Button className="w-full" size="lg">
-                      Go to Member Dashboard
-                    </Button>
-                  </Link>
+                  {isAuthenticated ? (
+                    <Link href="/member">
+                      <Button className="w-full" size="lg">
+                        Go to Member Dashboard
+                      </Button>
+                    </Link>
+                  ) : clerkPublishableKey ? (
+                    <>
+                      <Link href="/sign-up">
+                        <Button className="w-full" size="lg">
+                          Create Your Account
+                        </Button>
+                      </Link>
+                      <Link href="/sign-in">
+                        <Button variant="outline" className="w-full" size="lg">
+                          Sign In to View Your Schedule
+                        </Button>
+                      </Link>
+                    </>
+                  ) : (
+                    <a href={loginUrl}>
+                      <Button className="w-full" size="lg" disabled={loginUrl === "#"}>
+                        Sign In to Access Member Tools
+                      </Button>
+                    </a>
+                  )}
                   <Link href="/signup">
                     <Button variant="outline" className="w-full" size="lg">
                       Register for More Programs

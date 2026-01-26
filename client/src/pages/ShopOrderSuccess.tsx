@@ -6,9 +6,14 @@ import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { CART_STORAGE_KEY } from "@/const";
+import { CART_STORAGE_KEY, getClerkPublishableKey, getLoginUrl } from "@/const";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function ShopOrderSuccess() {
+  const { isAuthenticated } = useAuth();
+  const clerkPublishableKey = getClerkPublishableKey();
+  const loginUrl = getLoginUrl();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(CART_STORAGE_KEY);
@@ -65,14 +70,35 @@ export default function ShopOrderSuccess() {
                 Continue Shopping
               </Button>
             </Link>
-            <Link href="/member">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
-              >
-                View My Orders
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/member">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
+                >
+                  View My Orders
+                </Button>
+              </Link>
+            ) : clerkPublishableKey ? (
+              <Link href="/sign-in">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
+                >
+                  Sign In to View Orders
+                </Button>
+              </Link>
+            ) : (
+              <a href={loginUrl}>
+                <Button
+                  size="lg"
+                  disabled={loginUrl === "#"}
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
+                >
+                  Sign In to View Orders
+                </Button>
+              </a>
+            )}
           </div>
         </div>
       </motion.div>
