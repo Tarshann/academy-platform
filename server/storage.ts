@@ -4,6 +4,10 @@
 import { ENV } from './_core/env';
 
 type StorageConfig = { baseUrl: string; apiKey: string };
+type StoragePolicy = {
+  maxBytes: number | null;
+  allowedContentTypes: Set<string> | null;
+};
 
 function getStorageConfig(): StorageConfig {
   const baseUrl = ENV.forgeApiUrl;
@@ -16,6 +20,21 @@ function getStorageConfig(): StorageConfig {
   }
 
   return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+}
+
+function getStoragePolicy(): StoragePolicy {
+  const maxBytes = Number.isFinite(ENV.storageMaxBytes) && ENV.storageMaxBytes > 0
+    ? ENV.storageMaxBytes
+    : null;
+  const allowed = ENV.storageAllowedContentTypes
+    .split(",")
+    .map(value => value.trim())
+    .filter(Boolean);
+
+  return {
+    maxBytes,
+    allowedContentTypes: allowed.length > 0 ? new Set(allowed) : null,
+  };
 }
 
 function buildUploadUrl(baseUrl: string, relKey: string): URL {
@@ -73,6 +92,22 @@ export async function storagePut(
   contentType = "application/octet-stream"
 ): Promise<{ key: string; url: string }> {
   const { baseUrl, apiKey } = getStorageConfig();
+  const policy = getStoragePolicy();
+  const dataSize =
+    typeof data === "string" ? Buffer.byteLength(data) : Buffer.byteLength(data);
+
+  if (policy.maxBytes && dataSize > policy.maxBytes) {
+    throw new Error(
+      `Storage upload rejected: payload exceeds ${policy.maxBytes} bytes`
+    );
+  }
+
+  if (policy.allowedContentTypes && !policy.allowedContentTypes.has(contentType)) {
+    throw new Error(
+      `Storage upload rejected: content type ${contentType} is not allowed`
+    );
+  }
+
   const key = normalizeKey(relKey);
   const uploadUrl = buildUploadUrl(baseUrl, key);
   const formData = toFormData(data, contentType, key.split("/").pop() ?? key);

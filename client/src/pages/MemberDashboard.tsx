@@ -1,5 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +17,15 @@ import {
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
-import { Loader2, Calendar, Bell, Users, Clock, MapPin, Settings } from "lucide-react";
+import {
+  Loader2,
+  Calendar,
+  Bell,
+  Users,
+  Clock,
+  MapPin,
+  Settings,
+} from "lucide-react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -24,7 +38,15 @@ const getDayOfWeek = (schedule: any): string | null => {
   if (schedule.dayOfWeek) return schedule.dayOfWeek;
   if (schedule.startTime) {
     const date = new Date(schedule.startTime);
-    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    const days = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
     return days[date.getDay()];
   }
   return null;
@@ -34,21 +56,25 @@ export default function MemberDashboard() {
   const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
-  const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
-  );
+  const {
+    data: schedules,
+    isLoading: schedulesLoading,
+    refetch: refetchSchedules,
+  } = trpc.schedules.upcoming.useQuery(undefined, { enabled: isAuthenticated });
   const { data: locations } = trpc.locations.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-  const { data: myAttendance, isLoading: attendanceLoading } = trpc.attendance.getMyAttendance.useQuery(
-    undefined,
-    { enabled: isAuthenticated }
-  );
+  const { data: myAttendance, isLoading: attendanceLoading } =
+    trpc.attendance.getMyAttendance.useQuery(undefined, {
+      enabled: isAuthenticated,
+    });
   const { data: attendanceStats } = trpc.attendance.getMyStats.useQuery(
     undefined,
     { enabled: isAuthenticated }
   );
+  const attendanceRate = attendanceStats?.total
+    ? Math.round((attendanceStats.present / attendanceStats.total) * 100)
+    : 0;
   const registerForSession = trpc.schedules.register.useMutation();
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
@@ -81,28 +107,37 @@ export default function MemberDashboard() {
         return schedule.location === selectedLocation;
       })
       .forEach((schedule: any) => {
-      const day = getDayOfWeek(schedule);
-      if (day) {
-        if (!grouped[day]) grouped[day] = [];
-        grouped[day].push(schedule);
-      } else {
-        if (!grouped['other']) grouped['other'] = [];
-        grouped['other'].push(schedule);
-      }
-    });
+        const day = getDayOfWeek(schedule);
+        if (day) {
+          if (!grouped[day]) grouped[day] = [];
+          grouped[day].push(schedule);
+        } else {
+          if (!grouped["other"]) grouped["other"] = [];
+          grouped["other"].push(schedule);
+        }
+      });
     return grouped;
   }, [schedules, selectedLocation]);
 
-  const dayOrder = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'other'];
+  const dayOrder = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "other",
+  ];
   const dayLabels: Record<string, string> = {
-    sunday: 'Sunday',
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    other: 'Other',
+    sunday: "Sunday",
+    monday: "Monday",
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday",
+    other: "Other",
   };
 
   const handleRegister = async (scheduleId: number) => {
@@ -129,9 +164,12 @@ export default function MemberDashboard() {
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md px-6">
-            <h1 className="text-2xl font-bold mb-3">Authentication Not Configured</h1>
+            <h1 className="text-2xl font-bold mb-3">
+              Authentication Not Configured
+            </h1>
             <p className="text-muted-foreground">
-              Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials to access the member dashboard.
+              Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials to
+              access the member dashboard.
             </p>
           </div>
         </main>
@@ -151,12 +189,16 @@ export default function MemberDashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
-      
+
       <main id="main-content" className="flex-1 py-12">
         <div className="container">
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-foreground">Member Dashboard</h1>
-            <p className="text-muted-foreground">Welcome back, {user.name || 'Member'}!</p>
+            <h1 className="text-4xl font-bold mb-2 text-foreground">
+              Member Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome back, {user.name || "Member"}!
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -165,22 +207,36 @@ export default function MemberDashboard() {
               {/* Quick Actions */}
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Quick Actions</CardTitle>
+                  <CardTitle className="text-foreground">
+                    Quick Actions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start" asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
                     <a href="/programs">
                       <Users className="mr-2" size={18} />
                       Browse Programs
                     </a>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
                     <a href="/chat">
                       <Users className="mr-2" size={18} />
                       Member Chat
                     </a>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start" asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
                     <a href="/settings">
                       <Settings className="mr-2" size={18} />
                       Notification Settings
@@ -193,31 +249,43 @@ export default function MemberDashboard() {
               {attendanceStats && (
                 <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Attendance Stats</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Attendance Stats
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Sessions:</span>
-                        <span className="font-semibold">{attendanceStats.total}</span>
+                        <span className="text-muted-foreground">
+                          Total Sessions:
+                        </span>
+                        <span className="font-semibold">
+                          {attendanceStats.total}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Present:</span>
-                        <span className="font-semibold text-green-600">{attendanceStats.present}</span>
+                        <span className="font-semibold text-green-600">
+                          {attendanceStats.present}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Attendance Rate:</span>
-                        <span className="font-semibold">{attendanceStats.attendanceRate}%</span>
+                        <span className="text-muted-foreground">
+                          Attendance Rate:
+                        </span>
+                        <span className="font-semibold">{attendanceRate}%</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {user.role === 'admin' && (
+              {user.role === "admin" && (
                 <Card className="bg-primary/10 border-primary">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Admin Access</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Admin Access
+                    </CardTitle>
                     <CardDescription className="text-muted-foreground">
                       You have admin privileges
                     </CardDescription>
@@ -238,7 +306,9 @@ export default function MemberDashboard() {
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Calendar className="text-primary" size={24} />
-                    <CardTitle className="text-foreground">Upcoming Schedule</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Upcoming Schedule
+                    </CardTitle>
                   </div>
                   <CardDescription className="text-muted-foreground">
                     Your registered programs and sessions, organized by day
@@ -250,14 +320,20 @@ export default function MemberDashboard() {
                       <label className="text-sm font-medium text-muted-foreground mb-2 block">
                         Filter by location
                       </label>
-                      <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+                      <Select
+                        value={selectedLocation}
+                        onValueChange={setSelectedLocation}
+                      >
                         <SelectTrigger className="w-full sm:w-[320px]">
                           <SelectValue placeholder="All locations" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All locations</SelectItem>
                           {locations.map((location: any) => (
-                            <SelectItem key={location.id} value={location.id.toString()}>
+                            <SelectItem
+                              key={location.id}
+                              value={location.id.toString()}
+                            >
                               {location.name}
                             </SelectItem>
                           ))}
@@ -273,27 +349,36 @@ export default function MemberDashboard() {
                     </div>
                   ) : schedules && schedules.length > 0 ? (
                     <div className="space-y-6">
-                      {dayOrder.map((day) => {
+                      {dayOrder.map(day => {
                         const daySchedules = schedulesByDay[day];
-                        if (!daySchedules || daySchedules.length === 0) return null;
-                        
+                        if (!daySchedules || daySchedules.length === 0)
+                          return null;
+
                         return (
                           <div key={day} className="space-y-3">
                             <h3 className="text-lg font-semibold text-foreground border-b border-border pb-2">
                               {dayLabels[day]}
-                              {day === 'sunday' && (
-                                <Badge variant="secondary" className="ml-2">Open Gym Day</Badge>
+                              {day === "sunday" && (
+                                <Badge variant="secondary" className="ml-2">
+                                  Open Gym Day
+                                </Badge>
                               )}
-                              {(day === 'tuesday' || day === 'thursday') && (
-                                <Badge variant="outline" className="ml-2">Regular Training</Badge>
+                              {(day === "tuesday" || day === "thursday") && (
+                                <Badge variant="outline" className="ml-2">
+                                  Regular Training
+                                </Badge>
                               )}
                             </h3>
                             {daySchedules.map((schedule: any) => {
-                              const isOpenGym = schedule.sessionType === 'open_gym' || (day === 'sunday' && !schedule.sessionType);
+                              const isOpenGym =
+                                schedule.sessionType === "open_gym" ||
+                                (day === "sunday" && !schedule.sessionType);
                               const locationDetails = schedule.locationId
                                 ? locationLookup.get(schedule.locationId)
                                 : null;
-                              const attendanceRecord = attendanceLookup.get(schedule.id);
+                              const attendanceRecord = attendanceLookup.get(
+                                schedule.id
+                              );
                               const addressParts = [
                                 locationDetails?.address,
                                 locationDetails?.city,
@@ -307,29 +392,61 @@ export default function MemberDashboard() {
                                 name: schedule.location,
                               });
                               return (
-                                <div key={schedule.id} className="border border-border rounded-lg p-4 hover:bg-card/50 transition-colors">
+                                <div
+                                  key={schedule.id}
+                                  className="border border-border rounded-lg p-4 hover:bg-card/50 transition-colors"
+                                >
                                   <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
-                                      <h4 className="font-semibold text-foreground mb-2">{schedule.title}</h4>
+                                      <h4 className="font-semibold text-foreground mb-2">
+                                        {schedule.title}
+                                      </h4>
                                       {schedule.description && (
-                                        <p className="text-muted-foreground text-sm mb-3">{schedule.description}</p>
+                                        <p className="text-muted-foreground text-sm mb-3">
+                                          {schedule.description}
+                                        </p>
                                       )}
                                       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mb-2">
                                         <span className="flex items-center gap-1">
                                           <Clock className="h-4 w-4" />
-                                          {new Date(schedule.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(schedule.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                          {new Date(
+                                            schedule.startTime
+                                          ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}{" "}
+                                          -{" "}
+                                          {new Date(
+                                            schedule.endTime
+                                          ).toLocaleTimeString([], {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          })}
                                         </span>
-                                        {(schedule.location || locationDetails?.name) && (
+                                        {(schedule.location ||
+                                          locationDetails?.name) && (
                                           <span className="flex items-center gap-1">
                                             <MapPin className="h-4 w-4" />
-                                            {locationDetails?.name || schedule.location}
-                                            {addressParts ? ` · ${addressParts}` : ""}
+                                            {locationDetails?.name ||
+                                              schedule.location}
+                                            {addressParts
+                                              ? ` · ${addressParts}`
+                                              : ""}
                                           </span>
                                         )}
                                         {schedule.sessionType && (
-                                          <Badge variant={isOpenGym ? "default" : "outline"} className="capitalize">
-                                            {schedule.sessionType === 'open_gym' ? '🏀 Open Gym' : 
-                                             schedule.sessionType === 'special' ? '⭐ Special Event' : 'Regular Training'}
+                                          <Badge
+                                            variant={
+                                              isOpenGym ? "default" : "outline"
+                                            }
+                                            className="capitalize"
+                                          >
+                                            {schedule.sessionType === "open_gym"
+                                              ? "🏀 Open Gym"
+                                              : schedule.sessionType ===
+                                                  "special"
+                                                ? "⭐ Special Event"
+                                                : "Regular Training"}
                                           </Badge>
                                         )}
                                         {schedule.maxParticipants && (
@@ -350,17 +467,30 @@ export default function MemberDashboard() {
                                       )}
                                       {attendanceRecord && (
                                         <div className="mt-2">
-                                          <Badge variant="secondary" className="text-xs">
-                                            {attendanceRecord.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
-                                            {attendanceRecord.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
-                                            Attendance: {attendanceRecord.status || 'Not marked'}
+                                          <Badge
+                                            variant="secondary"
+                                            className="text-xs"
+                                          >
+                                            {attendanceRecord.status ===
+                                              "present" && (
+                                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                                            )}
+                                            {attendanceRecord.status ===
+                                              "absent" && (
+                                              <XCircle className="h-3 w-3 mr-1" />
+                                            )}
+                                            Attendance:{" "}
+                                            {attendanceRecord.status ||
+                                              "Not marked"}
                                           </Badge>
                                         </div>
                                       )}
                                     </div>
-                                    <Button 
-                                      size="sm" 
-                                      onClick={() => handleRegister(schedule.id)}
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        handleRegister(schedule.id)
+                                      }
                                       disabled={registerForSession.isPending}
                                     >
                                       Register
@@ -376,7 +506,8 @@ export default function MemberDashboard() {
                   ) : (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground mb-4">
-                        No upcoming sessions scheduled. Register for programs to see your schedule here.
+                        No upcoming sessions scheduled. Register for programs to
+                        see your schedule here.
                       </p>
                       <Button asChild>
                         <a href="/programs">Browse Programs</a>
@@ -390,7 +521,9 @@ export default function MemberDashboard() {
               {myAttendance && myAttendance.length > 0 && (
                 <Card className="bg-card border-border">
                   <CardHeader>
-                    <CardTitle className="text-foreground">Attendance History</CardTitle>
+                    <CardTitle className="text-foreground">
+                      Attendance History
+                    </CardTitle>
                     <CardDescription className="text-muted-foreground">
                       Your attendance record for training sessions
                     </CardDescription>
@@ -398,20 +531,35 @@ export default function MemberDashboard() {
                   <CardContent>
                     <div className="space-y-3">
                       {myAttendance.slice(0, 10).map((record: any) => (
-                        <div key={record.id} className="flex items-center justify-between border-b border-border pb-2">
+                        <div
+                          key={record.id}
+                          className="flex items-center justify-between border-b border-border pb-2"
+                        >
                           <div>
                             <p className="text-sm font-medium text-foreground">
                               {new Date(record.markedAt).toLocaleDateString()}
                             </p>
-                            <p className="text-xs text-muted-foreground">Session ID: {record.scheduleId}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Session ID: {record.scheduleId}
+                            </p>
                           </div>
-                          <Badge variant={
-                            record.status === 'present' ? 'default' :
-                            record.status === 'absent' ? 'destructive' :
-                            record.status === 'late' ? 'secondary' : 'outline'
-                          }>
-                            {record.status === 'present' && <CheckCircle2 className="h-3 w-3 mr-1" />}
-                            {record.status === 'absent' && <XCircle className="h-3 w-3 mr-1" />}
+                          <Badge
+                            variant={
+                              record.status === "present"
+                                ? "default"
+                                : record.status === "absent"
+                                  ? "destructive"
+                                  : record.status === "late"
+                                    ? "secondary"
+                                    : "outline"
+                            }
+                          >
+                            {record.status === "present" && (
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                            )}
+                            {record.status === "absent" && (
+                              <XCircle className="h-3 w-3 mr-1" />
+                            )}
                             {record.status}
                           </Badge>
                         </div>

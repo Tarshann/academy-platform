@@ -1,10 +1,4 @@
 import type { Express, Request, Response } from "express";
-import { clerkClient } from "@clerk/clerk-sdk-node";
-import { ENV } from "./env";
-import * as db from "../db";
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { getSessionCookieOptions } from "./cookies";
-import { createSessionToken, syncClerkUserToDatabase } from "./clerk";
 
 /**
  * Clerk OAuth callback handler
@@ -22,11 +16,11 @@ export async function handleClerkCallback(req: Request, res: Response) {
     // Exchange code for session token using Clerk
     // Note: Clerk handles this differently - we need to verify the session
     // For now, we'll use Clerk's built-in session handling
-    
+
     // Get the Clerk user from the session
     // Clerk sets a session token in a cookie automatically
     // We need to extract it and verify it
-    
+
     res.redirect(302, "/");
   } catch (error) {
     console.error("[Clerk] Callback failed:", error);

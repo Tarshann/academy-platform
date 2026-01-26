@@ -78,34 +78,52 @@ export async function getDb() {
 // USER FUNCTIONS
 // ============================================================================
 
-export async function upsertUser(userData: Partial<InsertUser> & { openId: string }) {
+export async function upsertUser(
+  userData: Partial<InsertUser> & { openId: string }
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const existing = await db.select().from(users).where(eq(users.openId, userData.openId)).limit(1);
-  
+  const existing = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, userData.openId))
+    .limit(1);
+
   if (existing.length > 0) {
     const updates: Partial<InsertUser> = {};
     if (userData.name !== undefined) updates.name = userData.name;
     if (userData.email !== undefined) updates.email = userData.email;
-    if (userData.loginMethod !== undefined) updates.loginMethod = userData.loginMethod;
-    if (userData.lastSignedIn !== undefined) updates.lastSignedIn = userData.lastSignedIn;
+    if (userData.loginMethod !== undefined)
+      updates.loginMethod = userData.loginMethod;
+    if (userData.lastSignedIn !== undefined)
+      updates.lastSignedIn = userData.lastSignedIn;
     if (userData.role !== undefined) updates.role = userData.role;
 
-    await db.update(users)
+    await db
+      .update(users)
       .set(updates)
       .where(eq(users.openId, userData.openId));
-    
-    return (await db.select().from(users).where(eq(users.openId, userData.openId)).limit(1))[0];
+
+    return (
+      await db
+        .select()
+        .from(users)
+        .where(eq(users.openId, userData.openId))
+        .limit(1)
+    )[0];
   } else {
-    const result = await db.insert(users).values({
-      openId: userData.openId,
-      name: userData.name ?? null,
-      email: userData.email ?? null,
-      loginMethod: userData.loginMethod ?? null,
-      lastSignedIn: userData.lastSignedIn ?? new Date(),
-      role: userData.role ?? "user",
-    }).returning();
+    const result = await db
+      .insert(users)
+      .values({
+        openId: userData.openId,
+        name: userData.name ?? null,
+        email: userData.email ?? null,
+        loginMethod: userData.loginMethod ?? null,
+        lastSignedIn: userData.lastSignedIn ?? new Date(),
+        role: userData.role ?? "user",
+      })
+      .returning();
     return result[0];
   }
 }
@@ -113,7 +131,11 @@ export async function upsertUser(userData: Partial<InsertUser> & { openId: strin
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -131,7 +153,11 @@ export async function getUserById(id: number) {
 export async function getAllPrograms() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(programs).where(eq(programs.isActive, true)).orderBy(asc(programs.name));
+  return await db
+    .select()
+    .from(programs)
+    .where(eq(programs.isActive, true))
+    .orderBy(asc(programs.name));
 }
 
 export async function getAllProgramsAdmin() {
@@ -143,14 +169,22 @@ export async function getAllProgramsAdmin() {
 export async function getProgramBySlug(slug: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(programs).where(eq(programs.slug, slug)).limit(1);
+  const result = await db
+    .select()
+    .from(programs)
+    .where(eq(programs.slug, slug))
+    .limit(1);
   return result[0] || null;
 }
 
 export async function getProgramById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(programs).where(eq(programs.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(programs)
+    .where(eq(programs.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -161,7 +195,10 @@ export async function createProgram(programData: InsertProgram) {
   return result[0];
 }
 
-export async function updateProgram(id: number, updates: Partial<InsertProgram>) {
+export async function updateProgram(
+  id: number,
+  updates: Partial<InsertProgram>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(programs).set(updates).where(eq(programs.id, id));
@@ -180,7 +217,9 @@ export async function deleteProgram(id: number) {
 export async function getPublishedAnnouncements() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(announcements)
+  return await db
+    .select()
+    .from(announcements)
     .where(eq(announcements.isPublished, true))
     .orderBy(desc(announcements.publishedAt));
 }
@@ -188,20 +227,27 @@ export async function getPublishedAnnouncements() {
 export async function getAllAnnouncementsAdmin() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(announcements).orderBy(desc(announcements.createdAt));
+  return await db
+    .select()
+    .from(announcements)
+    .orderBy(desc(announcements.createdAt));
 }
 
 export async function createAnnouncement(announcementData: InsertAnnouncement) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(announcements).values(announcementData).returning();
+  const result = await db
+    .insert(announcements)
+    .values(announcementData)
+    .returning();
   return result[0];
 }
 
 export async function publishAnnouncement(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(announcements)
+  await db
+    .update(announcements)
     .set({ isPublished: true, publishedAt: new Date() })
     .where(eq(announcements.id, id));
 }
@@ -220,7 +266,9 @@ export async function getUpcomingSchedules() {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
-  return await db.select().from(schedules)
+  return await db
+    .select()
+    .from(schedules)
     .where(gte(schedules.startTime, now))
     .orderBy(asc(schedules.startTime));
 }
@@ -234,7 +282,11 @@ export async function getAllSchedulesAdmin() {
 export async function getScheduleById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(schedules).where(eq(schedules.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(schedules)
+    .where(eq(schedules.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -245,7 +297,10 @@ export async function createSchedule(scheduleData: InsertSchedule) {
   return result[0];
 }
 
-export async function updateSchedule(id: number, updates: Partial<InsertSchedule>) {
+export async function updateSchedule(
+  id: number,
+  updates: Partial<InsertSchedule>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(schedules).set(updates).where(eq(schedules.id, id));
@@ -264,26 +319,37 @@ export async function deleteSchedule(id: number) {
 export async function getScheduleRegistrations(scheduleId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(sessionRegistrations)
+  return await db
+    .select()
+    .from(sessionRegistrations)
     .where(eq(sessionRegistrations.scheduleId, scheduleId));
 }
 
-export async function createSessionRegistration(userId: number, scheduleId: number, paymentId?: number) {
+export async function createSessionRegistration(
+  userId: number,
+  scheduleId: number,
+  paymentId?: number
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(sessionRegistrations).values({
-    userId,
-    scheduleId,
-    paymentId: paymentId ?? null,
-    status: "registered",
-  }).returning();
+  const result = await db
+    .insert(sessionRegistrations)
+    .values({
+      userId,
+      scheduleId,
+      paymentId: paymentId ?? null,
+      status: "registered",
+    })
+    .returning();
   return result[0];
 }
 
 export async function getUserRegistrations(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(sessionRegistrations)
+  return await db
+    .select()
+    .from(sessionRegistrations)
     .where(eq(sessionRegistrations.userId, userId))
     .orderBy(desc(sessionRegistrations.registeredAt));
 }
@@ -292,23 +358,32 @@ export async function getUserRegistrations(userId: number) {
 // CONTACT SUBMISSION FUNCTIONS
 // ============================================================================
 
-export async function createContactSubmission(submissionData: InsertContactSubmission) {
+export async function createContactSubmission(
+  submissionData: InsertContactSubmission
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(contactSubmissions).values(submissionData).returning();
+  const result = await db
+    .insert(contactSubmissions)
+    .values(submissionData)
+    .returning();
   return result[0];
 }
 
 export async function getContactSubmissions() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(contactSubmissions).orderBy(desc(contactSubmissions.createdAt));
+  return await db
+    .select()
+    .from(contactSubmissions)
+    .orderBy(desc(contactSubmissions.createdAt));
 }
 
 export async function markContactAsRead(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(contactSubmissions)
+  await db
+    .update(contactSubmissions)
     .set({ status: "read" })
     .where(eq(contactSubmissions.id, id));
 }
@@ -316,7 +391,8 @@ export async function markContactAsRead(id: number) {
 export async function markContactAsResponded(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(contactSubmissions)
+  await db
+    .update(contactSubmissions)
     .set({ status: "responded" })
     .where(eq(contactSubmissions.id, id));
 }
@@ -328,21 +404,25 @@ export async function markContactAsResponded(id: number) {
 export async function getAllGalleryPhotos() {
   const db = await getDb();
   if (!db) return [];
-  const photos = await db.select().from(galleryPhotos)
-    .where(and(
-      eq(galleryPhotos.isVisible, true),
-      sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
-      sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
-    ));
-  
+  const photos = await db
+    .select()
+    .from(galleryPhotos)
+    .where(
+      and(
+        eq(galleryPhotos.isVisible, true),
+        sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
+        sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
+      )
+    );
+
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
   return photos.sort((a, b) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
-    
+
     if (aHasImage && !bHasImage) return -1;
     if (!aHasImage && bHasImage) return 1;
-    
+
     // Both have images or both don't - sort by date (newest first)
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -353,22 +433,26 @@ export async function getAllGalleryPhotos() {
 export async function getGalleryPhotosByCategory(category: string) {
   const db = await getDb();
   if (!db) return [];
-  const photos = await db.select().from(galleryPhotos)
-    .where(and(
-      eq(galleryPhotos.isVisible, true),
-      eq(galleryPhotos.category, category as any),
-      sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
-      sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
-    ));
-  
+  const photos = await db
+    .select()
+    .from(galleryPhotos)
+    .where(
+      and(
+        eq(galleryPhotos.isVisible, true),
+        eq(galleryPhotos.category, category as any),
+        sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
+        sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
+      )
+    );
+
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
   return photos.sort((a, b) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
-    
+
     if (aHasImage && !bHasImage) return -1;
     if (!aHasImage && bHasImage) return 1;
-    
+
     // Both have images or both don't - sort by date (newest first)
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -389,10 +473,14 @@ export async function deleteGalleryPhoto(id: number) {
   await db.delete(galleryPhotos).where(eq(galleryPhotos.id, id));
 }
 
-export async function toggleGalleryPhotoVisibility(id: number, isVisible: boolean) {
+export async function toggleGalleryPhotoVisibility(
+  id: number,
+  isVisible: boolean
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(galleryPhotos)
+  await db
+    .update(galleryPhotos)
     .set({ isVisible })
     .where(eq(galleryPhotos.id, id));
 }
@@ -404,7 +492,9 @@ export async function toggleGalleryPhotoVisibility(id: number, isVisible: boolea
 export async function getAllPublishedBlogPosts() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(blogPosts)
+  return await db
+    .select()
+    .from(blogPosts)
     .where(eq(blogPosts.isPublished, true))
     .orderBy(desc(blogPosts.publishedAt));
 }
@@ -418,7 +508,11 @@ export async function getAllBlogPostsAdmin() {
 export async function getBlogPostBySlug(slug: string) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
+  const result = await db
+    .select()
+    .from(blogPosts)
+    .where(eq(blogPosts.slug, slug))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -429,7 +523,10 @@ export async function createBlogPost(postData: InsertBlogPost) {
   return result[0];
 }
 
-export async function updateBlogPost(id: number, updates: Partial<InsertBlogPost>) {
+export async function updateBlogPost(
+  id: number,
+  updates: Partial<InsertBlogPost>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(blogPosts).set(updates).where(eq(blogPosts.id, id));
@@ -438,7 +535,8 @@ export async function updateBlogPost(id: number, updates: Partial<InsertBlogPost
 export async function publishBlogPost(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(blogPosts)
+  await db
+    .update(blogPosts)
     .set({ isPublished: true, publishedAt: new Date() })
     .where(eq(blogPosts.id, id));
 }
@@ -457,11 +555,50 @@ export async function getAllVideos(onlyPublished: boolean = false) {
   const db = await getDb();
   if (!db) return [];
   if (onlyPublished) {
-    return await db.select().from(videos)
+    return await db
+      .select()
+      .from(videos)
       .where(eq(videos.isPublished, true))
       .orderBy(desc(videos.createdAt));
   }
   return await db.select().from(videos).orderBy(desc(videos.createdAt));
+}
+
+export async function getVideoById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(videos)
+    .where(eq(videos.id, id))
+    .limit(1);
+  return result[0] || null;
+}
+
+export async function getVideosByCategory(
+  category: string,
+  onlyPublished: boolean = false
+) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(videos.category, category as any)];
+  if (onlyPublished) {
+    conditions.push(eq(videos.isPublished, true));
+  }
+  return await db
+    .select()
+    .from(videos)
+    .where(and(...conditions))
+    .orderBy(desc(videos.createdAt));
+}
+
+export async function incrementVideoViewCount(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(videos)
+    .set({ viewCount: sql`${videos.viewCount} + 1` })
+    .where(eq(videos.id, id));
 }
 
 export async function createVideo(videoData: InsertVideo) {
@@ -490,19 +627,27 @@ export async function deleteVideo(id: number) {
 export async function getAllProducts() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(products)
-    .where(and(
-      eq(products.isActive, true),
-      sql`lower(${products.name}) NOT LIKE '%test%'`,
-      sql`lower(coalesce(${products.description}, '')) NOT LIKE '%test%'`
-    ))
+  return await db
+    .select()
+    .from(products)
+    .where(
+      and(
+        eq(products.isActive, true),
+        sql`lower(${products.name}) NOT LIKE '%test%'`,
+        sql`lower(coalesce(${products.description}, '')) NOT LIKE '%test%'`
+      )
+    )
     .orderBy(asc(products.name));
 }
 
 export async function getProductById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -513,7 +658,10 @@ export async function createProduct(productData: InsertProduct) {
   return result[0];
 }
 
-export async function updateProduct(id: number, updates: Partial<InsertProduct>) {
+export async function updateProduct(
+  id: number,
+  updates: Partial<InsertProduct>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(products).set(updates).where(eq(products.id, id));
@@ -532,12 +680,16 @@ export async function deleteProduct(id: number) {
 export async function getAllCampaigns() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(campaigns)
-    .where(and(
-      eq(campaigns.isActive, true),
-      sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
-      sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
-    ))
+  return await db
+    .select()
+    .from(campaigns)
+    .where(
+      and(
+        eq(campaigns.isActive, true),
+        sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
+        sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
+      )
+    )
     .orderBy(desc(campaigns.startDate));
 }
 
@@ -545,14 +697,18 @@ export async function getActiveCampaigns() {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
-  return await db.select().from(campaigns)
-    .where(and(
-      eq(campaigns.isActive, true),
-      lte(campaigns.startDate, now),
-      gte(campaigns.endDate, now),
-      sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
-      sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
-    ))
+  return await db
+    .select()
+    .from(campaigns)
+    .where(
+      and(
+        eq(campaigns.isActive, true),
+        lte(campaigns.startDate, now),
+        gte(campaigns.endDate, now),
+        sql`lower(${campaigns.name}) NOT LIKE '%test%'`,
+        sql`lower(coalesce(${campaigns.description}, '')) NOT LIKE '%test%'`
+      )
+    )
     .orderBy(desc(campaigns.startDate));
 }
 
@@ -563,7 +719,10 @@ export async function createCampaign(campaignData: InsertCampaign) {
   return result[0];
 }
 
-export async function updateCampaign(id: number, updates: Partial<InsertCampaign>) {
+export async function updateCampaign(
+  id: number,
+  updates: Partial<InsertCampaign>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(campaigns).set(updates).where(eq(campaigns.id, id));
@@ -582,7 +741,9 @@ export async function deleteCampaign(id: number) {
 export async function getUserPayments(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(payments)
+  return await db
+    .select()
+    .from(payments)
     .where(eq(payments.userId, userId))
     .orderBy(desc(payments.createdAt));
 }
@@ -590,7 +751,9 @@ export async function getUserPayments(userId: number) {
 export async function getUserSubscriptions(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(subscriptions)
+  return await db
+    .select()
+    .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
     .orderBy(desc(subscriptions.createdAt));
 }
@@ -602,31 +765,57 @@ export async function getUserSubscriptions(userId: number) {
 export async function getOrderById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
-export async function createOrder(orderData: { userId: number; stripeCheckoutSessionId?: string; totalAmount: string; shippingAddress?: string }) {
+export async function createOrder(orderData: {
+  userId: number;
+  stripeCheckoutSessionId?: string;
+  totalAmount: string;
+  shippingAddress?: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(orders).values({
-    userId: orderData.userId,
-    stripeCheckoutSessionId: orderData.stripeCheckoutSessionId ?? null,
-    totalAmount: orderData.totalAmount,
-    status: "pending",
-    shippingAddress: orderData.shippingAddress ?? null,
-  }).returning();
+  const result = await db
+    .insert(orders)
+    .values({
+      userId: orderData.userId,
+      stripeCheckoutSessionId: orderData.stripeCheckoutSessionId ?? null,
+      totalAmount: orderData.totalAmount,
+      status: "pending",
+      shippingAddress: orderData.shippingAddress ?? null,
+    })
+    .returning();
   return result[0];
 }
 
-export async function createOrderItem(itemData: { orderId: number; productId: number; quantity: number; price: string }) {
+export async function createOrderItem(itemData: {
+  orderId: number;
+  productId: number;
+  quantity: number;
+  price: string;
+}) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const result = await db.insert(orderItems).values(itemData).returning();
   return result[0];
 }
 
-export async function updateOrderStatus(id: number, status: "pending" | "paid" | "processing" | "shipped" | "delivered" | "cancelled") {
+export async function updateOrderStatus(
+  id: number,
+  status:
+    | "pending"
+    | "paid"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled"
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(orders).set({ status }).where(eq(orders.id, id));
@@ -635,7 +824,9 @@ export async function updateOrderStatus(id: number, status: "pending" | "paid" |
 export async function getUserOrders(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(orders)
+  return await db
+    .select()
+    .from(orders)
     .where(eq(orders.userId, userId))
     .orderBy(desc(orders.createdAt));
 }
@@ -647,7 +838,9 @@ export async function getUserOrders(userId: number) {
 export async function getAllLocations() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(locations)
+  return await db
+    .select()
+    .from(locations)
     .where(eq(locations.isActive, true))
     .orderBy(asc(locations.name));
 }
@@ -661,7 +854,11 @@ export async function getAllLocationsAdmin() {
 export async function getLocationById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(locations).where(eq(locations.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(locations)
+    .where(eq(locations.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -672,7 +869,10 @@ export async function createLocation(locationData: InsertLocation) {
   return result[0].id;
 }
 
-export async function updateLocation(id: number, updates: Partial<InsertLocation>) {
+export async function updateLocation(
+  id: number,
+  updates: Partial<InsertLocation>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(locations).set(updates).where(eq(locations.id, id));
@@ -691,7 +891,9 @@ export async function deleteLocation(id: number) {
 export async function getAllCoaches() {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(coaches)
+  return await db
+    .select()
+    .from(coaches)
     .where(eq(coaches.isActive, true))
     .orderBy(asc(coaches.id));
 }
@@ -705,7 +907,11 @@ export async function getAllCoachesAdmin() {
 export async function getCoachById(id: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(coaches).where(eq(coaches.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(coaches)
+    .where(eq(coaches.id, id))
+    .limit(1);
   return result[0] || null;
 }
 
@@ -732,28 +938,39 @@ export async function deleteCoach(id: number) {
 // COACH ASSIGNMENT FUNCTIONS
 // ============================================================================
 
-export async function getCoachAssignments(coachId?: number, programId?: number, scheduleId?: number) {
+export async function getCoachAssignments(
+  coachId?: number,
+  programId?: number,
+  scheduleId?: number
+) {
   const db = await getDb();
   if (!db) return [];
-  
-  let query = db.select().from(coachAssignments);
+
   const conditions = [];
-  
+
   if (coachId) conditions.push(eq(coachAssignments.coachId, coachId));
   if (programId) conditions.push(eq(coachAssignments.programId, programId));
   if (scheduleId) conditions.push(eq(coachAssignments.scheduleId, scheduleId));
-  
+
   if (conditions.length > 0) {
-    query = query.where(and(...conditions));
+    return await db
+      .select()
+      .from(coachAssignments)
+      .where(and(...conditions));
   }
-  
-  return await query;
+
+  return await db.select().from(coachAssignments);
 }
 
-export async function createCoachAssignment(assignmentData: InsertCoachAssignment) {
+export async function createCoachAssignment(
+  assignmentData: InsertCoachAssignment
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(coachAssignments).values(assignmentData).returning();
+  const result = await db
+    .insert(coachAssignments)
+    .values(assignmentData)
+    .returning();
   return result[0].id;
 }
 
@@ -770,20 +987,26 @@ export async function deleteCoachAssignment(id: number) {
 export async function getUserNotificationPreferences(userId: number) {
   const db = await getDb();
   if (!db) return null;
-  const result = await db.select().from(notificationPreferences)
+  const result = await db
+    .select()
+    .from(notificationPreferences)
     .where(eq(notificationPreferences.userId, userId))
     .limit(1);
   return result[0] || null;
 }
 
-export async function createOrUpdateNotificationPreferences(userId: number, preferences: Partial<InsertNotificationPreference>) {
+export async function createOrUpdateNotificationPreferences(
+  userId: number,
+  preferences: Partial<InsertNotificationPreference>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   const existing = await getUserNotificationPreferences(userId);
-  
+
   if (existing) {
-    await db.update(notificationPreferences)
+    await db
+      .update(notificationPreferences)
       .set(preferences)
       .where(eq(notificationPreferences.userId, userId));
   } else {
@@ -801,9 +1024,11 @@ export async function createOrUpdateNotificationPreferences(userId: number, pref
 export async function markAttendance(attendanceData: InsertAttendanceRecord) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  
+
   // Check if attendance already exists
-  const existing = await db.select().from(attendanceRecords)
+  const existing = await db
+    .select()
+    .from(attendanceRecords)
     .where(
       and(
         eq(attendanceRecords.userId, attendanceData.userId),
@@ -811,10 +1036,11 @@ export async function markAttendance(attendanceData: InsertAttendanceRecord) {
       )
     )
     .limit(1);
-  
+
   if (existing.length > 0) {
     // Update existing
-    await db.update(attendanceRecords)
+    await db
+      .update(attendanceRecords)
       .set({
         status: attendanceData.status,
         notes: attendanceData.notes ?? null,
@@ -825,7 +1051,10 @@ export async function markAttendance(attendanceData: InsertAttendanceRecord) {
     return existing[0].id;
   } else {
     // Create new
-    const result = await db.insert(attendanceRecords).values(attendanceData).returning();
+    const result = await db
+      .insert(attendanceRecords)
+      .values(attendanceData)
+      .returning();
     return result[0].id;
   }
 }
@@ -833,7 +1062,9 @@ export async function markAttendance(attendanceData: InsertAttendanceRecord) {
 export async function getAttendanceBySchedule(scheduleId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(attendanceRecords)
+  return await db
+    .select()
+    .from(attendanceRecords)
     .where(eq(attendanceRecords.scheduleId, scheduleId))
     .orderBy(asc(attendanceRecords.userId));
 }
@@ -841,15 +1072,21 @@ export async function getAttendanceBySchedule(scheduleId: number) {
 export async function getAttendanceByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db.select().from(attendanceRecords)
+  return await db
+    .select()
+    .from(attendanceRecords)
     .where(eq(attendanceRecords.userId, userId))
     .orderBy(desc(attendanceRecords.markedAt));
 }
 
-export async function getAttendanceStats(userId: number, startDate?: Date, endDate?: Date) {
+export async function getAttendanceStats(
+  userId: number,
+  startDate?: Date,
+  endDate?: Date
+) {
   const db = await getDb();
   if (!db) return { present: 0, absent: 0, excused: 0, late: 0, total: 0 };
-  
+
   const conditions = [eq(attendanceRecords.userId, userId)];
   if (startDate) {
     conditions.push(gte(attendanceRecords.markedAt, startDate));
@@ -857,9 +1094,12 @@ export async function getAttendanceStats(userId: number, startDate?: Date, endDa
   if (endDate) {
     conditions.push(lte(attendanceRecords.markedAt, endDate));
   }
-  
-  const records = await db.select().from(attendanceRecords).where(and(...conditions));
-  
+
+  const records = await db
+    .select()
+    .from(attendanceRecords)
+    .where(and(...conditions));
+
   const stats = {
     present: records.filter(r => r.status === "present").length,
     absent: records.filter(r => r.status === "absent").length,
@@ -867,14 +1107,20 @@ export async function getAttendanceStats(userId: number, startDate?: Date, endDa
     late: records.filter(r => r.status === "late").length,
     total: records.length,
   };
-  
+
   return stats;
 }
 
-export async function updateAttendance(id: number, updates: Partial<InsertAttendanceRecord>) {
+export async function updateAttendance(
+  id: number,
+  updates: Partial<InsertAttendanceRecord>
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.update(attendanceRecords).set(updates).where(eq(attendanceRecords.id, id));
+  await db
+    .update(attendanceRecords)
+    .set(updates)
+    .where(eq(attendanceRecords.id, id));
 }
 
 // ============================================================================
@@ -884,7 +1130,7 @@ export async function updateAttendance(id: number, updates: Partial<InsertAttend
 export async function getUserRelations(parentId?: number, childId?: number) {
   const db = await getDb();
   if (!db) return [];
-  
+
   const conditions = [];
   if (parentId) {
     conditions.push(eq(userRelations.parentId, parentId));
@@ -892,18 +1138,24 @@ export async function getUserRelations(parentId?: number, childId?: number) {
   if (childId) {
     conditions.push(eq(userRelations.childId, childId));
   }
-  
+
   if (conditions.length > 0) {
-    return await db.select().from(userRelations).where(and(...conditions));
+    return await db
+      .select()
+      .from(userRelations)
+      .where(and(...conditions));
   }
-  
+
   return await db.select().from(userRelations);
 }
 
 export async function createUserRelation(relation: InsertUserRelation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(userRelations).values(relation).returning({ id: userRelations.id });
+  const result = await db
+    .insert(userRelations)
+    .values(relation)
+    .returning({ id: userRelations.id });
   return result[0].id;
 }
 
@@ -916,27 +1168,29 @@ export async function deleteUserRelation(id: number) {
 export async function getChildrenForParent(parentId: number) {
   const db = await getDb();
   if (!db) return [];
-  
-  const relations = await db.select()
+
+  const relations = await db
+    .select()
     .from(userRelations)
     .where(eq(userRelations.parentId, parentId));
-  
+
   const childIds = relations.map(r => r.childId);
   if (childIds.length === 0) return [];
-  
+
   return await db.select().from(users).where(inArray(users.id, childIds));
 }
 
 export async function getParentsForChild(childId: number) {
   const db = await getDb();
   if (!db) return [];
-  
-  const relations = await db.select()
+
+  const relations = await db
+    .select()
     .from(userRelations)
     .where(eq(userRelations.childId, childId));
-  
+
   const parentIds = relations.map(r => r.parentId);
   if (parentIds.length === 0) return [];
-  
+
   return await db.select().from(users).where(inArray(users.id, parentIds));
 }

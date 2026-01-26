@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getClerkPublishableKey, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const [guestEmail, setGuestEmail] = useState("");
+  const checkoutKeyRef = useRef<Map<string, string>>(new Map());
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
   const createCheckout = trpc.payment.createCheckout.useMutation({
@@ -41,15 +42,32 @@ export default function SignUp() {
   });
 
   const handlePurchase = (productId: string) => {
+    const baseFingerprint = productId.trim();
     if (!isAuthenticated) {
       if (!guestEmail.trim()) {
         toast.info("Please enter an email for your registration receipt.");
         return;
       }
-      createGuestCheckout.mutate({ productId, email: guestEmail.trim() });
+      const guestFingerprint = `guest:${baseFingerprint}:${guestEmail.trim().toLowerCase()}`;
+      const existingKey = checkoutKeyRef.current.get(guestFingerprint);
+      const idempotencyKey = existingKey ?? crypto.randomUUID();
+      if (!existingKey) {
+        checkoutKeyRef.current.set(guestFingerprint, idempotencyKey);
+      }
+      createGuestCheckout.mutate({
+        productId,
+        email: guestEmail.trim(),
+        idempotencyKey,
+      });
       return;
     }
-    createCheckout.mutate({ productId });
+    const authFingerprint = `auth:${baseFingerprint}`;
+    const existingKey = checkoutKeyRef.current.get(authFingerprint);
+    const idempotencyKey = existingKey ?? crypto.randomUUID();
+    if (!existingKey) {
+      checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
+    }
+    createCheckout.mutate({ productId, idempotencyKey });
   };
 
   return (

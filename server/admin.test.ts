@@ -3,6 +3,10 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+const hasStripe = Boolean(process.env.STRIPE_SECRET_KEY);
+const describeDb = hasDatabase ? describe : describe.skip;
+const describeStripe = hasStripe ? describe : describe.skip;
 
 function createAdminContext(): TrpcContext {
   const adminUser: AuthenticatedUser = {
@@ -50,7 +54,7 @@ function createMemberContext(): TrpcContext {
   };
 }
 
-describe("Admin Access Control", () => {
+describeDb("Admin Access Control", () => {
   it("allows admin users to access admin.programs.list", async () => {
     const ctx = createAdminContext();
     const caller = appRouter.createCaller(ctx);
@@ -63,7 +67,9 @@ describe("Admin Access Control", () => {
     const ctx = createMemberContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.admin.programs.list()).rejects.toThrow("Admin access required");
+    await expect(caller.admin.programs.list()).rejects.toThrow(
+      "Admin access required"
+    );
   });
 
   it("allows admin users to access admin.schedules.list", async () => {
@@ -78,11 +84,13 @@ describe("Admin Access Control", () => {
     const ctx = createMemberContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.admin.schedules.list()).rejects.toThrow("Admin access required");
+    await expect(caller.admin.schedules.list()).rejects.toThrow(
+      "Admin access required"
+    );
   });
 });
 
-describe("Schedule Registration", () => {
+describeDb("Schedule Registration", () => {
   it("allows authenticated users to register for schedules", async () => {
     const ctx = createMemberContext();
     const caller = appRouter.createCaller(ctx);
@@ -99,7 +107,7 @@ describe("Schedule Registration", () => {
   });
 });
 
-describe("Payment Checkout", () => {
+describeStripe("Payment Checkout", () => {
   it("creates checkout session for authenticated users", async () => {
     const ctx = createMemberContext();
     const caller = appRouter.createCaller(ctx);
@@ -125,7 +133,7 @@ describe("Payment Checkout", () => {
   });
 });
 
-describe("Contact Submissions", () => {
+describeDb("Contact Submissions", () => {
   it("allows public users to submit contact forms", async () => {
     const ctx: TrpcContext = {
       user: null,

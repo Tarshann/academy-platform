@@ -3,6 +3,8 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+const describeDb = hasDatabase ? describe : describe.skip;
 
 function createPublicContext(): TrpcContext {
   return {
@@ -17,7 +19,7 @@ function createPublicContext(): TrpcContext {
   };
 }
 
-describe("contact.submit", () => {
+describeDb("contact.submit", () => {
   it("accepts valid general inquiry submission", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
@@ -27,7 +29,8 @@ describe("contact.submit", () => {
       email: "john@example.com",
       phone: "555-1234",
       subject: "Program Inquiry",
-      message: "I would like to know more about your programs for my 10-year-old son.",
+      message:
+        "I would like to know more about your programs for my 10-year-old son.",
       type: "general",
     });
 
@@ -43,7 +46,8 @@ describe("contact.submit", () => {
       email: "jane@example.com",
       phone: "555-5678",
       subject: "Volunteer Application",
-      message: "I have 5 years of coaching experience and would love to volunteer with The Academy.",
+      message:
+        "I have 5 years of coaching experience and would love to volunteer with The Academy.",
       type: "volunteer",
     });
 
@@ -81,7 +85,7 @@ describe("contact.submit", () => {
   });
 });
 
-describe("programs.list", () => {
+describeDb("programs.list", () => {
   it("returns list of active programs", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
@@ -103,7 +107,7 @@ describe("programs.list", () => {
   });
 });
 
-describe("announcements.list", () => {
+describeDb("announcements.list", () => {
   it("requires authentication", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);

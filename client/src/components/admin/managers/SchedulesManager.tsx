@@ -2,16 +2,54 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus } from "lucide-react";
+
+type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+type SessionType = "regular" | "open_gym" | "special";
 
 type ScheduleFormState = {
   title: string;
@@ -19,11 +57,11 @@ type ScheduleFormState = {
   programId: string;
   startTime: string;
   endTime: string;
-  dayOfWeek: string;
+  dayOfWeek: DayOfWeek | "";
   location: string;
   locationId: string;
   maxParticipants: string;
-  sessionType: string;
+  sessionType: SessionType | "";
   isRecurring: boolean;
 };
 
@@ -42,7 +80,11 @@ const initialForm: ScheduleFormState = {
 };
 
 export function SchedulesManager() {
-  const { data: schedules, isLoading, refetch } = trpc.admin.schedules.list.useQuery();
+  const {
+    data: schedules,
+    isLoading,
+    refetch,
+  } = trpc.admin.schedules.list.useQuery();
   const { data: programs } = trpc.admin.programs.list.useQuery();
   const { data: locations } = trpc.locations.admin.list.useQuery();
   const createSchedule = trpc.admin.schedules.create.useMutation();
@@ -55,11 +97,19 @@ export function SchedulesManager() {
   const locationOptions = useMemo(() => locations ?? [], [locations]);
 
   const resetForm = () => setFormData(initialForm);
-  const getDayOfWeek = (value: string) => {
+  const getDayOfWeek = (value: string): DayOfWeek | "" => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    return days[date.getDay()];
+    const days = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+    return days[date.getDay()] as DayOfWeek;
   };
 
   const handleCreate = async () => {
@@ -72,13 +122,19 @@ export function SchedulesManager() {
       await createSchedule.mutateAsync({
         title: formData.title,
         description: formData.description || undefined,
-        programId: formData.programId ? parseInt(formData.programId, 10) : undefined,
+        programId: formData.programId
+          ? parseInt(formData.programId, 10)
+          : undefined,
         startTime: new Date(formData.startTime),
         endTime: new Date(formData.endTime),
         dayOfWeek: formData.dayOfWeek || undefined,
         location: formData.location || undefined,
-        locationId: formData.locationId ? parseInt(formData.locationId, 10) : undefined,
-        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants, 10) : null,
+        locationId: formData.locationId
+          ? parseInt(formData.locationId, 10)
+          : undefined,
+        maxParticipants: formData.maxParticipants
+          ? parseInt(formData.maxParticipants, 10)
+          : null,
         sessionType: formData.sessionType || undefined,
         isRecurring: formData.isRecurring || undefined,
       });
@@ -110,7 +166,9 @@ export function SchedulesManager() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Schedule Management</CardTitle>
-            <CardDescription>Manage upcoming sessions and recurring events</CardDescription>
+            <CardDescription>
+              Manage upcoming sessions and recurring events
+            </CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
@@ -122,15 +180,20 @@ export function SchedulesManager() {
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Schedule</DialogTitle>
-                <DialogDescription>Set up a training session or event</DialogDescription>
+                <DialogDescription>
+                  Set up a training session or event
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="schedule-program">Program</Label>
                   <Select
                     value={formData.programId || "none"}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, programId: value === "none" ? "" : value })
+                    onValueChange={value =>
+                      setFormData({
+                        ...formData,
+                        programId: value === "none" ? "" : value,
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -151,7 +214,9 @@ export function SchedulesManager() {
                   <Input
                     id="schedule-title"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     placeholder="e.g., Saturday Skills Session"
                   />
                 </div>
@@ -160,7 +225,9 @@ export function SchedulesManager() {
                   <Textarea
                     id="schedule-description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={e =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     placeholder="Optional details"
                     rows={3}
                   />
@@ -172,9 +239,13 @@ export function SchedulesManager() {
                       id="schedule-start"
                       type="datetime-local"
                       value={formData.startTime}
-                      onChange={(e) => {
+                      onChange={e => {
                         const dayOfWeek = getDayOfWeek(e.target.value);
-                        setFormData({ ...formData, startTime: e.target.value, dayOfWeek });
+                        setFormData({
+                          ...formData,
+                          startTime: e.target.value,
+                          dayOfWeek,
+                        });
                       }}
                     />
                   </div>
@@ -184,7 +255,9 @@ export function SchedulesManager() {
                       id="schedule-end"
                       type="datetime-local"
                       value={formData.endTime}
-                      onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, endTime: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -192,8 +265,13 @@ export function SchedulesManager() {
                   <Label>Day of Week</Label>
                   <Select
                     value={formData.dayOfWeek || "none"}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, dayOfWeek: value === "none" ? "" : value })
+                    onValueChange={value =>
+                      setFormData({
+                        ...formData,
+                        dayOfWeek: (value === "none" ? "" : value) as
+                          | DayOfWeek
+                          | "",
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -216,7 +294,9 @@ export function SchedulesManager() {
                     <Label>Location (manual)</Label>
                     <Input
                       value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      onChange={e =>
+                        setFormData({ ...formData, location: e.target.value })
+                      }
                       placeholder="e.g., Main Gym"
                     />
                   </div>
@@ -224,8 +304,11 @@ export function SchedulesManager() {
                     <Label>Location (saved)</Label>
                     <Select
                       value={formData.locationId || "none"}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, locationId: value === "none" ? "" : value })
+                      onValueChange={value =>
+                        setFormData({
+                          ...formData,
+                          locationId: value === "none" ? "" : value,
+                        })
                       }
                     >
                       <SelectTrigger>
@@ -234,7 +317,10 @@ export function SchedulesManager() {
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {locationOptions.map((location: any) => (
-                          <SelectItem key={location.id} value={String(location.id)}>
+                          <SelectItem
+                            key={location.id}
+                            value={String(location.id)}
+                          >
                             {location.name}
                           </SelectItem>
                         ))}
@@ -248,7 +334,12 @@ export function SchedulesManager() {
                     <Input
                       type="number"
                       value={formData.maxParticipants}
-                      onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                      onChange={e =>
+                        setFormData({
+                          ...formData,
+                          maxParticipants: e.target.value,
+                        })
+                      }
                       placeholder="Optional"
                     />
                   </div>
@@ -256,8 +347,13 @@ export function SchedulesManager() {
                     <Label>Session Type</Label>
                     <Select
                       value={formData.sessionType || "none"}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, sessionType: value === "none" ? "" : value })
+                      onValueChange={value =>
+                        setFormData({
+                          ...formData,
+                          sessionType: (value === "none" ? "" : value) as
+                            | SessionType
+                            | "",
+                        })
                       }
                     >
                       <SelectTrigger>
@@ -276,7 +372,9 @@ export function SchedulesManager() {
                     <div className="flex items-center gap-2">
                       <Switch
                         checked={formData.isRecurring}
-                        onCheckedChange={(checked) => setFormData({ ...formData, isRecurring: checked })}
+                        onCheckedChange={checked =>
+                          setFormData({ ...formData, isRecurring: checked })
+                        }
                       />
                       <span className="text-sm text-muted-foreground">
                         {formData.isRecurring ? "Yes" : "No"}
@@ -286,7 +384,10 @@ export function SchedulesManager() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                >
                   Cancel
                 </Button>
                 {formData.dayOfWeek && (
@@ -297,7 +398,12 @@ export function SchedulesManager() {
                     </Badge>
                   </div>
                 )}
-                <Button onClick={handleCreate} disabled={!formData.title || !formData.startTime || !formData.endTime}>
+                <Button
+                  onClick={handleCreate}
+                  disabled={
+                    !formData.title || !formData.startTime || !formData.endTime
+                  }
+                >
                   Create Schedule
                 </Button>
               </DialogFooter>
@@ -323,17 +429,28 @@ export function SchedulesManager() {
           <TableBody>
             {schedules?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={9} className="text-center text-muted-foreground">
+                <TableCell
+                  colSpan={9}
+                  className="text-center text-muted-foreground"
+                >
                   No schedules yet. Create your first session.
                 </TableCell>
               </TableRow>
             ) : (
               schedules?.map((schedule: any) => {
-                const dayOfWeek = schedule.dayOfWeek || getDayOfWeek(schedule.startTime.toString());
+                const dayOfWeek =
+                  schedule.dayOfWeek ||
+                  getDayOfWeek(schedule.startTime.toString());
                 return (
                   <TableRow key={schedule.id}>
-                    <TableCell className="font-medium">{schedule.title}</TableCell>
-                    <TableCell>{programs?.find((program) => program.id === schedule.programId)?.name || "—"}</TableCell>
+                    <TableCell className="font-medium">
+                      {schedule.title}
+                    </TableCell>
+                    <TableCell>
+                      {programs?.find(
+                        program => program.id === schedule.programId
+                      )?.name || "—"}
+                    </TableCell>
                     <TableCell>
                       {dayOfWeek ? (
                         <Badge variant="outline" className="capitalize">
@@ -343,8 +460,12 @@ export function SchedulesManager() {
                         "—"
                       )}
                     </TableCell>
-                    <TableCell>{new Date(schedule.startTime).toLocaleString()}</TableCell>
-                    <TableCell>{new Date(schedule.endTime).toLocaleString()}</TableCell>
+                    <TableCell>
+                      {new Date(schedule.startTime).toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(schedule.endTime).toLocaleString()}
+                    </TableCell>
                     <TableCell>{schedule.location || "—"}</TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="capitalize">
@@ -353,7 +474,11 @@ export function SchedulesManager() {
                     </TableCell>
                     <TableCell>{schedule.isRecurring ? "Yes" : "No"}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(schedule.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(schedule.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>

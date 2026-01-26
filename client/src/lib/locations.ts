@@ -3,14 +3,28 @@ interface LocationDetails {
   city?: string | null;
   state?: string | null;
   zipCode?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
   name?: string | null;
 }
 
 export const buildDirectionsUrl = (location: LocationDetails) => {
-  if (location.latitude != null && location.longitude != null) {
-    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  const latitude =
+    location.latitude != null && location.latitude !== ""
+      ? Number(location.latitude)
+      : null;
+  const longitude =
+    location.longitude != null && location.longitude !== ""
+      ? Number(location.longitude)
+      : null;
+
+  if (
+    latitude != null &&
+    longitude != null &&
+    !Number.isNaN(latitude) &&
+    !Number.isNaN(longitude)
+  ) {
+    return `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
   }
 
   const addressParts = [

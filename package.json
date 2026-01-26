@@ -8,9 +8,12 @@
     "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check --ignore-unknown docs/SHIP_READINESS e2e/link-crawl.spec.ts drizzle/schema.ts server/stripe-webhook.ts",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "pnpm exec playwright test",
+    "e2e": "pnpm exec playwright test",
     "db:push": "drizzle-kit generate && drizzle-kit migrate"
   },
   "dependencies": {

@@ -3,8 +3,12 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+const hasDatabase = Boolean(process.env.DATABASE_URL);
+const describeDb = hasDatabase ? describe : describe.skip;
 
-function createAuthContext(role: "user" | "admin" = "user"): { ctx: TrpcContext } {
+function createAuthContext(role: "user" | "admin" = "user"): {
+  ctx: TrpcContext;
+} {
   const user: AuthenticatedUser = {
     id: 1,
     openId: "test-user",
@@ -29,7 +33,7 @@ function createAuthContext(role: "user" | "admin" = "user"): { ctx: TrpcContext 
   return { ctx };
 }
 
-describe("Shop Features", () => {
+describeDb("Shop Features", () => {
   it("allows public users to list products", async () => {
     const { ctx } = createAuthContext();
     ctx.user = undefined; // Public user

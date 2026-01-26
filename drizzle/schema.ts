@@ -1,25 +1,112 @@
-import { pgTable, serial, text, timestamp, varchar, numeric, integer, boolean, pgEnum } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  varchar,
+  numeric,
+  integer,
+  boolean,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 
 // ============================================================================
 // ENUMS
 // ============================================================================
 
 export const userRoleEnum = pgEnum("user_role", ["user", "admin"]);
-export const programCategoryEnum = pgEnum("program_category", ["group", "individual", "shooting", "league", "camp", "membership"]);
-export const programSportEnum = pgEnum("program_sport", ["basketball", "football", "soccer", "multi_sport", "saq"]);
+export const programCategoryEnum = pgEnum("program_category", [
+  "group",
+  "individual",
+  "shooting",
+  "league",
+  "camp",
+  "membership",
+]);
+export const programSportEnum = pgEnum("program_sport", [
+  "basketball",
+  "football",
+  "soccer",
+  "multi_sport",
+  "saq",
+]);
 export const contactTypeEnum = pgEnum("contact_type", ["general", "volunteer"]);
-export const contactStatusEnum = pgEnum("contact_status", ["new", "read", "responded"]);
-export const paymentStatusEnum = pgEnum("payment_status", ["pending", "succeeded", "failed", "refunded"]);
-export const paymentTypeEnum = pgEnum("payment_type", ["one_time", "recurring"]);
-export const subscriptionStatusEnum = pgEnum("subscription_status", ["active", "canceled", "past_due", "incomplete"]);
-export const registrationStatusEnum = pgEnum("registration_status", ["registered", "attended", "canceled", "no_show"]);
-export const galleryCategoryEnum = pgEnum("gallery_category", ["training", "teams", "events", "facilities", "other"]);
-export const blogCategoryEnum = pgEnum("blog_category", ["training_tips", "athlete_spotlight", "news", "events", "other"]);
-export const productCategoryEnum = pgEnum("product_category", ["apparel", "accessories", "equipment"]);
-export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]);
-export const videoCategoryEnum = pgEnum("video_category", ["drills", "technique", "conditioning", "games", "other"]);
-export const attendanceStatusEnum = pgEnum("attendance_status", ["present", "absent", "excused", "late"]);
-export const dayOfWeekEnum = pgEnum("day_of_week", ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]);
+export const contactStatusEnum = pgEnum("contact_status", [
+  "new",
+  "read",
+  "responded",
+]);
+export const paymentStatusEnum = pgEnum("payment_status", [
+  "pending",
+  "succeeded",
+  "failed",
+  "refunded",
+]);
+export const paymentTypeEnum = pgEnum("payment_type", [
+  "one_time",
+  "recurring",
+]);
+export const subscriptionStatusEnum = pgEnum("subscription_status", [
+  "active",
+  "canceled",
+  "past_due",
+  "incomplete",
+]);
+export const registrationStatusEnum = pgEnum("registration_status", [
+  "registered",
+  "attended",
+  "canceled",
+  "no_show",
+]);
+export const galleryCategoryEnum = pgEnum("gallery_category", [
+  "training",
+  "teams",
+  "events",
+  "facilities",
+  "other",
+]);
+export const blogCategoryEnum = pgEnum("blog_category", [
+  "training_tips",
+  "athlete_spotlight",
+  "news",
+  "events",
+  "other",
+]);
+export const productCategoryEnum = pgEnum("product_category", [
+  "apparel",
+  "accessories",
+  "equipment",
+]);
+export const orderStatusEnum = pgEnum("order_status", [
+  "pending",
+  "paid",
+  "processing",
+  "shipped",
+  "delivered",
+  "cancelled",
+]);
+export const videoCategoryEnum = pgEnum("video_category", [
+  "drills",
+  "technique",
+  "conditioning",
+  "games",
+  "other",
+]);
+export const attendanceStatusEnum = pgEnum("attendance_status", [
+  "present",
+  "absent",
+  "excused",
+  "late",
+]);
+export const dayOfWeekEnum = pgEnum("day_of_week", [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+]);
 
 // ============================================================================
 // TABLES
@@ -138,7 +225,8 @@ export const sessionRegistrations = pgTable("sessionRegistrations", {
 });
 
 export type SessionRegistration = typeof sessionRegistrations.$inferSelect;
-export type InsertSessionRegistration = typeof sessionRegistrations.$inferInsert;
+export type InsertSessionRegistration =
+  typeof sessionRegistrations.$inferInsert;
 
 /**
  * Payments table
@@ -157,6 +245,21 @@ export const payments = pgTable("payments", {
 
 export type Payment = typeof payments.$inferSelect;
 export type InsertPayment = typeof payments.$inferInsert;
+
+/**
+ * Stripe webhook events (dedupe + processing state)
+ */
+export const stripeWebhookEvents = pgTable("stripeWebhookEvents", {
+  id: serial("id").primaryKey(),
+  eventId: varchar("eventId", { length: 255 }).notNull().unique(),
+  eventType: varchar("eventType", { length: 255 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull().default("processing"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type StripeWebhookEvent = typeof stripeWebhookEvents.$inferSelect;
+export type InsertStripeWebhookEvent = typeof stripeWebhookEvents.$inferInsert;
 
 /**
  * Subscriptions table
@@ -409,8 +512,10 @@ export const notificationPreferences = pgTable("notificationPreferences", {
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
 
-export type NotificationPreference = typeof notificationPreferences.$inferSelect;
-export type InsertNotificationPreference = typeof notificationPreferences.$inferInsert;
+export type NotificationPreference =
+  typeof notificationPreferences.$inferSelect;
+export type InsertNotificationPreference =
+  typeof notificationPreferences.$inferInsert;
 
 /**
  * User relations table
@@ -420,7 +525,9 @@ export const userRelations = pgTable("userRelations", {
   id: serial("id").primaryKey(),
   parentId: integer("parentId").notNull(), // Parent user ID
   childId: integer("childId").notNull(), // Child user ID
-  relationshipType: varchar("relationshipType", { length: 50 }).notNull().default("parent"), // "parent", "guardian"
+  relationshipType: varchar("relationshipType", { length: 50 })
+    .notNull()
+    .default("parent"), // "parent", "guardian"
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
 });
