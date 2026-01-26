@@ -31,7 +31,7 @@ const getDayOfWeek = (schedule: any): string | null => {
 };
 
 export default function MemberDashboard() {
-  const { user, isAuthenticated, loading } = useAuth({
+  const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
   const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = trpc.schedules.upcoming.useQuery(
@@ -119,6 +119,23 @@ export default function MemberDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-primary" size={48} />
+      </div>
+    );
+  }
+
+  if (!authConfigured) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-6">
+            <h1 className="text-2xl font-bold mb-3">Authentication Not Configured</h1>
+            <p className="text-muted-foreground">
+              Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials to access the member dashboard.
+            </p>
+          </div>
+        </main>
+        <Footer />
       </div>
     );
   }
