@@ -277,7 +277,39 @@ export const appRouter = router({
             sessionLocation: schedule.location || "TBA",
           });
         }
+<<<<<<< Updated upstream
+        
+=======
 
+        const registrations = await getScheduleRegistrations(input.scheduleId);
+        const alreadyRegistered = registrations.some((registration) => registration.userId === ctx.user.id);
+        if (alreadyRegistered) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'Already registered for this session' });
+        }
+
+        if (schedule.maxParticipants && registrations.length >= schedule.maxParticipants) {
+          throw new TRPCError({ code: 'CONFLICT', message: 'This session is full' });
+        }
+
+        await createSessionRegistration(ctx.user.id, input.scheduleId);
+
+        if (ctx.user.email) {
+          const { getUserNotificationPreferences } = await import('./db');
+          const preferences = await getUserNotificationPreferences(ctx.user.id);
+          const allowEmail = preferences?.sessionRegistrations ?? true;
+
+          if (allowEmail) {
+            await sendSessionRegistrationEmail({
+              to: ctx.user.email,
+              userName: ctx.user.name || 'Member',
+              sessionTitle: schedule.title,
+              sessionDate: schedule.startTime,
+              sessionLocation: schedule.location || 'TBA',
+            });
+          }
+        }
+
+>>>>>>> Stashed changes
         return { success: true };
       }),
   }),
