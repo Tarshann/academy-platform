@@ -1,22 +1,22 @@
 # Setup & Configuration Summary
 
-## ✅ Completed Configuration
+## ✅ Configuration Checklist
 
-Configure the following environment variables in your `.env` file:
+Configure the following environment variables in your `.env` file (values shown here are placeholders):
 
 ### Stripe Payment Integration
-- ✅ **STRIPE_SECRET_KEY** - Configured (test key)
-- ✅ **STRIPE_PUBLISHABLE_KEY** - Configured (test key, reserved for future use)
-- ✅ **STRIPE_WEBHOOK_SECRET** - Configured (test webhook secret)
+- **STRIPE_SECRET_KEY** - Stripe secret key (test or live)
+- **STRIPE_PUBLISHABLE_KEY** - Stripe publishable key (reserved for future frontend use)
+- **STRIPE_WEBHOOK_SECRET** - Stripe webhook signing secret
 
 ### Email Service
-- ✅ **RESEND_API_KEY** - Configured
+- **RESEND_API_KEY** - Resend API key
 
 ### Forge API
-- ✅ **VITE_FRONTEND_FORGE_API_URL** - Set to `https://forge.example.com`
-- ✅ **BUILT_IN_FORGE_API_URL** - Set to `https://forge.example.com`
-- ⚠️ **VITE_FRONTEND_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
-- ⚠️ **BUILT_IN_FORGE_API_KEY** - **NEEDS TO BE FILLED IN**
+- **VITE_FRONTEND_FORGE_API_URL** - Forge API URL for frontend
+- **BUILT_IN_FORGE_API_URL** - Forge API URL for backend
+- **VITE_FRONTEND_FORGE_API_KEY** - Forge API key for frontend
+- **BUILT_IN_FORGE_API_KEY** - Forge API key for backend
 
 ## ⚠️ Required Configuration (Still Needed)
 
@@ -67,7 +67,7 @@ BUILT_IN_FORGE_API_KEY=your_backend_key
 
 ## 📝 Notes
 
-- **Stripe Keys**: Currently using test keys. For production, replace with live keys from Stripe Dashboard.
+- **Stripe Keys**: Use test keys for development. For production, replace with live keys from Stripe Dashboard.
 - **Stripe Publishable Key**: Not currently used in the frontend. Payments use Stripe Checkout (hosted by Stripe), so the publishable key is reserved for future use if you want to implement embedded payment forms.
 - **Environment Files**: 
   - `.env` - Your actual configuration (DO NOT COMMIT)
