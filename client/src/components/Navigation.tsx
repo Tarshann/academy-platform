@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "./ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, getClerkPublishableKey } from "@/const";
@@ -11,6 +11,7 @@ import { useClerkState } from "@/contexts/ClerkStateContext";
 
 export default function Navigation() {
   const { user: dbUser, isAuthenticated, logout } = useAuth();
+  const [location] = useLocation();
   const clerkPublishableKey = getClerkPublishableKey();
   const { user: clerkUser, isSignedIn, isEnabled: isClerkEnabled } = useClerkState();
   
@@ -33,6 +34,19 @@ export default function Navigation() {
     setMobileMenuOpen(false);
   };
 
+  const isActiveRoute = (path: string) => {
+    if (path === "/") return location === "/";
+    return location === path || location.startsWith(`${path}/`);
+  };
+
+  const getLinkClassName = (path: string) =>
+    [
+      "text-foreground hover:text-primary transition-colors",
+      isActiveRoute(path) ? "text-primary font-semibold" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
   return (
     <nav className="bg-card border-b border-border sticky top-0 z-50">
       <div className="container">
@@ -45,38 +59,38 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/" className={getLinkClassName("/")} aria-current={isActiveRoute("/") ? "page" : undefined}>
               Home
             </Link>
-            <Link href="/programs" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/programs" className={getLinkClassName("/programs")} aria-current={isActiveRoute("/programs") ? "page" : undefined}>
               Programs
             </Link>
-            <Link href="/about" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/about" className={getLinkClassName("/about")} aria-current={isActiveRoute("/about") ? "page" : undefined}>
               About
             </Link>
-            <Link href="/gallery" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/gallery" className={getLinkClassName("/gallery")} aria-current={isActiveRoute("/gallery") ? "page" : undefined}>
               Gallery
             </Link>
-            <Link href="/videos" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/videos" className={getLinkClassName("/videos")} aria-current={isActiveRoute("/videos") ? "page" : undefined}>
               Videos
             </Link>
-            <Link href="/shop" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/shop" className={getLinkClassName("/shop")} aria-current={isActiveRoute("/shop") ? "page" : undefined}>
               Shop
             </Link>
-            <Link href="/faqs" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/faqs" className={getLinkClassName("/faqs")} aria-current={isActiveRoute("/faqs") ? "page" : undefined}>
               FAQs
             </Link>
-            <Link href="/contact" className="text-foreground hover:text-primary transition-colors">
+            <Link href="/contact" className={getLinkClassName("/contact")} aria-current={isActiveRoute("/contact") ? "page" : undefined}>
               Contact
             </Link>
             
             {isAuthenticatedFinal ? (
               <>
-                <Link href="/member" className="text-foreground hover:text-primary transition-colors">
+                <Link href="/member" className={getLinkClassName("/member")} aria-current={isActiveRoute("/member") ? "page" : undefined}>
                   Dashboard
                 </Link>
                 {user?.role === 'admin' && (
-                  <Link href="/admin" className="text-foreground hover:text-primary transition-colors">
+                  <Link href="/admin" className={getLinkClassName("/admin")} aria-current={isActiveRoute("/admin") ? "page" : undefined}>
                     Admin
                   </Link>
                 )}
@@ -142,41 +156,41 @@ export default function Navigation() {
               <div className="px-4 pb-2">
                 <SearchBar />
               </div>
-              <Link href="/" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/" className={getLinkClassName("/")} aria-current={isActiveRoute("/") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Home
               </Link>
-              <Link href="/programs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/programs" className={getLinkClassName("/programs")} aria-current={isActiveRoute("/programs") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Programs
               </Link>
-              <Link href="/about" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/about" className={getLinkClassName("/about")} aria-current={isActiveRoute("/about") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 About
               </Link>
-              <Link href="/gallery" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/gallery" className={getLinkClassName("/gallery")} aria-current={isActiveRoute("/gallery") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Gallery
               </Link>
-              <Link href="/videos" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/videos" className={getLinkClassName("/videos")} aria-current={isActiveRoute("/videos") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Videos
               </Link>
-              <Link href="/shop" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/shop" className={getLinkClassName("/shop")} aria-current={isActiveRoute("/shop") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Shop
               </Link>
-              <Link href="/blog" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/blog" className={getLinkClassName("/blog")} aria-current={isActiveRoute("/blog") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Blog
               </Link>
-              <Link href="/faqs" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/faqs" className={getLinkClassName("/faqs")} aria-current={isActiveRoute("/faqs") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 FAQs
               </Link>
-              <Link href="/contact" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+              <Link href="/contact" className={getLinkClassName("/contact")} aria-current={isActiveRoute("/contact") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Contact
               </Link>
               
               {isAuthenticatedFinal ? (
                 <>
-                  <Link href="/member" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  <Link href="/member" className={getLinkClassName("/member")} aria-current={isActiveRoute("/member") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                     Dashboard
                   </Link>
                   {user?.role === 'admin' && (
-                    <Link href="/admin" className="text-foreground hover:text-primary transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                    <Link href="/admin" className={getLinkClassName("/admin")} aria-current={isActiveRoute("/admin") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                       Admin
                     </Link>
                   )}
