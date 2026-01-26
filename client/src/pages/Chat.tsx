@@ -153,7 +153,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <main id="main-content" className="min-h-screen bg-background p-4">
       <div className="container max-w-4xl mx-auto">
         <Card className="h-[calc(100vh-2rem)]">
           <CardHeader>
@@ -223,6 +223,6 @@ export default function Chat() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </main>
   );
 }

@@ -4,6 +4,8 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OrganizationStructuredData } from "@/components/StructuredData";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
@@ -66,13 +68,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <OrganizationStructuredData />
-      {/* Hero Section with Parallax */}
-      <motion.section
-        ref={heroRef}
-        style={{ opacity: heroOpacity, scale: heroScale }}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-black"
-      >
+      <Navigation />
+      <main id="main-content">
+        <OrganizationStructuredData />
+        {/* Hero Section with Parallax */}
+        <motion.section
+          ref={heroRef}
+          style={{ opacity: heroOpacity, scale: heroScale }}
+          className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-black"
+        >
         {/* Animated Background Elements */}
         <div className="absolute inset-0 overflow-hidden">
           <motion.div
@@ -402,6 +406,8 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+      </main>
+      <Footer />
     </div>
   );
 }

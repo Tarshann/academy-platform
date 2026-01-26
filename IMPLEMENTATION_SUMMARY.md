@@ -8,6 +8,12 @@
 
 ## ✅ Completed Implementations
 
+### March 2025 Visual & Navigation Polish ✅
+- **Navigation clarity**: Added active route styling and `aria-current` states for primary navigation links.
+- **Skip link coverage**: Ensured skip-to-content target exists on Home, Chat, and Not Found screens.
+- **Homepage consistency**: Restored global navigation and footer on the homepage for consistent wayfinding.
+- **Video library fix**: Restored missing router import to prevent empty-state rendering errors.
+
 ### January 2025 UX & Architecture Alignments ✅
 - **Unified location directions helper**: Centralized map URL generation for location cards and member schedules.
 - **Member dashboard performance**: Memoized attendance lookups to reduce repeated filtering in schedule views.
