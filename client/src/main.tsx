@@ -25,7 +25,13 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  const loginUrl = getLoginUrl();
+  if (loginUrl === "#") {
+    logger.warn("[Auth] Redirect skipped because authentication is not configured.");
+    return;
+  }
+
+  window.location.href = loginUrl;
 };
 
 queryClient.getQueryCache().subscribe(event => {

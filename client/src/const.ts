@@ -10,6 +10,18 @@ export const getClerkPublishableKey = (): string => {
          "";
 };
 
+export const isAuthConfigured = () => {
+  const clerkKey = getClerkPublishableKey();
+  if (clerkKey) {
+    return true;
+  }
+
+  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
+  const appId = import.meta.env.VITE_APP_ID;
+
+  return Boolean(oauthPortalUrl && appId);
+};
+
 // Generate login URL - supports both Clerk and legacy OAuth
 export const getLoginUrl = () => {
   const clerkKey = getClerkPublishableKey();

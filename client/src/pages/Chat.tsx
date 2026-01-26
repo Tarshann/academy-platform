@@ -20,7 +20,7 @@ interface Message {
 }
 
 export default function Chat() {
-  const { user, isAuthenticated, loading } = useAuth({
+  const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -154,6 +154,23 @@ export default function Chat() {
         <Navigation />
         <main className="flex-1 flex items-center justify-center text-muted-foreground">
           Loading chat...
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!authConfigured) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="text-center max-w-md px-6">
+            <h1 className="text-2xl font-bold mb-3 text-foreground">Authentication Not Configured</h1>
+            <p className="text-muted-foreground">
+              Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials to access the member chat.
+            </p>
+          </div>
         </main>
         <Footer />
       </div>

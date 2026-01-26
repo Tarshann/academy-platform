@@ -111,7 +111,12 @@ export default function Shop() {
   const handleCheckout = () => {
     if (!isAuthenticated) {
       toast.error("Please log in to checkout");
-      window.location.href = getLoginUrl();
+      const loginUrl = getLoginUrl();
+      if (loginUrl === "#") {
+        toast.error("Authentication is not configured. Please set Clerk or OAuth credentials.");
+        return;
+      }
+      window.location.href = loginUrl;
       return;
     }
 
