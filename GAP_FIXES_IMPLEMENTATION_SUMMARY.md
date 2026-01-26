@@ -6,6 +6,14 @@
 
 ---
 
+## Evidence Links (Fill Before Release)
+
+- Commit/Tag:
+- Test run (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`):
+- Lighthouse report:
+- Link crawl report:
+- Auth matrix:
+
 ## ✅ Completed Fixes
 
 ### 1. Database Documentation Mismatch ✅

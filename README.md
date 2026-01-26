@@ -88,6 +88,10 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (for future frontend use) | - |
 | `VITE_SITE_URL` | Public site URL for SEO/canonical tags | `window.location.origin` |
 | `CLERK_PUBLISHABLE_KEY` | Optional server-side fallback if your runtime cannot read Vite envs | - |
+| `ENABLE_SOCKET_IO` | Enable Socket.IO (set `true` only on websocket-capable runtime) | `false` in production |
+| `VITE_ENABLE_SOCKET_IO` | Enable chat UI for Socket.IO | `true` |
+| `STORAGE_MAX_BYTES` | Max upload size in bytes for storage uploads | `0` (disabled) |
+| `STORAGE_ALLOWED_CONTENT_TYPES` | Comma-separated allowlist for storage uploads | `""` (disabled) |
 
 ## 🛠️ Available Scripts
 

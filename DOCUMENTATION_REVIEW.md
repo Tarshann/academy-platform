@@ -1,7 +1,7 @@
 # Documentation & PR Review
 ## Academy Platform
 
-**Review Date:** 2025-02-14
+**Review Date:** 2025-02-14 (refreshed 2025-02-14)
 
 ## Review Method
 
@@ -12,6 +12,19 @@
 ## PR Artifacts
 
 - A standard pull request template now lives at `.github/PULL_REQUEST_TEMPLATE.md` to capture summaries, test evidence, and risk notes for future releases.
+- No other PR templates or release-note scaffolds were found in the repository.
+
+## Documentation Reviewed (Inventory)
+
+The following primary documentation artifacts were reviewed as part of this pass:
+
+- README and setup guides: `README.md`, `SETUP.md`, `DATABASE_SETUP.md`, `QUICK_START_DB.md`
+- Auth/OAuth: `CLERK_SETUP.md`, `CLERK_ENV_SETUP.md`, `OAUTH_SETUP.md`, `OAUTH_QUICK_START.md`
+- Deployment readiness: `PRE_DEPLOYMENT_CHECKLIST.md`, `PRE_DEPLOYMENT_FIXES_SUMMARY.md`, `DEPLOYMENT_READINESS_REVIEW.md`
+- Audit and gaps: `AUDIT_REPORT.md`, `VISION_GAP_ANALYSIS.md`, `GAP_FIXES_IMPLEMENTATION_SUMMARY.md`, `IMPLEMENTATION_SUMMARY.md`
+- Quality/perf guidance: `LIGHTHOUSE_TESTING_GUIDE.md`, `CROSS_BROWSER_TESTING.md`
+- Architecture and plans: `ARCHITECTURE_IMPROVEMENTS.md`
+- Ship readiness artifacts: `docs/SHIP_READINESS/*`
 
 ## Documentation Review Findings
 
@@ -71,6 +84,7 @@ Several documents previously conflicted on deployment readiness and completed fi
 
 1. Keep deployment readiness and audit summaries in sync with the latest release evidence.
 2. Populate evidence links (Lighthouse reports, test results, commit SHAs) during each release.
+3. Complete the ship readiness evidence set in `docs/SHIP_READINESS/` before public launch.
 
 ## Status Updates Applied in This Revision
 
@@ -82,3 +96,5 @@ Several documents previously conflicted on deployment readiness and completed fi
 - Ensured the README Testing section includes primary test commands and removed duplicate testing notes.
 - Added breadcrumbs to primary content pages and improved mobile navigation dismissal behavior.
 - Surfaced online member presence in chat to complete presence indicators.
+- Added evidence link placeholders to release readiness and audit documentation.
+- Added a domain cutover checklist and expanded ship-readiness guidance (auth matrix, env audit).

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import { Link } from "wouter";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -106,6 +106,18 @@ export default function Shop() {
     [cart]
   );
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const checkoutFingerprint = useMemo(
+    () =>
+      JSON.stringify({
+        cart: cart.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })),
+        shippingAddress: shippingAddress.trim(),
+      }),
+    [cart, shippingAddress]
+  );
+  const checkoutKeyRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const isCheckoutDisabled =
     checkoutMutation.isPending || cart.length === 0 || !shippingAddress.trim();
 
@@ -131,12 +143,20 @@ export default function Shop() {
       return;
     }
 
+    if (!checkoutKeyRef.current || checkoutKeyRef.current.fingerprint !== checkoutFingerprint) {
+      checkoutKeyRef.current = {
+        fingerprint: checkoutFingerprint,
+        key: crypto.randomUUID(),
+      };
+    }
+
     checkoutMutation.mutate({
       items: cart.map((item) => ({
         productId: item.productId,
         quantity: item.quantity,
       })),
       shippingAddress,
+      idempotencyKey: checkoutKeyRef.current.key,
     });
   };
 

@@ -10,6 +10,11 @@ export const ENV = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
+  enableSocketIo:
+    process.env.ENABLE_SOCKET_IO === "true" ||
+    (process.env.NODE_ENV !== "production" && process.env.ENABLE_SOCKET_IO !== "false"),
+  storageMaxBytes: Number(process.env.STORAGE_MAX_BYTES ?? 0),
+  storageAllowedContentTypes: process.env.STORAGE_ALLOWED_CONTENT_TYPES ?? "",
   // Clerk authentication
   // Support multiple naming conventions for flexibility
   clerkPublishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? 

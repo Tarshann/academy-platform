@@ -1,11 +1,12 @@
 import { createContext, useContext } from "react";
 import { useUser } from "@clerk/clerk-react";
-import type { UserResource } from "@clerk/types";
+
+type ClerkUser = ReturnType<typeof useUser>["user"];
 
 type ClerkState = {
   isEnabled: boolean;
   isSignedIn: boolean;
-  user: UserResource | null;
+  user: ClerkUser | null;
 };
 
 const ClerkStateContext = createContext<ClerkState>({
@@ -14,7 +15,11 @@ const ClerkStateContext = createContext<ClerkState>({
   user: null,
 });
 
-export function ClerkStateProvider({ children }: { children: React.ReactNode }) {
+export function ClerkStateProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { user, isSignedIn } = useUser();
 
   return (
