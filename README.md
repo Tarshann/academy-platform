@@ -66,7 +66,8 @@ The following environment variables are required. Copy `.env.example` to `.env` 
 | `DATABASE_URL` | PostgreSQL connection string | Your database provider |
 | `JWT_SECRET` | Secret key for JWT tokens | Generate a secure random string |
 | `CLERK_SECRET_KEY` | Clerk secret key (if using Clerk) | Clerk dashboard |
-| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (if using Clerk) | Clerk dashboard |
+| `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (server-side usage, if applicable) | Clerk dashboard |
+| `VITE_CLERK_PUBLISHABLE_KEY` | Clerk publishable key for the frontend (Vite) | Clerk dashboard |
 | `CLERK_ADMIN_EMAIL` | Admin email for Clerk role assignment | Your admin user |
 | `VITE_APP_ID` | OAuth application ID (if using OAuth) | OAuth provider |
 | `VITE_OAUTH_PORTAL_URL` | OAuth portal URL (if using OAuth) | OAuth provider |
@@ -129,7 +130,7 @@ academy-platform/
 
 ## 🔐 Authentication
 
-The platform uses a custom OAuth system. Users authenticate through an external OAuth provider and receive a JWT session token stored in a cookie.
+The platform primarily uses Clerk for authentication, with a legacy OAuth fallback. Users authenticate through Clerk (or OAuth when configured) and receive a session token stored in a cookie.
 
 - **Public routes**: Accessible to everyone
 - **Member routes**: Require authentication (role: `user` or `admin`)
