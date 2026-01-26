@@ -35,7 +35,29 @@
 
 ## 📋 Testing Requirements
 
-### 4. Lighthouse Performance Audit
+### 4. Playwright Gatekeeper Crawl (Automated)
+
+**Goal:** Verify critical public routes, nav/footer links, deep-link anchors, and route protections with a browser runner.
+
+**How to Run:**
+1. Install Playwright browsers (first time only):
+   ```bash
+   pnpm exec playwright install --with-deps
+   ```
+2. Run against a local dev server or a deployed URL:
+   ```bash
+   E2E_BASE_URL="https://your-preview-url.vercel.app" pnpm test:e2e
+   ```
+
+**What It Covers:**
+- Public routes render main content
+- Header + footer links resolve
+- /signup remains public
+- /member redirects or shows auth configuration messaging
+- Deep-link anchor validation for programs/shop/gallery/videos
+- 404 handling
+
+### 5. Lighthouse Performance Audit
 
 **How to Run:**
 1. Build the production version:
@@ -76,7 +98,7 @@
 3. Check for render-blocking resources
 4. Verify service worker is caching properly
 
-### 5. Cross-Browser Testing
+### 6. Cross-Browser Testing
 
 **Required Browsers:**
 - [ ] Chrome (latest)
@@ -160,7 +182,7 @@
   - Touch event handling
   - Safe area insets
 
-### 6. Additional Verification
+### 7. Additional Verification
 
 #### Accessibility Testing
 - [ ] **Screen Reader Testing**
