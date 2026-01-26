@@ -10,7 +10,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold text-foreground mb-4">The Academy</h3>
             <p className="text-muted-foreground text-sm">
-              Youth multi-sport training for basketball, football, and soccer athletes ages 8-18.
+              Youth multi-sport training for basketball, football, and soccer athletes.
             </p>
           </div>
 

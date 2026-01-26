@@ -36,8 +36,8 @@ export default function FAQs() {
                     What age groups do you serve?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
-                    The Academy serves youth athletes ages 8-18. We offer programs tailored to different 
-                    skill levels and age groups to ensure appropriate development for all participants.
+                    The Academy serves youth athletes across a range of developmental stages. We offer programs 
+                    tailored to different skill levels so we can recommend the right fit for each athlete.
                   </AccordionContent>
                 </AccordionItem>
 

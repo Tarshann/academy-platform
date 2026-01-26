@@ -153,6 +153,10 @@ Resend is used for transactional emails:
 - Payment confirmations
 - Contact form notifications
 
+## 🔎 SEO & Social Sharing
+
+The frontend uses a shared `SEO` component to populate meta descriptions, Open Graph tags, Twitter cards, and canonical URLs per page. To ensure canonical links and social previews resolve correctly in production, set `VITE_SITE_URL` to the public site URL (for example, `https://theacademy.example.com`).
+
 ## 🗄️ Database
 
 The database uses Drizzle ORM with PostgreSQL. Schema is defined in `drizzle/schema.ts`.
