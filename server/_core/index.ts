@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { logger } from "./logger";
 import { validateEnv } from "./validateEnv";
+import { getHealthStatus } from "./health";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -66,6 +67,11 @@ async function startServer() {
   // Rate limiting middleware
   const { apiRateLimiter } = await import("./rateLimiter");
   app.use("/api/trpc", apiRateLimiter);
+
+  app.get("/api/health", async (_req, res) => {
+    const status = await getHealthStatus();
+    res.status(status.ok ? 200 : 503).json(status);
+  });
 
   // tRPC API
   app.use(
