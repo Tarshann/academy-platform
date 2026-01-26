@@ -14,6 +14,31 @@
 - A standard pull request template now lives at `.github/PULL_REQUEST_TEMPLATE.md` to capture summaries, test evidence, and risk notes for future releases.
 - No other PR templates or release-note scaffolds were found in the repository.
 
+## PR Review Inventory (Merge History)
+
+The merge history includes the following PRs (newest to oldest) that were reviewed as part of this pass:
+
+- #50: address-documentation-and-pr-review-findings
+- #49: address-documentation-review-findings
+- #48: add-playwright-validation-for-deployed-app
+- #47: implement-playwright-validation-tests
+- #46: conduct-full-system-audit-and-implement-fixes
+- #45: conduct-system-audit-and-implement-fixes-dth94f
+- #44: perform-full-system-audit-and-fixes
+- #43: conduct-system-audit-and-implement-fixes
+- #42: diagnose-and-fix-codebase-misalignments
+- #41: diagnose-misalignments-and-implement-fixes-jjaxzb
+- #40: diagnose-and-align-codebase-with-vision-pg60rg
+- #39: diagnose-misalignments-and-implement-fixes-xnahf8
+- #38: diagnose-misalignments-and-implement-fixes
+- #37: diagnose-and-align-codebase-with-vision-qs6pyc
+- #36: diagnose-and-align-codebase-with-vision
+- #35: fix-link-error-on-homepage
+- #33: fix-issue-with-the-application
+- #32: review-homepage-design-for-academy-platform-9nzn44
+- #31: review-homepage-design-for-academy-platform-did3ti
+- #30: review-homepage-design-for-academy-platform-qqyoh0
+
 ## Documentation Reviewed (Inventory)
 
 The following primary documentation artifacts were reviewed as part of this pass:
