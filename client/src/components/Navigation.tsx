@@ -79,6 +79,9 @@ export default function Navigation() {
             <Link href="/programs" className={getLinkClassName("/programs")} aria-current={isActiveRoute("/programs") ? "page" : undefined}>
               Programs
             </Link>
+            <Link href="/signup" className={getLinkClassName("/signup")} aria-current={isActiveRoute("/signup") ? "page" : undefined}>
+              Register
+            </Link>
             <Link href="/about" className={getLinkClassName("/about")} aria-current={isActiveRoute("/about") ? "page" : undefined}>
               About
             </Link>
@@ -171,6 +174,9 @@ export default function Navigation() {
               <Link href="/programs" className={getLinkClassName("/programs")} aria-current={isActiveRoute("/programs") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 Programs
               </Link>
+              <Link href="/signup" className={getLinkClassName("/signup")} aria-current={isActiveRoute("/signup") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
+                Register
+              </Link>
               <Link href="/about" className={getLinkClassName("/about")} aria-current={isActiveRoute("/about") ? "page" : undefined} onClick={() => setMobileMenuOpen(false)}>
                 About
               </Link>
@@ -209,11 +215,22 @@ export default function Navigation() {
                 </>
               ) : (
                 <>
-                  <a href={loginUrl} onClick={handleAuthLinkClick}>
-                    <Button variant="outline" size="sm" className="w-full" disabled={loginUrl === "#"}>
-                      Login
-                    </Button>
-                  </a>
+                  {clerkPublishableKey && isClerkEnabled ? (
+                    <>
+                      <SignInButton mode="modal" afterSignInUrl="/">
+                        <Button variant="outline" size="sm" className="w-full">Login</Button>
+                      </SignInButton>
+                      <SignUpButton mode="modal" afterSignUpUrl="/">
+                        <Button variant="default" size="sm" className="w-full">Sign Up</Button>
+                      </SignUpButton>
+                    </>
+                  ) : (
+                    <a href={loginUrl} onClick={handleAuthLinkClick}>
+                      <Button variant="outline" size="sm" className="w-full" disabled={loginUrl === "#"}>
+                        Login
+                      </Button>
+                    </a>
+                  )}
                 </>
               )}
             </div>

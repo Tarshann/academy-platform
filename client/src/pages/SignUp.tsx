@@ -1,6 +1,7 @@
 import { Link } from "wouter";
+import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getClerkPublishableKey, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,10 +10,25 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
+  const [guestEmail, setGuestEmail] = useState("");
+  const clerkPublishableKey = getClerkPublishableKey();
+  const loginUrl = getLoginUrl();
   const createCheckout = trpc.payment.createCheckout.useMutation({
+    onSuccess: (data) => {
+      if (data.url) {
+        toast.info("Redirecting to checkout...");
+        window.open(data.url, '_blank');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create checkout session");
+    },
+  });
+  const createGuestCheckout = trpc.payment.createGuestCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         toast.info("Redirecting to checkout...");
@@ -26,8 +42,11 @@ export default function SignUp() {
 
   const handlePurchase = (productId: string) => {
     if (!isAuthenticated) {
-      toast.info("Please log in to purchase");
-      window.location.href = getLoginUrl();
+      if (!guestEmail.trim()) {
+        toast.info("Please enter an email for your registration receipt.");
+        return;
+      }
+      createGuestCheckout.mutate({ productId, email: guestEmail.trim() });
       return;
     }
     createCheckout.mutate({ productId });
@@ -49,6 +68,58 @@ export default function SignUp() {
             </div>
           </div>
         </section>
+
+        {!isAuthenticated && (
+          <section className="py-10">
+            <div className="container">
+              <Card className="bg-card border-border max-w-3xl mx-auto">
+                <CardHeader>
+                  <CardTitle className="text-foreground text-2xl">Guest Registration</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Register now with an email address. Create an account after checkout to access schedules, chat, and your member dashboard.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <label htmlFor="guest-email" className="text-sm font-medium text-foreground">
+                      Email for receipt and updates
+                    </label>
+                    <Input
+                      id="guest-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={guestEmail}
+                      onChange={(event) => setGuestEmail(event.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Prefer to manage everything in one place?
+                    </p>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      {clerkPublishableKey ? (
+                        <>
+                          <Link href="/sign-up">
+                            <Button variant="outline">Create Account</Button>
+                          </Link>
+                          <Link href="/sign-in">
+                            <Button variant="ghost">Sign In</Button>
+                          </Link>
+                        </>
+                      ) : (
+                        <a href={loginUrl}>
+                          <Button variant="outline" disabled={loginUrl === "#"}>
+                            Sign In
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
 
         {/* Memberships */}
         <section className="py-16">
@@ -94,9 +165,9 @@ export default function SignUp() {
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('academy-group-membership')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register Now'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register Now'}
                   </Button>
                 </CardContent>
               </Card>
@@ -136,9 +207,9 @@ export default function SignUp() {
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('complete-player-membership')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register Now'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register Now'}
                   </Button>
                 </CardContent>
               </Card>
@@ -172,9 +243,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('group-workout')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -196,9 +267,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('individual-training')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -220,9 +291,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('skills-class')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -256,9 +327,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('on-field-workouts')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -280,9 +351,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('summer-camp')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>
@@ -304,9 +375,9 @@ export default function SignUp() {
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('team-academy')}
-                    disabled={createCheckout.isPending}
+                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
                   >
-                    {createCheckout.isPending ? 'Processing...' : 'Register'}
+                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
                   </Button>
                 </CardContent>
               </Card>

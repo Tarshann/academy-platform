@@ -57,6 +57,70 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
+const createProgramCheckoutSession = async ({
+  productId,
+  origin,
+  customerEmail,
+  clientReferenceId,
+  metadata,
+}: {
+  productId: string;
+  origin: string;
+  customerEmail?: string;
+  clientReferenceId?: string;
+  metadata?: Record<string, string>;
+}) => {
+  const { ENV } = await import('./_core/env');
+  const Stripe = (await import('stripe')).default;
+  const stripe = new Stripe(ENV.stripeSecretKey);
+  const { getProduct } = await import('./products');
+
+  const product = getProduct(productId);
+  if (!product) {
+    throw new TRPCError({ code: 'NOT_FOUND', message: 'Product not found' });
+  }
+
+  const sessionParams: any = {
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: product.name,
+            description: product.description,
+          },
+          unit_amount: product.priceInCents,
+          ...(product.type === 'recurring' && {
+            recurring: {
+              interval: product.interval,
+            },
+          }),
+        },
+        quantity: 1,
+      },
+    ],
+    mode: product.type === 'recurring' ? 'subscription' : 'payment',
+    success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${origin}/signup`,
+    allow_promotion_codes: true,
+  };
+
+  if (customerEmail) {
+    sessionParams.customer_email = customerEmail;
+  }
+
+  if (clientReferenceId) {
+    sessionParams.client_reference_id = clientReferenceId;
+  }
+
+  if (metadata) {
+    sessionParams.metadata = metadata;
+  }
+
+  return await stripe.checkout.sessions.create(sessionParams);
+};
+
 export const appRouter = router({
   system: systemRouter,
   
@@ -652,52 +716,38 @@ export const appRouter = router({
         productId: z.string(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { ENV } = await import('./_core/env');
-        const Stripe = (await import('stripe')).default;
-        const stripe = new Stripe(ENV.stripeSecretKey);
-        const { getProduct } = await import('./products');
-
-        const product = getProduct(input.productId);
-        if (!product) {
-          throw new TRPCError({ code: 'NOT_FOUND', message: 'Product not found' });
-        }
-
         const origin = ctx.req.headers.origin || 'http://localhost:3000';
-
-        const sessionParams: any = {
-          payment_method_types: ['card'],
-          line_items: [
-            {
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: product.name,
-                  description: product.description,
-                },
-                unit_amount: product.priceInCents,
-                ...(product.type === 'recurring' && {
-                  recurring: {
-                    interval: product.interval,
-                  },
-                }),
-              },
-              quantity: 1,
-            },
-          ],
-          mode: product.type === 'recurring' ? 'subscription' : 'payment',
-          success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${origin}/signup`,
-          customer_email: ctx.user.email || undefined,
-          client_reference_id: ctx.user.id.toString(),
+        const session = await createProgramCheckoutSession({
+          productId: input.productId,
+          origin,
+          customerEmail: ctx.user.email || undefined,
+          clientReferenceId: ctx.user.id.toString(),
           metadata: {
             user_id: ctx.user.id.toString(),
             customer_email: ctx.user.email || '',
             customer_name: ctx.user.name || '',
           },
-          allow_promotion_codes: true,
-        };
+        });
 
-        const session = await stripe.checkout.sessions.create(sessionParams);
+        return { url: session.url };
+      }),
+
+    createGuestCheckout: publicProcedure
+      .input(z.object({
+        productId: z.string(),
+        email: z.string().email(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const origin = ctx.req.headers.origin || 'http://localhost:3000';
+        const session = await createProgramCheckoutSession({
+          productId: input.productId,
+          origin,
+          customerEmail: input.email,
+          metadata: {
+            guest_checkout: 'true',
+            guest_email: input.email,
+          },
+        });
 
         return { url: session.url };
       }),
