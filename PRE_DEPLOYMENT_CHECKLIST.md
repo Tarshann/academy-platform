@@ -1,6 +1,14 @@
 # Pre-Deployment Checklist
 ## The Academy Platform
 
+## Evidence Links (Fill Before Release)
+
+- Commit/Tag:
+- Test run (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`):
+- Lighthouse report:
+- Link crawl report:
+- Auth matrix:
+
 ## ✅ Verified Items
 
 ### 1. Color Contrast Testing

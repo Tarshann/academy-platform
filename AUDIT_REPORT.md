@@ -7,6 +7,14 @@
 
 ---
 
+## Evidence Links (Fill Before Release)
+
+- Commit/Tag:
+- Test run (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`):
+- Lighthouse report:
+- Link crawl report:
+- Auth matrix:
+
 ## Executive Summary
 
 The Academy Platform is a well-structured full-stack application built with React, TypeScript, Express, and tRPC. The codebase demonstrates good architectural decisions and modern development practices. Critical issues identified in earlier reviews have been addressed across SEO, accessibility, performance optimization, and user experience polish.

@@ -37,8 +37,13 @@ async function startServer() {
   const server = createServer(app);
   
   // Setup Socket.IO for realtime chat
-  const { setupChat } = await import("../chat");
-  setupChat(server);
+  const { ENV } = await import("./env");
+  if (ENV.enableSocketIo) {
+    const { setupChat } = await import("../chat");
+    setupChat(server);
+  } else {
+    logger.warn("[Chat] Socket.IO disabled. Set ENABLE_SOCKET_IO=true to enable.");
+  }
   
   // Stripe webhook MUST be registered BEFORE express.json() to preserve raw body
   app.post(
@@ -51,7 +56,6 @@ async function startServer() {
   );
   
   // Configure Clerk middleware (if configured)
-  const { ENV } = await import("./env");
   if (ENV.clerkSecretKey) {
     app.use(clerkMiddleware({
       secretKey: ENV.clerkSecretKey,

@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { trpc } from "@/lib/trpc";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -23,6 +24,7 @@ export default function Chat() {
   const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
+  const chatEnabled = import.meta.env.VITE_ENABLE_SOCKET_IO !== "false";
   const [socket, setSocket] = useState<Socket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -31,6 +33,11 @@ export default function Chat() {
   const [currentRoom] = useState("general");
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, {
+    enabled: Boolean(user),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -38,21 +45,29 @@ export default function Chat() {
     }
   }, [isAuthenticated, loading]);
 
+  useEffect(() => {
+    if (chatTokenQuery.error) {
+      logger.error("[Chat] Failed to load chat token", chatTokenQuery.error);
+      toast.error("Unable to authenticate chat session. Please refresh and try again.");
+    }
+  }, [chatTokenQuery.error]);
+
   // Setup Socket.IO connection
   useEffect(() => {
-    if (!user) return;
+    if (!chatEnabled || !user || !chatTokenQuery.data?.token) return;
 
     const socketUrl = window.location.origin;
     const newSocket = io(socketUrl, {
       path: "/socket.io/",
+      auth: {
+        token: chatTokenQuery.data.token,
+      },
     });
 
     newSocket.on("connect", () => {
       logger.info("Connected to chat server");
       newSocket.emit("join_room", {
         room: currentRoom,
-        userId: user.id,
-        userName: user.name || "Member",
       });
     });
 
@@ -88,7 +103,7 @@ export default function Chat() {
     return () => {
       newSocket.close();
     };
-  }, [user, currentRoom]);
+  }, [chatEnabled, user, currentRoom, chatTokenQuery.data?.token]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -102,8 +117,6 @@ export default function Chat() {
 
     socket.emit("send_message", {
       room: currentRoom,
-      userId: user.id,
-      userName: user.name || "Member",
       message: newMessage.trim(),
     });
 
@@ -115,7 +128,6 @@ export default function Chat() {
     }
     socket.emit("stop_typing", {
       room: currentRoom,
-      userName: user.name || "Member",
     });
   };
 
@@ -124,7 +136,6 @@ export default function Chat() {
 
     socket.emit("typing", {
       room: currentRoom,
-      userName: user.name || "Member",
     });
 
     // Clear previous timeout
@@ -136,7 +147,6 @@ export default function Chat() {
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("stop_typing", {
         room: currentRoom,
-        userName: user.name || "Member",
       });
     }, 1000);
   };
@@ -169,6 +179,23 @@ export default function Chat() {
             <h1 className="text-2xl font-bold mb-3 text-foreground">Authentication Not Configured</h1>
             <p className="text-muted-foreground">
               Please set VITE_CLERK_PUBLISHABLE_KEY or OAuth credentials to access the member chat.
+            </p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!chatEnabled) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="text-center max-w-md px-6">
+            <h1 className="text-2xl font-bold mb-3 text-foreground">Chat Temporarily Unavailable</h1>
+            <p className="text-muted-foreground">
+              Realtime chat is disabled in this environment. Please check back soon.
             </p>
           </div>
         </main>

@@ -18,6 +18,14 @@ Configure the following environment variables in your `.env` file (values shown 
 - **VITE_FRONTEND_FORGE_API_KEY** - Forge API key for frontend
 - **BUILT_IN_FORGE_API_KEY** - Forge API key for backend
 
+### Realtime Chat (Socket.IO)
+- **ENABLE_SOCKET_IO** - Enable Socket.IO on websocket-capable runtimes
+- **VITE_ENABLE_SOCKET_IO** - Enable the chat UI in the frontend
+
+### Storage Upload Safety
+- **STORAGE_MAX_BYTES** - Max upload size in bytes (0 disables size enforcement)
+- **STORAGE_ALLOWED_CONTENT_TYPES** - Comma-separated allowlist (e.g., `image/jpeg,image/png`)
+
 ## ⚠️ Required Configuration (Still Needed)
 
 You need to fill in the following environment variables in your `.env` file:

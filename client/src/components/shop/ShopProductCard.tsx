@@ -6,9 +6,9 @@ import { formatUsd } from "@shared/money";
 interface ShopProduct {
   id: number;
   name: string;
-  description: string;
-  price: number;
-  stock: number;
+  description?: string | null;
+  price: number | string;
+  stock: number | null;
   imageUrl?: string | null;
 }
 
@@ -17,7 +17,11 @@ interface ShopProductCardProps {
   onAddToCart: (product: ShopProduct) => void;
 }
 
-export function ShopProductCard({ product, onAddToCart }: ShopProductCardProps) {
+export function ShopProductCard({
+  product,
+  onAddToCart,
+}: ShopProductCardProps) {
+  const stockCount = product.stock ?? 0;
   return (
     <Card
       id={`product-${product.id}`}
@@ -37,25 +41,31 @@ export function ShopProductCard({ product, onAddToCart }: ShopProductCardProps) 
             <ShoppingCart size={64} className="text-neutral-400" />
           </div>
         )}
-        {product.stock <= 5 && product.stock > 0 && (
+        {stockCount <= 5 && stockCount > 0 && (
           <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-            Only {product.stock} left!
+            Only {stockCount} left!
           </div>
         )}
-        {product.stock === 0 && (
+        {stockCount === 0 && (
           <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
             <span className="text-white text-2xl font-bold">Out of Stock</span>
           </div>
         )}
       </div>
       <CardContent className="p-6">
-        <h3 className="text-xl font-bold text-neutral-900 mb-2">{product.name}</h3>
-        <p className="text-neutral-600 mb-4 line-clamp-2">{product.description}</p>
+        <h3 className="text-xl font-bold text-neutral-900 mb-2">
+          {product.name}
+        </h3>
+        <p className="text-neutral-600 mb-4 line-clamp-2">
+          {product.description ?? "No description available."}
+        </p>
         <div className="flex items-center justify-between">
-          <span className="text-2xl font-black text-amber-600">{formatUsd(product.price)}</span>
+          <span className="text-2xl font-black text-amber-600">
+            {formatUsd(product.price)}
+          </span>
           <Button
             onClick={() => onAddToCart(product)}
-            disabled={product.stock === 0}
+            disabled={(product.stock ?? 0) === 0}
             className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
           >
             Add to Cart
