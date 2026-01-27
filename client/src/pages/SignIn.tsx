@@ -11,7 +11,7 @@ export default function SignInPage() {
     redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
       ? redirectParam
       : "/member";
-  const signUpUrl = `/sign-up?redirect=${encodeURIComponent(redirectPath)}`;
+  const signUpUrl = `/signup?redirect=${encodeURIComponent(redirectPath)}`;
   
   if (!clerkKey) {
     return (

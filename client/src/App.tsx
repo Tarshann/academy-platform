@@ -11,7 +11,6 @@ import { SkipToContent } from "./components/SkipToContent";
 // Public pages live on academytn.com (academy-marketing). This app is the
 // authenticated member portal at app.academytn.com.
 const SignInPage = lazy(() => import("./pages/SignIn").then(m => ({ default: m.default })));
-const SignUpPage = lazy(() => import("./pages/SignUpPage").then(m => ({ default: m.default })));
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -53,7 +52,7 @@ function Router() {
         </Route>
         <Route path={"/sign-up"}>
           <SEO title="Sign Up" description="Create your Academy account." />
-          <SignUpPage />
+          <SignUp />
         </Route>
         <Route path={"/member"}>
           <SEO title="Member Dashboard" description="Access your member dashboard with schedules, announcements, and more." />
