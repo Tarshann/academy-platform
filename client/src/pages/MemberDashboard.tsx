@@ -174,14 +174,6 @@ export default function MemberDashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={48} />
-      </div>
-    );
-  }
-
   if (!authConfigured) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -202,10 +194,29 @@ export default function MemberDashboard() {
     );
   }
 
+  if (loading && isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+            <Loader2 className="animate-spin text-primary" size={48} />
+            Loading your dashboard...
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
-        Redirecting to sign in...
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center text-muted-foreground">
+          Redirecting to sign in...
+        </main>
+        <Footer />
       </div>
     );
   }
