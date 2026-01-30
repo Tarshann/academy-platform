@@ -98,10 +98,10 @@ export default function Navigation() {
   };
 
   const getLinkClassName = (path: string, isRegister = false) => {
-    const baseClasses = "relative text-foreground hover:text-primary transition-all duration-200 py-1";
-    const hoverUnderline = "hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0 hover:after:h-[2px] hover:after:bg-primary/40 hover:after:rounded-full";
-    const activeUnderline = "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full";
-    const registerAccent = isRegister ? "text-primary font-semibold" : "";
+    const baseClasses = "relative text-foreground hover:text-primary transition-all duration-200 py-1.5";
+    const hoverUnderline = "hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0 hover:after:h-[3px] hover:after:bg-primary/30 hover:after:rounded-full";
+    const activeUnderline = "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-primary after:rounded-full";
+    const registerAccent = isRegister ? "text-primary font-semibold hover:text-primary/80" : "";
     
     return [
       baseClasses,
