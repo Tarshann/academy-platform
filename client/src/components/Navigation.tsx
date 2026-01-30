@@ -97,13 +97,21 @@ export default function Navigation() {
     return location === path || location.startsWith(`${path}/`);
   };
 
-  const getLinkClassName = (path: string) =>
-    [
-      "relative text-foreground hover:text-primary transition-colors py-1",
-      isActiveRoute(path) ? "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full" : "",
+  const getLinkClassName = (path: string, isRegister = false) => {
+    const baseClasses = "relative text-foreground hover:text-primary transition-all duration-200 py-1";
+    const hoverUnderline = "hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0 hover:after:h-[2px] hover:after:bg-primary/40 hover:after:rounded-full";
+    const activeUnderline = "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full";
+    const registerAccent = isRegister ? "text-primary font-semibold" : "";
+    
+    return [
+      baseClasses,
+      hoverUnderline,
+      isActiveRoute(path) ? activeUnderline : "",
+      registerAccent,
     ]
       .filter(Boolean)
       .join(" ");
+  };
 
   const handleAuthLinkClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (loginUrl === "#") {
@@ -161,7 +169,7 @@ export default function Navigation() {
             </Link>
             <Link
               href="/signup"
-              className={getLinkClassName("/signup")}
+              className={getLinkClassName("/signup", true)}
               aria-current={isActiveRoute("/signup") ? "page" : undefined}
             >
               Register
@@ -316,7 +324,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/signup"
-                className={getLinkClassName("/signup")}
+                className={getLinkClassName("/signup", true)}
                 aria-current={isActiveRoute("/signup") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
