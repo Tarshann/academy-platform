@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Award, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Users, Target, Zap, Shield, Heart } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,397 +15,455 @@ export default function Home() {
   });
 
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
+  const heroY = useTransform(scrollYProgress, [0, 0.5], [0, 50]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
+  const fadeInUp = {
+    hidden: { opacity: 0, y: 24 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
+      y: 0,
+      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
     },
   };
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+  const staggerContainer = {
+    hidden: { opacity: 0 },
     visible: {
-      y: 0,
       opacity: 1,
-      transition: {
-        type: "spring" as const,
-        stiffness: 100,
-      },
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
     },
   };
 
   const programs = [
     {
-      title: "Group Training Sessions",
-      description: "High-energy group workouts focused on SAQ training, conditioning, and multi-sport fundamentals.",
+      title: "Group Training",
+      description: "High-energy sessions focused on SAQ training, conditioning, and multi-sport fundamentals. Limited to 8 athletes per session.",
       icon: Users,
-      color: "from-amber-500/20 to-yellow-600/20",
-      borderColor: "border-amber-500/30",
+      price: "$25",
+      unit: "per session",
+      featured: false,
     },
     {
-      title: "Individual Workouts",
-      description: "Personalized one-on-one training tailored to sport-specific goals and athletic development.",
-      icon: Award,
-      color: "from-amber-600/20 to-orange-600/20",
-      borderColor: "border-amber-600/30",
+      title: "Private Training",
+      description: "One-on-one sessions with Coach Mac or Coach O. Personalized plans for sport-specific goals and athletic development.",
+      icon: Target,
+      price: "$60",
+      unit: "per session",
+      featured: true,
     },
     {
       title: "Shooting Lab",
-      description: "Skill labs that sharpen technique, confidence, and repetition-based performance habits.",
-      icon: TrendingUp,
-      color: "from-yellow-500/20 to-amber-500/20",
-      borderColor: "border-yellow-500/30",
+      description: "Specialized sessions using our Dr Dish machine. High-volume repetition for shooting technique and muscle memory.",
+      icon: Zap,
+      price: "$25",
+      unit: "per session",
+      featured: false,
+    },
+  ];
+
+  const values = [
+    {
+      title: "Fundamentals First",
+      description: "Proper technique and athletic IQ are the foundation of every great player.",
+      icon: Target,
+    },
+    {
+      title: "Building Confidence",
+      description: "An environment where confidence grows through skill mastery and positive reinforcement.",
+      icon: Shield,
+    },
+    {
+      title: "Long-Term Growth",
+      description: "Sustainable development over short-term wins. Skills and character that last forever.",
+      icon: Heart,
     },
   ];
 
 
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background">
       <Navigation />
       <main id="main-content">
         <OrganizationStructuredData />
-        {/* Hero Section with Parallax */}
+        
+        {/* Hero Section - Premium Light Aesthetic */}
         <motion.section
           ref={heroRef}
-          style={{ opacity: heroOpacity, scale: heroScale }}
-          className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-neutral-900 via-neutral-800 to-black"
+          className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
         >
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            animate={{
-              scale: [1, 1.2, 1],
-              rotate: [0, 90, 0],
-            }}
-            transition={{
-              duration: 20,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-amber-500/10 to-transparent rounded-full blur-3xl"
-          />
-          <motion.div
-            animate={{
-              scale: [1.2, 1, 1.2],
-              rotate: [90, 0, 90],
-            }}
-            transition={{
-              duration: 15,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-            className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-yellow-500/10 to-transparent rounded-full blur-3xl"
-          />
-        </div>
+          {/* Background with warm white gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
 
-        <div className="container relative z-10 px-6 py-32">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center max-w-5xl mx-auto"
+          <motion.div 
+            style={{ opacity: heroOpacity, y: heroY }}
+            className="container relative z-10 px-6 py-24"
           >
+            <div className="max-w-4xl mx-auto text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 mb-8 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full"
+              >
+                <span className="text-primary font-medium text-sm tracking-wide">GALLATIN, TN</span>
+                <span className="w-1 h-1 rounded-full bg-primary/40" />
+                <span className="text-muted-foreground text-sm">Multi-Sport Development</span>
+              </motion.div>
+
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.6 }}
+                className="text-5xl md:text-7xl font-extrabold mb-6 text-foreground leading-[1.1] tracking-tight"
+              >
+                Build Complete Athletes.
+                <br />
+                <span className="text-primary">Not Just Better Players.</span>
+              </motion.h1>
+
+              <motion.p
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
+              >
+                Multi-sport development &bull; SAQ Training &bull; Strength &bull; Confidence
+              </motion.p>
+
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              >
+                <Button
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                  asChild
+                >
+                  <a href="/programs">
+                    View Programs
+                    <ArrowRight className="ml-2" size={20} />
+                  </a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 px-8 py-6 text-lg rounded-xl transition-all duration-300"
+                  asChild
+                >
+                  <a href="/contact">Private Training with Coach Mac &amp; Coach O</a>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        </motion.section>
+
+        {/* Trust Signals */}
+        <section className="py-16 border-b border-border">
+          <div className="container px-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="inline-block mb-6 px-6 py-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30 rounded-full"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              variants={staggerContainer}
+              className="flex flex-wrap justify-center items-center gap-12 md:gap-20"
             >
-              <span className="text-amber-300 font-semibold tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]">ELITE ATHLETIC DEVELOPMENT</span>
+              <motion.div variants={fadeInUp} className="text-center">
+                <p className="text-4xl font-bold text-foreground mb-1">10+</p>
+                <p className="text-muted-foreground text-sm">Years Coaching</p>
+              </motion.div>
+              <motion.div variants={fadeInUp} className="text-center">
+                <p className="text-4xl font-bold text-foreground mb-1">500+</p>
+                <p className="text-muted-foreground text-sm">Athletes Trained</p>
+              </motion.div>
+              <motion.div variants={fadeInUp} className="text-center">
+                <p className="text-4xl font-bold text-foreground mb-1">3</p>
+                <p className="text-muted-foreground text-sm">Sports Supported</p>
+              </motion.div>
+              <motion.div variants={fadeInUp} className="text-center">
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  Trusted by families across Gallatin &amp; Middle Tennessee
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+
+
+        {/* Programs Section */}
+        <section className="py-24 bg-background">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                Our Programs
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Choose the training path that fits your goals
+              </p>
             </motion.div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.8 }}
-              className="text-6xl md:text-8xl font-black mb-8 leading-tight"
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={staggerContainer}
+              className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
             >
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                THE BEGINNING
-              </span>
-              <br />
-              <span className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">OF A NEW CHAPTER</span>
-              <br />
-              <span className="bg-gradient-to-r from-yellow-300 via-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                IN GALLATIN SPORTS
-              </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.8 }}
-              className="text-xl md:text-2xl text-neutral-300 mb-12 max-w-3xl mx-auto leading-relaxed"
-            >
-              Developing elite youth athletes across{" "}
-              <span className="text-amber-300 font-semibold">basketball</span>,{" "}
-              <span className="text-amber-300 font-semibold">football</span>, and{" "}
-              <span className="text-amber-300 font-semibold">soccer</span> through expert training in speed, agility,
-              quickness, and strength.
-            </motion.p>
+              {programs.map((program, index) => (
+                <motion.div key={index} variants={fadeInUp}>
+                  <Card 
+                    className={`group relative overflow-hidden bg-card border transition-all duration-300 h-full hover:shadow-lg ${
+                      program.featured 
+                        ? "border-primary shadow-md ring-1 ring-primary/20" 
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    {program.featured && (
+                      <div className="absolute top-4 right-4">
+                        <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full">
+                          Most Popular
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
+                    <CardContent className="p-8">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6">
+                        <program.icon className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground mb-3">
+                        {program.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed mb-6 text-sm">
+                        {program.description}
+                      </p>
+                      <div className="border-t border-border pt-6">
+                        <p className="text-3xl font-bold text-primary mb-1">
+                          {program.price}
+                          <span className="text-sm text-muted-foreground font-normal ml-1">
+                            {program.unit}
+                          </span>
+                        </p>
+                        <Button
+                          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+                          asChild
+                        >
+                          <a href="/signup">Register Now</a>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-center mt-12"
             >
               <Button
+                variant="outline"
                 size="lg"
-                className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold px-8 py-6 text-lg rounded-xl shadow-2xl shadow-amber-500/50 hover:shadow-amber-500/70 transition-all duration-300 hover:scale-105 group"
+                className="border-2 hover:border-primary/50 hover:bg-primary/5"
                 asChild
               >
-                <a href="/signup">
-                  Start Your Journey
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={20} />
+                <a href="/programs">
+                  View All Programs
+                  <ArrowRight className="ml-2" size={18} />
                 </a>
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-amber-500/50 text-white hover:bg-amber-500/10 hover:border-amber-500 px-8 py-6 text-lg rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                asChild
-              >
-                <a href="/programs">Explore Programs</a>
-              </Button>
             </motion.div>
-          </motion.div>
-        </div>
+          </div>
+        </section>
 
-        {/* Scroll Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-12 left-1/2 transform -translate-x-1/2"
-        >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-6 h-10 border-2 border-amber-500/50 rounded-full flex justify-center pt-2"
-          >
-            <div className="w-1 h-2 bg-amber-500 rounded-full" />
-          </motion.div>
-        </motion.div>
-      </motion.section>
+        {/* Coach Spotlight Section */}
+        <section className="py-24 bg-muted/30">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                Meet Your Coaches
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Experienced coaches dedicated to developing complete athletes
+              </p>
+            </motion.div>
 
-
-
-      {/* Programs Section */}
-      <section className="py-32 bg-gradient-to-b from-neutral-900 to-black relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PHBhdGggZD0iTTM2IDM0djItaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6bTAtNHYyaDJ2LTJoLTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
-        
-        <div className="container px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-5xl md:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                Our Programs
-              </span>
-            </h2>
-            <p className="text-xl text-neutral-400 max-w-2xl mx-auto">
-              Choose the training path that fits your goals and watch your game reach new heights
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={containerVariants}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            {programs.map((program, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="group relative overflow-hidden bg-gradient-to-br from-neutral-800/50 to-neutral-900/80 border-neutral-700/50 hover:border-amber-500/50 transition-all duration-500 h-full backdrop-blur-sm hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/20">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${program.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-                  <CardContent className="relative z-10 p-8">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${program.color} border ${program.borderColor} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                      <program.icon className="w-8 h-8 text-amber-300" />
+            <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, x: -24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <Card className="overflow-hidden bg-card border-border h-full">
+                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                    <div className="absolute bottom-4 left-6">
+                      <h3 className="text-2xl font-bold text-foreground">Coach Mac</h3>
+                      <p className="text-muted-foreground">Head Coach</p>
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-300 transition-colors">
-                      {program.title}
-                    </h3>
-                    <p className="text-neutral-400 leading-relaxed mb-6">{program.description}</p>
-                    <Button
-                      variant="ghost"
-                      className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10 p-0 h-auto font-semibold group/btn"
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="w-12 h-0.5 bg-primary mb-6" />
+                    <blockquote className="text-lg text-foreground italic mb-6 leading-relaxed">
+                      "Every athlete deserves a foundation that lasts beyond one sport."
+                    </blockquote>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                      With over a decade of experience in multi-sport athletic development, 
+                      Coach Mac specializes in building complete athletes through SAQ training, 
+                      strength conditioning, and sport-specific skill development.
+                    </p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                       asChild
                     >
-                      <a href="/programs">
-                        Learn More
-                        <ArrowRight className="ml-2 w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                      </a>
+                      <a href="/contact">Request Private Session</a>
                     </Button>
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="text-center mt-16"
-          >
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold px-10 py-6 text-lg rounded-xl shadow-xl hover:shadow-2xl hover:shadow-amber-500/50 transition-all duration-300 hover:scale-105"
-              asChild
-            >
-              <a href="/programs">View All Programs</a>
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Philosophy & Values Section */}
-      <section className="py-32 bg-gradient-to-br from-black via-neutral-900 to-black relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent" />
-        </div>
-        
-        <div className="container px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-20"
-          >
-            <h2 className="text-5xl md:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-amber-300 to-yellow-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                Our Philosophy
-              </span>
-            </h2>
-            <p className="text-2xl text-neutral-300 max-w-4xl mx-auto leading-relaxed">
-              This is a place where your child will be <span className="text-amber-300 font-semibold">seen, developed, and supported</span>
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={containerVariants}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto"
-          >
-            {[
-              {
-                title: "Fundamentals First",
-                description: "We teach the game correctly from the ground up. Proper technique and basketball IQ are the foundation of every great player.",
-                icon: "🏀",
-              },
-              {
-                title: "Building Confidence",
-                description: "Every athlete deserves to feel capable and empowered. We create an environment where confidence grows through skill mastery and positive reinforcement.",
-                icon: "💪",
-              },
-              {
-                title: "Long-Term Growth",
-                description: "We prioritize sustainable development over short-term wins. Trophies fade, but the skills, character, and love for the game last forever.",
-                icon: "📈",
-              },
-              {
-                title: "Safe to Fail & Learn",
-                description: "Mistakes are part of the journey. Our environment encourages athletes to take risks, learn from failures, and grow stronger.",
-                icon: "🛡️",
-              },
-              {
-                title: "Community & Mentorship",
-                description: "We're building more than athletes—we're building leaders. Our program fosters mentorship, accountability, and lifelong connections.",
-                icon: "🤝",
-              },
-            ].map((value, index) => (
-              <motion.div key={index} variants={itemVariants}>
-                <Card className="group relative overflow-hidden bg-gradient-to-br from-neutral-800/50 to-neutral-900/80 border-neutral-700/50 hover:border-amber-500/50 transition-all duration-500 h-full backdrop-blur-sm hover:scale-105 hover:shadow-2xl hover:shadow-amber-500/20">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-yellow-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                  <CardContent className="relative z-10 p-8">
-                    <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                      {value.icon}
+              <motion.div
+                initial={{ opacity: 0, x: 24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <Card className="overflow-hidden bg-card border-border h-full">
+                  <div className="aspect-[4/3] bg-muted relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                    <div className="absolute bottom-4 left-6">
+                      <h3 className="text-2xl font-bold text-foreground">Coach O</h3>
+                      <p className="text-muted-foreground">Lead Trainer</p>
                     </div>
-                    <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-amber-300 transition-colors">
-                      {value.title}
-                    </h3>
-                    <p className="text-neutral-400 leading-relaxed">{value.description}</p>
+                  </div>
+                  <CardContent className="p-6">
+                    <div className="w-12 h-0.5 bg-primary mb-6" />
+                    <blockquote className="text-lg text-foreground italic mb-6 leading-relaxed">
+                      "We build confidence through competence. Master the fundamentals, and everything else follows."
+                    </blockquote>
+                    <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+                      Coach O brings expertise in basketball, football, and soccer development. 
+                      His approach focuses on building athletic foundations that translate 
+                      across all sports while developing mental toughness and game IQ.
+                    </p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      asChild
+                    >
+                      <a href="/contact">Request Private Session</a>
+                    </Button>
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="text-center mt-20"
-          >
-            <p className="text-xl text-neutral-300 max-w-3xl mx-auto leading-relaxed">
-              At The Academy, we don't just train athletes—we develop <span className="text-amber-400 font-semibold">confident, skilled, and resilient young people</span> who carry these lessons far beyond the court.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-32 bg-gradient-to-br from-neutral-900 via-black to-neutral-900 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-yellow-500/10" />
-        </div>
-        
-        <div className="container px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <h2 className="text-5xl md:text-6xl font-black mb-8">
-              <span className="bg-gradient-to-r from-amber-300 via-yellow-200 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
-                Ready to Transform
-              </span>
-              <br />
-              <span className="text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">Your Athletic Journey?</span>
-            </h2>
-            <p className="text-xl text-neutral-300 mb-12 leading-relaxed">
-              Join hundreds of youth athletes who have elevated their game with The Academy's proven training methods
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold px-12 py-7 text-xl rounded-xl shadow-2xl shadow-amber-500/50 hover:shadow-amber-500/70 transition-all duration-300 hover:scale-105"
-                asChild
-              >
-                <a href="/signup">Register Now</a>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-amber-500/50 text-white hover:bg-amber-500/10 hover:border-amber-500 px-12 py-7 text-xl rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                asChild
-              >
-                <a href="/contact">Contact Us</a>
-              </Button>
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        {/* Philosophy Section */}
+        <section className="py-24 bg-background">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                Our Philosophy
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                A place where your child will be{" "}
+                <span className="text-primary font-semibold">seen, developed, and supported</span>
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={staggerContainer}
+              className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+            >
+              {values.map((value, index) => (
+                <motion.div key={index} variants={fadeInUp}>
+                  <Card className="bg-card border-border hover:border-primary/30 transition-all duration-300 h-full hover:shadow-md">
+                    <CardContent className="p-8 text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                        <value.icon className="w-7 h-7 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground mb-3">
+                        {value.title}
+                      </h3>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {value.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-24 bg-foreground text-background">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="max-w-3xl mx-auto text-center"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Ready to Start Your
+                <br />
+                <span className="text-primary">Athletic Journey?</span>
+              </h2>
+              <p className="text-lg text-background/70 mb-10 leading-relaxed">
+                Join families across Gallatin and Middle Tennessee who trust The Academy 
+                for their athlete's development.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg rounded-xl shadow-lg"
+                  asChild
+                >
+                  <a href="/signup">Register Now</a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-background/30 text-background hover:bg-background/10 px-10 py-6 text-lg rounded-xl"
+                  asChild
+                >
+                  <a href="/contact">Contact Us</a>
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>

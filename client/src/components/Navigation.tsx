@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl, getClerkPublishableKey } from "@/const";
 import { Menu, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import type { MouseEvent } from "react";
 import { SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { SearchBar } from "./SearchBar";
@@ -22,8 +22,19 @@ export default function Navigation() {
   const loginUrl = getLoginUrl();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleScroll = useCallback(() => {
+    setIsScrolled(window.scrollY > 50);
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   useEffect(() => {
     if (!mobileMenuOpen) {
@@ -88,8 +99,8 @@ export default function Navigation() {
 
   const getLinkClassName = (path: string) =>
     [
-      "text-foreground hover:text-primary transition-colors",
-      isActiveRoute(path) ? "text-primary font-semibold" : "",
+      "relative text-foreground hover:text-primary transition-colors py-1",
+      isActiveRoute(path) ? "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -108,8 +119,16 @@ export default function Navigation() {
     }
   };
 
+  const isHomePage = location === "/";
+
   return (
-    <nav className="bg-card border-b border-border sticky top-0 z-50">
+    <nav 
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled || !isHomePage
+          ? "bg-card/95 backdrop-blur-md border-b border-border shadow-sm" 
+          : "bg-transparent border-b border-transparent"
+      }`}
+    >
       <div className="container">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
