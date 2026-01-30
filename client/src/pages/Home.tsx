@@ -121,7 +121,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="text-5xl md:text-7xl font-extrabold mb-6 text-foreground leading-[1.1] tracking-tight"
+                className="text-5xl md:text-7xl font-extrabold mb-8 text-foreground leading-[1.1] tracking-tight"
               >
                 Build Complete Athletes.
                 <br />
@@ -132,7 +132,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed"
+                className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed"
               >
                 Multi-sport development &bull; SAQ Training &bull; Strength &bull; Confidence
               </motion.p>
@@ -167,31 +167,31 @@ export default function Home() {
         </motion.section>
 
         {/* Trust Signals */}
-        <section className="py-16 border-b border-border">
+        <section className="py-20 md:py-24 border-b border-border">
           <div className="container px-6">
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
               variants={staggerContainer}
-              className="flex flex-wrap justify-center items-center gap-10 md:gap-16"
+              className="flex flex-wrap justify-center items-start gap-12 md:gap-20"
             >
               <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-4xl font-bold text-foreground mb-1">10+</p>
-                <p className="text-muted-foreground text-sm font-medium">Years Coaching</p>
-                <p className="text-muted-foreground/70 text-xs mt-1">Development experience</p>
+                <p className="text-5xl font-extrabold text-foreground mb-2">10+</p>
+                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Years Coaching</p>
+                <p className="text-muted-foreground/60 text-xs mt-1.5">Development experience</p>
               </motion.div>
               <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-4xl font-bold text-foreground mb-1">500+</p>
-                <p className="text-muted-foreground text-sm font-medium">Athletes Trained</p>
-                <p className="text-muted-foreground/70 text-xs mt-1">Across Middle TN</p>
+                <p className="text-5xl font-extrabold text-foreground mb-2">500+</p>
+                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Athletes Trained</p>
+                <p className="text-muted-foreground/60 text-xs mt-1.5">Across Middle TN</p>
               </motion.div>
               <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-4xl font-bold text-foreground mb-1">3</p>
-                <p className="text-muted-foreground text-sm font-medium">Sports Supported</p>
-                <p className="text-muted-foreground/70 text-xs mt-1">Basketball, football, soccer</p>
+                <p className="text-5xl font-extrabold text-foreground mb-2">3</p>
+                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Sports Supported</p>
+                <p className="text-muted-foreground/60 text-xs mt-1.5">Basketball, football, soccer</p>
               </motion.div>
-              <motion.div variants={fadeInUp} className="text-center max-w-[200px]">
+              <motion.div variants={fadeInUp} className="text-center max-w-[220px] pt-2">
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Trusted by families across Gallatin &amp; Middle Tennessee
                 </p>
@@ -203,14 +203,14 @@ export default function Home() {
 
 
         {/* Programs Section */}
-        <section className="py-24 bg-background">
+        <section className="py-24 md:py-32 bg-background">
           <div className="container px-6">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-16"
+              className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 Our Programs
@@ -254,10 +254,10 @@ export default function Home() {
                       <h3 className="text-xl font-bold text-foreground mb-3">
                         {program.title}
                       </h3>
-                      <p className="text-muted-foreground leading-relaxed mb-6 text-sm">
+                      <p className="text-muted-foreground leading-relaxed mb-8 text-sm">
                         {program.description}
                       </p>
-                      <div className="border-t border-border pt-6">
+                      <div className="border-t border-border pt-8">
                         <p className="text-3xl font-bold text-primary mb-1">
                           {program.price}
                           <span className="text-sm text-muted-foreground font-normal ml-1">
@@ -300,14 +300,14 @@ export default function Home() {
         </section>
 
         {/* Coach Spotlight Section */}
-        <section className="py-24 bg-muted/30">
+        <section className="py-24 md:py-32 bg-muted/30">
           <div className="container px-6">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-16"
+              className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 Meet Your Coaches
@@ -332,9 +332,9 @@ export default function Home() {
                       <p className="text-muted-foreground">Head Coach</p>
                     </div>
                   </div>
-                  <CardContent className="p-6">
+                  <CardContent className="p-8">
                     <div className="w-12 h-0.5 bg-primary mb-6" />
-                    <blockquote className="text-lg text-foreground italic mb-4 leading-relaxed">
+                    <blockquote className="text-xl text-foreground italic mb-5 leading-relaxed">
                       "Every athlete deserves a foundation that lasts beyond one sport."
                     </blockquote>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-4">
@@ -374,9 +374,9 @@ export default function Home() {
                       <p className="text-muted-foreground">Lead Trainer</p>
                     </div>
                   </div>
-                  <CardContent className="p-6">
+                  <CardContent className="p-8">
                     <div className="w-12 h-0.5 bg-primary mb-6" />
-                    <blockquote className="text-lg text-foreground italic mb-4 leading-relaxed">
+                    <blockquote className="text-xl text-foreground italic mb-5 leading-relaxed">
                       "We build confidence through competence. Master the fundamentals, and everything else follows."
                     </blockquote>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-4">
@@ -406,14 +406,14 @@ export default function Home() {
         </section>
 
         {/* Philosophy Section */}
-        <section className="py-24 bg-background">
+        <section className="py-24 md:py-32 bg-background">
           <div className="container px-6">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="text-center mb-16"
+              className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 Our Philosophy
@@ -453,7 +453,7 @@ export default function Home() {
         </section>
 
         {/* CTA Section */}
-        <section className="py-24 bg-foreground text-background">
+        <section className="py-24 md:py-32 bg-foreground text-background">
           <div className="container px-6">
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
