@@ -265,17 +265,13 @@ export default function Navigation() {
                       </Button>
                     </SignUpButton>
                   </>
-                ) : (
+                ) : loginUrl !== "#" ? (
                   <a href={loginUrl} onClick={handleAuthLinkClick}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={loginUrl === "#"}
-                    >
+                    <Button variant="outline" size="sm">
                       Login
                     </Button>
                   </a>
-                )}
+                ) : null}
               </>
             )}
           </div>
@@ -433,18 +429,13 @@ export default function Navigation() {
                         </Button>
                       </SignUpButton>
                     </>
-                  ) : (
+                  ) : loginUrl !== "#" ? (
                     <a href={loginUrl} onClick={handleAuthLinkClick}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        disabled={loginUrl === "#"}
-                      >
+                      <Button variant="outline" size="sm" className="w-full">
                         Login
                       </Button>
                     </a>
-                  )}
+                  ) : null}
                 </>
               )}
             </div>
