@@ -90,16 +90,29 @@ export default function Home() {
       <main id="main-content">
         <OrganizationStructuredData />
         
-        {/* Hero Section - Premium Light Aesthetic */}
+        {/* Hero Section - Premium Light Aesthetic with Video Background */}
         <motion.section
           ref={heroRef}
           className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
         >
-          {/* Background with subtle depth - warm gradient + texture */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-[oklch(0.95_0.005_90)]" />
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.05]" />
+          {/* Video Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            <video
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
+              style={{ filter: 'sepia(0.1)' }}
+            >
+              <source src="/images/hero-video.mp4" type="video/mp4" />
+            </video>
+          </div>
+          {/* Warm overlay gradient for text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-transparent to-primary/[0.08]" />
           {/* Subtle noise texture overlay for depth */}
-          <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
+          <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
           <motion.div 
             style={{ opacity: heroOpacity, y: heroY }}
@@ -326,10 +339,15 @@ export default function Home() {
               >
                 <Card className="overflow-hidden bg-card border-border h-full">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                    <img 
+                      src="/images/coach-mac.jpg" 
+                      alt="Coach Mac instructing athletes during training"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
-                      <h3 className="text-2xl font-bold text-foreground">Coach Mac</h3>
-                      <p className="text-muted-foreground">Head Coach</p>
+                      <h3 className="text-2xl font-bold text-white drop-shadow-lg">Coach Mac</h3>
+                      <p className="text-white/80 drop-shadow">Head Coach</p>
                     </div>
                   </div>
                   <CardContent className="p-8">
@@ -368,10 +386,15 @@ export default function Home() {
               >
                 <Card className="overflow-hidden bg-card border-border h-full">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/80 to-transparent" />
+                    <img 
+                      src="/images/coach-o.jpg" 
+                      alt="Coach O working with young athletes"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
-                      <h3 className="text-2xl font-bold text-foreground">Coach O</h3>
-                      <p className="text-muted-foreground">Lead Trainer</p>
+                      <h3 className="text-2xl font-bold text-white drop-shadow-lg">Coach O</h3>
+                      <p className="text-white/80 drop-shadow">Lead Trainer</p>
                     </div>
                   </div>
                   <CardContent className="p-8">
