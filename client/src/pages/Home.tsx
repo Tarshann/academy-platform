@@ -182,8 +182,8 @@ export default function Home() {
                 <p className="text-muted-foreground/60 text-xs mt-1.5">Development experience</p>
               </motion.div>
               <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-5xl font-extrabold text-foreground mb-2">500+</p>
-                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Athletes Trained</p>
+                <p className="text-5xl font-extrabold text-foreground mb-2">200+</p>
+                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Athletes <span className="font-normal text-muted-foreground/70">&amp; Counting</span></p>
                 <p className="text-muted-foreground/60 text-xs mt-1.5">Across Middle TN</p>
               </motion.div>
               <motion.div variants={fadeInUp} className="text-center">
