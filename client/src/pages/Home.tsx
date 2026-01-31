@@ -30,12 +30,19 @@ export default function Home() {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const heroY = useTransform(scrollYProgress, [0, 0.5], [0, 50]);
 
+  // Phase 3 Motion System - consistent, subtle animations
+  // Easing: cubic-bezier(0.4, 0, 0.2, 1) - standard Material easing
+  const motionEasing = [0.4, 0, 0.2, 1] as const;
+  
   const fadeInUp = {
-    hidden: { opacity: 0, y: 24 },
+    hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const },
+      transition: { 
+        duration: prefersReducedMotion ? 0 : 0.2, 
+        ease: motionEasing 
+      },
     },
   };
 
@@ -43,7 +50,23 @@ export default function Home() {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+      transition: { 
+        staggerChildren: prefersReducedMotion ? 0 : 0.08, 
+        delayChildren: prefersReducedMotion ? 0 : 0.1 
+      },
+    },
+  };
+
+  // Section header animation
+  const sectionHeader = {
+    hidden: { opacity: 0, y: 16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { 
+        duration: prefersReducedMotion ? 0 : 0.25, 
+        ease: motionEasing 
+      },
     },
   };
 
@@ -121,6 +144,7 @@ export default function Home() {
                 muted
                 loop
                 playsInline
+                preload="metadata"
                 className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
                 style={{ filter: 'sepia(0.1)' }}
               >
@@ -178,7 +202,7 @@ export default function Home() {
               >
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-150 ease-out"
                   asChild
                 >
                   <a href="/programs">
@@ -189,7 +213,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 px-8 py-6 text-lg rounded-xl transition-all duration-300"
+                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-0.5 px-8 py-6 text-lg rounded-xl transition-all duration-150 ease-out"
                   asChild
                 >
                   <a href="/contact">Private Training with Coach Mac &amp; Coach O</a>
@@ -239,10 +263,10 @@ export default function Home() {
         <section className="py-24 md:py-32 bg-background">
           <div className="container px-6">
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -263,9 +287,9 @@ export default function Home() {
               {programs.map((program, index) => (
                 <motion.div key={index} variants={fadeInUp}>
                   <Card 
-                    className={`group relative overflow-hidden bg-card border transition-all duration-300 h-full hover:shadow-lg ${
+                    className={`group relative overflow-hidden bg-card border transition-all duration-150 ease-out h-full hover:shadow-lg hover:-translate-y-1 ${
                       program.featured 
-                        ? "border-primary shadow-md ring-1 ring-primary/20" 
+                        ? "border-primary shadow-md ring-1 ring-primary/20 hover:shadow-primary/20" 
                         : "border-border hover:border-primary/30"
                     }`}
                   >
@@ -298,7 +322,7 @@ export default function Home() {
                           </span>
                         </p>
                         <Button
-                          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground"
+                          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
                           asChild
                         >
                           <a href="/signup">Register Now</a>
@@ -311,16 +335,16 @@ export default function Home() {
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 16 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+              transition={{ delay: prefersReducedMotion ? 0 : 0.15, duration: prefersReducedMotion ? 0 : 0.2, ease: motionEasing }}
               className="text-center mt-12"
             >
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 hover:border-primary/50 hover:bg-primary/5"
+                className="border-2 hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-0.5 transition-all duration-150 ease-out"
                 asChild
               >
                 <a href="/programs">
@@ -336,10 +360,10 @@ export default function Home() {
         <section className="py-24 md:py-32 bg-muted/30">
           <div className="container px-6">
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -352,17 +376,18 @@ export default function Home() {
 
             <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
               <motion.div
-                initial={{ opacity: 0, x: -24 }}
+                initial={{ opacity: 0, x: prefersReducedMotion ? 0 : -24 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               >
-                <Card className="overflow-hidden bg-card border-border h-full">
+                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg hover:-translate-y-1">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                     <img 
                       src="/images/coach-mac.jpg" 
                       alt="Coach Mac instructing athletes during training"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.02]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
@@ -389,7 +414,7 @@ export default function Home() {
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
                       asChild
                     >
                       <a href="/contact">Request Private Session</a>
@@ -399,17 +424,18 @@ export default function Home() {
               </motion.div>
 
               <motion.div
-                initial={{ opacity: 0, x: 24 }}
+                initial={{ opacity: 0, x: prefersReducedMotion ? 0 : 24 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               >
-                <Card className="overflow-hidden bg-card border-border h-full">
+                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg hover:-translate-y-1">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                     <img 
                       src="/images/coach-o.jpg" 
                       alt="Coach O working with young athletes"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.02]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
@@ -436,7 +462,7 @@ export default function Home() {
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
                       asChild
                     >
                       <a href="/contact">Request Private Session</a>
@@ -452,10 +478,10 @@ export default function Home() {
         <section className="py-24 md:py-32 bg-background">
           <div className="container px-6">
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               className="text-center mb-20"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
@@ -476,9 +502,9 @@ export default function Home() {
             >
               {values.map((value, index) => (
                 <motion.div key={index} variants={fadeInUp}>
-                  <Card className="bg-card border-border hover:border-primary/30 transition-all duration-300 h-full hover:shadow-md">
+                  <Card className="bg-card border-border hover:border-primary/30 transition-all duration-150 ease-out h-full hover:shadow-md hover:-translate-y-1">
                     <CardContent className="p-8 text-center">
-                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 transition-transform duration-150 group-hover:scale-105">
                         <value.icon className="w-7 h-7 text-primary" />
                       </div>
                       <h3 className="text-xl font-bold text-foreground mb-3">
@@ -499,10 +525,10 @@ export default function Home() {
         <section className="py-24 md:py-32 bg-foreground text-background">
           <div className="container px-6">
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               className="max-w-3xl mx-auto text-center"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -517,7 +543,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg rounded-xl shadow-lg"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-150 ease-out"
                   asChild
                 >
                   <a href="/signup">Register Now</a>
@@ -525,7 +551,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-background/30 text-background hover:bg-background/10 px-10 py-6 text-lg rounded-xl"
+                  className="border-2 border-background/30 text-background hover:bg-background/10 hover:-translate-y-0.5 px-10 py-6 text-lg rounded-xl transition-all duration-150 ease-out"
                   asChild
                 >
                   <a href="/contact">Contact Us</a>
