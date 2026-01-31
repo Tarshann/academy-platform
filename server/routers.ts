@@ -904,7 +904,7 @@ export const appRouter = router({
       .input(
         z.object({
           productId: z.string(),
-          email: z.string().email(),
+          email: z.string().email().optional(),
           idempotencyKey: z.string().optional(),
         })
       )
@@ -916,7 +916,7 @@ export const appRouter = router({
           customerEmail: input.email,
           metadata: {
             guest_checkout: "true",
-            guest_email: input.email,
+            ...(input.email && { guest_email: input.email }),
           },
           idempotencyKey: input.idempotencyKey,
         });
