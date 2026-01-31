@@ -64,6 +64,8 @@ export default function MemberDashboard() {
   const { data: locations } = trpc.locations.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+  const { data: announcements, isLoading: announcementsLoading } =
+    trpc.announcements.list.useQuery(undefined, { enabled: isAuthenticated });
   const { data: myAttendance, isLoading: attendanceLoading } =
     trpc.attendance.getMyAttendance.useQuery(undefined, {
       enabled: isAuthenticated,
@@ -301,6 +303,73 @@ export default function MemberDashboard() {
 
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
+              {/* Announcements */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Bell className="text-primary" size={24} />
+                    <CardTitle className="text-foreground">
+                      Announcements
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-muted-foreground">
+                    Latest updates from the Academy team.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {announcementsLoading ? (
+                    <p className="text-sm text-muted-foreground">
+                      Loading announcements...
+                    </p>
+                  ) : announcements && announcements.length > 0 ? (
+                    <ul className="space-y-4">
+                      {announcements.map((announcement: any) => (
+                        <li
+                          key={announcement.id}
+                          className="rounded-lg border border-border p-4"
+                        >
+                          <h4 className="font-semibold text-foreground mb-1">
+                            {announcement.title}
+                          </h4>
+                          <p className="text-sm text-muted-foreground whitespace-pre-line">
+                            {announcement.content}
+                          </p>
+                          {announcement.publishedAt && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              {new Date(announcement.publishedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No announcements at the moment.
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Member Chat */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Users className="text-primary" size={24} />
+                    <CardTitle className="text-foreground">
+                      Member Chat
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-muted-foreground">
+                    Ask questions, share updates, and connect with other members.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button asChild>
+                    <a href="/chat">Open Member Chat</a>
+                  </Button>
+                </CardContent>
+              </Card>
+
               {/* Upcoming Schedule - Grouped by Day */}
               <Card className="bg-card border-border">
                 <CardHeader>

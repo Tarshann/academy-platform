@@ -65,14 +65,14 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 const createProgramCheckoutSession = async ({
-  productId,
+  productIds,
   origin,
   customerEmail,
   clientReferenceId,
   metadata,
   idempotencyKey,
 }: {
-  productId: string;
+  productIds: string[];
   origin: string;
   customerEmail?: string;
   clientReferenceId?: string;
@@ -84,32 +84,50 @@ const createProgramCheckoutSession = async ({
   const stripe = new Stripe(ENV.stripeSecretKey);
   const { getProduct } = await import("./products");
 
-  const product = getProduct(productId);
-  if (!product) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+  const products = productIds.map((productId) => {
+    const product = getProduct(productId);
+    if (!product) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
+    }
+    return product;
+  });
+
+  const hasRecurring = products.some((product) => product.type === "recurring");
+  const hasOneTime = products.some((product) => product.type === "one_time");
+
+  if (hasRecurring && products.length > 1) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Memberships must be purchased individually.",
+    });
+  }
+
+  if (hasRecurring && hasOneTime) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Subscriptions cannot be combined with one-time classes.",
+    });
   }
 
   const sessionParams: any = {
     payment_method_types: ["card"],
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: product.name,
-            description: product.description,
-          },
-          unit_amount: product.priceInCents,
-          ...(product.type === "recurring" && {
-            recurring: {
-              interval: product.interval,
-            },
-          }),
+    line_items: products.map((product) => ({
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: product.name,
+          description: product.description,
         },
-        quantity: 1,
+        unit_amount: product.priceInCents,
+        ...(product.type === "recurring" && {
+          recurring: {
+            interval: product.interval,
+          },
+        }),
       },
-    ],
-    mode: product.type === "recurring" ? "subscription" : "payment",
+      quantity: 1,
+    })),
+    mode: hasRecurring ? "subscription" : "payment",
     success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${origin}/signup`,
     allow_promotion_codes: true,
@@ -126,6 +144,11 @@ const createProgramCheckoutSession = async ({
   if (metadata) {
     sessionParams.metadata = metadata;
   }
+
+  sessionParams.metadata = {
+    ...(sessionParams.metadata || {}),
+    program_ids: productIds.join(","),
+  };
 
   return await stripe.checkout.sessions.create(
     sessionParams,
@@ -878,14 +901,14 @@ export const appRouter = router({
     createCheckout: protectedProcedure
       .input(
         z.object({
-          productId: z.string(),
+          productIds: z.array(z.string()).min(1),
           idempotencyKey: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const origin = ctx.req.headers.origin || "http://localhost:3000";
         const session = await createProgramCheckoutSession({
-          productId: input.productId,
+          productIds: input.productIds,
           origin,
           customerEmail: ctx.user.email || undefined,
           clientReferenceId: ctx.user.id.toString(),
@@ -903,7 +926,7 @@ export const appRouter = router({
     createGuestCheckout: publicProcedure
       .input(
         z.object({
-          productId: z.string(),
+          productIds: z.array(z.string()).min(1),
           email: z.string().email().optional(),
           idempotencyKey: z.string().optional(),
         })
@@ -911,7 +934,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const origin = ctx.req.headers.origin || "http://localhost:3000";
         const session = await createProgramCheckoutSession({
-          productId: input.productId,
+          productIds: input.productIds,
           origin,
           customerEmail: input.email,
           metadata: {
