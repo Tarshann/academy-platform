@@ -124,8 +124,6 @@ export default function SignUp() {
                     <Input
                       id="guest-email"
                       type="text"
-                      inputMode="email"
-                      autoComplete="email"
                       placeholder="you@example.com"
                       value={guestEmail}
                       onChange={(event) => {
