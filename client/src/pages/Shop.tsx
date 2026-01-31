@@ -270,16 +270,17 @@ export default function Shop() {
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
                   <ShoppingCart className="w-12 h-12 text-neutral-400" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-900">No products available yet</h3>
+                <p className="text-sm font-medium text-primary/80 uppercase tracking-wide mb-2">Coming Soon</p>
+                <h3 className="text-xl font-semibold mb-2 text-neutral-900">Academy Merch</h3>
                 <p className="text-neutral-500 mb-6">
-                  We're working on adding Academy merchandise. Check back soon for official gear and equipment!
+                  Official Academy apparel and training gear launching soon. Sign up for training to be the first to know when merch drops.
                 </p>
-                <Link href="/programs">
-                  <Button variant="outline">Explore Programs</Button>
+                <Link href="/register">
+                  <Button variant="outline">Register for Training</Button>
                 </Link>
               </div>
             </div>
-          ) : (
+          ): (
             <motion.div
               variants={containerVariants}
               initial="hidden"

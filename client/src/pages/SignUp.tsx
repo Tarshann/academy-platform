@@ -81,7 +81,7 @@ export default function SignUp() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">Registration</h1>
               <p className="text-lg text-muted-foreground">
-                Choose the program that fits your goals. Registration is now open for all programs.
+                Ready to train? Choose your program and register below. Not sure which is right for you? <Link href="/programs" className="text-primary hover:underline font-medium">Explore our programs</Link> first.
               </p>
             </div>
           </div>
