@@ -303,7 +303,7 @@ export default function SignUp() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-6">
-                    Build a strong foundation with focused instruction on multi-sport fundamentals, footwork, and body control.
+                    Build a strong foundation with focused instruction on basketball fundamentals, footwork, and body control.
                   </p>
                   <Button 
                     variant="outline" 

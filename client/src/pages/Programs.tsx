@@ -148,13 +148,12 @@ export default function Programs() {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Group training sessions focus on foundational athletic development through SAQ (Speed, 
-                      Agility, Quickness) training and strength conditioning. These sessions build the core 
-                      athletic qualities that translate across basketball, football, and soccer - improving 
-                      acceleration, change of direction, and overall athleticism.
+                      Group basketball sessions focus on skill development, game IQ, and competitive drills. 
+                      These sessions build basketball-specific skills including ball handling, shooting form, 
+                      defensive positioning, and court awareness in a high-energy team environment.
                     </p>
                     <p className="text-muted-foreground mb-4">
-                      Players develop fundamental movement patterns, build confidence through proper technique, 
+                      Players develop fundamental basketball skills, build confidence through proper technique, 
                       and compete in a supportive environment that emphasizes long-term growth over short-term results.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">

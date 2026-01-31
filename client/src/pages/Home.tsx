@@ -110,16 +110,16 @@ export default function Home() {
   const programs = [
     {
       title: "Group Training",
-      label: "Athletic Foundation",
-      description: "High-energy sessions focused on SAQ training, conditioning, and multi-sport fundamentals. Limited to 8 athletes per session.",
+      label: "Basketball Development",
+      description: "High-energy basketball sessions focused on skill development, game IQ, and competitive drills. Limited to 8 athletes per session.",
       bestFor: "All skill levels",
       icon: Users,
       price: "$25",
       unit: "per session",
       featured: false,
       // Filtering metadata
-      sports: ["Basketball", "Football", "Soccer"],
-      goals: ["Speed & Agility (SAQ)", "Strength & Conditioning", "Confidence Building"],
+      sports: ["Basketball"],
+      goals: ["Skills Development", "Confidence Building"],
       format: "Small Group",
     },
     {
@@ -637,7 +637,7 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
                       <h3 className="text-2xl font-bold text-white drop-shadow-lg">Coach Mac</h3>
-                      <p className="text-white/80 drop-shadow">Head Coach</p>
+                      <p className="text-white/80 drop-shadow">Lead Trainer</p>
                     </div>
                   </div>
                   <CardContent className="p-6 md:p-8">
