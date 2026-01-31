@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Users, Target, Zap, Shield, Heart, ChevronDown } from "lucide-react";
+import { ArrowRight, Users, Target, Zap, Shield, Heart, ChevronDown, MessageCircle } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,11 +7,34 @@ import { OrganizationStructuredData } from "@/components/StructuredData";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
+// Program Finder filter options
+const sportOptions = ["Any Sport", "Basketball", "Football", "Soccer"] as const;
+const goalOptions = ["Any Goal", "Speed & Agility (SAQ)", "Skills Development", "Strength & Conditioning", "Confidence Building"] as const;
+const formatOptions = ["Any Format", "Private (1-on-1)", "Small Group", "Shooting Lab"] as const;
+
+type SportOption = typeof sportOptions[number];
+type GoalOption = typeof goalOptions[number];
+type FormatOption = typeof formatOptions[number];
+
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [showMobileCTA, setShowMobileCTA] = useState(false);
+  
+  // Program Finder state
+  const [selectedSport, setSelectedSport] = useState<SportOption>("Any Sport");
+  const [selectedGoal, setSelectedGoal] = useState<GoalOption>("Any Goal");
+  const [selectedFormat, setSelectedFormat] = useState<FormatOption>("Any Format");
+  const [showFinder, setShowFinder] = useState(false);
+  
+  const resetFilters = () => {
+    setSelectedSport("Any Sport");
+    setSelectedGoal("Any Goal");
+    setSelectedFormat("Any Format");
+  };
+  
+  const hasActiveFilters = selectedSport !== "Any Sport" || selectedGoal !== "Any Goal" || selectedFormat !== "Any Format";
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -94,6 +117,10 @@ export default function Home() {
       price: "$25",
       unit: "per session",
       featured: false,
+      // Filtering metadata
+      sports: ["Basketball", "Football", "Soccer"],
+      goals: ["Speed & Agility (SAQ)", "Strength & Conditioning", "Confidence Building"],
+      format: "Small Group",
     },
     {
       title: "Private Training",
@@ -104,6 +131,10 @@ export default function Home() {
       price: "$60",
       unit: "per session",
       featured: true,
+      // Filtering metadata
+      sports: ["Basketball", "Football", "Soccer"],
+      goals: ["Speed & Agility (SAQ)", "Skills Development", "Strength & Conditioning", "Confidence Building"],
+      format: "Private (1-on-1)",
     },
     {
       title: "Shooting Lab",
@@ -114,8 +145,20 @@ export default function Home() {
       price: "$25",
       unit: "per session",
       featured: false,
+      // Filtering metadata
+      sports: ["Basketball"],
+      goals: ["Skills Development"],
+      format: "Shooting Lab",
     },
   ];
+  
+  // Filter programs based on selections
+  const filteredPrograms = programs.filter((program) => {
+    const sportMatch = selectedSport === "Any Sport" || program.sports.includes(selectedSport);
+    const goalMatch = selectedGoal === "Any Goal" || program.goals.includes(selectedGoal);
+    const formatMatch = selectedFormat === "Any Format" || program.format === selectedFormat;
+    return sportMatch && goalMatch && formatMatch;
+  });
 
   const values = [
     {
@@ -322,7 +365,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
-              className="text-center mb-20"
+              className="text-center mb-12"
             >
               <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
                 Our Programs
@@ -332,14 +375,129 @@ export default function Home() {
               </p>
             </motion.div>
 
+            {/* Program Finder - Apple-style selector strip */}
+            <motion.div
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: motionEasing }}
+              className="max-w-4xl mx-auto mb-16"
+            >
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <button
+                  onClick={() => setShowFinder(!showFinder)}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Target className="w-4 h-4" />
+                  {showFinder ? "Hide Program Finder" : "Find Your Program"}
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showFinder ? "rotate-180" : ""}`} />
+                </button>
+              </div>
+              
+              {showFinder && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: motionEasing }}
+                  className="bg-muted/30 rounded-2xl p-6 border border-border"
+                >
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    {/* Sport selector */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">
+                        Sport
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {sportOptions.map((sport) => (
+                          <button
+                            key={sport}
+                            onClick={() => setSelectedSport(sport)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 ${
+                              selectedSport === sport
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "bg-card border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                            }`}
+                          >
+                            {sport === "Any Sport" ? "Any" : sport}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Goal selector */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">
+                        Training Goal
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {goalOptions.map((goal) => (
+                          <button
+                            key={goal}
+                            onClick={() => setSelectedGoal(goal)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 ${
+                              selectedGoal === goal
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "bg-card border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                            }`}
+                          >
+                            {goal === "Any Goal" ? "Any" : goal.replace(" & ", "/").replace("Speed/Agility (SAQ)", "SAQ")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Format selector */}
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">
+                        Format
+                      </label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {formatOptions.map((format) => (
+                          <button
+                            key={format}
+                            onClick={() => setSelectedFormat(format)}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-150 ${
+                              selectedFormat === format
+                                ? "bg-primary text-primary-foreground shadow-sm"
+                                : "bg-card border border-border text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                            }`}
+                          >
+                            {format === "Any Format" ? "Any" : format.replace(" (1-on-1)", "")}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Reset button */}
+                  {hasActiveFilters && (
+                    <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        Showing {filteredPrograms.length} of {programs.length} programs
+                      </p>
+                      <button
+                        onClick={resetFilters}
+                        className="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+                      >
+                        Reset filters
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+
+            {/* Program Cards */}
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
-              className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+              className={`grid gap-6 max-w-5xl mx-auto ${filteredPrograms.length === 1 ? "md:grid-cols-1 max-w-md" : filteredPrograms.length === 2 ? "md:grid-cols-2 max-w-3xl" : "md:grid-cols-3"}`}
             >
-              {programs.map((program, index) => (
+              {filteredPrograms.length > 0 ? (
+                filteredPrograms.map((program, index) => (
                 <motion.div key={index} variants={fadeInUp}>
                   <Card 
                     className={`group relative overflow-hidden bg-card border transition-all duration-150 ease-out h-full hover:shadow-lg [@media(hover:hover)]:hover:-translate-y-1 [@media(hover:none)]:active:opacity-95 ${
@@ -389,7 +547,36 @@ export default function Home() {
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))}
+              ))
+              ) : (
+                /* Empty state - no matching programs */
+                <motion.div variants={fadeInUp} className="col-span-full text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                      <Target className="w-8 h-8 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-bold text-foreground mb-2">No exact match found</h3>
+                    <p className="text-muted-foreground mb-6">
+                      We recommend <span className="font-semibold text-foreground">Private Training</span> for personalized coaching that covers all your goals.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                        asChild
+                      >
+                        <a href="/contact?subject=Private%20Session%20Request">Talk to Us</a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={resetFilters}
+                        className="border-2"
+                      >
+                        Reset Filters
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </motion.div>
 
             <motion.div
@@ -539,6 +726,66 @@ export default function Home() {
                 </Card>
               </motion.div>
             </div>
+          </div>
+        </section>
+
+        {/* Private Sessions Module - Premium booking CTA */}
+        <section className="py-20 md:py-24 bg-background border-y border-border">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
+              className="max-w-3xl mx-auto text-center"
+            >
+              <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-primary font-medium text-sm">Most Popular Option</span>
+              </div>
+              
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
+                Private Sessions
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+                Most popular option for athletes who want fast, personalized progress with Coach Mac or Coach O.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+                <Button
+                  size="lg"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-md hover:shadow-lg transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
+                  asChild
+                >
+                  <a href="/contact?subject=Private%20Session%20Request">
+                    Request a Private Session
+                    <ArrowRight className="ml-2" size={20} />
+                  </a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 px-8 py-6 text-lg rounded-xl transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
+                  asChild
+                >
+                  <a href="/contact">
+                    <MessageCircle className="mr-2" size={20} />
+                    Contact Us
+                  </a>
+                </Button>
+              </div>
+              
+              <p className="text-xs text-muted-foreground/60 mb-6">
+                We'll reply within 24 hours to schedule your session.
+              </p>
+              
+              {/* School Credibility Line */}
+              <div className="pt-6 border-t border-border">
+                <p className="text-xs text-muted-foreground/70 leading-relaxed">
+                  Trusted by athletes from <span className="text-muted-foreground">Sumner Academy</span>, <span className="text-muted-foreground">Shafer Middle School</span>, <span className="text-muted-foreground">Rucker Middle School</span>, <span className="text-muted-foreground">Gallatin High School</span>, <span className="text-muted-foreground">Liberty Creek Middle School</span>, <span className="text-muted-foreground">Station Camp</span>, <span className="text-muted-foreground">Stratford High School</span>, and more across Sumner & Davidson County.
+                </p>
+              </div>
+            </motion.div>
           </div>
         </section>
 
