@@ -272,3 +272,8 @@
 .video-fade-in {
   animation: fadeIn 0.8s ease-out forwards;
 }
+
+/* Safe area padding for iOS devices with home indicator */
+.safe-area-pb {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}

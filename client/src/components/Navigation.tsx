@@ -97,10 +97,19 @@ export default function Navigation() {
     return location === path || location.startsWith(`${path}/`);
   };
 
-  const getLinkClassName = (path: string, isRegister = false) => {
-    const baseClasses = "relative text-foreground hover:text-primary transition-all duration-200 py-1.5";
-    const hoverUnderline = "hover:after:absolute hover:after:bottom-0 hover:after:left-0 hover:after:right-0 hover:after:h-[3px] hover:after:bg-primary/30 hover:after:rounded-full";
-    const activeUnderline = "text-primary font-semibold after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:bg-primary after:rounded-full";
+  const getLinkClassName = (path: string, isRegister = false, isMobile = false) => {
+    // Pixel-perfect: consistent 2px underline, aligned insets, proper vertical rhythm
+    if (isMobile) {
+      // Mobile: 44px+ tap targets, full-width links
+      const mobileBase = "block px-4 py-3 text-base font-medium rounded-lg transition-colors";
+      const mobileActive = isActiveRoute(path) ? "text-primary bg-primary/5" : "text-foreground hover:bg-muted/50 active:bg-muted";
+      const mobileRegister = isRegister ? "text-primary font-semibold" : "";
+      return [mobileBase, mobileActive, mobileRegister].filter(Boolean).join(" ");
+    }
+    
+    const baseClasses = "relative text-foreground hover:text-primary transition-all duration-200 py-2 text-sm font-medium";
+    const hoverUnderline = "hover:after:absolute hover:after:bottom-0 hover:after:left-1 hover:after:right-1 hover:after:h-[2px] hover:after:bg-primary/30 hover:after:rounded-full";
+    const activeUnderline = "text-primary font-semibold after:absolute after:bottom-0 after:left-1 after:right-1 after:h-[2px] after:bg-primary after:rounded-full";
     const registerAccent = isRegister ? "text-primary font-semibold hover:text-primary/80" : "";
     
     return [
@@ -133,20 +142,20 @@ export default function Navigation() {
     <nav 
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled || !isHomePage
-          ? "bg-card/95 backdrop-blur-md border-b border-border shadow-sm" 
+          ? "bg-card/95 backdrop-blur-lg border-b border-border/50 shadow-sm" 
           : "bg-transparent border-b border-transparent"
       }`}
     >
       <div className="container">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3">
+          {/* Logo - aligned baseline with nav items */}
+          <Link href="/" className="flex items-center gap-3 py-1">
             <img
               src="/academy-logo.jpeg"
               alt="The Academy"
-              className="h-10 w-10 rounded-full"
+              className="h-9 w-9 rounded-full"
             />
-            <span className="text-xl font-bold text-foreground">
+            <span className="text-lg font-bold text-foreground tracking-tight">
               THE ACADEMY
             </span>
           </Link>
@@ -276,16 +285,16 @@ export default function Navigation() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - 44px tap target for accessibility */}
           <button
             ref={mobileMenuButtonRef}
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground w-11 h-11 flex items-center justify-center -mr-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-menu"
           >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
 
@@ -294,17 +303,18 @@ export default function Navigation() {
           <div
             ref={mobileMenuRef}
             id="mobile-menu"
-            className="md:hidden py-4 border-t border-border"
+            className="md:hidden py-4 border-t border-border/50 bg-card/95 backdrop-blur-lg"
             role="navigation"
             aria-label="Main navigation"
           >
-            <div className="flex flex-col gap-4">
+            {/* Mobile links with 44px+ tap targets */}
+            <div className="flex flex-col gap-1 px-2">
               <div className="px-4 pb-2">
                 <SearchBar />
               </div>
               <Link
                 href="/"
-                className={getLinkClassName("/")}
+                className={getLinkClassName("/", false, true)}
                 aria-current={isActiveRoute("/") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -312,7 +322,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/programs"
-                className={getLinkClassName("/programs")}
+                className={getLinkClassName("/programs", false, true)}
                 aria-current={isActiveRoute("/programs") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -320,7 +330,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/signup"
-                className={getLinkClassName("/signup", true)}
+                className={getLinkClassName("/signup", true, true)}
                 aria-current={isActiveRoute("/signup") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -328,7 +338,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/about"
-                className={getLinkClassName("/about")}
+                className={getLinkClassName("/about", false, true)}
                 aria-current={isActiveRoute("/about") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -336,7 +346,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/gallery"
-                className={getLinkClassName("/gallery")}
+                className={getLinkClassName("/gallery", false, true)}
                 aria-current={isActiveRoute("/gallery") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -344,7 +354,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/videos"
-                className={getLinkClassName("/videos")}
+                className={getLinkClassName("/videos", false, true)}
                 aria-current={isActiveRoute("/videos") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -352,7 +362,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/shop"
-                className={getLinkClassName("/shop")}
+                className={getLinkClassName("/shop", false, true)}
                 aria-current={isActiveRoute("/shop") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -360,7 +370,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/blog"
-                className={getLinkClassName("/blog")}
+                className={getLinkClassName("/blog", false, true)}
                 aria-current={isActiveRoute("/blog") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -368,7 +378,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/faqs"
-                className={getLinkClassName("/faqs")}
+                className={getLinkClassName("/faqs", false, true)}
                 aria-current={isActiveRoute("/faqs") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -376,7 +386,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/contact"
-                className={getLinkClassName("/contact")}
+                className={getLinkClassName("/contact", false, true)}
                 aria-current={isActiveRoute("/contact") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -387,7 +397,7 @@ export default function Navigation() {
                 <>
                   <Link
                     href="/member"
-                    className={getLinkClassName("/member")}
+                    className={getLinkClassName("/member", false, true)}
                     aria-current={isActiveRoute("/member") ? "page" : undefined}
                     onClick={() => setMobileMenuOpen(false)}
                   >
@@ -396,7 +406,7 @@ export default function Navigation() {
                   {user?.role === "admin" && (
                     <Link
                       href="/admin"
-                      className={getLinkClassName("/admin")}
+                      className={getLinkClassName("/admin", false, true)}
                       aria-current={
                         isActiveRoute("/admin") ? "page" : undefined
                       }
@@ -409,7 +419,7 @@ export default function Navigation() {
                     variant="outline"
                     size="sm"
                     onClick={handleLogout}
-                    className="w-full"
+                    className="w-full mt-2 h-11"
                   >
                     Logout
                   </Button>
