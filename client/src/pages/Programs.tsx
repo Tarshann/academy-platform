@@ -52,11 +52,13 @@ export default function Programs() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">Our Programs</h1>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-muted-foreground mb-4">
                 Comprehensive athletic development programs for basketball, football, and soccer athletes. 
                 Our focus on SAQ (Speed, Agility, Quickness) training and strength conditioning builds 
-                foundational athletic qualities that translate across all sports. Choose the program 
-                that fits your goals and schedule.
+                foundational athletic qualities that translate across all sports.
+              </p>
+              <p className="text-sm text-muted-foreground/80">
+                Explore what we offer below, then head to <Link href="/register" className="text-primary hover:underline font-medium">Registration</Link> when you're ready to sign up.
               </p>
             </div>
           </div>

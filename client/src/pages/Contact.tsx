@@ -220,7 +220,7 @@ export default function Contact() {
                     <CardHeader>
                       <CardTitle className="text-foreground">Send Us a Message</CardTitle>
                       <CardDescription className="text-muted-foreground">
-                        Fill out the form below and we'll get back to you as soon as possible.
+                        Fill out the form below and we'll get back to you within 24 hours. No spam, just answers.
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
