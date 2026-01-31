@@ -1,6 +1,6 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Users, Target, Zap, Shield, Heart } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { OrganizationStructuredData } from "@/components/StructuredData";
@@ -9,6 +9,19 @@ import Footer from "@/components/Footer";
 
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -95,18 +108,25 @@ export default function Home() {
           ref={heroRef}
           className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
         >
-          {/* Video Background */}
+          {/* Video Background - respects prefers-reduced-motion */}
           <div className="absolute inset-0 overflow-hidden">
-            <video
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
-              style={{ filter: 'sepia(0.1)' }}
-            >
-              <source src="/images/hero-video.mp4" type="video/mp4" />
-            </video>
+            {prefersReducedMotion ? (
+              <div 
+                className="absolute w-full h-full bg-gradient-to-br from-background to-[oklch(0.95_0.005_90)]"
+                aria-hidden="true"
+              />
+            ) : (
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
+                style={{ filter: 'sepia(0.1)' }}
+              >
+                <source src="/images/hero-video.mp4" type="video/mp4" />
+              </video>
+            )}
           </div>
           {/* Warm overlay gradient for text contrast */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
