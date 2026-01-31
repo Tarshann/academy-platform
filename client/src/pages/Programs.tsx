@@ -58,7 +58,7 @@ export default function Programs() {
                 foundational athletic qualities that translate across all sports.
               </p>
               <p className="text-sm text-muted-foreground/80">
-                Explore what we offer below, then head to <Link href="/register" className="text-primary hover:underline font-medium">Registration</Link> when you're ready to sign up.
+                Explore what we offer below, then head to <Link href="/signup" className="text-primary hover:underline font-medium">Registration</Link> when you're ready to sign up.
               </p>
             </div>
           </div>
