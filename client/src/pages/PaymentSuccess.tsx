@@ -48,7 +48,7 @@ export default function PaymentSuccess() {
                 <div className="flex justify-center mb-4">
                   <CheckCircle2 className="text-primary" size={64} />
                 </div>
-                <CardTitle className="text-3xl text-foreground">Payment Successful!</CardTitle>
+                <CardTitle className="text-3xl text-foreground">You're Registered!</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="text-center">
@@ -71,29 +71,38 @@ export default function PaymentSuccess() {
                   {isAuthenticated ? (
                     <Link href="/member">
                       <Button className="w-full" size="lg">
-                        Go to Member Dashboard
+                        View Schedule, Announcements, and Chat
                       </Button>
                     </Link>
-                  ) : clerkPublishableKey ? (
+                  ) : (
+                    <div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+                      Create an account to access your Schedule, Announcements, and Chat in the member dashboard.
+                    </div>
+                  )}
+
+                  {!isAuthenticated && clerkPublishableKey ? (
                     <>
                       <Link href="/sign-up">
                         <Button className="w-full" size="lg">
-                          Create Your Account
+                          Create Account
                         </Button>
                       </Link>
                       <Link href="/sign-in">
                         <Button variant="outline" className="w-full" size="lg">
-                          Sign In to View Your Schedule
+                          Sign In as a Member
                         </Button>
                       </Link>
                     </>
-                  ) : (
+                  ) : null}
+
+                  {!isAuthenticated && !clerkPublishableKey ? (
                     <a href={loginUrl}>
                       <Button className="w-full" size="lg" disabled={loginUrl === "#"}>
-                        Sign In to Access Member Tools
+                        Sign In as a Member
                       </Button>
                     </a>
-                  )}
+                  ) : null}
+
                   <Link href="/signup">
                     <Button variant="outline" className="w-full" size="lg">
                       Register for More Programs
@@ -110,7 +119,7 @@ export default function PaymentSuccess() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary mt-0.5">•</span>
-                      <span>View your schedule in the member dashboard</span>
+                      <span>Access your schedule, announcements, and chat in the member dashboard</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-primary mt-0.5">•</span>

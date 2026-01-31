@@ -1,9 +1,10 @@
 import { Link, useSearch } from "wouter";
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getClerkPublishableKey, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { formatUsd } from "@shared/money";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
@@ -11,6 +12,91 @@ import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const MEMBERSHIP_PRODUCTS = [
+  {
+    id: "academy-group-membership",
+    name: "Academy Group Membership",
+    description: "Unlimited group sessions",
+    price: 150,
+    intervalLabel: "/month",
+    badge: "POPULAR",
+    features: [
+      "Unlimited group workout sessions",
+      "Small group sizes (max 8 players)",
+      "Competitive training environment",
+      "Youth athletes of all levels",
+    ],
+  },
+  {
+    id: "complete-player-membership",
+    name: "Complete Player Membership",
+    description: "Unlimited skills classes + open gyms",
+    price: 100,
+    intervalLabel: "/month",
+    badge: "BEST VALUE",
+    features: [
+      "Unlimited skills classes",
+      "Unlimited open gym access",
+      "Shooting lab access included",
+      "Youth athletes of all levels",
+    ],
+  },
+];
+
+const ONE_TIME_PRODUCTS = [
+  {
+    id: "group-workout",
+    name: "Group Workout",
+    description: "Single session access to group workouts. Limited to 8 players.",
+    price: 25,
+    badge: "Group",
+    unitLabel: "/session",
+  },
+  {
+    id: "individual-training",
+    name: "Individual Training",
+    description: "One-on-one coaching tailored to each athlete's goals.",
+    price: 60,
+    badge: "1-on-1",
+    unitLabel: "/session",
+  },
+  {
+    id: "skills-class",
+    name: "Skills Class",
+    description: "Focused instruction on fundamentals, footwork, and body control.",
+    price: 15,
+    badge: "Skills",
+    unitLabel: "/class",
+  },
+  {
+    id: "on-field-workouts",
+    name: "On Field Workouts",
+    description: "Outdoor conditioning and agility training to complement basketball skills.",
+    price: 30,
+    badge: "Outdoor",
+    unitLabel: "/session",
+  },
+  {
+    id: "summer-camp",
+    name: "Summer Camp",
+    description: "Intensive summer training with full-day sessions, skill work, and competition.",
+    price: 20,
+    badge: "Camp",
+    unitLabel: "/day",
+  },
+  {
+    id: "team-academy",
+    name: "Team Academy",
+    description: "Competitive travel team registration including uniforms and coaching.",
+    price: 300,
+    badge: "Team",
+    unitLabel: "/season",
+  },
+];
+
+const INDIVIDUAL_PRODUCTS = ONE_TIME_PRODUCTS.slice(0, 3);
+const SPECIAL_PRODUCTS = ONE_TIME_PRODUCTS.slice(3);
 
 // Enhanced debug validation detector - shows which element is failing validation
 // Only active when ?debugValidation=1 is in the URL
@@ -52,6 +138,7 @@ function useValidationDebugger() {
 
     const getElementInfo = (el: Element) => {
       const input = el as HTMLInputElement;
+      const outerHTML = el.outerHTML || "";
       return {
         tagName: el.tagName,
         id: el.id || '(none)',
@@ -63,7 +150,7 @@ function useValidationDebugger() {
         valueLength: input.value?.length ?? 0,
         willValidate: input.willValidate,
         validationMessage: input.validationMessage,
-        outerHTML: el.outerHTML.slice(0, 200),
+        outerHTML: outerHTML.length > 300 ? `${outerHTML.slice(0, 300)}…` : outerHTML,
       };
     };
 
@@ -132,6 +219,40 @@ function useValidationDebugger() {
       });
     };
 
+    const wrapValidityMethod = <T extends Record<"reportValidity" | "checkValidity", (...args: any[]) => any>>(
+      prototype: T,
+      method: "reportValidity" | "checkValidity",
+      label: string
+    ) => {
+      const original = prototype[method];
+      prototype[method] = function (...args: any[]) {
+        const info = getElementInfo(this as unknown as Element);
+        logToOverlay(`${label}.${method} called: ${JSON.stringify(info)}`, "#0ff");
+        try {
+          const result = original.apply(this, args as []);
+          logToOverlay(`${label}.${method} result: ${result}`, "#0f0");
+          return result;
+        } catch (error) {
+          logToOverlay(`${label}.${method} ERROR: ${error}`, "#f00");
+          throw error;
+        }
+      };
+      return () => {
+        prototype[method] = original;
+      };
+    };
+
+    const restoreMethods = [
+      wrapValidityMethod(HTMLFormElement.prototype, "reportValidity", "FORM"),
+      wrapValidityMethod(HTMLFormElement.prototype, "checkValidity", "FORM"),
+      wrapValidityMethod(HTMLInputElement.prototype, "reportValidity", "INPUT"),
+      wrapValidityMethod(HTMLInputElement.prototype, "checkValidity", "INPUT"),
+      wrapValidityMethod(HTMLSelectElement.prototype, "reportValidity", "SELECT"),
+      wrapValidityMethod(HTMLSelectElement.prototype, "checkValidity", "SELECT"),
+      wrapValidityMethod(HTMLTextAreaElement.prototype, "reportValidity", "TEXTAREA"),
+      wrapValidityMethod(HTMLTextAreaElement.prototype, "checkValidity", "TEXTAREA"),
+    ];
+
     document.addEventListener('invalid', handleInvalid, true);
     document.addEventListener('submit', handleSubmit, true);
     document.addEventListener('click', handleClick, true);
@@ -148,6 +269,7 @@ function useValidationDebugger() {
       document.removeEventListener('invalid', handleInvalid, true);
       document.removeEventListener('submit', handleSubmit, true);
       document.removeEventListener('click', handleClick, true);
+      restoreMethods.forEach((restore) => restore());
       delete (window as any).__scanValidation;
       delete (window as any).__logElements;
       debugOverlay.remove();
@@ -160,8 +282,11 @@ function useValidationDebugger() {
 // PHASE B: Hard stop Safari validation on /signup
 // This hook makes /signup completely immune to HTML constraint validation
 // by overriding prototype methods and capturing all validation-related events
-function useValidationHardStop() {
+function useValidationHardStop(isDebugMode: boolean) {
   useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
     // Store original prototype methods
     const originalReportValidity = HTMLFormElement.prototype.reportValidity;
     const originalCheckValidity = HTMLFormElement.prototype.checkValidity;
@@ -172,37 +297,39 @@ function useValidationHardStop() {
     const originalTextAreaReportValidity = HTMLTextAreaElement.prototype.reportValidity;
     const originalTextAreaCheckValidity = HTMLTextAreaElement.prototype.checkValidity;
 
-    // Override form validation methods to always return true on /signup
-    HTMLFormElement.prototype.reportValidity = function() {
-      return true;
-    };
-    HTMLFormElement.prototype.checkValidity = function() {
-      return true;
-    };
+    if (!isDebugMode) {
+      // Override form validation methods to always return true on /signup
+      HTMLFormElement.prototype.reportValidity = function() {
+        return true;
+      };
+      HTMLFormElement.prototype.checkValidity = function() {
+        return true;
+      };
 
-    // Override input validation methods
-    HTMLInputElement.prototype.reportValidity = function() {
-      return true;
-    };
-    HTMLInputElement.prototype.checkValidity = function() {
-      return true;
-    };
+      // Override input validation methods
+      HTMLInputElement.prototype.reportValidity = function() {
+        return true;
+      };
+      HTMLInputElement.prototype.checkValidity = function() {
+        return true;
+      };
 
-    // Override select validation methods
-    HTMLSelectElement.prototype.reportValidity = function() {
-      return true;
-    };
-    HTMLSelectElement.prototype.checkValidity = function() {
-      return true;
-    };
+      // Override select validation methods
+      HTMLSelectElement.prototype.reportValidity = function() {
+        return true;
+      };
+      HTMLSelectElement.prototype.checkValidity = function() {
+        return true;
+      };
 
-    // Override textarea validation methods
-    HTMLTextAreaElement.prototype.reportValidity = function() {
-      return true;
-    };
-    HTMLTextAreaElement.prototype.checkValidity = function() {
-      return true;
-    };
+      // Override textarea validation methods
+      HTMLTextAreaElement.prototype.reportValidity = function() {
+        return true;
+      };
+      HTMLTextAreaElement.prototype.checkValidity = function() {
+        return true;
+      };
+    }
 
     // Capture and suppress submit events
     const suppressSubmit = (e: Event) => {
@@ -218,6 +345,9 @@ function useValidationHardStop() {
 
     // Add novalidate to all forms on the page
     const addNoValidateToForms = () => {
+      if (isDebugMode) {
+        return;
+      }
       document.querySelectorAll('form').forEach(form => {
         form.setAttribute('novalidate', 'true');
         form.noValidate = true;
@@ -231,15 +361,17 @@ function useValidationHardStop() {
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-          if (node instanceof HTMLFormElement) {
+          if (node instanceof HTMLFormElement && !isDebugMode) {
             node.setAttribute('novalidate', 'true');
             node.noValidate = true;
           }
           if (node instanceof HTMLElement) {
-            node.querySelectorAll('form').forEach(form => {
-              form.setAttribute('novalidate', 'true');
-              form.noValidate = true;
-            });
+            if (!isDebugMode) {
+              node.querySelectorAll('form').forEach(form => {
+                form.setAttribute('novalidate', 'true');
+                form.noValidate = true;
+              });
+            }
           }
         });
       });
@@ -269,7 +401,7 @@ function useValidationHardStop() {
       // Disconnect observer
       observer.disconnect();
     };
-  }, []);
+  }, [isDebugMode]);
 }
 
 // Div-based CTA component to bypass Safari iOS validation
@@ -332,14 +464,19 @@ function DivButton({ onClick, disabled, variant = 'default', size = 'default', c
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
+  const [cartItems, setCartItems] = useState<string[]>([]);
+  const productLookup = useMemo(
+    () => new Map(ONE_TIME_PRODUCTS.map((product) => [product.id, product])),
+    []
+  );
   
   // Enable debug mode with ?debugValidation=1
-  useValidationDebugger();
+  const isDebugMode = useValidationDebugger();
 
   // PHASE B: Hard stop Safari validation on /signup
   // This overrides prototype methods and captures all validation events
   // to make /signup completely immune to HTML constraint validation
-  useValidationHardStop();
+  useValidationHardStop(isDebugMode);
 
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
@@ -370,10 +507,40 @@ export default function SignUp() {
     },
   });
 
+  const cartDetails = useMemo(
+    () =>
+      cartItems
+        .map((id) => productLookup.get(id))
+        .filter((item): item is (typeof ONE_TIME_PRODUCTS)[number] => Boolean(item)),
+    [cartItems, productLookup]
+  );
+  const cartTotal = useMemo(
+    () => cartDetails.reduce((sum, item) => sum + item.price, 0),
+    [cartDetails]
+  );
+
+  const toggleCartItem = useCallback((productId: string) => {
+    setCartItems((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+  }, []);
+
   // Simplified checkout handler - no email collection on this page
   // Stripe Checkout will collect email natively
-  const handlePurchase = (productId: string) => {
-    const baseFingerprint = productId.trim();
+  const handleCheckout = (productIds: string[]) => {
+    const normalized = productIds.map((id) => id.trim()).filter(Boolean);
+    if (normalized.length === 0) {
+      toast.error("Select at least one program to continue.");
+      return;
+    }
+
+    const baseFingerprint = normalized.slice().sort().join("|");
     
     if (isAuthenticated) {
       // Authenticated user - use their account email
@@ -383,7 +550,7 @@ export default function SignUp() {
       if (!existingKey) {
         checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
       }
-      createCheckout.mutate({ productId, idempotencyKey });
+      createCheckout.mutate({ productIds: normalized, idempotencyKey });
     } else {
       // Guest user - Stripe will collect email
       const guestFingerprint = `guest:${baseFingerprint}`;
@@ -392,7 +559,7 @@ export default function SignUp() {
       if (!existingKey) {
         checkoutKeyRef.current.set(guestFingerprint, idempotencyKey);
       }
-      createGuestCheckout.mutate({ productId, idempotencyKey });
+      createGuestCheckout.mutate({ productIds: normalized, idempotencyKey });
     }
   };
 
@@ -456,6 +623,66 @@ export default function SignUp() {
           </section>
         )}
 
+        {/* Cart */}
+        <section className="py-10">
+          <div className="container">
+            <Card className="bg-card border-border max-w-4xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-foreground text-2xl">Your Class Cart</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Select one or more classes below, then check out with Stripe (email collected at checkout).
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {cartDetails.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No classes selected yet. Tap “Add to cart” on any class to build your registration.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    <ul className="space-y-2">
+                      {cartDetails.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex items-center justify-between text-sm text-foreground"
+                        >
+                          <span>{item.name}</span>
+                          <span className="text-muted-foreground">{formatUsd(item.price)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="flex items-center justify-between border-t border-border pt-4 text-sm font-semibold">
+                      <span>Total</span>
+                      <span>{formatUsd(cartTotal)}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-6">
+                  <div className="flex items-center gap-3">
+                    <DivButton
+                      className="w-full sm:w-auto"
+                      size="lg"
+                      onClick={() => handleCheckout(cartItems)}
+                      disabled={cartItems.length === 0 || isPending}
+                    >
+                      {isPending ? "Processing..." : "Checkout Selected Classes"}
+                    </DivButton>
+                    {cartItems.length > 0 && (
+                      <Button type="button" variant="ghost" onClick={clearCart}>
+                        Clear cart
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Memberships are monthly subscriptions and check out separately.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
         {/* Memberships */}
         <section className="py-16">
           <div className="container">
@@ -465,89 +692,39 @@ export default function SignUp() {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              <Card className="bg-card border-2 border-primary relative">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">POPULAR</Badge>
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-foreground text-2xl">Academy Group Membership</CardTitle>
-                  <CardDescription className="text-muted-foreground">Unlimited group sessions</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold text-primary">$150</span>
-                    <span className="text-muted-foreground">/month</span>
+              {MEMBERSHIP_PRODUCTS.map((product) => (
+                <Card key={product.id} className="bg-card border-2 border-primary relative">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-primary text-primary-foreground">{product.badge}</Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Unlimited group workout sessions</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Small group sizes (max 8 players)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Competitive training environment</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Youth athletes of all levels</span>
-                    </li>
-                  </ul>
-                  <DivButton 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => handlePurchase('academy-group-membership')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register Now'}
-                  </DivButton>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-2 border-primary relative">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground">BEST VALUE</Badge>
-                </div>
-                <CardHeader>
-                  <CardTitle className="text-foreground text-2xl">Complete Player Membership</CardTitle>
-                  <CardDescription className="text-muted-foreground">Unlimited skills classes + open gyms</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold text-primary">$100</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Unlimited skills classes</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Unlimited open gym access</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Shooting lab access included</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                      <span className="text-muted-foreground">Youth athletes of all levels</span>
-                    </li>
-                  </ul>
-                  <DivButton 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => handlePurchase('complete-player-membership')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register Now'}
-                  </DivButton>
-                </CardContent>
-              </Card>
+                  <CardHeader>
+                    <CardTitle className="text-foreground text-2xl">{product.name}</CardTitle>
+                    <CardDescription className="text-muted-foreground">{product.description}</CardDescription>
+                    <div className="mt-4">
+                      <span className="text-4xl font-bold text-primary">{formatUsd(product.price)}</span>
+                      <span className="text-muted-foreground">{product.intervalLabel}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3 mb-6">
+                      {product.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-2">
+                          <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
+                          <span className="text-muted-foreground">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <DivButton 
+                      className="w-full" 
+                      size="lg"
+                      onClick={() => handleCheckout([product.id])}
+                      disabled={isPending}
+                    >
+                      {isPending ? 'Processing...' : 'Register Now'}
+                    </DivButton>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
@@ -561,77 +738,38 @@ export default function SignUp() {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Group Workout</CardTitle>
-                  <CardDescription className="text-muted-foreground">Limited to 8 players</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$25</span>
-                    <span className="text-muted-foreground">/session</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Single session access to group workouts. Develop skills in a competitive environment.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('group-workout')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Individual Training</CardTitle>
-                  <CardDescription className="text-muted-foreground">One-on-one coaching</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$60</span>
-                    <span className="text-muted-foreground">/session</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Personalized training focused on your unique strengths and development goals.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('individual-training')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-background border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Skills Class</CardTitle>
-                  <CardDescription className="text-muted-foreground">Fundamentals focus</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$15</span>
-                    <span className="text-muted-foreground">/class</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Build a strong foundation with focused instruction on basketball fundamentals, footwork, and body control.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('skills-class')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
+              {INDIVIDUAL_PRODUCTS.map((product) => {
+                const isSelected = cartItems.includes(product.id);
+                return (
+                  <Card key={product.id} className="bg-background border-border">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-foreground">{product.name}</CardTitle>
+                        <Badge variant="outline">{product.badge}</Badge>
+                      </div>
+                      <CardDescription className="text-muted-foreground">One-time registration</CardDescription>
+                      <div className="mt-4">
+                        <span className="text-3xl font-bold text-primary">{formatUsd(product.price)}</span>
+                        <span className="text-muted-foreground">{product.unitLabel}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-6">
+                        {product.description}
+                      </p>
+                      <Button
+                        type="button"
+                        variant={isSelected ? "secondary" : "outline"}
+                        className="w-full"
+                        onClick={() => toggleCartItem(product.id)}
+                        disabled={isPending}
+                      >
+                        {isSelected ? "Remove from cart" : "Add to cart"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </section>
@@ -645,77 +783,38 @@ export default function SignUp() {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">On Field Workouts</CardTitle>
-                  <CardDescription className="text-muted-foreground">Outdoor training</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$30</span>
-                    <span className="text-muted-foreground">/session</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Outdoor conditioning and agility training to complement basketball skills.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('on-field-workouts')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Summer Camp</CardTitle>
-                  <CardDescription className="text-muted-foreground">Seasonal program</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$20</span>
-                    <span className="text-muted-foreground">/day</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Intensive summer training with full-day sessions, skill work, and competition.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('summer-camp')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-card border-border">
-                <CardHeader>
-                  <CardTitle className="text-foreground">Team Academy</CardTitle>
-                  <CardDescription className="text-muted-foreground">Competitive travel team</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">$300</span>
-                    <span className="text-muted-foreground">/season</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-6">
-                    Join our competitive teams. Includes uniforms, coaching, and tournament fees.
-                  </p>
-                  <DivButton 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => handlePurchase('team-academy')}
-                    disabled={isPending}
-                  >
-                    {isPending ? 'Processing...' : 'Register'}
-                  </DivButton>
-                </CardContent>
-              </Card>
+              {SPECIAL_PRODUCTS.map((product) => {
+                const isSelected = cartItems.includes(product.id);
+                return (
+                  <Card key={product.id} className="bg-card border-border">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-foreground">{product.name}</CardTitle>
+                        <Badge variant="outline">{product.badge}</Badge>
+                      </div>
+                      <CardDescription className="text-muted-foreground">One-time registration</CardDescription>
+                      <div className="mt-4">
+                        <span className="text-3xl font-bold text-primary">{formatUsd(product.price)}</span>
+                        <span className="text-muted-foreground">{product.unitLabel}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-6">
+                        {product.description}
+                      </p>
+                      <Button
+                        type="button"
+                        variant={isSelected ? "secondary" : "outline"}
+                        className="w-full"
+                        onClick={() => toggleCartItem(product.id)}
+                        disabled={isPending}
+                      >
+                        {isSelected ? "Remove from cart" : "Add to cart"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </section>

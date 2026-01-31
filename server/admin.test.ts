@@ -113,7 +113,7 @@ describeStripe("Payment Checkout", () => {
     const caller = appRouter.createCaller(ctx);
 
     const result = await caller.payment.createCheckout({
-      productId: "group-workout",
+      productIds: ["group-workout"],
     });
 
     expect(result).toHaveProperty("url");
@@ -127,7 +127,7 @@ describeStripe("Payment Checkout", () => {
 
     await expect(
       caller.payment.createCheckout({
-        productId: "invalid-product-id",
+        productIds: ["invalid-product-id"],
       })
     ).rejects.toThrow("Product not found");
   });

@@ -24,6 +24,12 @@
       (function() {
         // Only apply on /signup page to avoid affecting other pages
         if (window.location.pathname !== '/signup') return;
+        var searchParams = new URLSearchParams(window.location.search);
+        var isDebugMode = searchParams.get('debugValidation') === '1';
+        if (isDebugMode) {
+          window.__signupValidationDebug = true;
+          return;
+        }
         
         // Override prototype methods to always return true
         HTMLFormElement.prototype.reportValidity = function() { return true; };
