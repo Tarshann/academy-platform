@@ -254,7 +254,7 @@ export default function Navigation() {
                 {clerkPublishableKey && isClerkEnabled ? (
                   <UserButton afterSignOutUrl="/" />
                 ) : (
-                  <Button variant="outline" size="sm" onClick={handleLogout}>
+                  <Button type="button" variant="outline" size="sm" onClick={handleLogout} formNoValidate>
                     Logout
                   </Button>
                 )}
@@ -264,19 +264,19 @@ export default function Navigation() {
                 {clerkPublishableKey && isClerkEnabled ? (
                   <>
                     <SignInButton mode="modal" fallbackRedirectUrl="/">
-                      <Button variant="outline" size="sm">
+                      <Button type="button" variant="outline" size="sm" formNoValidate>
                         Login
                       </Button>
                     </SignInButton>
                     <SignUpButton mode="modal" fallbackRedirectUrl="/">
-                      <Button variant="default" size="sm">
+                      <Button type="button" variant="default" size="sm" formNoValidate>
                         Sign Up
                       </Button>
                     </SignUpButton>
                   </>
                 ) : loginUrl !== "#" ? (
                   <a href={loginUrl} onClick={handleAuthLinkClick}>
-                    <Button variant="outline" size="sm">
+                    <Button type="button" variant="outline" size="sm" formNoValidate>
                       Login
                     </Button>
                   </a>
@@ -416,10 +416,12 @@ export default function Navigation() {
                     </Link>
                   )}
                   <Button
+                    type="button"
                     variant="outline"
                     size="sm"
                     onClick={handleLogout}
                     className="w-full mt-2 h-11"
+                    formNoValidate
                   >
                     Logout
                   </Button>
@@ -429,19 +431,19 @@ export default function Navigation() {
                   {clerkPublishableKey && isClerkEnabled ? (
                     <>
                       <SignInButton mode="modal" fallbackRedirectUrl="/">
-                        <Button variant="outline" size="sm" className="w-full">
+                        <Button type="button" variant="outline" size="sm" className="w-full" formNoValidate>
                           Login
                         </Button>
                       </SignInButton>
                       <SignUpButton mode="modal" fallbackRedirectUrl="/">
-                        <Button variant="default" size="sm" className="w-full">
+                        <Button type="button" variant="default" size="sm" className="w-full" formNoValidate>
                           Sign Up
                         </Button>
                       </SignUpButton>
                     </>
                   ) : loginUrl !== "#" ? (
                     <a href={loginUrl} onClick={handleAuthLinkClick}>
-                      <Button variant="outline" size="sm" className="w-full">
+                      <Button type="button" variant="outline" size="sm" className="w-full" formNoValidate>
                         Login
                       </Button>
                     </a>

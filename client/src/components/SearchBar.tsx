@@ -194,16 +194,19 @@ export function SearchBar() {
               className="h-6 w-6"
               onClick={clearSearch}
               aria-label="Clear search"
+              formNoValidate
             >
               <X className="h-4 w-4" />
             </Button>
           )}
           <Button
-            type="submit"
+            type="button"
             size="icon"
             className="h-8 w-8"
             disabled={query.trim().length < 2}
             aria-label="Search"
+            onClick={handleSearch}
+            formNoValidate
           >
             <Search className="h-4 w-4" />
           </Button>
