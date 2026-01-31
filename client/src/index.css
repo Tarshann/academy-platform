@@ -182,6 +182,18 @@
   }
 }
 
+@layer base {
+  /* Focus ring styles for keyboard accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  
+  /* Remove default focus outline, use focus-visible instead */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
 @layer components {
   /**
    * Custom container utility that centers content and adds responsive padding.
@@ -223,4 +235,40 @@
       max-width: 1280px; /* Standard content width */
     }
   }
+}
+
+/* Phase 3.5: Gate hover effects for touch devices */
+@media (hover: hover) {
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+  .hover-lift-sm:hover {
+    transform: translateY(-1px);
+  }
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+}
+
+/* Touch devices: simpler active states */
+@media (hover: none) {
+  .hover-lift:active,
+  .hover-lift-sm:active {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+  .hover-scale:active {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+
+/* Hero video fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.video-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
 }
