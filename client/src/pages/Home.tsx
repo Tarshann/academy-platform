@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [videoLoaded, setVideoLoaded] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -134,22 +135,37 @@ export default function Home() {
           {/* Video Background - respects prefers-reduced-motion */}
           <div className="absolute inset-0 overflow-hidden">
             {prefersReducedMotion ? (
-              <div 
-                className="absolute w-full h-full bg-gradient-to-br from-background to-[oklch(0.95_0.005_90)]"
+              <img 
+                src="/images/hero-poster.jpg"
+                alt=""
+                className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
+                style={{ filter: 'sepia(0.1)' }}
                 aria-hidden="true"
               />
             ) : (
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
-                style={{ filter: 'sepia(0.1)' }}
-              >
-                <source src="/images/hero-video.mp4" type="video/mp4" />
-              </video>
+              <>
+                {/* Poster image shown until video loads */}
+                <img 
+                  src="/images/hero-poster.jpg"
+                  alt=""
+                  className={`absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110 transition-opacity duration-500 ${videoLoaded ? 'opacity-0' : ''}`}
+                  style={{ filter: 'sepia(0.1)' }}
+                  aria-hidden="true"
+                />
+                <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  poster="/images/hero-poster.jpg"
+                  onCanPlay={() => setVideoLoaded(true)}
+                  className={`absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110 ${videoLoaded ? 'video-fade-in' : 'opacity-0'}`}
+                  style={{ filter: 'sepia(0.1)' }}
+                >
+                  <source src="/images/hero-video.mp4" type="video/mp4" />
+                </video>
+              </>
             )}
           </div>
           {/* Warm overlay gradient for text contrast */}
@@ -202,7 +218,7 @@ export default function Home() {
               >
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-150 ease-out"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-8 py-6 text-lg rounded-xl shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
                   asChild
                 >
                   <a href="/programs">
@@ -213,7 +229,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-0.5 px-8 py-6 text-lg rounded-xl transition-all duration-150 ease-out"
+                  className="border-2 border-border hover:border-primary/50 hover:bg-primary/5 px-8 py-6 text-lg rounded-xl transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
                   asChild
                 >
                   <a href="/contact">Private Training with Coach Mac &amp; Coach O</a>
@@ -287,9 +303,9 @@ export default function Home() {
               {programs.map((program, index) => (
                 <motion.div key={index} variants={fadeInUp}>
                   <Card 
-                    className={`group relative overflow-hidden bg-card border transition-all duration-150 ease-out h-full hover:shadow-lg hover:-translate-y-1 ${
+                    className={`group relative overflow-hidden bg-card border transition-all duration-150 ease-out h-full hover:shadow-lg [@media(hover:hover)]:hover:-translate-y-1 [@media(hover:none)]:active:opacity-95 ${
                       program.featured 
-                        ? "border-primary shadow-md ring-1 ring-primary/20 hover:shadow-primary/20" 
+                        ? "border-primary shadow-md ring-1 ring-primary/20" 
                         : "border-border hover:border-primary/30"
                     }`}
                   >
@@ -322,7 +338,7 @@ export default function Home() {
                           </span>
                         </p>
                         <Button
-                          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
+                          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                           asChild
                         >
                           <a href="/signup">Register Now</a>
@@ -344,7 +360,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="border-2 hover:border-primary/50 hover:bg-primary/5 hover:-translate-y-0.5 transition-all duration-150 ease-out"
+                className="border-2 hover:border-primary/50 hover:bg-primary/5 transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
                 asChild
               >
                 <a href="/programs">
@@ -381,13 +397,13 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               >
-                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg hover:-translate-y-1">
+                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg [@media(hover:hover)]:hover:-translate-y-1 [@media(hover:none)]:active:opacity-95">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                     <img 
                       src="/images/coach-mac.jpg" 
                       alt="Coach Mac instructing athletes during training"
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.02]"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 [@media(hover:hover)]:group-hover:scale-[1.02]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
@@ -414,7 +430,7 @@ export default function Home() {
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                       asChild
                     >
                       <a href="/contact">Request Private Session</a>
@@ -429,13 +445,13 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
               >
-                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg hover:-translate-y-1">
+                <Card className="group overflow-hidden bg-card border-border h-full transition-all duration-150 ease-out hover:shadow-lg [@media(hover:hover)]:hover:-translate-y-1 [@media(hover:none)]:active:opacity-95">
                   <div className="aspect-[4/3] bg-muted relative overflow-hidden">
                     <img 
                       src="/images/coach-o.jpg" 
                       alt="Coach O working with young athletes"
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 group-hover:scale-[1.02]"
+                      className="absolute inset-0 w-full h-full object-cover transition-all duration-300 [@media(hover:hover)]:group-hover:scale-[1.02]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
                     <div className="absolute bottom-4 left-6">
@@ -462,7 +478,7 @@ export default function Home() {
                       </div>
                     </div>
                     <Button 
-                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-lg hover:shadow-primary/20 transition-all duration-150 ease-out"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                       asChild
                     >
                       <a href="/contact">Request Private Session</a>
@@ -502,9 +518,9 @@ export default function Home() {
             >
               {values.map((value, index) => (
                 <motion.div key={index} variants={fadeInUp}>
-                  <Card className="bg-card border-border hover:border-primary/30 transition-all duration-150 ease-out h-full hover:shadow-md hover:-translate-y-1">
+                  <Card className="group bg-card border-border hover:border-primary/30 transition-all duration-150 ease-out h-full hover:shadow-md [@media(hover:hover)]:hover:-translate-y-1 [@media(hover:none)]:active:opacity-95">
                     <CardContent className="p-8 text-center">
-                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 transition-transform duration-150 group-hover:scale-105">
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6 transition-transform duration-150 [@media(hover:hover)]:group-hover:scale-105">
                         <value.icon className="w-7 h-7 text-primary" />
                       </div>
                       <h3 className="text-xl font-bold text-foreground mb-3">
@@ -543,7 +559,7 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg rounded-xl shadow-lg hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 transition-all duration-150 ease-out"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold px-10 py-6 text-lg rounded-xl shadow-md hover:shadow-lg transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
                   asChild
                 >
                   <a href="/signup">Register Now</a>
@@ -551,7 +567,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-2 border-background/30 text-background hover:bg-background/10 hover:-translate-y-0.5 px-10 py-6 text-lg rounded-xl transition-all duration-150 ease-out"
+                  className="border-2 border-background/30 text-background hover:bg-background/10 px-10 py-6 text-lg rounded-xl transition-all duration-150 ease-out [@media(hover:hover)]:hover:-translate-y-0.5 [@media(hover:none)]:active:opacity-90"
                   asChild
                 >
                   <a href="/contact">Contact Us</a>
