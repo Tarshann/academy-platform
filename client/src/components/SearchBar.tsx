@@ -170,7 +170,7 @@ export function SearchBar() {
 
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
-      <form onSubmit={handleSearch} className="relative">
+      <form onSubmit={handleSearch} noValidate className="relative">
         <Input
           ref={inputRef}
           type="text"
