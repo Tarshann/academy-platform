@@ -13,6 +13,7 @@ import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 // Permissive email validation - accepts standard formats without being overly strict
+// Force rebuild to clear Vercel cache
 function isValidEmail(email: string): boolean {
   const trimmed = email.trim();
   if (!trimmed) return false;
