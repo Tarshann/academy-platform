@@ -12,8 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Debug validation detector - shows which element is failing validation
+// Enhanced debug validation detector - shows which element is failing validation
 // Only active when ?debugValidation=1 is in the URL
+// Captures: invalid, submit, click events and reportValidity/checkValidity calls
 function useValidationDebugger() {
   const searchString = useSearch();
   const isDebugMode = searchString.includes('debugValidation=1');
@@ -28,43 +29,67 @@ function useValidationDebugger() {
       bottom: 10px;
       left: 10px;
       right: 10px;
-      max-height: 200px;
+      max-height: 250px;
       overflow-y: auto;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       color: #0f0;
       font-family: monospace;
-      font-size: 11px;
+      font-size: 10px;
       padding: 10px;
       z-index: 99999;
       border-radius: 8px;
-      display: none;
     `;
+    debugOverlay.innerHTML = '<div style="color:#ff0;margin-bottom:5px;">VALIDATION DEBUG MODE ACTIVE</div>';
     document.body.appendChild(debugOverlay);
 
-    const logToOverlay = (msg: string) => {
-      debugOverlay.style.display = 'block';
-      debugOverlay.innerHTML += `<div>${new Date().toISOString().slice(11, 23)} ${msg}</div>`;
+    const logToOverlay = (msg: string, color = '#0f0') => {
+      const line = document.createElement('div');
+      line.style.color = color;
+      line.textContent = `${new Date().toISOString().slice(11, 23)} ${msg}`;
+      debugOverlay.appendChild(line);
       debugOverlay.scrollTop = debugOverlay.scrollHeight;
+    };
+
+    const getElementInfo = (el: Element) => {
+      const input = el as HTMLInputElement;
+      return {
+        tagName: el.tagName,
+        id: el.id || '(none)',
+        name: input.name || '(none)',
+        type: input.type || '(none)',
+        inputMode: input.inputMode || '(none)',
+        required: input.required,
+        pattern: input.pattern || '(none)',
+        valueLength: input.value?.length ?? 0,
+        willValidate: input.willValidate,
+        validationMessage: input.validationMessage,
+        outerHTML: el.outerHTML.slice(0, 200),
+      };
     };
 
     // Capture invalid events at document level
     const handleInvalid = (e: Event) => {
       e.preventDefault();
       e.stopImmediatePropagation();
-      
-      const el = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-      const info = {
-        tagName: el.tagName,
-        id: el.id || '(none)',
-        name: el.name || '(none)',
-        type: (el as HTMLInputElement).type || '(none)',
-        required: el.required,
-        pattern: (el as HTMLInputElement).pattern || '(none)',
-        valueLength: el.value?.length ?? 0,
-        willValidate: el.willValidate,
-        validationMessage: el.validationMessage,
-      };
-      logToOverlay(`INVALID EVENT: ${JSON.stringify(info)}`);
+      const info = getElementInfo(e.target as Element);
+      logToOverlay(`INVALID: ${JSON.stringify(info)}`, '#f00');
+    };
+
+    // Capture submit events
+    const handleSubmit = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const form = e.target as HTMLFormElement;
+      logToOverlay(`SUBMIT BLOCKED: form#${form.id || '?'} action=${form.action || '(none)'}`, '#ff0');
+    };
+
+    // Capture click events to see what triggers validation
+    const handleClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'BUTTON' || target.closest('button')) {
+        const btn = (target.tagName === 'BUTTON' ? target : target.closest('button')) as HTMLButtonElement;
+        logToOverlay(`CLICK: button#${btn.id || '?'} type=${btn.type} form=${btn.form?.id || '(none)'}`, '#0ff');
+      }
     };
 
     // Scan for any element that would fail validation
@@ -73,43 +98,178 @@ function useValidationDebugger() {
       const failing: string[] = [];
       elements.forEach((el) => {
         const input = el as HTMLInputElement;
-        if (input.willValidate && !input.checkValidity()) {
-          failing.push(`${input.tagName}#${input.id || '?'}[name=${input.name || '?'}][type=${input.type}] msg="${input.validationMessage}"`);
+        // Use try-catch because checkValidity might throw in some edge cases
+        try {
+          if (input.willValidate && !input.checkValidity()) {
+            failing.push(`${input.tagName}#${input.id || '?'}[name=${input.name || '?'}][type=${input.type}] msg="${input.validationMessage}"`);
+          }
+        } catch (err) {
+          failing.push(`${input.tagName}#${input.id || '?'} ERROR: ${err}`);
         }
       });
       if (failing.length > 0) {
-        logToOverlay(`SCAN FOUND ${failing.length} FAILING: ${failing.join(', ')}`);
+        logToOverlay(`SCAN FOUND ${failing.length} FAILING: ${failing.join(', ')}`, '#f00');
       } else {
-        logToOverlay('SCAN: No failing elements found');
+        logToOverlay('SCAN: No failing elements found', '#0f0');
       }
+      return failing;
     };
 
     // Log all form-associated elements on page load
     const logAllFormElements = () => {
+      const forms = document.querySelectorAll('form');
+      logToOverlay(`FORMS: Found ${forms.length} form elements`, forms.length > 0 ? '#ff0' : '#0f0');
+      forms.forEach((form, i) => {
+        logToOverlay(`  [form ${i}] id=${form.id || '?'} noValidate=${form.noValidate}`, '#ff0');
+      });
+
       const elements = document.querySelectorAll('input, select, textarea, button');
-      logToOverlay(`PAGE LOAD: Found ${elements.length} form-associated elements`);
+      logToOverlay(`ELEMENTS: Found ${elements.length} form-associated elements`);
       elements.forEach((el, i) => {
         const input = el as HTMLInputElement;
-        logToOverlay(`  [${i}] ${input.tagName}#${input.id || '?'} type=${input.type || '?'} required=${input.required} pattern=${input.pattern || 'none'} willValidate=${input.willValidate}`);
+        const hasValidation = input.required || input.pattern || input.type === 'email';
+        logToOverlay(`  [${i}] ${input.tagName}#${input.id || '?'} type=${input.type || '?'} req=${input.required} pat=${input.pattern || '-'} willVal=${input.willValidate}`, hasValidation ? '#ff0' : '#888');
       });
     };
 
     document.addEventListener('invalid', handleInvalid, true);
+    document.addEventListener('submit', handleSubmit, true);
+    document.addEventListener('click', handleClick, true);
     
     // Expose scan function globally for manual testing
     (window as any).__scanValidation = scanForInvalidElements;
+    (window as any).__logElements = logAllFormElements;
     
     // Log elements after a short delay to catch dynamically added ones
-    setTimeout(logAllFormElements, 1000);
+    setTimeout(logAllFormElements, 500);
+    setTimeout(logAllFormElements, 2000); // Re-scan after Clerk/Stripe might inject elements
 
     return () => {
       document.removeEventListener('invalid', handleInvalid, true);
+      document.removeEventListener('submit', handleSubmit, true);
+      document.removeEventListener('click', handleClick, true);
       delete (window as any).__scanValidation;
+      delete (window as any).__logElements;
       debugOverlay.remove();
     };
   }, [isDebugMode]);
 
   return isDebugMode;
+}
+
+// PHASE B: Hard stop Safari validation on /signup
+// This hook makes /signup completely immune to HTML constraint validation
+// by overriding prototype methods and capturing all validation-related events
+function useValidationHardStop() {
+  useEffect(() => {
+    // Store original prototype methods
+    const originalReportValidity = HTMLFormElement.prototype.reportValidity;
+    const originalCheckValidity = HTMLFormElement.prototype.checkValidity;
+    const originalInputReportValidity = HTMLInputElement.prototype.reportValidity;
+    const originalInputCheckValidity = HTMLInputElement.prototype.checkValidity;
+    const originalSelectReportValidity = HTMLSelectElement.prototype.reportValidity;
+    const originalSelectCheckValidity = HTMLSelectElement.prototype.checkValidity;
+    const originalTextAreaReportValidity = HTMLTextAreaElement.prototype.reportValidity;
+    const originalTextAreaCheckValidity = HTMLTextAreaElement.prototype.checkValidity;
+
+    // Override form validation methods to always return true on /signup
+    HTMLFormElement.prototype.reportValidity = function() {
+      return true;
+    };
+    HTMLFormElement.prototype.checkValidity = function() {
+      return true;
+    };
+
+    // Override input validation methods
+    HTMLInputElement.prototype.reportValidity = function() {
+      return true;
+    };
+    HTMLInputElement.prototype.checkValidity = function() {
+      return true;
+    };
+
+    // Override select validation methods
+    HTMLSelectElement.prototype.reportValidity = function() {
+      return true;
+    };
+    HTMLSelectElement.prototype.checkValidity = function() {
+      return true;
+    };
+
+    // Override textarea validation methods
+    HTMLTextAreaElement.prototype.reportValidity = function() {
+      return true;
+    };
+    HTMLTextAreaElement.prototype.checkValidity = function() {
+      return true;
+    };
+
+    // Capture and suppress submit events
+    const suppressSubmit = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+
+    // Capture and suppress invalid events
+    const suppressInvalid = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    };
+
+    // Add novalidate to all forms on the page
+    const addNoValidateToForms = () => {
+      document.querySelectorAll('form').forEach(form => {
+        form.setAttribute('novalidate', 'true');
+        form.noValidate = true;
+      });
+    };
+
+    // Run immediately and observe for new forms
+    addNoValidateToForms();
+
+    // MutationObserver to catch dynamically added forms
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLFormElement) {
+            node.setAttribute('novalidate', 'true');
+            node.noValidate = true;
+          }
+          if (node instanceof HTMLElement) {
+            node.querySelectorAll('form').forEach(form => {
+              form.setAttribute('novalidate', 'true');
+              form.noValidate = true;
+            });
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Add event listeners in capture phase
+    document.addEventListener('submit', suppressSubmit, true);
+    document.addEventListener('invalid', suppressInvalid, true);
+
+    return () => {
+      // Restore original prototype methods
+      HTMLFormElement.prototype.reportValidity = originalReportValidity;
+      HTMLFormElement.prototype.checkValidity = originalCheckValidity;
+      HTMLInputElement.prototype.reportValidity = originalInputReportValidity;
+      HTMLInputElement.prototype.checkValidity = originalInputCheckValidity;
+      HTMLSelectElement.prototype.reportValidity = originalSelectReportValidity;
+      HTMLSelectElement.prototype.checkValidity = originalSelectCheckValidity;
+      HTMLTextAreaElement.prototype.reportValidity = originalTextAreaReportValidity;
+      HTMLTextAreaElement.prototype.checkValidity = originalTextAreaCheckValidity;
+
+      // Remove event listeners
+      document.removeEventListener('submit', suppressSubmit, true);
+      document.removeEventListener('invalid', suppressInvalid, true);
+
+      // Disconnect observer
+      observer.disconnect();
+    };
+  }, []);
 }
 
 // Div-based CTA component to bypass Safari iOS validation
@@ -176,22 +336,10 @@ export default function SignUp() {
   // Enable debug mode with ?debugValidation=1
   useValidationDebugger();
 
-  // Global validation suppression for Safari iOS
-  // Safari validates hidden/injected inputs (Stripe, Clerk) even with noValidate
-  // This captures and suppresses those native validation events
-  useEffect(() => {
-    const suppressValidation = (e: Event) => {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-    };
-
-    // Capture phase to intercept before any other handler
-    document.addEventListener('invalid', suppressValidation, true);
-    
-    return () => {
-      document.removeEventListener('invalid', suppressValidation, true);
-    };
-  }, []);
+  // PHASE B: Hard stop Safari validation on /signup
+  // This overrides prototype methods and captures all validation events
+  // to make /signup completely immune to HTML constraint validation
+  useValidationHardStop();
 
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
