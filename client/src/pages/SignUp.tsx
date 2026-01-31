@@ -12,9 +12,19 @@ import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
+// Permissive email validation - accepts standard formats without being overly strict
+function isValidEmail(email: string): boolean {
+  const trimmed = email.trim();
+  if (!trimmed) return false;
+  // Basic check: has @ with something before and after, and a dot after @
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(trimmed);
+}
+
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const [guestEmail, setGuestEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
@@ -44,11 +54,19 @@ export default function SignUp() {
   const handlePurchase = (productId: string) => {
     const baseFingerprint = productId.trim();
     if (!isAuthenticated) {
-      if (!guestEmail.trim()) {
+      const trimmedEmail = guestEmail.trim();
+      if (!trimmedEmail) {
+        setEmailError("Please enter an email for your registration receipt.");
         toast.info("Please enter an email for your registration receipt.");
         return;
       }
-      const guestFingerprint = `guest:${baseFingerprint}:${guestEmail.trim().toLowerCase()}`;
+      if (!isValidEmail(trimmedEmail)) {
+        setEmailError("Please double-check your email address.");
+        toast.error("Please double-check your email address.");
+        return;
+      }
+      setEmailError(null);
+      const guestFingerprint = `guest:${baseFingerprint}:${trimmedEmail.toLowerCase()}`;
       const existingKey = checkoutKeyRef.current.get(guestFingerprint);
       const idempotencyKey = existingKey ?? crypto.randomUUID();
       if (!existingKey) {
@@ -56,7 +74,7 @@ export default function SignUp() {
       }
       createGuestCheckout.mutate({
         productId,
-        email: guestEmail.trim(),
+        email: trimmedEmail,
         idempotencyKey,
       });
       return;
@@ -104,11 +122,24 @@ export default function SignUp() {
                     </label>
                     <Input
                       id="guest-email"
-                      type="email"
+                      type="text"
+                      inputMode="email"
+                      autoComplete="email"
                       placeholder="you@example.com"
                       value={guestEmail}
-                      onChange={(event) => setGuestEmail(event.target.value)}
+                      onChange={(event) => {
+                        setGuestEmail(event.target.value);
+                        if (emailError) setEmailError(null);
+                      }}
+                      className={emailError ? "border-destructive" : ""}
+                      aria-invalid={!!emailError}
+                      aria-describedby={emailError ? "guest-email-error" : undefined}
                     />
+                    {emailError && (
+                      <p id="guest-email-error" className="text-sm text-destructive" role="alert">
+                        {emailError}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-muted-foreground">
