@@ -13,7 +13,6 @@ import { Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 // Permissive email validation - accepts standard formats without being overly strict
-// Force rebuild to clear Vercel cache
 function isValidEmail(email: string): boolean {
   const trimmed = email.trim();
   if (!trimmed) return false;
@@ -26,65 +25,25 @@ export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const [guestEmail, setGuestEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
 
-  // Document-level invalid event listener to catch ALL validation errors
+  // Global validation suppression for Safari iOS
+  // Safari validates hidden/injected inputs (Stripe, Clerk) even with noValidate
+  // This captures and suppresses those native validation events
   useEffect(() => {
-    const handleDocumentInvalid = (e: Event) => {
+    const suppressValidation = (e: Event) => {
       e.preventDefault();
-      const el = e.target as HTMLInputElement;
-      const info = `DOCUMENT-LEVEL INVALID:
-Tag: ${el.tagName}
-Name: ${el.name || 'none'}
-ID: ${el.id || 'none'}
-Type: ${el.type || 'none'}
-InputMode: ${el.inputMode || 'none'}
-AutoComplete: ${el.autocomplete || 'none'}
-Pattern: ${el.pattern || 'none'}
-Required: ${el.required}
-Value: "${el.value}"
-ValidationMessage: ${el.validationMessage}
-Form: ${el.form?.id || el.form?.className || 'no form'}
-ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as HTMLElement)?.id || 'none'}`;
-      console.error(info);
-      setDebugInfo(info);
-      
-      // Also log all inputs on the page
-      const allInputs = document.querySelectorAll('input');
-      console.log('ALL INPUTS ON PAGE:', allInputs.length);
-      allInputs.forEach((input, i) => {
-        console.log(`Input ${i}: type=${input.type}, name=${input.name}, id=${input.id}, pattern=${input.pattern}, inputMode=${input.inputMode}`);
-      });
+      e.stopImmediatePropagation();
     };
 
-    // Capture phase to catch before any other handler
-    document.addEventListener('invalid', handleDocumentInvalid, true);
+    // Capture phase to intercept before any other handler
+    document.addEventListener('invalid', suppressValidation, true);
     
     return () => {
-      document.removeEventListener('invalid', handleDocumentInvalid, true);
+      document.removeEventListener('invalid', suppressValidation, true);
     };
   }, []);
 
-  // Debug handler to catch any invalid events and identify the culprit field
-  const handleInvalidCapture = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const el = e.target as HTMLInputElement;
-    const info = `FORM-LEVEL INVALID:
-Tag: ${el.tagName}
-Name: ${el.name || 'none'}
-ID: ${el.id || 'none'}
-Type: ${el.type || 'none'}
-InputMode: ${el.inputMode || 'none'}
-AutoComplete: ${el.autocomplete || 'none'}
-Pattern: ${el.pattern || 'none'}
-Required: ${el.required}
-Value: "${el.value}"
-ValidationMessage: ${el.validationMessage}
-ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as HTMLElement)?.id || 'none'}`;
-    console.error(info);
-    setDebugInfo(info);
-  };
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
   const createCheckout = trpc.payment.createCheckout.useMutation({
@@ -110,6 +69,8 @@ ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as H
     },
   });
 
+  // Safari iOS workaround: delay checkout trigger by one tick
+  // This breaks Safari's validation chain that fires before navigation
   const handlePurchase = (productId: string) => {
     const baseFingerprint = productId.trim();
     if (!isAuthenticated) {
@@ -131,10 +92,13 @@ ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as H
       if (!existingKey) {
         checkoutKeyRef.current.set(guestFingerprint, idempotencyKey);
       }
-      createGuestCheckout.mutate({
-        productId,
-        email: trimmedEmail,
-        idempotencyKey,
+      // Delay checkout to break Safari's validation chain
+      requestAnimationFrame(() => {
+        createGuestCheckout.mutate({
+          productId,
+          email: trimmedEmail,
+          idempotencyKey,
+        });
       });
       return;
     }
@@ -144,50 +108,17 @@ ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as H
     if (!existingKey) {
       checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
     }
-    createCheckout.mutate({ productId, idempotencyKey });
+    // Delay checkout to break Safari's validation chain
+    requestAnimationFrame(() => {
+      createCheckout.mutate({ productId, idempotencyKey });
+    });
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      {/* Debug panel - shows when validation error is caught */}
-      {debugInfo && (
-        <div className="fixed bottom-0 left-0 right-0 bg-red-900 text-white p-4 z-50 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-auto">
-          <button 
-            type="button"
-            onClick={() => setDebugInfo(null)} 
-            className="absolute top-2 right-2 bg-red-700 px-2 py-1 rounded"
-          >
-            Close
-          </button>
-          {debugInfo}
-        </div>
-      )}
-      
-      {/* Debug button to show all inputs - always visible for testing */}
-      <button
-        type="button"
-        onClick={() => {
-          const allInputs = document.querySelectorAll('input');
-          const allForms = document.querySelectorAll('form');
-          let info = `FORMS ON PAGE: ${allForms.length}\n`;
-          allForms.forEach((form, i) => {
-            info += `Form ${i}: id=${form.id || 'none'}, noValidate=${form.noValidate}\n`;
-          });
-          info += `\nINPUTS ON PAGE: ${allInputs.length}\n`;
-          allInputs.forEach((input, i) => {
-            info += `${i}: type=${input.type}, name=${input.name || 'none'}, id=${input.id || 'none'}, pattern=${input.pattern || 'none'}, inputMode=${input.inputMode || 'none'}, required=${input.required}\n`;
-          });
-          setDebugInfo(info);
-        }}
-        className="fixed bottom-4 right-4 bg-blue-600 text-white px-3 py-2 rounded text-xs z-50"
-      >
-        Show All Inputs
-      </button>
-      
-      <form noValidate onInvalidCapture={handleInvalidCapture} className="flex-1 contents">
-        <main className="flex-1">
+      <main className="flex-1">
         {/* Hero */}
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">
@@ -552,7 +483,6 @@ ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as H
           </div>
         </section>
       </main>
-      </form>
 
       <Footer />
     </div>
