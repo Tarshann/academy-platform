@@ -26,7 +26,28 @@ export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const [guestEmail, setGuestEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
+
+  // Debug handler to catch any invalid events and identify the culprit field
+  const handleInvalidCapture = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const el = e.target as HTMLInputElement;
+    const info = `INVALID FIELD DETECTED:
+Tag: ${el.tagName}
+Name: ${el.name || 'none'}
+ID: ${el.id || 'none'}
+Type: ${el.type || 'none'}
+InputMode: ${el.inputMode || 'none'}
+AutoComplete: ${el.autocomplete || 'none'}
+Pattern: ${el.pattern || 'none'}
+Required: ${el.required}
+Value: "${el.value}"
+ValidationMessage: ${el.validationMessage}
+ActiveElement: ${document.activeElement?.tagName}/${(document.activeElement as HTMLElement)?.id || 'none'}`;
+    console.error(info);
+    setDebugInfo(info);
+  };
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
   const createCheckout = trpc.payment.createCheckout.useMutation({
@@ -93,7 +114,22 @@ export default function SignUp() {
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
       
-      <main className="flex-1">
+      {/* Debug panel - shows when validation error is caught */}
+      {debugInfo && (
+        <div className="fixed bottom-0 left-0 right-0 bg-red-900 text-white p-4 z-50 text-xs font-mono whitespace-pre-wrap max-h-48 overflow-auto">
+          <button 
+            type="button"
+            onClick={() => setDebugInfo(null)} 
+            className="absolute top-2 right-2 bg-red-700 px-2 py-1 rounded"
+          >
+            Close
+          </button>
+          {debugInfo}
+        </div>
+      )}
+      
+      <form noValidate onInvalidCapture={handleInvalidCapture} className="flex-1 contents">
+        <main className="flex-1">
         {/* Hero */}
         <section className="py-16 bg-gradient-to-br from-background via-card to-background">
           <div className="container">
@@ -124,8 +160,6 @@ export default function SignUp() {
                     <Input
                       id="guest-email"
                       type="text"
-                      inputMode="email"
-                      autoComplete="email"
                       placeholder="you@example.com"
                       value={guestEmail}
                       onChange={(event) => {
@@ -212,6 +246,7 @@ export default function SignUp() {
                     </li>
                   </ul>
                   <Button 
+                    type="button"
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('academy-group-membership')}
@@ -254,6 +289,7 @@ export default function SignUp() {
                     </li>
                   </ul>
                   <Button 
+                    type="button"
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('complete-player-membership')}
@@ -290,6 +326,7 @@ export default function SignUp() {
                     Single session access to group workouts. Develop skills in a competitive environment.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('group-workout')}
@@ -314,6 +351,7 @@ export default function SignUp() {
                     Personalized training focused on your unique strengths and development goals.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('individual-training')}
@@ -338,6 +376,7 @@ export default function SignUp() {
                     Build a strong foundation with focused instruction on basketball fundamentals, footwork, and body control.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('skills-class')}
@@ -374,6 +413,7 @@ export default function SignUp() {
                     Outdoor conditioning and agility training to complement basketball skills.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('on-field-workouts')}
@@ -398,6 +438,7 @@ export default function SignUp() {
                     Intensive summer training with full-day sessions, skill work, and competition.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('summer-camp')}
@@ -422,6 +463,7 @@ export default function SignUp() {
                     Join our competitive teams. Includes uniforms, coaching, and tournament fees.
                   </p>
                   <Button 
+                    type="button"
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('team-academy')}
@@ -444,7 +486,7 @@ export default function SignUp() {
                 Not sure which program is right for you? Contact us and we'll help you find the perfect fit.
               </p>
               <Link href="/contact">
-                <Button size="lg" className="text-lg px-8">
+                <Button type="button" size="lg" className="text-lg px-8">
                   Contact Us
                 </Button>
               </Link>
@@ -452,6 +494,7 @@ export default function SignUp() {
           </div>
         </section>
       </main>
+      </form>
 
       <Footer />
     </div>
