@@ -122,8 +122,15 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Social proof line */}
+        <div className="mt-12 pt-8 border-t border-border">
+          <p className="text-center text-sm text-muted-foreground/70 mb-8">
+            Proudly serving athletes in <span className="text-muted-foreground">Gallatin</span>, <span className="text-muted-foreground">Hendersonville</span>, and <span className="text-muted-foreground">Sumner County</span>
+          </p>
+        </div>
+
         {/* Bottom bar */}
-        <div className="border-t border-border mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} The Academy. All rights reserved.
           </p>

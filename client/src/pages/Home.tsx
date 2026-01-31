@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Users, Target, Zap, Shield, Heart } from "lucide-react";
+import { ArrowRight, Users, Target, Zap, Shield, Heart, ChevronDown } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [showMobileCTA, setShowMobileCTA] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -22,6 +23,18 @@ export default function Home() {
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Show sticky mobile CTA after scrolling past hero
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const heroHeight = heroRef.current?.offsetHeight || 600;
+      setShowMobileCTA(scrollY > heroHeight * 0.7);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   const { scrollYProgress } = useScroll({
     target: heroRef,
@@ -76,6 +89,7 @@ export default function Home() {
       title: "Group Training",
       label: "Athletic Foundation",
       description: "High-energy sessions focused on SAQ training, conditioning, and multi-sport fundamentals. Limited to 8 athletes per session.",
+      bestFor: "All skill levels",
       icon: Users,
       price: "$25",
       unit: "per session",
@@ -85,6 +99,7 @@ export default function Home() {
       title: "Private Training",
       label: "1-on-1 Coaching",
       description: "One-on-one sessions with Coach Mac or Coach O. Personalized plans for sport-specific goals and athletic development.",
+      bestFor: "Serious athletes",
       icon: Target,
       price: "$60",
       unit: "per session",
@@ -94,6 +109,7 @@ export default function Home() {
       title: "Shooting Lab",
       label: "Skill Mastery",
       description: "Specialized sessions using our Dr Dish machine. High-volume repetition for shooting technique and muscle memory.",
+      bestFor: "Basketball players",
       icon: Zap,
       price: "$25",
       unit: "per session",
@@ -194,7 +210,7 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6 }}
-                className="text-5xl md:text-7xl font-extrabold mb-8 text-foreground leading-[1.1] tracking-tight"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-8 text-foreground leading-[1.08] tracking-tight max-w-[20ch] mx-auto"
               >
                 Build Complete Athletes.
                 <br />
@@ -237,37 +253,60 @@ export default function Home() {
               </motion.div>
             </div>
           </motion.div>
+          
+          {/* Scroll cue indicator - fades out after scroll */}
+          <motion.div 
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1, duration: 0.5 }}
+            style={{ opacity: heroOpacity }}
+          >
+            <span className="text-xs text-muted-foreground/60 uppercase tracking-widest">Scroll</span>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <ChevronDown className="w-5 h-5 text-muted-foreground/40" />
+            </motion.div>
+          </motion.div>
         </motion.section>
 
         {/* Trust Signals */}
-        <section className="py-20 md:py-24 border-b border-border">
+        <section className="py-16 md:py-20 border-b border-border">
           <div className="container px-6">
             <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, margin: "-50px" }}
               variants={staggerContainer}
-              className="flex flex-wrap justify-center items-start gap-12 md:gap-20"
+              className="flex flex-col md:flex-row flex-wrap justify-center items-center gap-8 md:gap-0"
             >
-              <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-5xl font-extrabold text-foreground mb-2">10+</p>
-                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Years Coaching</p>
-                <p className="text-muted-foreground/60 text-xs mt-1.5">Development experience</p>
+              {/* Stat 1 */}
+              <motion.div variants={fadeInUp} className="text-center px-8 md:px-12">
+                <p className="text-4xl md:text-5xl font-black text-foreground mb-1 tabular-nums">10+</p>
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Years Coaching</p>
+                <p className="text-muted-foreground/50 text-[11px] mt-1">Development experience</p>
               </motion.div>
-              <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-5xl font-extrabold text-foreground mb-2">200+</p>
-                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Athletes <span className="font-normal text-muted-foreground/70">&amp; Counting</span></p>
-                <p className="text-muted-foreground/60 text-xs mt-1.5">Across Middle TN</p>
+              
+              {/* Hairline divider */}
+              <div className="hidden md:block w-px h-12 bg-border" />
+              
+              {/* Stat 2 */}
+              <motion.div variants={fadeInUp} className="text-center px-8 md:px-12">
+                <p className="text-4xl md:text-5xl font-black text-foreground mb-1 tabular-nums">200+</p>
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Athletes <span className="font-normal text-muted-foreground/60">&amp; Counting</span></p>
+                <p className="text-muted-foreground/50 text-[11px] mt-1">Across Middle TN</p>
               </motion.div>
-              <motion.div variants={fadeInUp} className="text-center">
-                <p className="text-5xl font-extrabold text-foreground mb-2">3</p>
-                <p className="text-muted-foreground text-sm font-semibold uppercase tracking-wide">Sports Supported</p>
-                <p className="text-muted-foreground/60 text-xs mt-1.5">Basketball, football, soccer</p>
-              </motion.div>
-              <motion.div variants={fadeInUp} className="text-center max-w-[220px] pt-2">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Trusted by families across Gallatin &amp; Middle Tennessee
-                </p>
+              
+              {/* Hairline divider */}
+              <div className="hidden md:block w-px h-12 bg-border" />
+              
+              {/* Stat 3 */}
+              <motion.div variants={fadeInUp} className="text-center px-8 md:px-12">
+                <p className="text-4xl md:text-5xl font-black text-foreground mb-1 tabular-nums">3</p>
+                <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Sports Supported</p>
+                <p className="text-muted-foreground/50 text-[11px] mt-1">Basketball, football, soccer</p>
               </motion.div>
             </motion.div>
           </div>
@@ -317,26 +356,29 @@ export default function Home() {
                       </div>
                     )}
                     <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60" />
-                    <CardContent className="p-8">
-                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
-                        <program.icon className="w-6 h-6 text-primary" />
+                    <CardContent className="p-6 md:p-8 flex flex-col h-full">
+                      <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                        <program.icon className="w-5 h-5 text-primary" />
                       </div>
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">
                         {program.label}
                       </p>
-                      <h3 className="text-xl font-bold text-foreground mb-3">
+                      <h3 className="text-xl font-bold text-foreground mb-2">
                         {program.title}
                       </h3>
-                      <p className="text-muted-foreground leading-relaxed mb-8 text-sm">
+                      <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
                         {program.description}
                       </p>
-                      <div className="border-t border-border pt-8">
-                        <p className="text-3xl font-bold text-primary mb-1">
-                          {program.price}
-                          <span className="text-sm text-muted-foreground font-normal ml-1">
-                            {program.unit}
-                          </span>
-                        </p>
+                      {/* Program fit micro-line */}
+                      <p className="text-[11px] text-muted-foreground/60 mt-4 mb-6">
+                        Best for: <span className="text-muted-foreground">{program.bestFor}</span>
+                      </p>
+                      {/* Price section pinned to bottom */}
+                      <div className="border-t border-border pt-6 mt-auto">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-bold text-primary tabular-nums">{program.price}</span>
+                          <span className="text-sm text-muted-foreground">{program.unit}</span>
+                        </div>
                         <Button
                           className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                           asChild
@@ -411,9 +453,9 @@ export default function Home() {
                       <p className="text-white/80 drop-shadow">Head Coach</p>
                     </div>
                   </div>
-                  <CardContent className="p-8">
-                    <div className="w-12 h-0.5 bg-primary mb-6" />
-                    <blockquote className="text-xl text-foreground italic mb-5 leading-relaxed">
+                  <CardContent className="p-6 md:p-8">
+                    <div className="w-10 h-0.5 bg-primary mb-5" />
+                    <blockquote className="text-lg md:text-xl text-foreground italic mb-4 leading-[1.6]">
                       "Every athlete deserves a foundation that lasts beyond one sport."
                     </blockquote>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-4">
@@ -421,19 +463,24 @@ export default function Home() {
                       Coach Mac specializes in building complete athletes through SAQ training, 
                       strength conditioning, and sport-specific skill development.
                     </p>
-                    <div className="mb-6">
+                    <div className="mb-5">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">Coaching Focus</p>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">SAQ & Movement</span>
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">Strength Building</span>
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">Sport Transfer</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">SAQ & Movement</span>
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">Strength Building</span>
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">Sport Transfer</span>
                       </div>
                     </div>
+                    {/* Availability note */}
+                    <p className="text-[11px] text-muted-foreground/60 mb-4 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500/70" />
+                      Limited weekly slots available
+                    </p>
                     <Button 
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                       asChild
                     >
-                      <a href="/contact">Request Private Session</a>
+                      <a href="/contact">Book Private Session</a>
                     </Button>
                   </CardContent>
                 </Card>
@@ -459,9 +506,9 @@ export default function Home() {
                       <p className="text-white/80 drop-shadow">Lead Trainer</p>
                     </div>
                   </div>
-                  <CardContent className="p-8">
-                    <div className="w-12 h-0.5 bg-primary mb-6" />
-                    <blockquote className="text-xl text-foreground italic mb-5 leading-relaxed">
+                  <CardContent className="p-6 md:p-8">
+                    <div className="w-10 h-0.5 bg-primary mb-5" />
+                    <blockquote className="text-lg md:text-xl text-foreground italic mb-4 leading-[1.6]">
                       "We build confidence through competence. Master the fundamentals, and everything else follows."
                     </blockquote>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-4">
@@ -469,19 +516,24 @@ export default function Home() {
                       His approach focuses on building athletic foundations that translate 
                       across all sports while developing mental toughness and game IQ.
                     </p>
-                    <div className="mb-6">
+                    <div className="mb-5">
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground/70 font-medium mb-2">Coaching Focus</p>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">Confidence Building</span>
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">Game IQ</span>
-                        <span className="text-xs px-2 py-1 bg-primary/5 text-muted-foreground rounded">Mental Toughness</span>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">Confidence Building</span>
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">Game IQ</span>
+                        <span className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">Mental Toughness</span>
                       </div>
                     </div>
+                    {/* Availability note */}
+                    <p className="text-[11px] text-muted-foreground/60 mb-4 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-green-500/70" />
+                      Limited weekly slots available
+                    </p>
                     <Button 
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
                       asChild
                     >
-                      <a href="/contact">Request Private Session</a>
+                      <a href="/contact">Book Private Session</a>
                     </Button>
                   </CardContent>
                 </Card>
@@ -578,6 +630,33 @@ export default function Home() {
         </section>
       </main>
       <Footer />
+      
+      {/* Sticky Mobile CTA - appears after scrolling past hero */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ 
+          y: showMobileCTA ? 0 : 100, 
+          opacity: showMobileCTA ? 1 : 0 
+        }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-card/95 backdrop-blur-lg border-t border-border/50 px-4 py-3 safe-area-pb"
+      >
+        <div className="flex gap-3">
+          <Button
+            className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-12 rounded-xl shadow-md"
+            asChild
+          >
+            <a href="/signup">Register Now</a>
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 border-2 h-12 rounded-xl"
+            asChild
+          >
+            <a href="/contact">Book Private</a>
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 }
