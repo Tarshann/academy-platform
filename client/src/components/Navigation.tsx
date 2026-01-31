@@ -287,6 +287,7 @@ export default function Navigation() {
 
           {/* Mobile Menu Button - 44px tap target for accessibility */}
           <button
+            type="button"
             ref={mobileMenuButtonRef}
             className="md:hidden text-foreground w-11 h-11 flex items-center justify-center -mr-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
