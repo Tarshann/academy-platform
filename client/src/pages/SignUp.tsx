@@ -1,5 +1,5 @@
-import { Link } from "wouter";
-import { useRef, useState, useEffect } from "react";
+import { Link, useSearch } from "wouter";
+import { useRef, useEffect, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getClerkPublishableKey, getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
@@ -10,22 +10,171 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Check } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
-// Permissive email validation - accepts standard formats without being overly strict
-function isValidEmail(email: string): boolean {
-  const trimmed = email.trim();
-  if (!trimmed) return false;
-  // Basic check: has @ with something before and after, and a dot after @
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(trimmed);
+// Debug validation detector - shows which element is failing validation
+// Only active when ?debugValidation=1 is in the URL
+function useValidationDebugger() {
+  const searchString = useSearch();
+  const isDebugMode = searchString.includes('debugValidation=1');
+
+  useEffect(() => {
+    if (!isDebugMode) return;
+
+    const debugOverlay = document.createElement('div');
+    debugOverlay.id = 'validation-debug-overlay';
+    debugOverlay.style.cssText = `
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0,0,0,0.9);
+      color: #0f0;
+      font-family: monospace;
+      font-size: 11px;
+      padding: 10px;
+      z-index: 99999;
+      border-radius: 8px;
+      display: none;
+    `;
+    document.body.appendChild(debugOverlay);
+
+    const logToOverlay = (msg: string) => {
+      debugOverlay.style.display = 'block';
+      debugOverlay.innerHTML += `<div>${new Date().toISOString().slice(11, 23)} ${msg}</div>`;
+      debugOverlay.scrollTop = debugOverlay.scrollHeight;
+    };
+
+    // Capture invalid events at document level
+    const handleInvalid = (e: Event) => {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      
+      const el = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+      const info = {
+        tagName: el.tagName,
+        id: el.id || '(none)',
+        name: el.name || '(none)',
+        type: (el as HTMLInputElement).type || '(none)',
+        required: el.required,
+        pattern: (el as HTMLInputElement).pattern || '(none)',
+        valueLength: el.value?.length ?? 0,
+        willValidate: el.willValidate,
+        validationMessage: el.validationMessage,
+      };
+      logToOverlay(`INVALID EVENT: ${JSON.stringify(info)}`);
+    };
+
+    // Scan for any element that would fail validation
+    const scanForInvalidElements = () => {
+      const elements = document.querySelectorAll('input, select, textarea');
+      const failing: string[] = [];
+      elements.forEach((el) => {
+        const input = el as HTMLInputElement;
+        if (input.willValidate && !input.checkValidity()) {
+          failing.push(`${input.tagName}#${input.id || '?'}[name=${input.name || '?'}][type=${input.type}] msg="${input.validationMessage}"`);
+        }
+      });
+      if (failing.length > 0) {
+        logToOverlay(`SCAN FOUND ${failing.length} FAILING: ${failing.join(', ')}`);
+      } else {
+        logToOverlay('SCAN: No failing elements found');
+      }
+    };
+
+    // Log all form-associated elements on page load
+    const logAllFormElements = () => {
+      const elements = document.querySelectorAll('input, select, textarea, button');
+      logToOverlay(`PAGE LOAD: Found ${elements.length} form-associated elements`);
+      elements.forEach((el, i) => {
+        const input = el as HTMLInputElement;
+        logToOverlay(`  [${i}] ${input.tagName}#${input.id || '?'} type=${input.type || '?'} required=${input.required} pattern=${input.pattern || 'none'} willValidate=${input.willValidate}`);
+      });
+    };
+
+    document.addEventListener('invalid', handleInvalid, true);
+    
+    // Expose scan function globally for manual testing
+    (window as any).__scanValidation = scanForInvalidElements;
+    
+    // Log elements after a short delay to catch dynamically added ones
+    setTimeout(logAllFormElements, 1000);
+
+    return () => {
+      document.removeEventListener('invalid', handleInvalid, true);
+      delete (window as any).__scanValidation;
+      debugOverlay.remove();
+    };
+  }, [isDebugMode]);
+
+  return isDebugMode;
+}
+
+// Div-based CTA component to bypass Safari iOS validation
+// Safari validates all inputs in the DOM when a <button> is clicked,
+// even hidden inputs injected by Stripe/Clerk. Using a div avoids this.
+interface DivButtonProps {
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: 'default' | 'outline';
+  size?: 'default' | 'lg';
+  className?: string;
+  children: React.ReactNode;
+}
+
+function DivButton({ onClick, disabled, variant = 'default', size = 'default', className, children }: DivButtonProps) {
+  const isDebugMode = typeof window !== 'undefined' && window.location.search.includes('debugValidation=1');
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (!disabled) onClick();
+    }
+  }, [disabled, onClick]);
+
+  const handleClick = useCallback(() => {
+    if (disabled) return;
+
+    // In debug mode, scan for invalid elements before checkout
+    if (isDebugMode && (window as any).__scanValidation) {
+      (window as any).__scanValidation();
+    }
+
+    // Delay by one tick to break Safari's validation chain
+    requestAnimationFrame(() => {
+      onClick();
+    });
+  }, [disabled, onClick, isDebugMode]);
+
+  const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] cursor-pointer select-none";
+  const variantStyles = variant === 'outline' 
+    ? "border bg-transparent shadow-xs hover:bg-accent dark:bg-transparent dark:border-input dark:hover:bg-input/50"
+    : "bg-primary text-primary-foreground hover:bg-primary/90";
+  const sizeStyles = size === 'lg' ? "h-10 rounded-md px-6" : "h-9 px-4 py-2";
+  const disabledStyles = disabled ? "pointer-events-none opacity-50" : "";
+
+  return (
+    <div
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      className={cn(baseStyles, variantStyles, sizeStyles, disabledStyles, className)}
+      aria-disabled={disabled}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
-  const [guestEmail, setGuestEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null);
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
+  
+  // Enable debug mode with ?debugValidation=1
+  useValidationDebugger();
 
   // Global validation suppression for Safari iOS
   // Safari validates hidden/injected inputs (Stripe, Clerk) even with noValidate
@@ -46,22 +195,26 @@ export default function SignUp() {
 
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
+  
+  // For authenticated users
   const createCheckout = trpc.payment.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         toast.info("Redirecting to checkout...");
-        window.open(data.url, '_blank');
+        window.location.assign(data.url);
       }
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create checkout session");
     },
   });
+  
+  // For guest users - Stripe will collect email
   const createGuestCheckout = trpc.payment.createGuestCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         toast.info("Redirecting to checkout...");
-        window.open(data.url, '_blank');
+        window.location.assign(data.url);
       }
     },
     onError: (error) => {
@@ -69,50 +222,33 @@ export default function SignUp() {
     },
   });
 
-  // Safari iOS workaround: delay checkout trigger by one tick
-  // This breaks Safari's validation chain that fires before navigation
+  // Simplified checkout handler - no email collection on this page
+  // Stripe Checkout will collect email natively
   const handlePurchase = (productId: string) => {
     const baseFingerprint = productId.trim();
-    if (!isAuthenticated) {
-      const trimmedEmail = guestEmail.trim();
-      if (!trimmedEmail) {
-        setEmailError("Please enter an email for your registration receipt.");
-        toast.info("Please enter an email for your registration receipt.");
-        return;
+    
+    if (isAuthenticated) {
+      // Authenticated user - use their account email
+      const authFingerprint = `auth:${baseFingerprint}`;
+      const existingKey = checkoutKeyRef.current.get(authFingerprint);
+      const idempotencyKey = existingKey ?? crypto.randomUUID();
+      if (!existingKey) {
+        checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
       }
-      if (!isValidEmail(trimmedEmail)) {
-        setEmailError("Please double-check your email address.");
-        toast.error("Please double-check your email address.");
-        return;
-      }
-      setEmailError(null);
-      const guestFingerprint = `guest:${baseFingerprint}:${trimmedEmail.toLowerCase()}`;
+      createCheckout.mutate({ productId, idempotencyKey });
+    } else {
+      // Guest user - Stripe will collect email
+      const guestFingerprint = `guest:${baseFingerprint}`;
       const existingKey = checkoutKeyRef.current.get(guestFingerprint);
       const idempotencyKey = existingKey ?? crypto.randomUUID();
       if (!existingKey) {
         checkoutKeyRef.current.set(guestFingerprint, idempotencyKey);
       }
-      // Delay checkout to break Safari's validation chain
-      requestAnimationFrame(() => {
-        createGuestCheckout.mutate({
-          productId,
-          email: trimmedEmail,
-          idempotencyKey,
-        });
-      });
-      return;
+      createGuestCheckout.mutate({ productId, idempotencyKey });
     }
-    const authFingerprint = `auth:${baseFingerprint}`;
-    const existingKey = checkoutKeyRef.current.get(authFingerprint);
-    const idempotencyKey = existingKey ?? crypto.randomUUID();
-    if (!existingKey) {
-      checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
-    }
-    // Delay checkout to break Safari's validation chain
-    requestAnimationFrame(() => {
-      createCheckout.mutate({ productId, idempotencyKey });
-    });
   };
+
+  const isPending = createCheckout.isPending || createGuestCheckout.isPending;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -131,6 +267,7 @@ export default function SignUp() {
           </div>
         </section>
 
+        {/* Guest info banner - no email input, Stripe collects email */}
         {!isAuthenticated && (
           <section className="py-10">
             <div className="container">
@@ -138,50 +275,27 @@ export default function SignUp() {
                 <CardHeader>
                   <CardTitle className="text-foreground text-2xl">Guest Registration</CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Register now with an email address. Create an account after checkout to access schedules, chat, and your member dashboard.
+                    Click any program below to register. You'll enter your email securely during checkout.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="guest-email" className="text-sm font-medium text-foreground">
-                      Email for receipt and updates
-                    </label>
-                    <Input
-                      id="guest-email"
-                      type="text"
-                      placeholder="you@example.com"
-                      value={guestEmail}
-                      onChange={(event) => {
-                        setGuestEmail(event.target.value);
-                        if (emailError) setEmailError(null);
-                      }}
-                      className={emailError ? "border-destructive" : ""}
-                      aria-invalid={!!emailError}
-                      aria-describedby={emailError ? "guest-email-error" : undefined}
-                    />
-                    {emailError && (
-                      <p id="guest-email-error" className="text-sm text-destructive" role="alert">
-                        {emailError}
-                      </p>
-                    )}
-                  </div>
+                <CardContent>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-sm text-muted-foreground">
-                      Prefer to manage everything in one place?
+                      Want to manage bookings and access member features?
                     </p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                       {clerkPublishableKey ? (
                         <>
                           <Link href="/sign-up">
-                            <Button variant="outline">Create Account</Button>
+                            <Button type="button" variant="outline">Create Account</Button>
                           </Link>
                           <Link href="/sign-in">
-                            <Button variant="ghost">Sign In</Button>
+                            <Button type="button" variant="ghost">Sign In</Button>
                           </Link>
                         </>
                       ) : (
                         <a href={loginUrl}>
-                          <Button variant="outline" disabled={loginUrl === "#"}>
+                          <Button type="button" variant="outline" disabled={loginUrl === "#"}>
                             Sign In
                           </Button>
                         </a>
@@ -234,15 +348,14 @@ export default function SignUp() {
                       <span className="text-muted-foreground">Youth athletes of all levels</span>
                     </li>
                   </ul>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('academy-group-membership')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register Now'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register Now'}
+                  </DivButton>
                 </CardContent>
               </Card>
 
@@ -277,15 +390,14 @@ export default function SignUp() {
                       <span className="text-muted-foreground">Youth athletes of all levels</span>
                     </li>
                   </ul>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     className="w-full" 
                     size="lg"
                     onClick={() => handlePurchase('complete-player-membership')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register Now'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register Now'}
+                  </DivButton>
                 </CardContent>
               </Card>
             </div>
@@ -314,15 +426,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Single session access to group workouts. Develop skills in a competitive environment.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('group-workout')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
 
@@ -339,15 +450,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Personalized training focused on your unique strengths and development goals.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('individual-training')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
 
@@ -364,15 +474,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Build a strong foundation with focused instruction on basketball fundamentals, footwork, and body control.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('skills-class')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
             </div>
@@ -401,15 +510,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Outdoor conditioning and agility training to complement basketball skills.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('on-field-workouts')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
 
@@ -426,15 +534,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Intensive summer training with full-day sessions, skill work, and competition.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('summer-camp')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
 
@@ -451,15 +558,14 @@ export default function SignUp() {
                   <p className="text-muted-foreground mb-6">
                     Join our competitive teams. Includes uniforms, coaching, and tournament fees.
                   </p>
-                  <Button 
-                    type="button"
+                  <DivButton 
                     variant="outline" 
                     className="w-full"
                     onClick={() => handlePurchase('team-academy')}
-                    disabled={createCheckout.isPending || createGuestCheckout.isPending}
+                    disabled={isPending}
                   >
-                    {createCheckout.isPending || createGuestCheckout.isPending ? 'Processing...' : 'Register'}
-                  </Button>
+                    {isPending ? 'Processing...' : 'Register'}
+                  </DivButton>
                 </CardContent>
               </Card>
             </div>
