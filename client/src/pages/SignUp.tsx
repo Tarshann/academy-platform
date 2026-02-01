@@ -1,7 +1,11 @@
 import { Link, useSearch } from "wouter";
 import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getClerkPublishableKey, getLoginUrl } from "@/const";
+import {
+  getClerkPublishableKey,
+  getLoginUrl,
+  isValidClerkPublishableKey,
+} from "@/const";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { formatUsd } from "@shared/money";
@@ -481,6 +485,7 @@ export default function SignUp() {
   useValidationHardStop(isDebugMode);
 
   const clerkPublishableKey = getClerkPublishableKey();
+  const hasValidClerkKey = isValidClerkPublishableKey(clerkPublishableKey);
   const loginUrl = getLoginUrl();
   
   // For authenticated users
@@ -601,7 +606,7 @@ export default function SignUp() {
                       Want to manage bookings and access member features?
                     </p>
                     <div className="flex flex-col gap-2 sm:flex-row">
-                      {clerkPublishableKey ? (
+                      {hasValidClerkKey ? (
                         <>
                           <Link href="/sign-up">
                             <Button type="button" variant="outline">Create Account</Button>
