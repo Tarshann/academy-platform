@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("checkout validation on signup", () => {
-  test.use({
-    browserName: "webkit",
-    viewport: { width: 390, height: 844 },
-  });
+test.use({
+  browserName: "webkit",
+  viewport: { width: 390, height: 844 },
+});
 
+test.describe("checkout validation on signup", () => {
   test("checkout selected classes avoids pattern error", async ({ page }) => {
     await page.addInitScript(() => {
       (window as any).__assignedCheckoutUrl = "";
