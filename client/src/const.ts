@@ -10,9 +10,13 @@ export const getClerkPublishableKey = (): string => {
          "";
 };
 
+export const isValidClerkPublishableKey = (
+  key: string = getClerkPublishableKey()
+): boolean => /^pk_(test|live)_/.test(key);
+
 export const isAuthConfigured = () => {
   const clerkKey = getClerkPublishableKey();
-  if (clerkKey) {
+  if (isValidClerkPublishableKey(clerkKey)) {
     return true;
   }
 
@@ -27,7 +31,7 @@ export const getLoginUrl = () => {
   const clerkKey = getClerkPublishableKey();
   
   // If Clerk is configured, use Clerk's sign-in
-  if (clerkKey) {
+  if (isValidClerkPublishableKey(clerkKey)) {
     return "/sign-in"; // Clerk will handle this route
   }
   

@@ -7,7 +7,11 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { getLoginUrl, getClerkPublishableKey } from "./const";
+import {
+  getLoginUrl,
+  getClerkPublishableKey,
+  isValidClerkPublishableKey,
+} from "./const";
 import { logger } from "@/lib/logger";
 import {
   ClerkStateFallbackProvider,
@@ -86,7 +90,7 @@ function createTrpcClient(getToken?: () => Promise<string | null>) {
 }
 
 const clerkPublishableKey = getClerkPublishableKey();
-const isValidClerkKey = /^pk_(test|live)_/.test(clerkPublishableKey);
+const isValidClerkKey = isValidClerkPublishableKey(clerkPublishableKey);
 
 const injectAnalyticsScript = () => {
   const endpoint = import.meta.env.VITE_ANALYTICS_ENDPOINT;

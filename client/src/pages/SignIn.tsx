@@ -1,12 +1,13 @@
 import { SignIn } from "@clerk/clerk-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { getClerkPublishableKey } from "@/const";
+import { getClerkPublishableKey, isValidClerkPublishableKey } from "@/const";
 
 export default function SignInPage() {
   const clerkKey = getClerkPublishableKey();
+  const hasValidClerkKey = isValidClerkPublishableKey(clerkKey);
   
-  if (!clerkKey) {
+  if (!hasValidClerkKey) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navigation />

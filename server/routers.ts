@@ -2,6 +2,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { toCents } from "@shared/money";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
+import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
@@ -54,41 +55,6 @@ const slugSchema = z
 const ageSchema = z.number().int().min(1).max(99);
 const maxParticipantsSchema = z.number().int().min(1).nullable();
 
-const resolveCheckoutOrigin = (req: { headers: Record<string, string | string[] | undefined> }) => {
-  const originHeader = req.headers.origin;
-  if (typeof originHeader === "string" && originHeader.length > 0) {
-    try {
-      return new URL(originHeader).origin;
-    } catch {
-      // Fall through to forwarded headers and env fallback.
-    }
-  }
-
-  const forwardedProto = Array.isArray(req.headers["x-forwarded-proto"])
-    ? req.headers["x-forwarded-proto"][0]
-    : req.headers["x-forwarded-proto"];
-  const forwardedHost = Array.isArray(req.headers["x-forwarded-host"])
-    ? req.headers["x-forwarded-host"][0]
-    : req.headers["x-forwarded-host"];
-  const hostHeader = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host;
-
-  const protocol = (forwardedProto || "https").toString().split(",")[0].trim();
-  const host = (forwardedHost || hostHeader || "").toString().split(",")[0].trim();
-
-  if (host) {
-    return `${protocol}://${host}`;
-  }
-
-  if (ENV.siteUrl) {
-    try {
-      return new URL(ENV.siteUrl).origin;
-    } catch {
-      return ENV.siteUrl;
-    }
-  }
-
-  return "http://localhost:3000";
-};
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
@@ -145,6 +111,13 @@ const createProgramCheckoutSession = async ({
     });
   }
 
+  const successUrl = buildCheckoutUrl(
+    origin,
+    "/payment/success",
+    "session_id={CHECKOUT_SESSION_ID}"
+  );
+  const cancelUrl = buildCheckoutUrl(origin, "/signup");
+
   const sessionParams: any = {
     payment_method_types: ["card"],
     line_items: products.map((product) => ({
@@ -164,8 +137,8 @@ const createProgramCheckoutSession = async ({
       quantity: 1,
     })),
     mode: hasRecurring ? "subscription" : "payment",
-    success_url: `${origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/signup`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
     allow_promotion_codes: true,
   };
 
@@ -700,15 +673,21 @@ export const appRouter = router({
           totalAmount += unitAmount * item.quantity;
         }
 
-        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const origin = resolveCheckoutOrigin(ctx.req, ENV.siteUrl);
+        const successUrl = buildCheckoutUrl(
+          origin,
+          "/shop/order-success",
+          "session_id={CHECKOUT_SESSION_ID}"
+        );
+        const cancelUrl = buildCheckoutUrl(origin, "/shop");
 
         const session = await stripe.checkout.sessions.create(
           {
             payment_method_types: ["card"],
             line_items: lineItems,
             mode: "payment",
-            success_url: `${origin}/shop/order-success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/shop`,
+            success_url: successUrl,
+            cancel_url: cancelUrl,
             customer_email: ctx.user.email || undefined,
             client_reference_id: ctx.user.id.toString(),
             metadata: {
@@ -942,7 +921,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const origin = resolveCheckoutOrigin(ctx.req);
+        const origin = resolveCheckoutOrigin(ctx.req, ENV.siteUrl);
         const session = await createProgramCheckoutSession({
           productIds: input.productIds,
           origin,
@@ -968,7 +947,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const origin = resolveCheckoutOrigin(ctx.req);
+        const origin = resolveCheckoutOrigin(ctx.req, ENV.siteUrl);
         const session = await createProgramCheckoutSession({
           productIds: input.productIds,
           origin,
