@@ -251,3 +251,13 @@
 ## Merchandise Store
 - [x] Populate store with Academy branded apparel (t-shirts, hoodies, shorts)
 - [x] Add training equipment products (basketballs, water bottles, bags)
+
+## Registration System Rebuild
+- [x] Remove registration form requirements (name, phone, age)
+- [x] Implement cart-based checkout system
+- [x] Add guest checkout with Stripe email collection
+- [x] Update Register page to display all programs with cart functionality
+- [x] Add "Sign in for faster checkout" option
+- [x] Implement one-time session purchases (Group, 1-on-1, Specialty, Performance, Seasonal)
+- [x] Implement subscription purchases (Monthly, Quarterly memberships)
+- [x] Test Stripe checkout integration

@@ -14,7 +14,7 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const FAQs = lazy(() => import("./pages/FAQs"));
 const SignUp = lazy(() => import("./pages/SignUp"));
-const RegisterRedirect = lazy(() => import("./pages/RegisterRedirect"));
+const Register = lazy(() => import("./pages/Register"));
 const SignInPage = lazy(() => import("./pages/SignIn").then(m => ({ default: m.default })));
 const SignUpPage = lazy(() => import("./pages/SignUpPage").then(m => ({ default: m.default })));
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
@@ -66,7 +66,8 @@ function Router() {
           <SignUp />
         </Route>
         <Route path={"/register"}>
-          <RegisterRedirect />
+          <SEO title="Register" description="Register for The Academy's multi-sport training programs. Guest checkout available." />
+          <Register />
         </Route>
         <Route path={"/sign-in"}>
           <SEO title="Sign In" description="Sign in to your Academy account." />
