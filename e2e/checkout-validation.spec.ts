@@ -36,17 +36,29 @@ test.describe("checkout validation on signup", () => {
       name: /checkout selected classes/i,
     });
     await expect(checkoutButton).toBeVisible();
+
+    const checkoutResponsePromise = page.waitForResponse((response) => {
+      return (
+        response.url().includes("payment.createGuestCheckout") &&
+        response.request().method() === "POST"
+      );
+    });
+
     await checkoutButton.click();
 
-    await page.waitForFunction(
-      () => Boolean((window as any).__assignedCheckoutUrl),
-      null,
-      { timeout: 15_000 }
-    );
+    const checkoutResponse = await checkoutResponsePromise;
+    const checkoutPayload = await checkoutResponse.json();
+    const checkoutError =
+      checkoutPayload?.error?.message ??
+      checkoutPayload?.[0]?.error?.message ??
+      null;
+
+    expect(checkoutError).toBeNull();
 
     const assignedUrl = await page.evaluate(
       () => (window as any).__assignedCheckoutUrl as string
     );
+    expect(assignedUrl).not.toEqual("");
     expect(assignedUrl).toMatch(/^https:\/\//);
 
     await expect(
