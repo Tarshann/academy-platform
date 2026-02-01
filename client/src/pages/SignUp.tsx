@@ -410,7 +410,7 @@ function useValidationHardStop(isDebugMode: boolean) {
 interface DivButtonProps {
   onClick: () => void;
   disabled?: boolean;
-  variant?: 'default' | 'outline';
+  variant?: 'default' | 'outline' | 'secondary';
   size?: 'default' | 'lg';
   className?: string;
   children: React.ReactNode;
@@ -443,7 +443,9 @@ function DivButton({ onClick, disabled, variant = 'default', size = 'default', c
   const baseStyles = "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px] cursor-pointer select-none";
   const variantStyles = variant === 'outline' 
     ? "border bg-transparent shadow-xs hover:bg-accent dark:bg-transparent dark:border-input dark:hover:bg-input/50"
-    : "bg-primary text-primary-foreground hover:bg-primary/90";
+    : variant === 'secondary'
+      ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+      : "bg-primary text-primary-foreground hover:bg-primary/90";
   const sizeStyles = size === 'lg' ? "h-10 rounded-md px-6" : "h-9 px-4 py-2";
   const disabledStyles = disabled ? "pointer-events-none opacity-50" : "";
 
@@ -757,15 +759,14 @@ export default function SignUp() {
                       <p className="text-muted-foreground mb-6">
                         {product.description}
                       </p>
-                      <Button
-                        type="button"
+                      <DivButton
                         variant={isSelected ? "secondary" : "outline"}
                         className="w-full"
                         onClick={() => toggleCartItem(product.id)}
                         disabled={isPending}
                       >
                         {isSelected ? "Remove from cart" : "Add to cart"}
-                      </Button>
+                      </DivButton>
                     </CardContent>
                   </Card>
                 );
@@ -802,15 +803,14 @@ export default function SignUp() {
                       <p className="text-muted-foreground mb-6">
                         {product.description}
                       </p>
-                      <Button
-                        type="button"
+                      <DivButton
                         variant={isSelected ? "secondary" : "outline"}
                         className="w-full"
                         onClick={() => toggleCartItem(product.id)}
                         disabled={isPending}
                       >
                         {isSelected ? "Remove from cart" : "Add to cart"}
-                      </Button>
+                      </DivButton>
                     </CardContent>
                   </Card>
                 );
