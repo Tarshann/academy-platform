@@ -37,32 +37,35 @@ test.describe("checkout validation on signup", () => {
     });
     await expect(checkoutButton).toBeVisible();
 
-    const checkoutResponsePromise = page.waitForResponse((response) => {
-      return (
-        response.url().includes("payment.createGuestCheckout") &&
-        response.request().method() === "POST"
-      );
-    });
-
     await checkoutButton.click();
 
-    const checkoutResponse = await checkoutResponsePromise;
-    const checkoutPayload = await checkoutResponse.json();
-    const checkoutError =
-      checkoutPayload?.error?.message ??
-      checkoutPayload?.[0]?.error?.message ??
-      null;
+    const patternErrorToast = page.getByText(
+      "The string did not match the expected pattern."
+    );
 
-    expect(checkoutError).toBeNull();
+    const redirectDetected = page
+      .waitForFunction(
+        () => Boolean((window as any).__assignedCheckoutUrl),
+        null,
+        { timeout: 15_000 }
+      )
+      .then(() => "redirect");
+
+    const patternErrorDetected = patternErrorToast
+      .waitFor({ state: "visible", timeout: 15_000 })
+      .then(() => "pattern_error");
+
+    const outcome = await Promise.race([
+      redirectDetected,
+      patternErrorDetected,
+    ]);
+
+    expect(outcome).toBe("redirect");
 
     const assignedUrl = await page.evaluate(
       () => (window as any).__assignedCheckoutUrl as string
     );
     expect(assignedUrl).not.toEqual("");
     expect(assignedUrl).toMatch(/^https:\/\//);
-
-    await expect(
-      page.getByText("The string did not match the expected pattern.")
-    ).toHaveCount(0);
   });
 });
