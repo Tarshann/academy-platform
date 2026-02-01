@@ -54,6 +54,42 @@ const slugSchema = z
 const ageSchema = z.number().int().min(1).max(99);
 const maxParticipantsSchema = z.number().int().min(1).nullable();
 
+const resolveCheckoutOrigin = (req: { headers: Record<string, string | string[] | undefined> }) => {
+  const originHeader = req.headers.origin;
+  if (typeof originHeader === "string" && originHeader.length > 0) {
+    try {
+      return new URL(originHeader).origin;
+    } catch {
+      // Fall through to forwarded headers and env fallback.
+    }
+  }
+
+  const forwardedProto = Array.isArray(req.headers["x-forwarded-proto"])
+    ? req.headers["x-forwarded-proto"][0]
+    : req.headers["x-forwarded-proto"];
+  const forwardedHost = Array.isArray(req.headers["x-forwarded-host"])
+    ? req.headers["x-forwarded-host"][0]
+    : req.headers["x-forwarded-host"];
+  const hostHeader = Array.isArray(req.headers.host) ? req.headers.host[0] : req.headers.host;
+
+  const protocol = (forwardedProto || "https").toString().split(",")[0].trim();
+  const host = (forwardedHost || hostHeader || "").toString().split(",")[0].trim();
+
+  if (host) {
+    return `${protocol}://${host}`;
+  }
+
+  if (ENV.siteUrl) {
+    try {
+      return new URL(ENV.siteUrl).origin;
+    } catch {
+      return ENV.siteUrl;
+    }
+  }
+
+  return "http://localhost:3000";
+};
+
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
     throw new TRPCError({
@@ -906,7 +942,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const origin = resolveCheckoutOrigin(ctx.req);
         const session = await createProgramCheckoutSession({
           productIds: input.productIds,
           origin,
@@ -932,7 +968,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const origin = ctx.req.headers.origin || "http://localhost:3000";
+        const origin = resolveCheckoutOrigin(ctx.req);
         const session = await createProgramCheckoutSession({
           productIds: input.productIds,
           origin,
