@@ -51,8 +51,8 @@ export default function Shop() {
   const checkoutMutation = trpc.shop.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
-        window.open(data.url, "_blank");
         toast.success("Redirecting to checkout...");
+        window.location.assign(data.url);
       }
     },
     onError: (error) => {
