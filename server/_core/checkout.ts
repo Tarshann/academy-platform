@@ -7,6 +7,14 @@ const getHeaderValue = (value: HeaderValue): string => {
   return value ?? "";
 };
 
+const sanitizeHost = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") {
+    return "";
+  }
+  return trimmed;
+};
+
 const ensureScheme = (value: string): string => {
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) {
     return value;
@@ -25,24 +33,59 @@ const normalizeOrigin = (value: HeaderValue): string | null => {
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return null;
     }
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === "null" || hostname === "undefined") {
+      return null;
+    }
     return parsed.origin;
   } catch {
     return null;
   }
 };
 
+const isLocalHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]";
+
+const enforceHttps = (origin: string): string => {
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol === "http:" && !isLocalHost(parsed.hostname)) {
+      parsed.protocol = "https:";
+      return parsed.origin;
+    }
+  } catch {
+    return origin;
+  }
+  return origin;
+};
+
 export const resolveCheckoutOrigin = (
   req: { headers: Record<string, HeaderValue> },
   siteUrl?: string
 ): string => {
+  const originFromEnv = normalizeOrigin(siteUrl);
+  if (originFromEnv) {
+    return enforceHttps(originFromEnv);
+  }
+
   const originFromHeader = normalizeOrigin(req.headers.origin);
   if (originFromHeader) {
-    return originFromHeader;
+    return enforceHttps(originFromHeader);
+  }
+
+  const refererHeader = getHeaderValue(req.headers.referer || req.headers.referrer);
+  const originFromReferer = normalizeOrigin(refererHeader);
+  if (originFromReferer) {
+    return enforceHttps(originFromReferer);
   }
 
   const forwardedProto = getHeaderValue(req.headers["x-forwarded-proto"]).split(",")[0]?.trim();
-  const forwardedHost = getHeaderValue(req.headers["x-forwarded-host"]).split(",")[0]?.trim();
-  const hostHeader = getHeaderValue(req.headers.host).split(",")[0]?.trim();
+  const forwardedHostRaw = getHeaderValue(req.headers["x-forwarded-host"]).split(",")[0]?.trim();
+  const hostHeaderRaw = getHeaderValue(req.headers.host).split(",")[0]?.trim();
+  const forwardedHost = sanitizeHost(forwardedHostRaw);
+  const hostHeader = sanitizeHost(hostHeaderRaw);
 
   const protocol =
     forwardedProto && ["http", "https"].includes(forwardedProto)
@@ -50,15 +93,14 @@ export const resolveCheckoutOrigin = (
       : "https";
   const host = forwardedHost || hostHeader;
   if (host) {
-    const originFromHost = normalizeOrigin(`${protocol}://${host}`);
+    const safeProtocol =
+      protocol === "http" && !isLocalHost(host.split(":")[0] ?? "")
+        ? "https"
+        : protocol;
+    const originFromHost = normalizeOrigin(`${safeProtocol}://${host}`);
     if (originFromHost) {
-      return originFromHost;
+      return enforceHttps(originFromHost);
     }
-  }
-
-  const originFromEnv = normalizeOrigin(siteUrl);
-  if (originFromEnv) {
-    return originFromEnv;
   }
 
   return "http://localhost:3000";
