@@ -17,6 +17,7 @@ const ensureScheme = (value: string): string => {
 const normalizeOrigin = (value: HeaderValue): string | null => {
   const raw = getHeaderValue(value).trim();
   if (!raw) return null;
+  if (raw === "null" || raw === "undefined") return null;
 
   const candidate = ensureScheme(raw);
   try {
