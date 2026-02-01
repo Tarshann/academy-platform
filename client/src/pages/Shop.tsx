@@ -275,7 +275,7 @@ export default function Shop() {
                 <p className="text-neutral-500 mb-6">
                   Official Academy apparel and training gear launching soon. Sign up for training to be the first to know when merch drops.
                 </p>
-                <Link href="/register">
+                <Link href="/signup">
                   <Button variant="outline">Register for Training</Button>
                 </Link>
               </div>
