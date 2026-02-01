@@ -5,19 +5,19 @@ const createReq = (headers: Record<string, string | string[] | undefined>) =>
   ({ headers }) as { headers: Record<string, string | string[] | undefined> };
 
 describe("resolveCheckoutOrigin", () => {
-  it("uses a valid origin header when provided", () => {
+  it("prefers siteUrl when provided", () => {
     const req = createReq({ origin: "https://academy.test" });
     const origin = resolveCheckoutOrigin(req, "https://fallback.test");
-    expect(origin).toBe("https://academy.test");
+    expect(origin).toBe("https://fallback.test");
   });
 
   it("falls back to forwarded host/proto when origin is invalid", () => {
     const req = createReq({
-      origin: "null",
+      origin: "https://null",
       "x-forwarded-proto": "https",
       "x-forwarded-host": "academy-forwarded.test",
     });
-    const origin = resolveCheckoutOrigin(req, "https://fallback.test");
+    const origin = resolveCheckoutOrigin(req, "");
     expect(origin).toBe("https://academy-forwarded.test");
   });
 

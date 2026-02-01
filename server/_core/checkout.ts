@@ -7,6 +7,14 @@ const getHeaderValue = (value: HeaderValue): string => {
   return value ?? "";
 };
 
+const sanitizeHost = (value: string): string => {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "null" || trimmed === "undefined") {
+    return "";
+  }
+  return trimmed;
+};
+
 const ensureScheme = (value: string): string => {
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(value)) {
     return value;
@@ -25,6 +33,10 @@ const normalizeOrigin = (value: HeaderValue): string | null => {
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return null;
     }
+    const hostname = parsed.hostname.toLowerCase();
+    if (hostname === "null" || hostname === "undefined") {
+      return null;
+    }
     return parsed.origin;
   } catch {
     return null;
@@ -35,14 +47,27 @@ export const resolveCheckoutOrigin = (
   req: { headers: Record<string, HeaderValue> },
   siteUrl?: string
 ): string => {
+  const originFromEnv = normalizeOrigin(siteUrl);
+  if (originFromEnv) {
+    return originFromEnv;
+  }
+
   const originFromHeader = normalizeOrigin(req.headers.origin);
   if (originFromHeader) {
     return originFromHeader;
   }
 
+  const refererHeader = getHeaderValue(req.headers.referer || req.headers.referrer);
+  const originFromReferer = normalizeOrigin(refererHeader);
+  if (originFromReferer) {
+    return originFromReferer;
+  }
+
   const forwardedProto = getHeaderValue(req.headers["x-forwarded-proto"]).split(",")[0]?.trim();
-  const forwardedHost = getHeaderValue(req.headers["x-forwarded-host"]).split(",")[0]?.trim();
-  const hostHeader = getHeaderValue(req.headers.host).split(",")[0]?.trim();
+  const forwardedHostRaw = getHeaderValue(req.headers["x-forwarded-host"]).split(",")[0]?.trim();
+  const hostHeaderRaw = getHeaderValue(req.headers.host).split(",")[0]?.trim();
+  const forwardedHost = sanitizeHost(forwardedHostRaw);
+  const hostHeader = sanitizeHost(hostHeaderRaw);
 
   const protocol =
     forwardedProto && ["http", "https"].includes(forwardedProto)
@@ -54,11 +79,6 @@ export const resolveCheckoutOrigin = (
     if (originFromHost) {
       return originFromHost;
     }
-  }
-
-  const originFromEnv = normalizeOrigin(siteUrl);
-  if (originFromEnv) {
-    return originFromEnv;
   }
 
   return "http://localhost:3000";
