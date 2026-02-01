@@ -10,6 +10,7 @@ export const ENV = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
+  siteUrl: process.env.VITE_SITE_URL ?? process.env.SITE_URL ?? "",
   enableSocketIo:
     process.env.ENABLE_SOCKET_IO === "true" ||
     (process.env.NODE_ENV !== "production" && process.env.ENABLE_SOCKET_IO !== "false"),
