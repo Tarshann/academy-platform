@@ -27,6 +27,12 @@ describe("resolveCheckoutOrigin", () => {
     expect(origin).toBe("https://academy-platform.test");
   });
 
+  it("upgrades http origins to https for non-local hosts", () => {
+    const req = createReq({});
+    const origin = resolveCheckoutOrigin(req, "http://academy-platform.test");
+    expect(origin).toBe("https://academy-platform.test");
+  });
+
   it("returns localhost when no origin data is available", () => {
     const req = createReq({});
     const origin = resolveCheckoutOrigin(req, "");

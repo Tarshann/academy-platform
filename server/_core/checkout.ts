@@ -43,24 +43,42 @@ const normalizeOrigin = (value: HeaderValue): string | null => {
   }
 };
 
+const isLocalHost = (hostname: string): boolean =>
+  hostname === "localhost" ||
+  hostname === "127.0.0.1" ||
+  hostname === "[::1]";
+
+const enforceHttps = (origin: string): string => {
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol === "http:" && !isLocalHost(parsed.hostname)) {
+      parsed.protocol = "https:";
+      return parsed.origin;
+    }
+  } catch {
+    return origin;
+  }
+  return origin;
+};
+
 export const resolveCheckoutOrigin = (
   req: { headers: Record<string, HeaderValue> },
   siteUrl?: string
 ): string => {
   const originFromEnv = normalizeOrigin(siteUrl);
   if (originFromEnv) {
-    return originFromEnv;
+    return enforceHttps(originFromEnv);
   }
 
   const originFromHeader = normalizeOrigin(req.headers.origin);
   if (originFromHeader) {
-    return originFromHeader;
+    return enforceHttps(originFromHeader);
   }
 
   const refererHeader = getHeaderValue(req.headers.referer || req.headers.referrer);
   const originFromReferer = normalizeOrigin(refererHeader);
   if (originFromReferer) {
-    return originFromReferer;
+    return enforceHttps(originFromReferer);
   }
 
   const forwardedProto = getHeaderValue(req.headers["x-forwarded-proto"]).split(",")[0]?.trim();
@@ -75,9 +93,13 @@ export const resolveCheckoutOrigin = (
       : "https";
   const host = forwardedHost || hostHeader;
   if (host) {
-    const originFromHost = normalizeOrigin(`${protocol}://${host}`);
+    const safeProtocol =
+      protocol === "http" && !isLocalHost(host.split(":")[0] ?? "")
+        ? "https"
+        : protocol;
+    const originFromHost = normalizeOrigin(`${safeProtocol}://${host}`);
     if (originFromHost) {
-      return originFromHost;
+      return enforceHttps(originFromHost);
     }
   }
 
