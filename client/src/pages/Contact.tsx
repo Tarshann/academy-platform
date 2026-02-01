@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -98,6 +99,8 @@ function validateVolunteerForm(form: { name: string; email: string; phone: strin
 }
 
 export default function Contact() {
+  const [location] = useLocation();
+  const [activeTab, setActiveTab] = useState("general");
   const [generalForm, setGeneralForm] = useState({
     name: "",
     email: "",
@@ -188,6 +191,26 @@ export default function Contact() {
     }
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const subject = params.get("subject");
+    const tab = params.get("tab");
+
+    if (tab === "volunteer") {
+      setActiveTab("volunteer");
+    }
+
+    if (subject) {
+      setGeneralForm((prev) => ({ ...prev, subject }));
+      if (generalErrors.subject) {
+        setGeneralErrors((prev) => ({ ...prev, subject: undefined }));
+      }
+      if (generalSuccess) {
+        setGeneralSuccess(false);
+      }
+    }
+  }, [generalErrors.subject, generalSuccess, location]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
@@ -209,7 +232,7 @@ export default function Contact() {
         <section className="py-16">
           <div className="container">
             <div className="max-w-3xl mx-auto">
-              <Tabs defaultValue="general" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="general">General Inquiry</TabsTrigger>
                   <TabsTrigger value="volunteer">Volunteer/Coach</TabsTrigger>
