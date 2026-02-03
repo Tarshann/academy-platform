@@ -107,7 +107,7 @@ export default function Programs() {
                     </p>
                     <p className="text-muted-foreground mb-4">
                       Perfect for developing muscle memory, refining form, and improving shooting consistency through 
-                      focused technical work. <strong>Not included in memberships.</strong>
+                      focused technical work. <strong>Included with Academy Group Membership only.</strong>
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$25 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
@@ -168,12 +168,12 @@ export default function Programs() {
                       BEST VALUE
                     </div>
                     <CardTitle className="text-foreground">Complete Player Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • All-access</CardDescription>
+                    <CardDescription className="text-muted-foreground">Dedicated athletes • Skills focus</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Unlimited access to skills classes and open gyms (when available seasonally). The most comprehensive option for 
-                      serious players committed to year-round development.
+                      Unlimited access to skills classes and open gyms (when available seasonally). Perfect for 
+                      dedicated athletes focused on fundamentals and year-round development.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$100 <span className="text-sm text-muted-foreground font-normal">per month</span></p>

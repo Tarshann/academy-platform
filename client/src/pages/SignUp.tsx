@@ -42,7 +42,6 @@ const MEMBERSHIP_PRODUCTS = [
     features: [
       "Unlimited skills classes",
       "Unlimited open gym access",
-      "Shooting Lab access included",
       "For dedicated athletes",
     ],
   },
