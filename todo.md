@@ -337,3 +337,9 @@
 - [x] Implement email sending after successful checkout
 - [x] Include purchase details in confirmation email
 - [x] Test email delivery (5 tests passed)
+
+## Stripe Live Mode Setup
+- [x] Fix webhook to return valid JSON with verified: true
+- [x] Ensure all webhook responses return 200 status
+- [ ] Configure live Stripe keys in Settings → Payment
+- [ ] Verify webhook in Stripe Dashboard
