@@ -161,22 +161,43 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
+  // Import email functions
+  const { sendPaymentConfirmationEmail, sendGuestPaymentConfirmationEmail } = await import("./email");
+  
+  // Get product name from line items or metadata
+  const productName = session.metadata?.product_name || 
+    session.line_items?.data[0]?.description || 
+    "Academy Program";
+
+  // Check if this is a guest checkout
+  const isGuestCheckout = session.metadata?.guest_checkout === "true";
+  const guestEmail = session.metadata?.guest_email || session.customer_email;
+  
   const userId = session.client_reference_id
     ? parseInt(session.client_reference_id)
     : null;
-  if (!userId) {
-    logger.error("[Webhook] No user ID in session metadata");
+
+  if (isGuestCheckout || !userId) {
+    // Handle guest checkout - send email to guest
+    if (guestEmail && session.amount_total) {
+      logger.info(`[Webhook] Sending guest confirmation email to: ${guestEmail}`);
+      await sendGuestPaymentConfirmationEmail({
+        to: guestEmail,
+        productName,
+        amount: session.amount_total,
+        currency: session.currency || "usd",
+      });
+    } else {
+      logger.warn("[Webhook] Guest checkout but no email available");
+    }
     return;
   }
 
-  // Send payment confirmation email
-  const { sendPaymentConfirmationEmail } = await import("./email");
+  // Handle logged-in user checkout
   const { getUserById } = await import("./db");
-
   const user = await getUserById(userId);
+  
   if (user && user.email && session.amount_total) {
-    const productName =
-      session.line_items?.data[0]?.description || "Academy Program";
     await sendPaymentConfirmationEmail({
       to: user.email,
       userName: user.name || "Member",

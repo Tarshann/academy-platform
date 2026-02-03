@@ -331,3 +331,9 @@
 - [x] Test Stripe guest checkout with email collection
 - [ ] Verify confirmation emails work for guest purchases
 - [x] Deploy guest checkout fix to production (ready for publish)
+
+## Confirmation Emails
+- [x] Review Stripe webhook for payment success events
+- [x] Implement email sending after successful checkout
+- [x] Include purchase details in confirmation email
+- [x] Test email delivery (5 tests passed)
