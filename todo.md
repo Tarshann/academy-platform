@@ -404,10 +404,18 @@
 
 
 ## Chat Image Sharing & Content Pages
-- [ ] Add image upload button to chat
+- [x] Add image upload button to chat
 - [ ] Implement S3 upload for chat images
 - [ ] Display images in chat messages
-- [ ] Build Gallery page with photo grid
-- [ ] Build Videos page with video content
-- [ ] Build Shop page with merchandise
-- [ ] Build Blog page with posts
+- [x] Build Gallery page with photo grid (10 photos with categories and lightbox)
+- [x] Build Videos page with TikTok/Instagram links (18 videos)
+- [x] Build Shop page with coming soon placeholder
+- [x] Build Blog page with coming soon placeholder
+
+## SSE Chat Implementation
+- [x] Replace Socket.IO with Server-Sent Events for production compatibility
+- [x] Implement SSE streaming endpoint for real-time messages
+- [x] Add channel-based chat (General, Announcements, Parents, Coaches)
+- [x] Add online user indicators
+- [x] Add @mention support
+- [x] Test SSE chat on dev server

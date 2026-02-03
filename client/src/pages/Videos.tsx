@@ -1,184 +1,321 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Play, Eye } from "lucide-react";
-import { Link } from "wouter";
+import { Play, ExternalLink } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { trpc } from "@/lib/trpc";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
+// TikTok videos from The Academy
+const tiktokVideos = [
+  {
+    id: "tt1",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426665432193920298",
+    title: "Training Highlights",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png"
+  },
+  {
+    id: "tt2",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426652015718460714",
+    title: "Skills Development",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png"
+  },
+  {
+    id: "tt3",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426651330054538539",
+    title: "Dribbling Drills",
+    category: "drills",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png"
+  },
+  {
+    id: "tt4",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426650617190679851",
+    title: "Shooting Practice",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png"
+  },
+  {
+    id: "tt5",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426649984685289771",
+    title: "Team Training",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png"
+  },
+  {
+    id: "tt6",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426649426347912491",
+    title: "Ball Handling",
+    category: "drills",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/EHhkFKpZPIRhKBhk.jpeg"
+  },
+  {
+    id: "tt7",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426648763882748203",
+    title: "Footwork Fundamentals",
+    category: "drills",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ycReYGSogWWXZoQk.jpeg"
+  },
+  {
+    id: "tt8",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426648066550359339",
+    title: "Conditioning",
+    category: "conditioning",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/QxrXovSzWgTZmpuQ.jpeg"
+  },
+  {
+    id: "tt9",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426647407243523371",
+    title: "Game Prep",
+    category: "games",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+  },
+  {
+    id: "tt10",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426646709697204523",
+    title: "Youth Development",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png"
+  },
+  {
+    id: "tt11",
+    url: "https://www.tiktok.com/@cspringsacademy/video/7426646007474175275",
+    title: "Academy Life",
+    category: "highlights",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+  },
+];
+
+// Instagram posts and reels
+const instagramVideos = [
+  {
+    id: "ig1",
+    url: "https://www.instagram.com/reel/DDVpkOWRPTc/",
+    title: "Training Session",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png"
+  },
+  {
+    id: "ig2",
+    url: "https://www.instagram.com/reel/DDVpJcMRVgJ/",
+    title: "Skills Work",
+    category: "drills",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png"
+  },
+  {
+    id: "ig3",
+    url: "https://www.instagram.com/reel/DDVo1qMR_Xv/",
+    title: "Practice Highlights",
+    category: "highlights",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png"
+  },
+  {
+    id: "ig4",
+    url: "https://www.instagram.com/p/DDVoqVqxWXC/",
+    title: "Team Photo",
+    category: "highlights",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png"
+  },
+  {
+    id: "ig5",
+    url: "https://www.instagram.com/p/DDVoZYJx3Vy/",
+    title: "Camp Moments",
+    category: "highlights",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+  },
+  {
+    id: "ig6",
+    url: "https://www.instagram.com/p/DDVoH-Yx_Wk/",
+    title: "Shooting Form",
+    category: "training",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png"
+  },
+  {
+    id: "ig7",
+    url: "https://www.instagram.com/p/DDVn4rnRgvH/",
+    title: "Dribble Moves",
+    category: "drills",
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png"
+  },
+];
+
+const categories = [
+  { value: "all", label: "All Videos" },
+  { value: "training", label: "Training" },
+  { value: "drills", label: "Drills" },
+  { value: "highlights", label: "Highlights" },
+  { value: "conditioning", label: "Conditioning" },
+  { value: "games", label: "Games" },
+];
+
+const allVideos = [
+  ...tiktokVideos.map(v => ({ ...v, platform: "tiktok" as const })),
+  ...instagramVideos.map(v => ({ ...v, platform: "instagram" as const })),
+];
+
 export default function Videos() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<any>(null);
-  
-  const { data: videos, isLoading } = trpc.videos.list.useQuery();
-  
-  const categories = [
-    { id: "all", label: "All Videos", value: null },
-    { id: "drills", label: "Drills", value: "drills" },
-    { id: "technique", label: "Technique", value: "technique" },
-    { id: "conditioning", label: "Conditioning", value: "conditioning" },
-    { id: "games", label: "Game Footage", value: "games" },
-  ];
-  
-  const filteredVideos = selectedCategory
-    ? videos?.filter((v: any) => v.category === selectedCategory)
-    : videos;
-  
-  // Extract video ID from YouTube or Vimeo URL
-  const getEmbedUrl = (url: string) => {
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-      const videoId = url.includes("youtu.be") 
-        ? url.split("/").pop()?.split("?")[0]
-        : new URL(url).searchParams.get("v");
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    if (url.includes("vimeo.com")) {
-      const videoId = url.split("/").pop();
-      return `https://player.vimeo.com/video/${videoId}`;
-    }
-    return url;
-  };
-  
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const filteredVideos = selectedCategory === "all"
+    ? allVideos
+    : allVideos.filter(v => v.category === selectedCategory);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
-      <main id="main-content" className="pt-24 pb-20">
-        <div className="container px-6">
+      <main id="main-content" className="flex-1">
+        <div className="container pt-6">
           <Breadcrumbs items={[{ label: "Videos" }]} />
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
-            <h1 className="text-5xl md:text-6xl font-black mb-6">
-              <span className="bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
-                Video Library
-              </span>
+        </div>
+
+        {/* Hero Section */}
+        <section className="bg-gradient-to-b from-primary/10 to-background py-16">
+          <div className="container">
+            <h1 className="text-4xl md:text-5xl font-bold text-center mb-4">
+              Video Library
             </h1>
-            <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-              Watch training demonstrations, technique tutorials, and game footage to improve your skills
+            <p className="text-xl text-center text-muted-foreground max-w-2xl mx-auto">
+              Watch training clips, drills, and highlights from The Academy
             </p>
-          </motion.div>
-          
-          {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-3 mb-12">
-            {categories.map((cat) => (
-              <Button
-                key={cat.id}
-                variant={selectedCategory === cat.value ? "default" : "outline"}
-                onClick={() => setSelectedCategory(cat.value)}
-                className={selectedCategory === cat.value ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-black font-bold" : ""}
+            <div className="flex justify-center gap-4 mt-6">
+              <a
+                href="https://www.tiktok.com/@cspringsacademy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
               >
-                {cat.label}
-              </Button>
-            ))}
-          </div>
-          
-          {/* Videos Grid */}
-          {isLoading ? (
-            <div className="text-center py-20">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-amber-500 border-t-transparent"></div>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                </svg>
+                Follow on TikTok
+              </a>
+              <a
+                href="https://www.instagram.com/cspringsacademy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                Follow on Instagram
+              </a>
             </div>
-          ) : filteredVideos && filteredVideos.length > 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-            >
-              {filteredVideos.map((video: any) => (
-                <motion.div
-                  key={video.id}
-                  id={`video-${video.id}`}
-                  whileHover={{ scale: 1.03 }}
-                  className="cursor-pointer scroll-mt-24"
-                  onClick={() => setSelectedVideo(video)}
+          </div>
+        </section>
+
+        {/* Category Filter */}
+        <section className="py-8 border-b">
+          <div className="container">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {categories.map((category) => (
+                <Button
+                  key={category.value}
+                  variant={selectedCategory === category.value ? "default" : "outline"}
+                  onClick={() => setSelectedCategory(category.value)}
+                  className="min-w-[100px]"
                 >
-                  <Card className="overflow-hidden hover:shadow-2xl transition-shadow duration-300">
-                    <div className="relative aspect-video bg-neutral-900">
-                      {video.thumbnailUrl ? (
-                        <img
-                          src={video.thumbnailUrl}
-                          alt={video.title || `Video: ${video.category}`}
-                          loading="lazy"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Play className="w-16 h-16 text-amber-500" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                        <Play className="w-16 h-16 text-white" />
+                  {category.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Video Grid */}
+        <section className="py-12">
+          <div className="container">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredVideos.map((video) => (
+                <a
+                  key={video.id}
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative overflow-hidden rounded-xl bg-muted shadow-md hover:shadow-xl transition-all duration-300 block"
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-gray-900">
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      loading="lazy"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
                       </div>
                     </div>
-                    <CardContent className="p-6">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xs font-semibold px-2 py-1 rounded bg-amber-100 text-amber-800">
-                          {video.category}
-                        </span>
-                        <span className="text-xs text-neutral-500 flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {video.viewCount || 0}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-lg mb-2 line-clamp-2">{video.title}</h3>
-                      {video.description && (
-                        <p className="text-sm text-neutral-600 line-clamp-2">{video.description}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                        video.platform === "tiktok" 
+                          ? "bg-black text-white" 
+                          : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                      }`}>
+                        {video.platform === "tiktok" ? "TikTok" : "Instagram"}
+                      </span>
+                      <span className="text-xs text-white/70 capitalize">{video.category}</span>
+                    </div>
+                    <h3 className="font-semibold text-white text-sm flex items-center gap-1">
+                      {video.title}
+                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </h3>
+                  </div>
+                </a>
               ))}
-            </motion.div>
-          ) : (
-            <div className="text-center py-20">
-              <div className="max-w-md mx-auto">
-                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-neutral-100 flex items-center justify-center">
-                  <Play className="w-12 h-12 text-neutral-400" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2 text-neutral-900">No videos available yet</h3>
-                <p className="text-neutral-500 mb-6">
-                  We're working on adding training videos and highlights. Check back soon!
-                </p>
-                <Link href="/programs">
-                  <Button variant="outline">Explore Programs</Button>
-                </Link>
-              </div>
             </div>
-          )}
-        </div>
+
+            {filteredVideos.length === 0 && (
+              <div className="text-center py-16">
+                <Play className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No videos in this category yet.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-16 bg-primary/5">
+          <div className="container text-center">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              Want to see more?
+            </h2>
+            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+              Follow us on social media for daily training content, tips, and updates
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <a
+                href="https://www.tiktok.com/@cspringsacademy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+                </svg>
+                TikTok
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/cspringsacademy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                Instagram
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
-      
-      {/* Video Player Dialog */}
-      <Dialog open={!!selectedVideo} onOpenChange={() => setSelectedVideo(null)}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>{selectedVideo?.title}</DialogTitle>
-          </DialogHeader>
-          {selectedVideo && (
-            <div>
-              <div className="aspect-video bg-black rounded-lg overflow-hidden mb-4">
-                <iframe
-                  src={getEmbedUrl(selectedVideo.videoUrl)}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              {selectedVideo.description && (
-                <p className="text-neutral-700">{selectedVideo.description}</p>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-      
+
       <Footer />
     </div>
   );
