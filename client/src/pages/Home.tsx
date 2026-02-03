@@ -8,7 +8,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
 // Program Finder filter options
-const sportOptions = ["Any Sport", "Basketball", "Football", "Soccer"] as const;
+const sportOptions = ["Any Sport", "Basketball", "Flag Football", "Football", "Soccer"] as const;
 const goalOptions = ["Any Goal", "Speed & Agility (SAQ)", "Skills Development", "Strength & Conditioning", "Confidence Building"] as const;
 const formatOptions = ["Any Format", "Private (1-on-1)", "Small Group", "Shooting Lab"] as const;
 
@@ -347,9 +347,9 @@ export default function Home() {
               
               {/* Stat 3 */}
               <motion.div variants={fadeInUp} className="text-center px-8 md:px-12">
-                <p className="text-4xl md:text-5xl font-black text-foreground mb-1 tabular-nums">3</p>
+                <p className="text-4xl md:text-5xl font-black text-foreground mb-1 tabular-nums">4</p>
                 <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">Sports Supported</p>
-                <p className="text-muted-foreground/50 text-[11px] mt-1">Basketball, football, soccer</p>
+                <p className="text-muted-foreground/50 text-[11px] mt-1">Basketball, flag football, football, soccer</p>
               </motion.div>
             </motion.div>
           </div>
