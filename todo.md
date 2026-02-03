@@ -449,3 +449,7 @@
 
 ## Sports Update
 - [x] Add Flag Football to sports list throughout the site
+
+## Gallery Photo Upload
+- [x] Upload 7 training photos to S3
+- [x] Add photos to gallery page

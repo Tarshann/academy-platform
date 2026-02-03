@@ -1,0 +1,18 @@
+{
+  "query": "SHOW COLUMNS FROM galleryPhotos WHERE Field = 'category';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute SHOW COLUMNS FROM galleryPhotos WHERE Field = 'category';",
+  "rows": [
+    {
+      "Field": "category",
+      "Type": "enum('training','teams','events','facilities','other')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "other",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\ncategory\tenum('training','teams','events','facilities','other')\tNO\t\tother\t\n",
+  "stderr": "",
+  "execution_time_ms": 60
+}

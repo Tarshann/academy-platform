@@ -77,6 +77,55 @@ const galleryPhotos = [
     category: "training",
     description: "Working on crossover and ball control"
   },
+  {
+    id: 11,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/OXGVMbmpOnjLcxFC.jpeg",
+    title: "Dribbling Drill Training",
+    category: "training",
+    description: "Athletes working on ball handling with cone drills"
+  },
+  {
+    id: 12,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/byeDlUFApdDtuMZV.jpeg",
+    title: "Coach Leading Group Session",
+    category: "training",
+    description: "Coach Mac instructing youth athletes during group training"
+  },
+  {
+    id: 13,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/nlIpkFwbWbxRGafH.jpeg",
+    title: "Shooting Form Practice",
+    category: "training",
+    description: "Young athlete working on proper shooting technique"
+  },
+  {
+    id: 14,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/gztSZBHhURZbqUWj.jpeg",
+    title: "Conditioning Pushups",
+    category: "training",
+    description: "Athletes building strength with conditioning exercises"
+  },
+  {
+    id: 15,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/chBQYdtyOInJapIK.jpeg",
+    title: "Girls Shooting Practice",
+    category: "training",
+    description: "Female athletes practicing shooting at the basket"
+  },
+  {
+    id: 16,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WIGbipbOvWrdjWER.jpeg",
+    title: "Layup Training",
+    category: "highlights",
+    description: "Athlete executing a layup during training session"
+  },
+  {
+    id: 17,
+    url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/JPMGTbiynWZNnTCz.jpeg",
+    title: "Game Action Shot",
+    category: "highlights",
+    description: "Athlete finishing at the rim during competitive play"
+  },
 ];
 
 const categories = [
