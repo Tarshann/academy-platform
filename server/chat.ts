@@ -93,6 +93,36 @@ export function setupChat(httpServer: HTTPServer) {
       socket.to(room).emit("user_joined", { userName });
     });
 
+    // Handle get room history request
+    socket.on("get_room_history", async ({ room }) => {
+      if (typeof room !== "string" || room.trim().length === 0) {
+        socket.emit("error", { message: "Invalid room" });
+        return;
+      }
+      const user = socket.data.user;
+      if (!user) {
+        socket.emit("error", { message: "Unauthorized" });
+        return;
+      }
+
+      try {
+        const db = await getDb();
+        if (db) {
+          const { eq } = await import("drizzle-orm");
+          const recentMessages = await db
+            .select()
+            .from(chatMessages)
+            .where(eq(chatMessages.room, room))
+            .orderBy(desc(chatMessages.createdAt))
+            .limit(50);
+
+          socket.emit("message_history", recentMessages.reverse());
+        }
+      } catch (error) {
+        logger.error("[Chat] Error loading room history:", error);
+      }
+    });
+
     // Handle new messages
     socket.on("send_message", async ({ room, message }) => {
       if (typeof room !== "string" || room.trim().length === 0) {

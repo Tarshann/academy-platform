@@ -367,3 +367,35 @@
 - [x] Check Socket.IO server configuration
 - [x] Fix chat functionality (enabled Socket.IO by default)
 - [ ] Test chat messaging after publish
+
+
+## Messaging Platform Enhancement
+### Direct Messaging
+- [ ] Create DM database schema (conversations, messages, participants)
+- [ ] Implement role-based DM restrictions (coaches can DM parents, etc.)
+- [ ] Add read receipts for DMs
+- [ ] Implement block/mute functionality
+- [ ] Add message search functionality
+- [ ] Build DM UI with conversation list and chat view
+
+### Push Notifications
+- [ ] Set up Web Push API with VAPID keys
+- [ ] Create notification preferences database schema
+- [ ] Implement opt-in subscription flow
+- [ ] Add notification triggers (DM, channel message, @mentions, announcements)
+- [ ] Build notification customization settings UI
+- [ ] Implement email fallback for users without push enabled
+
+### Skill Creation
+- [ ] Create messaging-platform skill with full documentation
+- [ ] Include setup instructions and code templates
+- [ ] Document role-based permissions system
+
+
+## Bug Fixes (Reported by User)
+- [x] Fix location creation database error (insert query failing) - Created missing locations table
+- [x] Fix chat messaging functionality (messages not sending) - Confirmed working
+- [x] Update Academy Group Membership to include Shooting Lab
+- [x] Fix Summer Camp pricing ($185 total, $20 deposit, $165 due after)
+- [x] Chat functionality confirmed working
+- [x] Rename Academy League to Academy Offseason with summer tournament description

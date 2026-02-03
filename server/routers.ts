@@ -1387,6 +1387,296 @@ export const appRouter = router({
       }),
   }),
 
+  // Direct Messaging routes
+  dm: router({
+    // Get all conversations for current user
+    getConversations: protectedProcedure.query(async ({ ctx }) => {
+      const { getUserConversations } = await import("./db");
+      return await getUserConversations(ctx.user.id);
+    }),
+
+    // Get messages for a conversation
+    getMessages: protectedProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          limit: z.number().optional().default(50),
+          before: z.number().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const { getConversationMessages, getUserConversations } = await import("./db");
+        // Verify user is participant
+        const conversations = await getUserConversations(ctx.user.id);
+        const isParticipant = conversations.some(
+          (c: any) => c.id === input.conversationId
+        );
+        if (!isParticipant) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Not a participant" });
+        }
+        return await getConversationMessages(
+          input.conversationId,
+          input.limit,
+          input.before
+        );
+      }),
+
+    // Start or get existing conversation with a user
+    startConversation: protectedProcedure
+      .input(z.object({ recipientId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { getOrCreateConversation, canUserDm } = await import("./db");
+        
+        // Check if user can DM recipient
+        const canDm = await canUserDm(ctx.user.id, input.recipientId);
+        if (!canDm) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You cannot message this user",
+          });
+        }
+
+        const conversation = await getOrCreateConversation(
+          ctx.user.id,
+          input.recipientId
+        );
+        return conversation;
+      }),
+
+    // Send a message
+    sendMessage: protectedProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          content: z.string().min(1).max(5000),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { sendDmMessage, getUserConversations } = await import("./db");
+        
+        // Verify user is participant
+        const conversations = await getUserConversations(ctx.user.id);
+        const isParticipant = conversations.some(
+          (c: any) => c.id === input.conversationId
+        );
+        if (!isParticipant) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Not a participant" });
+        }
+
+        const message = await sendDmMessage(
+          input.conversationId,
+          ctx.user.id,
+          ctx.user.name || "Unknown",
+          input.content
+        );
+        return message;
+      }),
+
+    // Mark conversation as read
+    markAsRead: protectedProcedure
+      .input(z.object({ conversationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { markConversationAsRead } = await import("./db");
+        await markConversationAsRead(input.conversationId, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Get users available for DM
+    getAvailableUsers: protectedProcedure.query(async ({ ctx }) => {
+      const { getAvailableDmUsers } = await import("./db");
+      return await getAvailableDmUsers(ctx.user.id);
+    }),
+
+    // Search messages
+    searchMessages: protectedProcedure
+      .input(z.object({ query: z.string().min(1) }))
+      .query(async ({ ctx, input }) => {
+        const { searchDmMessages } = await import("./db");
+        return await searchDmMessages(ctx.user.id, input.query);
+      }),
+
+    // Block a user
+    blockUser: protectedProcedure
+      .input(z.object({ userId: z.number(), reason: z.string().optional() }))
+      .mutation(async ({ ctx, input }) => {
+        const { blockUser } = await import("./db");
+        await blockUser(ctx.user.id, input.userId, input.reason);
+        return { success: true };
+      }),
+
+    // Unblock a user
+    unblockUser: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { unblockUser } = await import("./db");
+        await unblockUser(ctx.user.id, input.userId);
+        return { success: true };
+      }),
+
+    // Get blocked users
+    getBlockedUsers: protectedProcedure.query(async ({ ctx }) => {
+      const { getBlockedUsers } = await import("./db");
+      return await getBlockedUsers(ctx.user.id);
+    }),
+
+    // Mute a conversation
+    muteConversation: protectedProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          until: z.date().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { muteConversation } = await import("./db");
+        await muteConversation(input.conversationId, ctx.user.id, input.until);
+        return { success: true };
+      }),
+
+    // Unmute a conversation
+    unmuteConversation: protectedProcedure
+      .input(z.object({ conversationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { unmuteConversation } = await import("./db");
+        await unmuteConversation(input.conversationId, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Archive a conversation
+    archiveConversation: protectedProcedure
+      .input(z.object({ conversationId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const { archiveConversation } = await import("./db");
+        await archiveConversation(input.conversationId, ctx.user.id);
+        return { success: true };
+      }),
+
+    // Get user's messaging role
+    getMyRole: protectedProcedure.query(async ({ ctx }) => {
+      const { getOrCreateUserMessagingRole } = await import("./db");
+      return await getOrCreateUserMessagingRole(ctx.user.id);
+    }),
+  }),
+
+  // Admin DM management
+  dmAdmin: router({
+    // Set user's messaging role
+    setUserRole: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          messagingRole: z.enum(["parent", "athlete", "coach", "staff", "admin"]),
+          canDmCoaches: z.boolean().optional(),
+          canDmParents: z.boolean().optional(),
+          canDmAthletes: z.boolean().optional(),
+          canBroadcast: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { updateUserMessagingRole } = await import("./db");
+        const { userId, ...updates } = input;
+        await updateUserMessagingRole(userId, updates);
+        return { success: true };
+      }),
+
+    // Get all users with their messaging roles
+    getUsersWithRoles: adminProcedure.query(async () => {
+      const { getDb } = await import("./db");
+      const db = await getDb();
+      if (!db) return [];
+      
+      const { users, userMessagingRoles } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      
+      const allUsers = await db.select().from(users);
+      const result = [];
+      
+      for (const user of allUsers) {
+        const role = await db
+          .select()
+          .from(userMessagingRoles)
+          .where(eq(userMessagingRoles.userId, user.id))
+          .limit(1);
+        
+        result.push({
+          ...user,
+          messagingRole: role[0] || null,
+        });
+      }
+      
+      return result;
+    }),
+  }),
+
+  // Push notification routes
+  pushNotifications: router({
+    // Get notification settings
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const { getOrCreateNotificationSettings } = await import("./db");
+      return await getOrCreateNotificationSettings(ctx.user.id);
+    }),
+
+    // Update notification settings
+    updateSettings: protectedProcedure
+      .input(
+        z.object({
+          pushEnabled: z.boolean().optional(),
+          emailFallback: z.boolean().optional(),
+          dmNotifications: z.boolean().optional(),
+          channelNotifications: z.boolean().optional(),
+          mentionNotifications: z.boolean().optional(),
+          announcementNotifications: z.boolean().optional(),
+          quietHoursEnabled: z.boolean().optional(),
+          quietHoursStart: z.string().optional(),
+          quietHoursEnd: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { updateNotificationSettings } = await import("./db");
+        await updateNotificationSettings(ctx.user.id, input);
+        return { success: true };
+      }),
+
+    // Subscribe to push notifications
+    subscribe: protectedProcedure
+      .input(
+        z.object({
+          endpoint: z.string(),
+          p256dh: z.string(),
+          auth: z.string(),
+          userAgent: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { savePushSubscription, updateNotificationSettings } = await import("./db");
+        await savePushSubscription(
+          ctx.user.id,
+          input.endpoint,
+          input.p256dh,
+          input.auth,
+          input.userAgent
+        );
+        // Enable push notifications
+        await updateNotificationSettings(ctx.user.id, { pushEnabled: true });
+        return { success: true };
+      }),
+
+    // Unsubscribe from push notifications
+    unsubscribe: protectedProcedure
+      .input(z.object({ endpoint: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const { removePushSubscription } = await import("./db");
+        await removePushSubscription(ctx.user.id, input.endpoint);
+        return { success: true };
+      }),
+
+    // Get VAPID public key for push subscription
+    getVapidPublicKey: publicProcedure.query(async () => {
+      // Return the VAPID public key from environment
+      return { publicKey: ENV.vapidPublicKey || null };
+    }),
+  }),
+
   // Blog routes (public)
   blog: router({
     list: publicProcedure

@@ -21,7 +21,7 @@ export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
   'academy-group-membership': {
     id: 'academy-group-membership',
     name: 'Academy Group Membership',
-    description: 'Unlimited access to group sessions throughout the month. Perfect for dedicated players.',
+    description: 'Unlimited access to group sessions and Shooting Lab throughout the month. Perfect for dedicated players.',
     priceInCents: 15000, // $150.00
     currency: 'usd',
     type: 'recurring',
@@ -90,8 +90,8 @@ export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
   'summer-basketball-camp': {
     id: 'summer-basketball-camp',
     name: 'Summer Basketball Camp',
-    description: 'Intensive multi-day basketball camp with skill development, competition, and team building. Includes $20 registration fee.',
-    priceInCents: 18500,
+    description: 'Intensive week-long basketball camp with skill development, competition, and team building. $20 deposit, $165 due after deposit.',
+    priceInCents: 18500, // $185.00 total
     currency: 'usd',
     type: 'one_time',
     category: 'camp',

@@ -300,8 +300,8 @@ export default function Programs() {
                     skill work, games, and competition.
                   </p>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$200 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
-                    <p className="text-sm text-muted-foreground mb-4">$20 deposit (included in total) • $180 due after deposit</p>
+                    <p className="text-2xl font-bold text-primary mb-2">$185 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
+                    <p className="text-sm text-muted-foreground mb-4">$20 deposit (included in total) • $165 due after deposit</p>
                     <Link href="/signup">
                       <Button className="w-full">Register Now</Button>
                     </Link>
@@ -309,15 +309,15 @@ export default function Programs() {
                 </CardContent>
               </Card>
 
-              <Card id="program-academy-league" className="bg-card border-border scroll-mt-24">
+              <Card id="program-academy-offseason" className="bg-card border-border scroll-mt-24">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Academy League</CardTitle>
-                  <CardDescription className="text-muted-foreground">Youth athletes • Competitive league play</CardDescription>
+                  <CardTitle className="text-foreground">Academy Offseason</CardTitle>
+                  <CardDescription className="text-muted-foreground">Youth athletes • Summer tournament preparation</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Join our competitive league representing The Academy in organized games and tournaments. 
-                    Includes coaching, game management, and competitive development opportunities.
+                    Join summer tournaments representing The Academy! Includes practices and SAQ training 
+                    to prepare athletes for the upcoming season. Build team chemistry and competitive experience.
                   </p>
                   <div className="border-t border-border pt-4 mt-4">
                     <p className="text-lg text-muted-foreground mb-4">Contact us for availability and pricing</p>

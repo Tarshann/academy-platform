@@ -553,3 +553,174 @@ export const privateSessionBookings = mysqlTable("privateSessionBookings", {
 
 export type PrivateSessionBooking = typeof privateSessionBookings.$inferSelect;
 export type InsertPrivateSessionBooking = typeof privateSessionBookings.$inferInsert;
+
+
+// ============================================================================
+// DIRECT MESSAGING TABLES
+// ============================================================================
+
+/**
+ * DM Conversations table
+ * Represents a direct message thread between users
+ */
+export const dmConversations = mysqlTable("dmConversations", {
+  id: int("id").primaryKey().autoincrement(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  lastMessageAt: timestamp("lastMessageAt"),
+});
+
+export type DmConversation = typeof dmConversations.$inferSelect;
+export type InsertDmConversation = typeof dmConversations.$inferInsert;
+
+/**
+ * DM Participants table
+ * Links users to conversations with their settings
+ */
+export const dmParticipants = mysqlTable("dmParticipants", {
+  id: int("id").primaryKey().autoincrement(),
+  conversationId: int("conversationId").notNull(),
+  userId: int("userId").notNull(),
+  lastReadAt: timestamp("lastReadAt"),
+  isMuted: boolean("isMuted").notNull().default(false),
+  mutedUntil: timestamp("mutedUntil"),
+  isArchived: boolean("isArchived").notNull().default(false),
+  joinedAt: timestamp("joinedAt").defaultNow().notNull(),
+});
+
+export type DmParticipant = typeof dmParticipants.$inferSelect;
+export type InsertDmParticipant = typeof dmParticipants.$inferInsert;
+
+/**
+ * DM Messages table
+ * Individual messages within a conversation
+ */
+export const dmMessages = mysqlTable("dmMessages", {
+  id: int("id").primaryKey().autoincrement(),
+  conversationId: int("conversationId").notNull(),
+  senderId: int("senderId").notNull(),
+  senderName: varchar("senderName", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  isEdited: boolean("isEdited").notNull().default(false),
+  isDeleted: boolean("isDeleted").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type DmMessage = typeof dmMessages.$inferSelect;
+export type InsertDmMessage = typeof dmMessages.$inferInsert;
+
+/**
+ * DM Read Receipts table
+ * Tracks when users read specific messages
+ */
+export const dmReadReceipts = mysqlTable("dmReadReceipts", {
+  id: int("id").primaryKey().autoincrement(),
+  messageId: int("messageId").notNull(),
+  userId: int("userId").notNull(),
+  readAt: timestamp("readAt").defaultNow().notNull(),
+});
+
+export type DmReadReceipt = typeof dmReadReceipts.$inferSelect;
+export type InsertDmReadReceipt = typeof dmReadReceipts.$inferInsert;
+
+/**
+ * User Blocks table
+ * Tracks blocked users for DM purposes
+ */
+export const userBlocks = mysqlTable("userBlocks", {
+  id: int("id").primaryKey().autoincrement(),
+  blockerId: int("blockerId").notNull(),
+  blockedId: int("blockedId").notNull(),
+  reason: text("reason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserBlock = typeof userBlocks.$inferSelect;
+export type InsertUserBlock = typeof userBlocks.$inferInsert;
+
+/**
+ * User Roles Extended table
+ * Extended roles for messaging permissions (parent, athlete, coach, staff)
+ */
+export const userMessagingRoles = mysqlTable("userMessagingRoles", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull().unique(),
+  messagingRole: mysqlEnum("messagingRole", ["parent", "athlete", "coach", "staff", "admin"]).notNull().default("parent"),
+  canDmCoaches: boolean("canDmCoaches").notNull().default(true),
+  canDmParents: boolean("canDmParents").notNull().default(false),
+  canDmAthletes: boolean("canDmAthletes").notNull().default(false),
+  canBroadcast: boolean("canBroadcast").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type UserMessagingRole = typeof userMessagingRoles.$inferSelect;
+export type InsertUserMessagingRole = typeof userMessagingRoles.$inferInsert;
+
+// ============================================================================
+// PUSH NOTIFICATIONS TABLES
+// ============================================================================
+
+/**
+ * Push Subscriptions table
+ * Stores Web Push API subscriptions for users
+ */
+export const pushSubscriptions = mysqlTable("pushSubscriptions", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: varchar("p256dh", { length: 255 }).notNull(),
+  auth: varchar("auth", { length: 255 }).notNull(),
+  userAgent: text("userAgent"),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+/**
+ * Notification Settings table
+ * User preferences for push and email notifications
+ */
+export const notificationSettings = mysqlTable("notificationSettings", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull().unique(),
+  pushEnabled: boolean("pushEnabled").notNull().default(false),
+  emailFallback: boolean("emailFallback").notNull().default(true),
+  dmNotifications: boolean("dmNotifications").notNull().default(true),
+  channelNotifications: boolean("channelNotifications").notNull().default(true),
+  mentionNotifications: boolean("mentionNotifications").notNull().default(true),
+  announcementNotifications: boolean("announcementNotifications").notNull().default(true),
+  quietHoursEnabled: boolean("quietHoursEnabled").notNull().default(false),
+  quietHoursStart: varchar("quietHoursStart", { length: 5 }),
+  quietHoursEnd: varchar("quietHoursEnd", { length: 5 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type NotificationSetting = typeof notificationSettings.$inferSelect;
+export type InsertNotificationSetting = typeof notificationSettings.$inferInsert;
+
+/**
+ * Notification Log table
+ * Tracks sent notifications for debugging and analytics
+ */
+export const notificationLogs = mysqlTable("notificationLogs", {
+  id: int("id").primaryKey().autoincrement(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("notificationType", ["push", "email"]).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  body: text("body"),
+  data: text("data"),
+  status: mysqlEnum("notificationStatus", ["pending", "sent", "failed", "clicked"]).notNull().default("pending"),
+  sentAt: timestamp("sentAt"),
+  clickedAt: timestamp("clickedAt"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type NotificationLog = typeof notificationLogs.$inferSelect;
+export type InsertNotificationLog = typeof notificationLogs.$inferInsert;

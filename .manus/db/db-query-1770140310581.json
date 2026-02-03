@@ -1,0 +1,109 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "announcements"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "attendance"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "blogPosts"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "campaignProducts"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "campaigns"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "chatMessages"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "contactSubmissions"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "dmConversations"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "dmMessages"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "dmParticipants"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "dmReadReceipts"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "galleryPhotos"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "notificationLogs"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "notificationSettings"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "orderItems"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "orders"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "payments"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "productVariants"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "products"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "programs"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "pushSubscriptions"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "schedules"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "sessionRegistrations"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "stripeWebhookEvents"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "subscriptions"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "trainerAvailability"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "trainers"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "trainingBookings"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "userBlocks"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "userMessagingRoles"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "users"
+    },
+    {
+      "Tables_in_bbHXx7a7VbAs5icaZpy3GL": "videos"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_bbHXx7a7VbAs5icaZpy3GL\n__drizzle_migrations\nannouncements\nattendance\nblogPosts\ncampaignProducts\ncampaigns\nchatMessages\ncontactSubmissions\ndmConversations\ndmMessages\ndmParticipants\ndmReadReceipts\ngalleryPhotos\nnotificationLogs\nnotificationSettings\norderItems\norders\npayments\nproductVariants\nproducts\nprograms\npushSubscriptions\nschedules\nsessionRegistrations\nstripeWebhookEvents\nsubscriptions\ntrainerAvailability\ntrainers\ntrainingBookings\nuserBlocks\nuserMessagingRoles\nusers\nvideos\n",
+  "stderr": "",
+  "execution_time_ms": 116
+}

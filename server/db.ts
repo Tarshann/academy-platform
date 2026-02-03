@@ -1217,3 +1217,736 @@ export async function getParentsForChild(childId: number) {
 
   return await db.select().from(users).where(inArray(users.id, parentIds));
 }
+
+
+// ============================================================================
+// DIRECT MESSAGING FUNCTIONS
+// ============================================================================
+
+import {
+  dmConversations,
+  dmParticipants,
+  dmMessages,
+  dmReadReceipts,
+  userBlocks,
+  userMessagingRoles,
+  pushSubscriptions,
+  notificationSettings,
+  notificationLogs,
+  type InsertDmConversation,
+  type InsertDmParticipant,
+  type InsertDmMessage,
+  type InsertDmReadReceipt,
+  type InsertUserBlock,
+  type InsertUserMessagingRole,
+  type InsertPushSubscription,
+  type InsertNotificationSetting,
+  type InsertNotificationLog,
+} from "../drizzle/schema";
+
+// Get or create a conversation between two users
+export async function getOrCreateConversation(userId1: number, userId2: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Find existing conversation between these two users
+  const existingParticipants = await db
+    .select()
+    .from(dmParticipants)
+    .where(eq(dmParticipants.userId, userId1));
+
+  for (const p1 of existingParticipants) {
+    const otherParticipant = await db
+      .select()
+      .from(dmParticipants)
+      .where(
+        and(
+          eq(dmParticipants.conversationId, p1.conversationId),
+          eq(dmParticipants.userId, userId2)
+        )
+      )
+      .limit(1);
+
+    if (otherParticipant.length > 0) {
+      // Found existing conversation
+      const conversation = await db
+        .select()
+        .from(dmConversations)
+        .where(eq(dmConversations.id, p1.conversationId))
+        .limit(1);
+      return conversation[0];
+    }
+  }
+
+  // Create new conversation
+  const result = await db.insert(dmConversations).values({});
+  const conversationId = result[0].insertId;
+
+  // Add both participants
+  await db.insert(dmParticipants).values([
+    { conversationId, userId: userId1 },
+    { conversationId, userId: userId2 },
+  ]);
+
+  const newConversation = await db
+    .select()
+    .from(dmConversations)
+    .where(eq(dmConversations.id, conversationId))
+    .limit(1);
+
+  return newConversation[0];
+}
+
+// Get all conversations for a user
+export async function getUserConversations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const participations = await db
+    .select()
+    .from(dmParticipants)
+    .where(
+      and(
+        eq(dmParticipants.userId, userId),
+        eq(dmParticipants.isArchived, false)
+      )
+    );
+
+  const conversations = [];
+  for (const p of participations) {
+    const conversation = await db
+      .select()
+      .from(dmConversations)
+      .where(eq(dmConversations.id, p.conversationId))
+      .limit(1);
+
+    if (conversation.length > 0) {
+      // Get other participant
+      const otherParticipant = await db
+        .select()
+        .from(dmParticipants)
+        .where(
+          and(
+            eq(dmParticipants.conversationId, p.conversationId),
+            sql`${dmParticipants.userId} != ${userId}`
+          )
+        )
+        .limit(1);
+
+      // Get last message
+      const lastMessage = await db
+        .select()
+        .from(dmMessages)
+        .where(eq(dmMessages.conversationId, p.conversationId))
+        .orderBy(desc(dmMessages.createdAt))
+        .limit(1);
+
+      // Get unread count
+      const unreadMessages = await db
+        .select()
+        .from(dmMessages)
+        .where(
+          and(
+            eq(dmMessages.conversationId, p.conversationId),
+            sql`${dmMessages.senderId} != ${userId}`,
+            p.lastReadAt
+              ? sql`${dmMessages.createdAt} > ${p.lastReadAt}`
+              : sql`1=1`
+          )
+        );
+
+      let otherUser = null;
+      if (otherParticipant.length > 0) {
+        otherUser = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, otherParticipant[0].userId))
+          .limit(1);
+      }
+
+      conversations.push({
+        ...conversation[0],
+        participant: p,
+        otherUser: otherUser?.[0] || null,
+        lastMessage: lastMessage[0] || null,
+        unreadCount: unreadMessages.length,
+      });
+    }
+  }
+
+  // Sort by last message time
+  conversations.sort((a, b) => {
+    const aTime = a.lastMessage?.createdAt?.getTime() || 0;
+    const bTime = b.lastMessage?.createdAt?.getTime() || 0;
+    return bTime - aTime;
+  });
+
+  return conversations;
+}
+
+// Get messages for a conversation
+export async function getConversationMessages(
+  conversationId: number,
+  limit = 50,
+  before?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = [eq(dmMessages.conversationId, conversationId)];
+  if (before) {
+    conditions.push(sql`${dmMessages.id} < ${before}`);
+  }
+
+  return await db
+    .select()
+    .from(dmMessages)
+    .where(and(...conditions))
+    .orderBy(desc(dmMessages.createdAt))
+    .limit(limit);
+}
+
+// Send a DM
+export async function sendDmMessage(
+  conversationId: number,
+  senderId: number,
+  senderName: string,
+  content: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(dmMessages).values({
+    conversationId,
+    senderId,
+    senderName,
+    content,
+  });
+
+  // Update conversation lastMessageAt
+  await db
+    .update(dmConversations)
+    .set({ lastMessageAt: new Date(), updatedAt: new Date() })
+    .where(eq(dmConversations.id, conversationId));
+
+  const insertId = result[0].insertId;
+  const message = await db
+    .select()
+    .from(dmMessages)
+    .where(eq(dmMessages.id, insertId))
+    .limit(1);
+
+  return message[0];
+}
+
+// Mark messages as read
+export async function markConversationAsRead(
+  conversationId: number,
+  userId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(dmParticipants)
+    .set({ lastReadAt: new Date() })
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        eq(dmParticipants.userId, userId)
+      )
+    );
+}
+
+// Check if user can DM another user (role-based)
+export async function canUserDm(senderId: number, recipientId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  // Check if blocked
+  const blocked = await db
+    .select()
+    .from(userBlocks)
+    .where(
+      or(
+        and(
+          eq(userBlocks.blockerId, senderId),
+          eq(userBlocks.blockedId, recipientId)
+        ),
+        and(
+          eq(userBlocks.blockerId, recipientId),
+          eq(userBlocks.blockedId, senderId)
+        )
+      )
+    )
+    .limit(1);
+
+  if (blocked.length > 0) return false;
+
+  // Get sender's messaging role
+  const senderRole = await db
+    .select()
+    .from(userMessagingRoles)
+    .where(eq(userMessagingRoles.userId, senderId))
+    .limit(1);
+
+  // Get recipient's messaging role
+  const recipientRole = await db
+    .select()
+    .from(userMessagingRoles)
+    .where(eq(userMessagingRoles.userId, recipientId))
+    .limit(1);
+
+  // Default permissions if no role set
+  const senderPerms = senderRole[0] || {
+    messagingRole: "parent",
+    canDmCoaches: true,
+    canDmParents: false,
+    canDmAthletes: false,
+  };
+  const recipientPerms = recipientRole[0] || { messagingRole: "parent" };
+
+  // Check permissions based on roles
+  if (
+    senderPerms.messagingRole === "coach" ||
+    senderPerms.messagingRole === "staff" ||
+    senderPerms.messagingRole === "admin"
+  ) {
+    // Coaches/staff/admin can DM anyone
+    return true;
+  }
+
+  if (senderPerms.messagingRole === "parent") {
+    // Parents can DM coaches
+    if (
+      recipientPerms.messagingRole === "coach" ||
+      recipientPerms.messagingRole === "staff" ||
+      recipientPerms.messagingRole === "admin"
+    ) {
+      return senderPerms.canDmCoaches;
+    }
+    // Parents can DM other parents if enabled
+    if (recipientPerms.messagingRole === "parent") {
+      return senderPerms.canDmParents;
+    }
+  }
+
+  if (senderPerms.messagingRole === "athlete") {
+    // Athletes can only DM coaches
+    if (
+      recipientPerms.messagingRole === "coach" ||
+      recipientPerms.messagingRole === "staff" ||
+      recipientPerms.messagingRole === "admin"
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  return false;
+}
+
+// Block a user
+export async function blockUser(blockerId: number, blockedId: number, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if already blocked
+  const existing = await db
+    .select()
+    .from(userBlocks)
+    .where(
+      and(eq(userBlocks.blockerId, blockerId), eq(userBlocks.blockedId, blockedId))
+    )
+    .limit(1);
+
+  if (existing.length > 0) return existing[0].id;
+
+  const result = await db.insert(userBlocks).values({
+    blockerId,
+    blockedId,
+    reason,
+  });
+
+  return result[0].insertId;
+}
+
+// Unblock a user
+export async function unblockUser(blockerId: number, blockedId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .delete(userBlocks)
+    .where(
+      and(eq(userBlocks.blockerId, blockerId), eq(userBlocks.blockedId, blockedId))
+    );
+}
+
+// Get blocked users
+export async function getBlockedUsers(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const blocks = await db
+    .select()
+    .from(userBlocks)
+    .where(eq(userBlocks.blockerId, userId));
+
+  const blockedUserIds = blocks.map((b: any) => b.blockedId);
+  if (blockedUserIds.length === 0) return [];
+
+  return await db.select().from(users).where(inArray(users.id, blockedUserIds));
+}
+
+// Mute a conversation
+export async function muteConversation(
+  conversationId: number,
+  userId: number,
+  until?: Date
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(dmParticipants)
+    .set({ isMuted: true, mutedUntil: until || null })
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        eq(dmParticipants.userId, userId)
+      )
+    );
+}
+
+// Unmute a conversation
+export async function unmuteConversation(conversationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(dmParticipants)
+    .set({ isMuted: false, mutedUntil: null })
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        eq(dmParticipants.userId, userId)
+      )
+    );
+}
+
+// Archive a conversation
+export async function archiveConversation(conversationId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(dmParticipants)
+    .set({ isArchived: true })
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        eq(dmParticipants.userId, userId)
+      )
+    );
+}
+
+// Search messages
+export async function searchDmMessages(userId: number, query: string, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get user's conversations
+  const participations = await db
+    .select()
+    .from(dmParticipants)
+    .where(eq(dmParticipants.userId, userId));
+
+  const conversationIds = participations.map((p: any) => p.conversationId);
+  if (conversationIds.length === 0) return [];
+
+  // Search messages in those conversations
+  return await db
+    .select()
+    .from(dmMessages)
+    .where(
+      and(
+        inArray(dmMessages.conversationId, conversationIds),
+        sql`${dmMessages.content} LIKE ${`%${query}%`}`
+      )
+    )
+    .orderBy(desc(dmMessages.createdAt))
+    .limit(limit);
+}
+
+// Get or create user messaging role
+export async function getOrCreateUserMessagingRole(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await db
+    .select()
+    .from(userMessagingRoles)
+    .where(eq(userMessagingRoles.userId, userId))
+    .limit(1);
+
+  if (existing.length > 0) return existing[0];
+
+  await db.insert(userMessagingRoles).values({ userId });
+
+  const created = await db
+    .select()
+    .from(userMessagingRoles)
+    .where(eq(userMessagingRoles.userId, userId))
+    .limit(1);
+
+  return created[0];
+}
+
+// Update user messaging role
+export async function updateUserMessagingRole(
+  userId: number,
+  updates: Partial<InsertUserMessagingRole>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await getOrCreateUserMessagingRole(userId);
+
+  await db
+    .update(userMessagingRoles)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(userMessagingRoles.userId, userId));
+}
+
+// Get users available for DM (based on role permissions)
+export async function getAvailableDmUsers(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const userRole = await getOrCreateUserMessagingRole(userId);
+
+  // Get all users with their messaging roles
+  const allUsers = await db.select().from(users).where(sql`${users.id} != ${userId}`);
+
+  const availableUsers = [];
+  for (const user of allUsers) {
+    const canDm = await canUserDm(userId, user.id);
+    if (canDm) {
+      const role = await db
+        .select()
+        .from(userMessagingRoles)
+        .where(eq(userMessagingRoles.userId, user.id))
+        .limit(1);
+
+      availableUsers.push({
+        ...user,
+        messagingRole: role[0]?.messagingRole || "parent",
+      });
+    }
+  }
+
+  return availableUsers;
+}
+
+// ============================================================================
+// PUSH NOTIFICATION FUNCTIONS
+// ============================================================================
+
+// Save push subscription
+export async function savePushSubscription(
+  userId: number,
+  endpoint: string,
+  p256dh: string,
+  auth: string,
+  userAgent?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Check if subscription already exists
+  const existing = await db
+    .select()
+    .from(pushSubscriptions)
+    .where(
+      and(
+        eq(pushSubscriptions.userId, userId),
+        sql`${pushSubscriptions.endpoint} = ${endpoint}`
+      )
+    )
+    .limit(1);
+
+  if (existing.length > 0) {
+    await db
+      .update(pushSubscriptions)
+      .set({ p256dh, auth, userAgent, isActive: true, updatedAt: new Date() })
+      .where(eq(pushSubscriptions.id, existing[0].id));
+    return existing[0].id;
+  }
+
+  const result = await db.insert(pushSubscriptions).values({
+    userId,
+    endpoint,
+    p256dh,
+    auth,
+    userAgent,
+  });
+
+  return result[0].insertId;
+}
+
+// Get user's push subscriptions
+export async function getUserPushSubscriptions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(pushSubscriptions)
+    .where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.isActive, true)));
+}
+
+// Remove push subscription
+export async function removePushSubscription(userId: number, endpoint: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(pushSubscriptions)
+    .set({ isActive: false })
+    .where(
+      and(
+        eq(pushSubscriptions.userId, userId),
+        sql`${pushSubscriptions.endpoint} = ${endpoint}`
+      )
+    );
+}
+
+// Get or create notification settings
+export async function getOrCreateNotificationSettings(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await db
+    .select()
+    .from(notificationSettings)
+    .where(eq(notificationSettings.userId, userId))
+    .limit(1);
+
+  if (existing.length > 0) return existing[0];
+
+  await db.insert(notificationSettings).values({ userId });
+
+  const created = await db
+    .select()
+    .from(notificationSettings)
+    .where(eq(notificationSettings.userId, userId))
+    .limit(1);
+
+  return created[0];
+}
+
+// Update notification settings
+export async function updateNotificationSettings(
+  userId: number,
+  updates: Partial<InsertNotificationSetting>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await getOrCreateNotificationSettings(userId);
+
+  await db
+    .update(notificationSettings)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(notificationSettings.userId, userId));
+}
+
+// Log a notification
+export async function logNotification(
+  userId: number,
+  type: "push" | "email",
+  title: string,
+  body?: string,
+  data?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(notificationLogs).values({
+    userId,
+    type,
+    title,
+    body,
+    data,
+  });
+
+  return result[0].insertId;
+}
+
+// Update notification log status
+export async function updateNotificationLogStatus(
+  id: number,
+  status: "pending" | "sent" | "failed" | "clicked",
+  errorMessage?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updates: any = { status };
+  if (status === "sent") updates.sentAt = new Date();
+  if (status === "clicked") updates.clickedAt = new Date();
+  if (errorMessage) updates.errorMessage = errorMessage;
+
+  await db.update(notificationLogs).set(updates).where(eq(notificationLogs.id, id));
+}
+
+// Get users to notify for a DM
+export async function getUsersToNotifyForDm(conversationId: number, senderId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get other participants
+  const participants = await db
+    .select()
+    .from(dmParticipants)
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        sql`${dmParticipants.userId} != ${senderId}`,
+        eq(dmParticipants.isMuted, false)
+      )
+    );
+
+  const usersToNotify = [];
+  for (const p of participants) {
+    const settings = await getOrCreateNotificationSettings(p.userId);
+    if (settings.dmNotifications) {
+      const user = await getUserById(p.userId);
+      const subscriptions = await getUserPushSubscriptions(p.userId);
+      usersToNotify.push({
+        user,
+        settings,
+        subscriptions,
+      });
+    }
+  }
+
+  return usersToNotify;
+}
+
+// Get all users for a specific role
+export async function getUsersByMessagingRole(role: string) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const roles = await db
+    .select()
+    .from(userMessagingRoles)
+    .where(eq(userMessagingRoles.messagingRole, role as any));
+
+  const userIds = roles.map((r: any) => r.userId);
+  if (userIds.length === 0) return [];
+
+  return await db.select().from(users).where(inArray(users.id, userIds));
+}

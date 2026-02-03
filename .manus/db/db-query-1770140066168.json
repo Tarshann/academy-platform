@@ -1,0 +1,9 @@
+{
+  "query": "CREATE INDEX `idx_dmParticipants_conversationId` ON `dmParticipants` (`conversationId`);\nCREATE INDEX `idx_dmParticipants_userId` ON `dmParticipants` (`userId`);\nCREATE INDEX `idx_dmMessages_conversationId` ON `dmMessages` (`conversationId`);\nCREATE INDEX `idx_dmMessages_senderId` ON `dmMessages` (`senderId`);\nCREATE INDEX `idx_dmReadReceipts_messageId` ON `dmReadReceipts` (`messageId`);\nCREATE INDEX `idx_userBlocks_blockerId` ON `userBlocks` (`blockerId`);\nCREATE INDEX `idx_pushSubscriptions_userId` ON `pushSubscriptions` (`userId`);\nCREATE INDEX `idx_notificationLogs_userId` ON `notificationLogs` (`userId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute CREATE INDEX `idx_dmParticipants_conversationId` ON `dmParticipants` (`conversationId`);\nCREATE INDEX `idx_dmParticipants_userId` ON `dmParticipants` (`userId`);\nCREATE INDEX `idx_dmMessages_conversationId` ON `dmMessages` (`conversationId`);\nCREATE INDEX `idx_dmMessages_senderId` ON `dmMessages` (`senderId`);\nCREATE INDEX `idx_dmReadReceipts_messageId` ON `dmReadReceipts` (`messageId`);\nCREATE INDEX `idx_userBlocks_blockerId` ON `userBlocks` (`blockerId`);\nCREATE INDEX `idx_pushSubscriptions_userId` ON `pushSubscriptions` (`userId`);\nCREATE INDEX `idx_notificationLogs_userId` ON `notificationLogs` (`userId`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 3929
+}

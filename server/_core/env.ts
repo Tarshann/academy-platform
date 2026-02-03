@@ -23,4 +23,7 @@ export const ENV = {
                         "",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkAdminEmail: process.env.CLERK_ADMIN_EMAIL ?? "",
+  // Web Push VAPID keys
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
 };
