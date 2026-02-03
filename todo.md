@@ -423,3 +423,6 @@
 
 ## Videos Page Enhancement
 - [x] Add Load More button for paginated video browsing
+- [x] Add infinite scroll to replace Load More button
+- [x] Add video sorting (newest, oldest, platform, A-Z)
+- [x] Add search functionality for videos

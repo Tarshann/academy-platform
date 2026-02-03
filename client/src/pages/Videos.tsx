@@ -1,8 +1,10 @@
-import { useState, useMemo } from "react";
-import { Play, ExternalLink, ChevronDown } from "lucide-react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { Play, ExternalLink, Search, SortAsc, Loader2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
 // TikTok videos from The Academy
@@ -12,77 +14,88 @@ const tiktokVideos = [
     url: "https://www.tiktok.com/@cspringsacademy/video/7426665432193920298",
     title: "Training Highlights",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+    date: "2024-12-01"
   },
   {
     id: "tt2",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426652015718460714",
     title: "Skills Development",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png",
+    date: "2024-11-28"
   },
   {
     id: "tt3",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426651330054538539",
     title: "Dribbling Drills",
     category: "drills",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png",
+    date: "2024-11-25"
   },
   {
     id: "tt4",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426650617190679851",
     title: "Shooting Practice",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png",
+    date: "2024-11-20"
   },
   {
     id: "tt5",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426649984685289771",
     title: "Team Training",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png",
+    date: "2024-11-15"
   },
   {
     id: "tt6",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426649426347912491",
     title: "Ball Handling",
     category: "drills",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/EHhkFKpZPIRhKBhk.jpeg"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/EHhkFKpZPIRhKBhk.jpeg",
+    date: "2024-11-10"
   },
   {
     id: "tt7",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426648763882748203",
     title: "Footwork Fundamentals",
     category: "drills",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ycReYGSogWWXZoQk.jpeg"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ycReYGSogWWXZoQk.jpeg",
+    date: "2024-11-05"
   },
   {
     id: "tt8",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426648066550359339",
     title: "Conditioning",
     category: "conditioning",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/QxrXovSzWgTZmpuQ.jpeg"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/QxrXovSzWgTZmpuQ.jpeg",
+    date: "2024-10-30"
   },
   {
     id: "tt9",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426647407243523371",
     title: "Game Prep",
     category: "games",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    date: "2024-10-25"
   },
   {
     id: "tt10",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426646709697204523",
     title: "Youth Development",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
+    date: "2024-10-20"
   },
   {
     id: "tt11",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426646007474175275",
     title: "Academy Life",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    date: "2024-10-15"
   },
 ];
 
@@ -93,49 +106,56 @@ const instagramVideos = [
     url: "https://www.instagram.com/reel/DDVpkOWRPTc/",
     title: "Training Session",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+    date: "2024-12-02"
   },
   {
     id: "ig2",
     url: "https://www.instagram.com/reel/DDVpJcMRVgJ/",
     title: "Skills Work",
     category: "drills",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png",
+    date: "2024-11-30"
   },
   {
     id: "ig3",
     url: "https://www.instagram.com/reel/DDVo1qMR_Xv/",
     title: "Practice Highlights",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png",
+    date: "2024-11-27"
   },
   {
     id: "ig4",
     url: "https://www.instagram.com/p/DDVoqVqxWXC/",
     title: "Team Photo",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
+    date: "2024-11-22"
   },
   {
     id: "ig5",
     url: "https://www.instagram.com/p/DDVoZYJx3Vy/",
     title: "Camp Moments",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    date: "2024-11-18"
   },
   {
     id: "ig6",
     url: "https://www.instagram.com/p/DDVoH-Yx_Wk/",
     title: "Shooting Form",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png",
+    date: "2024-11-12"
   },
   {
     id: "ig7",
     url: "https://www.instagram.com/p/DDVn4rnRgvH/",
     title: "Dribble Moves",
     category: "drills",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png"
+    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png",
+    date: "2024-11-08"
   },
 ];
 
@@ -148,6 +168,15 @@ const categories = [
   { value: "games", label: "Games" },
 ];
 
+const sortOptions = [
+  { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
+  { value: "tiktok", label: "TikTok First" },
+  { value: "instagram", label: "Instagram First" },
+  { value: "az", label: "A-Z" },
+  { value: "za", label: "Z-A" },
+];
+
 const allVideos = [
   ...tiktokVideos.map(v => ({ ...v, platform: "tiktok" as const })),
   ...instagramVideos.map(v => ({ ...v, platform: "instagram" as const })),
@@ -157,27 +186,100 @@ const VIDEOS_PER_PAGE = 8;
 
 export default function Videos() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(VIDEOS_PER_PAGE);
+  const [isLoading, setIsLoading] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  const filteredVideos = useMemo(() => {
-    return selectedCategory === "all"
-      ? allVideos
-      : allVideos.filter(v => v.category === selectedCategory);
-  }, [selectedCategory]);
+  // Filter and sort videos
+  const processedVideos = useMemo(() => {
+    let videos = [...allVideos];
 
-  // Reset visible count when category changes
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+    // Filter by category
+    if (selectedCategory !== "all") {
+      videos = videos.filter(v => v.category === selectedCategory);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      videos = videos.filter(v => 
+        v.title.toLowerCase().includes(query) ||
+        v.category.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort videos
+    switch (sortBy) {
+      case "newest":
+        videos.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        break;
+      case "oldest":
+        videos.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        break;
+      case "tiktok":
+        videos.sort((a, b) => {
+          if (a.platform === "tiktok" && b.platform !== "tiktok") return -1;
+          if (a.platform !== "tiktok" && b.platform === "tiktok") return 1;
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        break;
+      case "instagram":
+        videos.sort((a, b) => {
+          if (a.platform === "instagram" && b.platform !== "instagram") return -1;
+          if (a.platform !== "instagram" && b.platform === "instagram") return 1;
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        break;
+      case "az":
+        videos.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "za":
+        videos.sort((a, b) => b.title.localeCompare(a.title));
+        break;
+    }
+
+    return videos;
+  }, [selectedCategory, sortBy, searchQuery]);
+
+  // Reset visible count when filters change
+  useEffect(() => {
     setVisibleCount(VIDEOS_PER_PAGE);
-  };
+  }, [selectedCategory, sortBy, searchQuery]);
 
-  const visibleVideos = filteredVideos.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredVideos.length;
-  const remainingCount = filteredVideos.length - visibleCount;
+  const visibleVideos = processedVideos.slice(0, visibleCount);
+  const hasMore = visibleCount < processedVideos.length;
 
-  const handleLoadMore = () => {
-    setVisibleCount(prev => Math.min(prev + VIDEOS_PER_PAGE, filteredVideos.length));
-  };
+  // Infinite scroll handler
+  const loadMore = useCallback(() => {
+    if (!hasMore || isLoading) return;
+    
+    setIsLoading(true);
+    // Simulate loading delay for smooth UX
+    setTimeout(() => {
+      setVisibleCount(prev => Math.min(prev + VIDEOS_PER_PAGE, processedVideos.length));
+      setIsLoading(false);
+    }, 300);
+  }, [hasMore, isLoading, processedVideos.length]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, loadMore]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -224,95 +326,151 @@ export default function Videos() {
           </div>
         </section>
 
-        {/* Category Filter */}
-        <section className="py-8 border-b">
+        {/* Search and Filter Section */}
+        <section className="py-6 border-b bg-muted/30">
           <div className="container">
-            <div className="flex flex-wrap gap-2 justify-center">
+            {/* Search Bar */}
+            <div className="max-w-md mx-auto mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search videos by title..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-11"
+                />
+              </div>
+            </div>
+
+            {/* Category Filters */}
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
               {categories.map((category) => (
                 <Button
                   key={category.value}
                   variant={selectedCategory === category.value ? "default" : "outline"}
-                  onClick={() => handleCategoryChange(category.value)}
-                  className="min-w-[100px]"
+                  onClick={() => setSelectedCategory(category.value)}
+                  size="sm"
                 >
                   {category.label}
                 </Button>
               ))}
             </div>
-            <p className="text-center text-sm text-muted-foreground mt-4">
-              Showing {visibleVideos.length} of {filteredVideos.length} videos
-            </p>
+
+            {/* Sort and Count */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-sm text-muted-foreground">
+                {searchQuery && (
+                  <span className="font-medium">
+                    {processedVideos.length === 0 
+                      ? "No results for " 
+                      : `${processedVideos.length} result${processedVideos.length !== 1 ? 's' : ''} for `}
+                    "{searchQuery}"
+                  </span>
+                )}
+                {!searchQuery && (
+                  <span>
+                    Showing {Math.min(visibleCount, processedVideos.length)} of {processedVideos.length} videos
+                  </span>
+                )}
+              </p>
+              <div className="flex items-center gap-2">
+                <SortAsc className="w-4 h-4 text-muted-foreground" />
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Video Grid */}
         <section className="py-12">
           <div className="container">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {visibleVideos.map((video) => (
-                <a
-                  key={video.id}
-                  href={video.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative overflow-hidden rounded-xl bg-muted shadow-md hover:shadow-xl transition-all duration-300 block"
-                >
-                  <div className="aspect-[4/3] overflow-hidden bg-gray-900">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                        <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                        video.platform === "tiktok" 
-                          ? "bg-black text-white" 
-                          : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
-                      }`}>
-                        {video.platform === "tiktok" ? "TikTok" : "Instagram"}
-                      </span>
-                      <span className="text-xs text-white/70 capitalize">{video.category}</span>
-                    </div>
-                    <h3 className="font-semibold text-white text-sm flex items-center gap-1">
-                      {video.title}
-                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </h3>
-                  </div>
-                </a>
-              ))}
-            </div>
-
-            {filteredVideos.length === 0 && (
+            {processedVideos.length === 0 ? (
               <div className="text-center py-16">
                 <Play className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No videos in this category yet.</p>
+                <p className="text-muted-foreground text-lg mb-2">
+                  {searchQuery ? "No videos match your search" : "No videos in this category yet"}
+                </p>
+                {searchQuery && (
+                  <Button variant="outline" onClick={() => setSearchQuery("")}>
+                    Clear search
+                  </Button>
+                )}
               </div>
-            )}
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {visibleVideos.map((video) => (
+                    <a
+                      key={video.id}
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative overflow-hidden rounded-xl bg-muted shadow-md hover:shadow-xl transition-all duration-300 block"
+                    >
+                      <div className="aspect-[4/3] overflow-hidden bg-gray-900">
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          loading="lazy"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            video.platform === "tiktok" 
+                              ? "bg-black text-white" 
+                              : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
+                          }`}>
+                            {video.platform === "tiktok" ? "TikTok" : "Instagram"}
+                          </span>
+                          <span className="text-xs text-white/70 capitalize">{video.category}</span>
+                        </div>
+                        <h3 className="font-semibold text-white text-sm flex items-center gap-1">
+                          {video.title}
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </h3>
+                      </div>
+                    </a>
+                  ))}
+                </div>
 
-            {/* Load More Button */}
-            {hasMore && (
-              <div className="flex flex-col items-center mt-12">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={handleLoadMore}
-                  className="gap-2 px-8"
-                >
-                  <ChevronDown className="w-5 h-5" />
-                  Load More
-                  <span className="text-muted-foreground ml-1">
-                    ({remainingCount} remaining)
-                  </span>
-                </Button>
-              </div>
+                {/* Infinite Scroll Trigger */}
+                {hasMore && (
+                  <div ref={loadMoreRef} className="flex justify-center py-8">
+                    {isLoading && (
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Loading more videos...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* End of results message */}
+                {!hasMore && processedVideos.length > VIDEOS_PER_PAGE && (
+                  <p className="text-center text-muted-foreground py-8">
+                    You've reached the end of the video library
+                  </p>
+                )}
+              </>
             )}
           </div>
         </section>
