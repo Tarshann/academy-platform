@@ -247,7 +247,7 @@ export function VideosManager() {
                   onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Optional custom thumbnail image URL. Leave blank to use default.
+                  Optional custom thumbnail image URL. Leave blank to use platform-branded placeholder (TikTok/Instagram logo).
                 </p>
               </div>
               <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">

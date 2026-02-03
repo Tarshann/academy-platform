@@ -8,113 +8,98 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { trpc } from "@/lib/trpc";
 
-// Default/fallback videos (used when database is empty)
+// Platform-specific placeholder component
+const PlatformPlaceholder = ({ platform, title }: { platform: "tiktok" | "instagram"; title: string }) => {
+  if (platform === "tiktok") {
+    return (
+      <div className="w-full h-full bg-black flex flex-col items-center justify-center p-6">
+        {/* TikTok Logo */}
+        <svg viewBox="0 0 48 48" className="w-16 h-16 mb-4" fill="none">
+          <path d="M34.1451 16.3322C36.5765 18.0193 39.5431 19.0145 42.7391 19.0145V12.6467C42.1461 12.6467 41.5548 12.5941 40.9722 12.4906V17.4889C37.7762 17.4889 34.8096 16.4937 32.3782 14.8066V28.3282C32.3782 35.0958 26.9174 40.5833 20.1891 40.5833C17.5718 40.5833 15.1404 39.7837 13.1211 38.4185C15.4156 40.7566 18.6116 42.1092 22.1222 42.1092C28.8505 42.1092 34.3113 36.6217 34.3113 29.8541V16.3322H34.1451ZM36.3313 9.96455C35.1016 8.60018 34.2728 6.86654 34.0217 4.95117V4.21875H32.4631C32.8811 6.55518 34.3113 8.55518 36.3313 9.96455ZM17.3207 33.3541C16.5768 32.3589 16.1588 31.1193 16.1588 29.7541C16.1588 26.3541 18.9168 23.5833 22.3004 23.5833C22.8934 23.5833 23.4695 23.6633 24.0205 23.8145V17.3633C23.4275 17.2854 22.8261 17.2598 22.2248 17.2854V22.2889C21.6738 22.1377 21.0977 22.0577 20.5047 22.0577C17.1211 22.0577 14.3631 24.8285 14.3631 28.2285C14.3631 30.5666 15.5928 32.6185 17.3207 33.3541Z" fill="#FF004F"/>
+          <path d="M32.3782 14.8066C34.8096 16.4937 37.7762 17.4889 40.9722 17.4889V12.4906C38.9522 12.0626 37.1394 11.0674 35.7092 9.68701C33.6892 8.27765 32.259 6.27765 31.841 3.94122H27.1182V29.5766C27.1013 32.9597 24.3518 35.7135 20.9851 35.7135C18.8802 35.7135 17.0168 34.6414 15.8871 33.0766C14.1592 32.341 12.9295 30.2891 12.9295 27.951C12.9295 24.551 15.6875 21.7802 19.0711 21.7802C19.6641 21.7802 20.2402 21.8602 20.7912 22.0114V17.0079C14.1423 17.1335 8.76562 22.5691 8.76562 29.2766C8.76562 32.6254 10.0802 35.6691 12.2362 37.8691C14.2555 39.2343 16.687 40.0339 19.3042 40.0339C26.0325 40.0339 31.4933 34.5464 31.4933 27.7787V14.2572L32.3782 14.8066Z" fill="#00F2EA"/>
+        </svg>
+        <p className="text-white text-center font-medium text-sm leading-tight">{title}</p>
+        <p className="text-gray-400 text-xs mt-2">@academytn</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-6">
+      {/* Instagram Logo */}
+      <svg viewBox="0 0 48 48" className="w-16 h-16 mb-4" fill="white">
+        <path d="M24 4.32c6.41 0 7.17.03 9.7.14 2.34.11 3.61.5 4.46.83 1.12.44 1.92.96 2.76 1.8.84.84 1.37 1.64 1.8 2.76.33.85.73 2.12.83 4.46.12 2.53.14 3.29.14 9.7 0 6.4-.02 7.16-.14 9.68-.1 2.35-.5 3.62-.83 4.47-.43 1.12-.96 1.92-1.8 2.76-.84.84-1.64 1.37-2.76 1.8-.85.33-2.12.72-4.46.83-2.53.11-3.29.14-9.7.14-6.4 0-7.16-.03-9.68-.14-2.35-.11-3.62-.5-4.47-.83-1.12-.43-1.92-.96-2.76-1.8-.84-.84-1.37-1.64-1.8-2.76-.33-.85-.73-2.12-.83-4.47-.12-2.52-.14-3.28-.14-9.68 0-6.41.02-7.17.14-9.7.1-2.34.5-3.61.83-4.46.43-1.12.96-1.92 1.8-2.76.84-.84 1.64-1.37 2.76-1.8.85-.33 2.12-.72 4.47-.83 2.52-.11 3.28-.14 9.68-.14M24 0c-6.52 0-7.33.03-9.9.14-2.54.12-4.28.53-5.8 1.13-1.57.62-2.9 1.44-4.23 2.77C2.74 5.37 1.92 6.7 1.3 8.27c-.6 1.52-1 3.26-1.13 5.8C.03 16.67 0 17.48 0 24c0 6.52.03 7.33.14 9.9.12 2.54.53 4.28 1.13 5.8.62 1.57 1.44 2.9 2.77 4.23 1.33 1.33 2.66 2.15 4.23 2.77 1.52.6 3.26 1 5.8 1.13 2.57.11 3.38.14 9.9.14 6.52 0 7.33-.03 9.9-.14 2.54-.12 4.28-.53 5.8-1.13 1.57-.62 2.9-1.44 4.23-2.77 1.33-1.33 2.15-2.66 2.77-4.23.6-1.52 1-3.26 1.13-5.8.11-2.57.14-3.38.14-9.9 0-6.52-.03-7.33-.14-9.9-.12-2.54-.53-4.28-1.13-5.8-.62-1.57-1.44-2.9-2.77-4.23C42.63 2.74 41.3 1.92 39.73 1.3c-1.52-.6-3.26-1-5.8-1.13C31.33.03 30.52 0 24 0z"/>
+        <path d="M24 11.68c-6.8 0-12.32 5.52-12.32 12.32 0 6.8 5.52 12.32 12.32 12.32 6.8 0 12.32-5.52 12.32-12.32 0-6.8-5.52-12.32-12.32-12.32zM24 32c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+        <circle cx="36.8" cy="11.2" r="2.88"/>
+      </svg>
+      <p className="text-white text-center font-medium text-sm leading-tight">{title}</p>
+      <p className="text-white/80 text-xs mt-2">@the_academytn</p>
+    </div>
+  );
+};
+
+// Default/fallback videos (used when database is empty) - no thumbnails, will use platform placeholders
 const defaultVideos = [
   {
     id: "tt1",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426665432193920298",
+    url: "https://www.tiktok.com/@academytn/video/7426665432193920298",
     title: "Training Highlights",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-12-01"
   },
   {
     id: "tt2",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426652015718460714",
+    url: "https://www.tiktok.com/@academytn/video/7426652015718460714",
     title: "Skills Development",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-11-28"
   },
   {
     id: "tt3",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426651330054538539",
+    url: "https://www.tiktok.com/@academytn/video/7426651330054538539",
     title: "Dribbling Drills",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-11-25"
   },
   {
     id: "tt4",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426650617190679851",
+    url: "https://www.tiktok.com/@academytn/video/7426650617190679851",
     title: "Shooting Practice",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-11-20"
   },
   {
     id: "tt5",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426649984685289771",
+    url: "https://www.tiktok.com/@academytn/video/7426649984685289771",
     title: "Team Training",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-11-15"
   },
   {
     id: "tt6",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426649426347912491",
+    url: "https://www.tiktok.com/@academytn/video/7426649426347912491",
     title: "Ball Handling",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/EHhkFKpZPIRhKBhk.jpeg",
+    thumbnail: null,
     platform: "tiktok" as const,
     date: "2024-11-10"
-  },
-  {
-    id: "tt7",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426648763882748203",
-    title: "Footwork Fundamentals",
-    category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ycReYGSogWWXZoQk.jpeg",
-    platform: "tiktok" as const,
-    date: "2024-11-05"
-  },
-  {
-    id: "tt8",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426648066550359339",
-    title: "Conditioning",
-    category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/QxrXovSzWgTZmpuQ.jpeg",
-    platform: "tiktok" as const,
-    date: "2024-10-30"
-  },
-  {
-    id: "tt9",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426647407243523371",
-    title: "Game Prep",
-    category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
-    platform: "tiktok" as const,
-    date: "2024-10-25"
-  },
-  {
-    id: "tt10",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426646709697204523",
-    title: "Youth Development",
-    category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
-    platform: "tiktok" as const,
-    date: "2024-10-20"
-  },
-  {
-    id: "tt11",
-    url: "https://www.tiktok.com/@cspringsacademy/video/7426646007474175275",
-    title: "Academy Life",
-    category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/OXGVMbmpOnjLcxFC.jpeg",
-    platform: "tiktok" as const,
-    date: "2024-10-15"
   },
   {
     id: "ig1",
     url: "https://www.instagram.com/reel/DDVpkOWRPTc/",
     title: "Training Session",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/byeDlUFApdDtuMZV.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-12-02"
   },
@@ -123,7 +108,7 @@ const defaultVideos = [
     url: "https://www.instagram.com/reel/DDVpJcMRVgJ/",
     title: "Skills Work",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/nlIpkFwbWbxRGafH.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-11-30"
   },
@@ -132,7 +117,7 @@ const defaultVideos = [
     url: "https://www.instagram.com/reel/DDVo1qMR_Xv/",
     title: "Practice Highlights",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/gztSZBHhURZbqUWj.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-11-27"
   },
@@ -141,7 +126,7 @@ const defaultVideos = [
     url: "https://www.instagram.com/p/DDVoqVqxWXC/",
     title: "Team Photo",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/chBQYdtyOInJapIK.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-11-22"
   },
@@ -150,7 +135,7 @@ const defaultVideos = [
     url: "https://www.instagram.com/p/DDVoZYJx3Vy/",
     title: "Camp Moments",
     category: "highlights",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WIGbipbOvWrdjWER.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-11-18"
   },
@@ -159,7 +144,7 @@ const defaultVideos = [
     url: "https://www.instagram.com/p/DDVoH-Yx_Wk/",
     title: "Shooting Form",
     category: "training",
-    thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/JPMGTbiynWZNnTCz.jpeg",
+    thumbnail: null,
     platform: "instagram" as const,
     date: "2024-11-12"
   },
@@ -207,7 +192,7 @@ export default function Videos() {
         url: v.url,
         title: v.title,
         category: v.category,
-        thumbnail: v.thumbnail || "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+        thumbnail: v.thumbnail || null,
         platform: v.platform as "tiktok" | "instagram",
         date: v.createdAt ? new Date(v.createdAt).toISOString().split('T')[0] : "2024-01-01",
         viewCount: v.viewCount || 0
@@ -402,11 +387,15 @@ export default function Videos() {
                       onClick={() => handleVideoClick(video)}
                     >
                       <div className="relative aspect-[9/16] rounded-xl overflow-hidden bg-muted">
-                        <img
-                          src={video.thumbnail}
-                          alt={video.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
+                        {video.thumbnail ? (
+                          <img
+                            src={video.thumbnail}
+                            alt={video.title}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <PlatformPlaceholder platform={video.platform} title={video.title} />
+                        )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <div className="bg-white rounded-full p-4">
                             <Play className="h-8 w-8 text-primary fill-primary" />

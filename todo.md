@@ -460,3 +460,7 @@
 
 ## Gallery and Videos Cleanup
 - [x] Remove duplicate thumbnails from Videos page (each video now has unique thumbnail)
+
+## Video Thumbnails Update
+- [x] Replace photo thumbnails with platform-specific placeholders (TikTok/Instagram branded)
+- [x] Add custom thumbnail upload option in admin video form (URL field available, platform placeholders as default)
