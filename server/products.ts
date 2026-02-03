@@ -82,7 +82,16 @@ export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
     id: 'summer-camp',
     name: 'Academy Summer Camp (Per Day)',
     description: 'Intensive summer training with full-day sessions, skill work, and competition.',
-    priceInCents: 2000, // $20.00
+    priceInCents: 2000,
+    currency: 'usd',
+    type: 'one_time',
+    category: 'camp',
+  },
+  'summer-basketball-camp': {
+    id: 'summer-basketball-camp',
+    name: 'Summer Basketball Camp',
+    description: 'Intensive multi-day basketball camp with skill development, competition, and team building. Includes registration fee.',
+    priceInCents: 20500,
     currency: 'usd',
     type: 'one_time',
     category: 'camp',

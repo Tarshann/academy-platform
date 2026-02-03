@@ -26,6 +26,7 @@ export const programCategoryEnum = pgEnum("program_category", [
 export const programSportEnum = pgEnum("program_sport", [
   "basketball",
   "football",
+  "flag_football",
   "soccer",
   "multi_sport",
   "saq",
@@ -534,3 +535,30 @@ export const userRelations = pgTable("userRelations", {
 
 export type UserRelation = typeof userRelations.$inferSelect;
 export type InsertUserRelation = typeof userRelations.$inferInsert;
+
+
+/**
+ * Private Session Booking Requests table
+ * Tracks booking requests for individual training sessions
+ */
+export const privateSessionBookings = pgTable("privateSessionBookings", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId"),
+  customerEmail: varchar("customerEmail", { length: 255 }).notNull(),
+  customerName: varchar("customerName", { length: 255 }).notNull(),
+  customerPhone: varchar("customerPhone", { length: 20 }),
+  coachId: integer("coachId").notNull(), // Coach selected (1 for Coach Mac, 2 for Coach O)
+  coachName: varchar("coachName", { length: 100 }).notNull(), // "Coach Mac" or "Coach O"
+  preferredDates: text("preferredDates"), // JSON array of preferred dates
+  preferredTimes: text("preferredTimes"), // JSON array of preferred times
+  notes: text("notes"), // Additional notes from customer
+  status: varchar("status", { length: 50 }).notNull().default("pending"), // "pending", "confirmed", "completed", "cancelled"
+  stripeSessionId: varchar("stripeSessionId", { length: 255 }), // Link to payment session
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type PrivateSessionBooking =
+  typeof privateSessionBookings.$inferSelect;
+export type InsertPrivateSessionBooking =
+  typeof privateSessionBookings.$inferInsert;

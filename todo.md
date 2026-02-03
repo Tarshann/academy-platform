@@ -271,3 +271,17 @@
 - [x] Create next steps section with calendar and schedule links
 - [x] Add email confirmation option
 - [x] Test end-to-end payment success flow
+
+
+## Private Session Booking System
+- [x] Add coach information to database schema
+- [x] Create private session booking request form page
+- [x] Build backend API for booking requests
+- [x] Update payment success page with coach booking section
+- [x] Add email notifications for coach booking requests (via notifyOwner)
+- [x] Test booking flow end-to-end
+
+
+## Recent Updates
+- [x] Added flag_football to sports enum in database schema
+- [x] Added Summer Basketball Camp product ($205 total: $185 + $20 registration)

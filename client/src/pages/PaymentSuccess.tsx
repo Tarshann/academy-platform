@@ -192,6 +192,31 @@ export default function PaymentSuccess() {
             </Card>
           )}
 
+          {/* Private Session Booking Section */}
+          {sessionDetails && sessionDetails.items.some((item: any) => item.productId === 'individual-training') && (
+            <Card className="bg-amber-50 border-amber-200 mb-8">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-amber-600" />
+                  Schedule Your Private Session
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-amber-900">
+                  You have purchased an Individual Training session! The next step is to coordinate with your coach for location and schedule details.
+                </p>
+                <Link href={`/private-session-booking?session_id=${sessionId}&email=${sessionDetails.customerEmail}`}>
+                  <Button className="w-full" size="lg">
+                    Book Your Session with a Coach
+                  </Button>
+                </Link>
+                <p className="text-sm text-amber-800">
+                  Select your preferred coach and submit your availability. Your coach will contact you within 24 hours to confirm your session details.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Confirmation Message */}
           <Card className="bg-blue-50 border-blue-200 mb-8">
             <CardContent className="pt-6">

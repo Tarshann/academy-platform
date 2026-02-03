@@ -1017,6 +1017,61 @@ export const appRouter = router({
           });
         }
       }),
+
+    submitPrivateSessionBooking: publicProcedure
+      .input(
+        z.object({
+          customerName: z.string().min(1),
+          customerEmail: z.string().email(),
+          customerPhone: z.string().optional(),
+          coachId: z.number(),
+          coachName: z.string(),
+          preferredDates: z.string().optional(),
+          preferredTimes: z.string().optional(),
+          notes: z.string().optional(),
+          stripeSessionId: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const { db } = await import("./db");
+          const { privateSessionBookings } = await import("../drizzle/schema");
+          
+          // Insert booking request into database
+          const result = await db
+            .insert(privateSessionBookings)
+            .values({
+              customerName: input.customerName,
+              customerEmail: input.customerEmail,
+              customerPhone: input.customerPhone || null,
+              coachId: input.coachId,
+              coachName: input.coachName,
+              preferredDates: input.preferredDates || null,
+              preferredTimes: input.preferredTimes || null,
+              notes: input.notes || null,
+              stripeSessionId: input.stripeSessionId || null,
+              status: "pending",
+            })
+            .returning({ id: privateSessionBookings.id });
+
+          // Send notification to owner
+          await notifyOwner({
+            title: "New Private Session Booking Request",
+            content: `${input.customerName} (${input.customerEmail}) has requested a private session with ${input.coachName}. Phone: ${input.customerPhone || "Not provided"}. Preferred dates: ${input.preferredDates || "Not specified"}. Preferred times: ${input.preferredTimes || "Not specified"}.`,
+          });
+
+          return {
+            success: true,
+            bookingId: result[0]?.id,
+          };
+        } catch (error) {
+          console.error("Booking submission error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to submit booking request",
+          });
+        }
+      }),
   }),
 
   attendance: router({
