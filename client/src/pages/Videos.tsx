@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Play, ExternalLink } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Play, ExternalLink, ChevronDown } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -153,12 +153,31 @@ const allVideos = [
   ...instagramVideos.map(v => ({ ...v, platform: "instagram" as const })),
 ];
 
+const VIDEOS_PER_PAGE = 8;
+
 export default function Videos() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(VIDEOS_PER_PAGE);
 
-  const filteredVideos = selectedCategory === "all"
-    ? allVideos
-    : allVideos.filter(v => v.category === selectedCategory);
+  const filteredVideos = useMemo(() => {
+    return selectedCategory === "all"
+      ? allVideos
+      : allVideos.filter(v => v.category === selectedCategory);
+  }, [selectedCategory]);
+
+  // Reset visible count when category changes
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setVisibleCount(VIDEOS_PER_PAGE);
+  };
+
+  const visibleVideos = filteredVideos.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredVideos.length;
+  const remainingCount = filteredVideos.length - visibleCount;
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => Math.min(prev + VIDEOS_PER_PAGE, filteredVideos.length));
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -213,13 +232,16 @@ export default function Videos() {
                 <Button
                   key={category.value}
                   variant={selectedCategory === category.value ? "default" : "outline"}
-                  onClick={() => setSelectedCategory(category.value)}
+                  onClick={() => handleCategoryChange(category.value)}
                   className="min-w-[100px]"
                 >
                   {category.label}
                 </Button>
               ))}
             </div>
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              Showing {visibleVideos.length} of {filteredVideos.length} videos
+            </p>
           </div>
         </section>
 
@@ -227,7 +249,7 @@ export default function Videos() {
         <section className="py-12">
           <div className="container">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredVideos.map((video) => (
+              {visibleVideos.map((video) => (
                 <a
                   key={video.id}
                   href={video.url}
@@ -272,6 +294,24 @@ export default function Videos() {
               <div className="text-center py-16">
                 <Play className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No videos in this category yet.</p>
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex flex-col items-center mt-12">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={handleLoadMore}
+                  className="gap-2 px-8"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                  Load More
+                  <span className="text-muted-foreground ml-1">
+                    ({remainingCount} remaining)
+                  </span>
+                </Button>
               </div>
             )}
           </div>
