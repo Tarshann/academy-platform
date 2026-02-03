@@ -1027,9 +1027,12 @@ export const appRouter = router({
         })
       )
       .query(async ({ input, ctx }) => {
-        const { db } = await import("./db");
+        const { getDb } = await import("./db");
         const { privateSessionBookings } = await import("../drizzle/schema");
         const { eq, and } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
         
         const conditions = [];
         if (input.coachId) {
@@ -1057,9 +1060,12 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const { db } = await import("./db");
+        const { getDb } = await import("./db");
         const { privateSessionBookings } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
+        
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
         
         await db
           .update(privateSessionBookings)
@@ -1089,8 +1095,11 @@ export const appRouter = router({
       )
       .mutation(async ({ input, ctx }) => {
         try {
-          const { db } = await import("./db");
+          const { getDb } = await import("./db");
           const { privateSessionBookings } = await import("../drizzle/schema");
+          
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
           
           // Insert booking request into database
           const result = await db

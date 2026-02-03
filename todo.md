@@ -316,3 +316,18 @@
 - [x] Create schedule page showing weekly program times
 - [x] Add schedule information: Sat/Sun (Private Sessions), Tue/Thu (Group Sessions, Skills Classes, SAQ Training)
 - [x] Update navigation to include Schedule link (desktop and mobile)
+
+## Critical Fix: PostgreSQL to MySQL/TiDB Database Conversion
+- [ ] Convert Drizzle schema from pgTable to mysqlTable
+- [ ] Convert all pgEnum to mysqlEnum
+- [ ] Update db.ts to use mysql2 driver instead of postgres
+- [ ] Update drizzle.config.ts dialect from postgresql to mysql2
+- [ ] Test OAuth login after conversion
+- [ ] Save checkpoint and deploy fix to production
+
+## Priority: Guest Checkout Flow (Bypass Login Issue)
+- [x] Verify guest checkout API endpoint works without authentication
+- [x] Ensure Register page allows checkout without login
+- [x] Test Stripe guest checkout with email collection
+- [ ] Verify confirmation emails work for guest purchases
+- [x] Deploy guest checkout fix to production (ready for publish)

@@ -117,7 +117,7 @@ export function CoachDashboard() {
             </div>
           ) : bookings && bookings.length > 0 ? (
             <div className="grid gap-4">
-              {bookings.map((booking: Booking) => (
+              {bookings.map((booking) => (
                 <Card key={booking.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -130,7 +130,7 @@ export function CoachDashboard() {
                           Requested on {formatDate(booking.createdAt)}
                         </CardDescription>
                       </div>
-                      {getStatusBadge(booking.status)}
+                      {getStatusBadge(booking.status as BookingStatus)}
                     </div>
                   </CardHeader>
                   <CardContent>
