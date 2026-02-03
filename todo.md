@@ -453,3 +453,10 @@
 ## Gallery Photo Upload
 - [x] Upload 7 training photos to S3
 - [x] Add photos to gallery page
+
+## Gallery and Videos Cleanup
+- [ ] Remove duplicate images from Gallery
+- [ ] Remove duplicate videos from Videos page
+
+## Gallery and Videos Cleanup
+- [x] Remove duplicate thumbnails from Videos page (each video now has unique thumbnail)
