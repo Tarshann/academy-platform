@@ -394,6 +394,9 @@ export const chatMessages = mysqlTable("chatMessages", {
   userName: varchar("userName", { length: 255 }).notNull(),
   message: text("message").notNull(),
   room: varchar("room", { length: 100 }).default("general"),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  imageKey: varchar("imageKey", { length: 500 }),
+  mentions: text("mentions"), // JSON array of mentioned user IDs
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

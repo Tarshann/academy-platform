@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { io, Socket } from "socket.io-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle } from "lucide-react";
+import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle, Image as ImageIcon, AtSign } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc";
@@ -19,6 +18,8 @@ interface Message {
   userId: number;
   userName: string;
   message: string;
+  imageUrl?: string;
+  mentions?: number[];
   createdAt: Date | string;
 }
 
@@ -28,6 +29,11 @@ interface ChatRoom {
   description: string;
   icon: React.ReactNode;
   unreadCount: number;
+}
+
+interface OnlineUser {
+  id: number;
+  name: string;
 }
 
 const CHAT_ROOMS: Omit<ChatRoom, 'unreadCount'>[] = [
@@ -41,21 +47,25 @@ export default function Chat() {
   const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
-  const chatEnabled = import.meta.env.VITE_ENABLE_SOCKET_IO !== "false";
-  const [socket, setSocket] = useState<Socket | null>(null);
+  
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<Array<{ userId: number; userName: string }>>([]);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [currentRoom, setCurrentRoom] = useState("general");
   const [rooms, setRooms] = useState<ChatRoom[]>(
     CHAT_ROOMS.map(r => ({ ...r, unreadCount: 0 }))
   );
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState("");
+  const [allUsers, setAllUsers] = useState<OnlineUser[]>([]);
+  
   const scrollRef = useRef<HTMLDivElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, {
     enabled: Boolean(user),
     retry: false,
@@ -75,107 +85,135 @@ export default function Chat() {
     }
   }, [chatTokenQuery.error]);
 
-  // Setup Socket.IO connection
+  // Fetch all users for @mentions
   useEffect(() => {
-    if (!chatEnabled || !user || !chatTokenQuery.data?.token) return;
+    if (chatTokenQuery.data?.token) {
+      fetch("/api/chat/users")
+        .then(res => res.json())
+        .then(users => setAllUsers(users))
+        .catch(err => logger.error("[Chat] Failed to fetch users:", err));
+    }
+  }, [chatTokenQuery.data?.token]);
 
-    const socketUrl = window.location.origin;
-    const newSocket = io(socketUrl, {
-      path: "/socket.io/",
-      auth: {
-        token: chatTokenQuery.data.token,
-      },
-      // Use polling first, then upgrade to websocket
-      // This helps with proxies that may block websocket upgrades
-      transports: ["polling", "websocket"],
-      upgrade: true,
-      // Increase timeout for slow connections
-      timeout: 20000,
-      // Force new connection on reconnect
-      forceNew: true,
-    });
+  // Setup SSE connection
+  const connectSSE = useCallback(() => {
+    if (!user || !chatTokenQuery.data?.token) return;
 
-    newSocket.on("connect", () => {
-      logger.info("Connected to chat server");
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const token = chatTokenQuery.data.token;
+    const sseUrl = `/api/chat/stream?token=${encodeURIComponent(token)}`;
+    
+    logger.info("[Chat] Connecting to SSE...");
+    const eventSource = new EventSource(sseUrl);
+    eventSourceRef.current = eventSource;
+
+    eventSource.addEventListener("connected", (event) => {
+      const data = JSON.parse(event.data);
+      logger.info("[Chat] SSE connected:", data);
       setIsConnected(true);
       toast.success("Connected to chat");
-      // Join all rooms to receive notifications
-      CHAT_ROOMS.forEach(room => {
-        newSocket.emit("join_room", { room: room.id });
-      });
-    });
-
-    newSocket.on("connect_error", (error) => {
-      logger.error("Chat connection error:", error);
-      toast.error("Failed to connect to chat. Please refresh the page.");
-    });
-
-    newSocket.on("disconnect", (reason) => {
-      logger.warn("Disconnected from chat:", reason);
-      setIsConnected(false);
-      if (reason === "io server disconnect") {
-        // Server disconnected, try to reconnect
-        newSocket.connect();
-      }
-    });
-
-    newSocket.on("message_history", (history: Message[]) => {
-      setMessages(history);
-    });
-
-    newSocket.on("receive_message", (message: Message) => {
-      setMessages((prev) => [...prev, message]);
       
-      // If message is from a different room, increment unread count
-      if (message.room && message.room !== currentRoom && message.userId !== user.id) {
+      // Fetch initial message history
+      fetchMessageHistory(currentRoom);
+    });
+
+    eventSource.addEventListener("new_message", (event) => {
+      const message = JSON.parse(event.data) as Message;
+      
+      // Only add message if it's for the current room
+      if (message.room === currentRoom) {
+        setMessages(prev => [...prev, message]);
+      } else if (message.userId !== user.id) {
+        // Increment unread count for other rooms
         setRooms(prev => prev.map(r => 
           r.id === message.room 
             ? { ...r, unreadCount: r.unreadCount + 1 }
             : r
         ));
-        // Show notification toast for messages in other rooms
         toast.info(`New message in #${message.room} from ${message.userName}`);
       }
     });
 
-    newSocket.on("user_joined", ({ userName, room }: { userName: string; room?: string }) => {
-      if (!room || room === currentRoom) {
-        toast.info(`${userName} joined the chat`);
-      }
+    eventSource.addEventListener("mention", (event) => {
+      const data = JSON.parse(event.data);
+      toast.info(`${data.from} mentioned you in #${data.room}`);
     });
 
-    newSocket.on("user_typing", ({ userName }: { userName: string }) => {
-      setTypingUsers((prev) => {
-        if (prev.includes(userName)) return prev;
-        return [...prev, userName];
-      });
-    });
-
-    newSocket.on("user_stop_typing", ({ userName }: { userName: string }) => {
-      setTypingUsers((prev) => prev.filter((u) => u !== userName));
-    });
-
-    newSocket.on("online_users", (users: Array<{ userId: number; userName: string }>) => {
+    eventSource.addEventListener("online_users", (event) => {
+      const users = JSON.parse(event.data) as OnlineUser[];
       setOnlineUsers(users);
     });
 
-    setSocket(newSocket);
+    eventSource.addEventListener("ping", () => {
+      // Keep-alive ping received
+    });
+
+    eventSource.onerror = () => {
+      logger.error("[Chat] SSE connection error");
+      setIsConnected(false);
+      eventSource.close();
+      
+      // Attempt to reconnect after 5 seconds
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      reconnectTimeoutRef.current = setTimeout(() => {
+        logger.info("[Chat] Attempting to reconnect...");
+        connectSSE();
+      }, 5000);
+    };
 
     return () => {
-      newSocket.close();
+      eventSource.close();
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
     };
-  }, [chatEnabled, user, chatTokenQuery.data?.token]);
+  }, [user, chatTokenQuery.data?.token, currentRoom]);
 
-  // Request room history when switching rooms
+  // Connect to SSE when token is available
   useEffect(() => {
-    if (socket && currentRoom) {
-      socket.emit("get_room_history", { room: currentRoom });
+    if (chatTokenQuery.data?.token && user) {
+      connectSSE();
+    }
+
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, [chatTokenQuery.data?.token, user, connectSSE]);
+
+  // Fetch message history for a room
+  const fetchMessageHistory = async (room: string) => {
+    try {
+      const response = await fetch(`/api/chat/history/${room}?limit=50`);
+      if (response.ok) {
+        const history = await response.json();
+        setMessages(history);
+      }
+    } catch (error) {
+      logger.error("[Chat] Failed to fetch message history:", error);
+    }
+  };
+
+  // Fetch history when switching rooms
+  useEffect(() => {
+    if (isConnected && currentRoom) {
+      fetchMessageHistory(currentRoom);
       // Clear unread count for current room
       setRooms(prev => prev.map(r => 
         r.id === currentRoom ? { ...r, unreadCount: 0 } : r
       ));
     }
-  }, [socket, currentRoom]);
+  }, [isConnected, currentRoom]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -184,54 +222,52 @@ export default function Chat() {
     }
   }, [messages]);
 
-  const handleSendMessage = () => {
-    if (!socket || !user || !newMessage.trim()) {
-      if (!socket) {
+  // Send message via HTTP POST
+  const handleSendMessage = async () => {
+    if (!user || !newMessage.trim() || !chatTokenQuery.data?.token) {
+      if (!isConnected) {
         toast.error("Not connected to chat. Please wait or refresh the page.");
       }
       return;
     }
 
-    if (!socket.connected) {
-      toast.error("Connection lost. Reconnecting...");
-      socket.connect();
-      return;
-    }
-
-    socket.emit("send_message", {
-      room: currentRoom,
-      message: newMessage.trim(),
-    });
-
-    setNewMessage("");
+    setIsSending(true);
     
-    // Stop typing indicator
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    socket.emit("stop_typing", {
-      room: currentRoom,
-    });
-  };
+    // Extract mentions from message
+    const mentionRegex = /@(\w+)/g;
+    const mentionedNames = [...newMessage.matchAll(mentionRegex)].map(m => m[1]);
+    const mentionedUserIds = allUsers
+      .filter(u => mentionedNames.some(name => 
+        u.name.toLowerCase().includes(name.toLowerCase())
+      ))
+      .map(u => u.id);
 
-  const handleTyping = () => {
-    if (!socket || !user) return;
-
-    socket.emit("typing", {
-      room: currentRoom,
-    });
-
-    // Clear previous timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-
-    // Set new timeout to stop typing indicator
-    typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stop_typing", {
-        room: currentRoom,
+    try {
+      const response = await fetch("/api/chat/send", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: chatTokenQuery.data.token,
+          room: currentRoom,
+          message: newMessage.trim(),
+          mentions: mentionedUserIds.length > 0 ? mentionedUserIds : undefined,
+        }),
       });
-    }, 1000);
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+
+      setNewMessage("");
+      setShowMentions(false);
+    } catch (error) {
+      logger.error("[Chat] Failed to send message:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -239,6 +275,35 @@ export default function Chat() {
       e.preventDefault();
       handleSendMessage();
     }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewMessage(value);
+    
+    // Check for @ mentions
+    const lastAtIndex = value.lastIndexOf("@");
+    if (lastAtIndex !== -1 && lastAtIndex === value.length - 1) {
+      setShowMentions(true);
+      setMentionFilter("");
+    } else if (lastAtIndex !== -1) {
+      const afterAt = value.slice(lastAtIndex + 1);
+      if (!afterAt.includes(" ")) {
+        setShowMentions(true);
+        setMentionFilter(afterAt);
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const insertMention = (userName: string) => {
+    const lastAtIndex = newMessage.lastIndexOf("@");
+    const newValue = newMessage.slice(0, lastAtIndex) + `@${userName} `;
+    setNewMessage(newValue);
+    setShowMentions(false);
   };
 
   const switchRoom = (roomId: string) => {
@@ -249,6 +314,10 @@ export default function Chat() {
 
   const currentRoomData = rooms.find(r => r.id === currentRoom);
   const totalUnread = rooms.reduce((sum, r) => sum + r.unreadCount, 0);
+  
+  const filteredMentionUsers = allUsers.filter(u => 
+    u.name.toLowerCase().includes(mentionFilter.toLowerCase())
+  ).slice(0, 5);
 
   if (loading) {
     return (
@@ -279,23 +348,6 @@ export default function Chat() {
     );
   }
 
-  if (!chatEnabled) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Navigation />
-        <main className="flex-1 flex items-center justify-center text-muted-foreground">
-          <div className="text-center max-w-md px-6">
-            <h1 className="text-2xl font-bold mb-3 text-foreground">Chat Temporarily Unavailable</h1>
-            <p className="text-muted-foreground">
-              Realtime chat is disabled in this environment. Please check back soon.
-            </p>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
   if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -315,7 +367,7 @@ export default function Chat() {
         <div className="container max-w-6xl mx-auto h-[calc(100vh-10rem)]">
           <div className="flex h-full gap-4">
             {/* Sidebar - Desktop */}
-            <div className={`hidden md:flex flex-col w-64 bg-card rounded-lg border ${sidebarOpen ? '' : 'hidden'}`}>
+            <div className="hidden md:flex flex-col w-64 bg-card rounded-lg border">
               <div className="p-4 border-b">
                 <h2 className="font-semibold text-lg flex items-center gap-2">
                   <Hash className="h-5 w-5 text-primary" />
@@ -356,8 +408,8 @@ export default function Chat() {
                 </h3>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {onlineUsers.slice(0, 10).map((u) => (
-                    <div key={u.userId} className="text-sm text-muted-foreground truncate">
-                      {u.userName}
+                    <div key={u.id} className="text-sm text-muted-foreground truncate">
+                      {u.name}
                     </div>
                   ))}
                   {onlineUsers.length > 10 && (
@@ -469,7 +521,7 @@ export default function Chat() {
                         
                         return (
                           <div
-                            key={index}
+                            key={msg.id || index}
                             className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                           >
                             <div
@@ -481,6 +533,13 @@ export default function Chat() {
                             >
                               {!isOwnMessage && showAvatar && (
                                 <p className="text-xs font-semibold mb-1">{msg.userName}</p>
+                              )}
+                              {msg.imageUrl && (
+                                <img 
+                                  src={msg.imageUrl} 
+                                  alt="Shared image" 
+                                  className="max-w-full rounded mb-2"
+                                />
                               )}
                               <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
                               <p className="text-xs opacity-70 mt-1">
@@ -497,15 +556,19 @@ export default function Chat() {
                   </div>
                 </ScrollArea>
 
-                {/* Typing Indicator */}
-                {typingUsers.length > 0 && (
-                  <div className="text-sm text-muted-foreground mb-2 px-2 flex items-center gap-2">
-                    <span className="flex gap-1">
-                      <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </span>
-                    {typingUsers.join(", ")} {typingUsers.length === 1 ? "is" : "are"} typing...
+                {/* Mention Suggestions */}
+                {showMentions && filteredMentionUsers.length > 0 && (
+                  <div className="absolute bottom-20 left-4 right-4 bg-card border rounded-lg shadow-lg p-2 max-h-40 overflow-y-auto">
+                    {filteredMentionUsers.map(u => (
+                      <button
+                        key={u.id}
+                        onClick={() => insertMention(u.name)}
+                        className="w-full text-left px-3 py-2 hover:bg-muted rounded flex items-center gap-2"
+                      >
+                        <AtSign className="h-4 w-4 text-muted-foreground" />
+                        {u.name}
+                      </button>
+                    ))}
                   </div>
                 )}
 
@@ -513,15 +576,17 @@ export default function Chat() {
                 <div className="flex gap-2">
                   <Input
                     value={newMessage}
-                    onChange={(e) => {
-                      setNewMessage(e.target.value);
-                      handleTyping();
-                    }}
+                    onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
-                    placeholder={`Message #${currentRoomData?.name || currentRoom}...`}
+                    placeholder={`Message #${currentRoomData?.name || currentRoom}... (use @ to mention)`}
                     className="flex-1"
+                    disabled={isSending}
                   />
-                  <Button onClick={handleSendMessage} size="icon" disabled={!newMessage.trim()}>
+                  <Button 
+                    onClick={handleSendMessage} 
+                    size="icon" 
+                    disabled={!newMessage.trim() || isSending}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

@@ -36,7 +36,7 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   
-  // Setup Socket.IO for realtime chat
+  // Setup Socket.IO for realtime chat (fallback)
   const { ENV } = await import("./env");
   if (ENV.enableSocketIo) {
     const { setupChat } = await import("../chat");
@@ -67,7 +67,13 @@ async function startServer() {
     registerOAuthRoutes(app);
   }
   
-  // Body parser already configured above
+  // Body parser for JSON requests
+  app.use(express.json());
+  
+  // Setup SSE-based chat (works on all hosting platforms)
+  const { setupSSEChat } = await import("../chat-sse");
+  setupSSEChat(app);
+  
   // Rate limiting middleware
   const { apiRateLimiter } = await import("./rateLimiter");
   app.use("/api/trpc", apiRateLimiter);
