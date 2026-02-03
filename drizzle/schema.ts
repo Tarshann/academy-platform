@@ -287,7 +287,7 @@ export const galleryPhotos = mysqlTable("galleryPhotos", {
   description: text("description"),
   imageUrl: varchar("imageUrl", { length: 500 }).notNull(),
   imageKey: varchar("imageKey", { length: 500 }),
-  category: mysqlEnum("category", ["training", "teams", "events", "facilities", "other"]).notNull().default("other"),
+  category: mysqlEnum("category", ["training", "highlights"]).notNull().default("training"),
   uploadedBy: int("uploadedBy").notNull(),
   isVisible: boolean("isVisible").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

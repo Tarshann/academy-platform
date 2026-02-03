@@ -431,3 +431,21 @@
 - [x] Simplify Gallery categories to Training and Highlights only
 - [x] Simplify Videos categories to Training and Highlights only
 - [x] Add admin video upload form for managing TikTok/Instagram links
+
+
+## Social Media Links Update
+- [x] Update TikTok link to @academytn (https://www.tiktok.com/@academytn)
+- [x] Update Instagram link to @the_academytn (https://www.instagram.com/the_academytn)
+
+## Gallery Admin & Video Tracking
+- [x] Build Gallery admin section for photo management (upload, edit, delete)
+- [x] Add video view tracking (track clicks on video links)
+- [x] Display view counts on Videos page
+
+## SAQ Lab Program
+- [x] Add SAQ Lab program (Speed, Agility, Quickness + Conditioning)
+- [x] Set schedule for Tuesdays and Thursdays (7-8pm)
+- [x] Set price at $15
+
+## Sports Update
+- [x] Add Flag Football to sports list throughout the site

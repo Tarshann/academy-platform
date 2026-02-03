@@ -204,21 +204,33 @@ export default function Videos() {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
+  // Track view mutation
+  const trackViewMutation = trpc.videos.trackView.useMutation();
+
   // Use database videos if available, otherwise use defaults
   const allVideos = useMemo(() => {
     if (dbVideos && dbVideos.length > 0) {
       return dbVideos.map((v: any) => ({
         id: v.id.toString(),
+        numericId: v.id,
         url: v.url,
         title: v.title,
         category: v.category,
         thumbnail: v.thumbnail || "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
         platform: v.platform as "tiktok" | "instagram",
-        date: v.createdAt ? new Date(v.createdAt).toISOString().split('T')[0] : "2024-01-01"
+        date: v.createdAt ? new Date(v.createdAt).toISOString().split('T')[0] : "2024-01-01",
+        viewCount: v.viewCount || 0
       }));
     }
-    return defaultVideos;
+    return defaultVideos.map(v => ({ ...v, numericId: null, viewCount: 0 }));
   }, [dbVideos]);
+
+  // Handle video click to track view
+  const handleVideoClick = (video: any) => {
+    if (video.numericId) {
+      trackViewMutation.mutate({ id: video.numericId });
+    }
+  };
 
   // Filter and sort videos
   const processedVideos = useMemo(() => {
@@ -329,7 +341,7 @@ export default function Videos() {
             </p>
             <div className="flex justify-center gap-4 mt-6">
               <a
-                href="https://www.tiktok.com/@cspringsacademy"
+                href="https://www.tiktok.com/@academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -340,7 +352,7 @@ export default function Videos() {
                 Follow on TikTok
               </a>
               <a
-                href="https://www.instagram.com/cspringsacademy"
+                href="https://www.instagram.com/the_academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
@@ -445,6 +457,7 @@ export default function Videos() {
                       href={video.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => handleVideoClick(video)}
                       className="group relative overflow-hidden rounded-xl bg-muted shadow-md hover:shadow-xl transition-all duration-300 block"
                     >
                       <div className="aspect-[4/3] overflow-hidden bg-gray-900">
@@ -470,6 +483,12 @@ export default function Videos() {
                             {video.platform === "tiktok" ? "TikTok" : "Instagram"}
                           </span>
                           <span className="text-xs text-white/70 capitalize">{video.category}</span>
+                          {video.viewCount > 0 && (
+                            <span className="text-xs text-white/70 flex items-center gap-1">
+                              <Play className="w-3 h-3" />
+                              {video.viewCount.toLocaleString()}
+                            </span>
+                          )}
                         </div>
                         <h3 className="font-semibold text-white text-sm flex items-center gap-1">
                           {video.title}
@@ -514,7 +533,7 @@ export default function Videos() {
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://www.tiktok.com/@cspringsacademy"
+                href="https://www.tiktok.com/@academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -526,7 +545,7 @@ export default function Videos() {
                 <ExternalLink className="w-4 h-4" />
               </a>
               <a
-                href="https://www.instagram.com/cspringsacademy"
+                href="https://www.instagram.com/the_academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"

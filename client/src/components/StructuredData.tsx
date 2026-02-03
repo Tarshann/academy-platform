@@ -34,15 +34,15 @@ interface ProgramStructuredData {
 
 export function OrganizationStructuredData({
   name = "The Academy",
-  description = "Elite youth multi-sport training for basketball, football, and soccer athletes.",
+  description = "Elite youth multi-sport training for basketball, flag football, and soccer athletes.",
   url,
   logo,
   phone = "(571) 292-0833",
   email = "omarphilmore@yahoo.com",
   socialMedia = [
-    "https://www.facebook.com/theacademytn",
-    "https://www.instagram.com/theacademytn",
-    "https://www.tiktok.com/@theacademytn"
+    "https://www.facebook.com/share/1DY8v2AEuN/?mibextid=wwXIfr",
+    "https://www.instagram.com/the_academytn",
+    "https://www.tiktok.com/@academytn"
   ]
 }: {
   name?: string;

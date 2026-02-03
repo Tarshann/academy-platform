@@ -1,0 +1,1 @@
+ALTER TABLE `galleryPhotos` MODIFY COLUMN `category` enum('training','highlights') NOT NULL DEFAULT 'training';

@@ -102,7 +102,7 @@ describeDb("programs.list", () => {
       expect(program).toHaveProperty("description");
       expect(program).toHaveProperty("price");
       expect(program).toHaveProperty("category");
-      expect(program.isActive).toBe(1);
+      expect(program.isActive).toBe(true);
     });
   });
 });

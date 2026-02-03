@@ -116,7 +116,7 @@ export default function Blog() {
                   <p className="text-muted-foreground mb-4">Follow us for the latest content</p>
                   <div className="flex justify-center gap-4">
                     <a
-                      href="https://www.tiktok.com/@cspringsacademy"
+                      href="https://www.tiktok.com/@academytn"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
@@ -127,7 +127,7 @@ export default function Blog() {
                       TikTok
                     </a>
                     <a
-                      href="https://www.instagram.com/cspringsacademy"
+                      href="https://www.instagram.com/the_academytn"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
@@ -138,7 +138,7 @@ export default function Blog() {
                       Instagram
                     </a>
                     <a
-                      href="https://www.facebook.com/cspringsacademy"
+                      href="https://www.facebook.com/share/1DY8v2AEuN/?mibextid=wwXIfr"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 bg-[#1877f2] text-white rounded-lg hover:bg-[#166fe5] transition-colors"

@@ -18,7 +18,7 @@ type ProgramFormData = {
   description: string;
   price: string;
   category: "group" | "individual" | "shooting" | "league" | "camp" | "membership";
-  sport: "" | "basketball" | "football" | "soccer" | "multi_sport" | "saq";
+  sport: "" | "basketball" | "flag_football" | "soccer" | "multi_sport" | "saq";
   ageMin: string;
   ageMax: string;
   maxParticipants: string;
@@ -159,7 +159,7 @@ function ProgramFormFields({ formData, setFormData, errors }: ProgramFormFieldsP
           <SelectContent>
             <SelectItem value="">None / General</SelectItem>
             <SelectItem value="basketball">Basketball</SelectItem>
-            <SelectItem value="football">Football</SelectItem>
+            <SelectItem value="flag_football">Flag Football</SelectItem>
             <SelectItem value="soccer">Soccer</SelectItem>
             <SelectItem value="multi_sport">Multi-Sport</SelectItem>
             <SelectItem value="saq">SAQ Training</SelectItem>

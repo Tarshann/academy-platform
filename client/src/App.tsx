@@ -45,11 +45,11 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path={"/"}>
-          <SEO title="Home" description="Elite youth multi-sport training for basketball, football, and soccer athletes." />
+          <SEO title="Home" description="Elite youth multi-sport training for basketball, flag football, and soccer athletes." />
           <Home />
         </Route>
         <Route path={"/programs"}>
-          <SEO title="Programs" description="Comprehensive athletic development programs for basketball, football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development." />
+          <SEO title="Programs" description="Comprehensive athletic development programs for basketball, flag football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development." />
           <Programs />
         </Route>
         <Route path={"/about"}>

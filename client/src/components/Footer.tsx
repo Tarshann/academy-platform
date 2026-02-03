@@ -20,11 +20,11 @@ export default function Footer() {
               <span className="text-xl font-bold text-foreground">THE ACADEMY</span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
-              Building complete athletes through multi-sport development in basketball, football, and soccer.
+              Building complete athletes through multi-sport development in basketball, flag football, and soccer.
             </p>
             <div className="flex gap-3">
               <a
-                href="https://www.facebook.com/theacademytn"
+                href="https://www.facebook.com/share/1DY8v2AEuN/?mibextid=wwXIfr"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
@@ -33,7 +33,7 @@ export default function Footer() {
                 <Facebook size={18} />
               </a>
               <a
-                href="https://www.instagram.com/theacademytn"
+                href="https://www.instagram.com/the_academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
@@ -42,7 +42,7 @@ export default function Footer() {
                 <Instagram size={18} />
               </a>
               <a
-                href="https://www.tiktok.com/@theacademytn"
+                href="https://www.tiktok.com/@academytn"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"

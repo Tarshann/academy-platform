@@ -13,7 +13,7 @@ export default function Programs() {
       <Navigation />
       <ProgramStructuredData 
         name="The Academy Athletic Development Programs"
-        description="Comprehensive athletic development programs for basketball, football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development."
+        description="Comprehensive athletic development programs for basketball, flag football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development."
       />
       <main id="main-content" className="flex-1">
         <div className="container pt-6">
@@ -25,7 +25,7 @@ export default function Programs() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">Our Programs</h1>
               <p className="text-lg text-muted-foreground mb-4">
-                Comprehensive athletic development programs for basketball, football, and soccer athletes. 
+                Comprehensive athletic development programs for basketball, flag football, and soccer athletes. 
                 Our focus on SAQ (Speed, Agility, Quickness) training and strength conditioning builds 
                 foundational athletic qualities that translate across all sports.
               </p>
@@ -131,6 +131,26 @@ export default function Programs() {
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$15 <span className="text-sm text-muted-foreground font-normal">per class</span></p>
+                      <Link href="/signup">
+                        <Button className="w-full">Register Now</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* SAQ Lab */}
+                <Card id="program-saq-lab" className="bg-card border-border scroll-mt-24">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">SAQ Lab</CardTitle>
+                    <CardDescription className="text-muted-foreground">Youth athletes • Tuesdays & Thursdays 7-8pm</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Speed, Agility, and Quickness training combined with conditioning. Build explosive athleticism, 
+                      improve reaction time, and develop the foundational movement skills that translate across all sports.
+                    </p>
+                    <div className="border-t border-border pt-4 mt-4">
+                      <p className="text-2xl font-bold text-primary mb-2">$15 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
                       <Link href="/signup">
                         <Button className="w-full">Register Now</Button>
                       </Link>

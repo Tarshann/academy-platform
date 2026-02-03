@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Calendar, Users, MessageSquare, Settings, UserPlus, Video } from "lucide-react";
+import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image } from "lucide-react";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
 import { AttendanceManager } from "@/components/admin/managers/AttendanceManager";
@@ -15,6 +15,7 @@ import { ProgramsManager } from "@/components/admin/managers/ProgramsManager";
 import { AnnouncementsManager } from "@/components/admin/managers/AnnouncementsManager";
 import { ContactsManager } from "@/components/admin/managers/ContactsManager";
 import { VideosManager } from "@/components/admin/managers/VideosManager";
+import { GalleryManager } from "@/components/admin/managers/GalleryManager";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -91,6 +92,10 @@ export default function AdminDashboard() {
                 <Video className="h-4 w-4" />
                 <span className="hidden sm:inline">Videos</span>
               </TabsTrigger>
+              <TabsTrigger value="gallery" className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                <span className="hidden sm:inline">Gallery</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="schedules">
@@ -122,6 +127,9 @@ export default function AdminDashboard() {
             </TabsContent>
             <TabsContent value="videos">
               <VideosManager />
+            </TabsContent>
+            <TabsContent value="gallery">
+              <GalleryManager />
             </TabsContent>
           </Tabs>
         </div>

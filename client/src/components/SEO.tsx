@@ -9,7 +9,7 @@ interface SEOProps {
 }
 
 const SITE_NAME = "The Academy";
-const DEFAULT_DESCRIPTION = "Elite youth multi-sport training for basketball, football, and soccer athletes. Focused on speed, agility, quickness, and strength development.";
+const DEFAULT_DESCRIPTION = "Elite youth multi-sport training for basketball, flag football, and soccer athletes. Focused on speed, agility, quickness, and strength development.";
 const DEFAULT_IMAGE = "/academy-logo.jpeg";
 const SITE_URL =
   import.meta.env.VITE_SITE_URL ||

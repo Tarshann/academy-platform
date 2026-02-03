@@ -699,7 +699,7 @@ export default function Home() {
                       "We build confidence through competence. Master the fundamentals, and everything else follows."
                     </blockquote>
                     <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-                      Coach O brings expertise in basketball, football, and soccer development. 
+                      Coach O brings expertise in basketball, flag football, and soccer development. 
                       His approach focuses on building athletic foundations that translate 
                       across all sports while developing mental toughness and game IQ.
                     </p>

@@ -93,7 +93,7 @@ export default function FAQs() {
                     What makes The Academy different from other programs?
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
-                    The Academy focuses on holistic athletic development across basketball, football, and soccer. 
+                    The Academy focuses on holistic athletic development across basketball, flag football, and soccer. 
                     We emphasize foundational athletic qualities (SAQ and strength) that translate across all 
                     sports, not just sport-specific skills. We prioritize character building, accountability, 
                     and long-term growth over short-term results. Our coaches provide individualized attention 

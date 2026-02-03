@@ -330,7 +330,7 @@ export const appRouter = router({
               sport: z
                 .enum([
                   "basketball",
-                  "football",
+                  "flag_football",
                   "soccer",
                   "multi_sport",
                   "saq",
@@ -372,7 +372,7 @@ export const appRouter = router({
               sport: z
                 .enum([
                   "basketball",
-                  "football",
+                  "flag_football",
                   "soccer",
                   "multi_sport",
                   "saq",
@@ -554,6 +554,36 @@ export const appRouter = router({
       }),
 
     admin: router({
+      list: adminProcedure.query(async () => {
+        const { getDb } = await import("./db");
+        const { galleryPhotos } = await import("../drizzle/schema");
+        const { desc } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) return [];
+        return await db.select().from(galleryPhotos).orderBy(desc(galleryPhotos.createdAt));
+      }),
+
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            title: z.string().optional(),
+            description: z.string().optional(),
+            category: z.enum(["training", "highlights"]).optional(),
+            isVisible: z.boolean().optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { getDb } = await import("./db");
+          const { galleryPhotos } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
+          const { id, ...updates } = input;
+          await db.update(galleryPhotos).set(updates).where(eq(galleryPhotos.id, id));
+          return { success: true };
+        }),
+
       upload: adminProcedure
         .input(
           z.object({
@@ -561,13 +591,7 @@ export const appRouter = router({
             description: z.string().optional(),
             imageUrl: z.string(),
             imageKey: z.string(),
-            category: z.enum([
-              "training",
-              "teams",
-              "events",
-              "facilities",
-              "other",
-            ]),
+            category: z.enum(["training", "highlights"]),
           })
         )
         .mutation(async ({ ctx, input }) => {
@@ -845,6 +869,14 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const { getVideosByCategory } = await import("./db");
         return await getVideosByCategory(input.category, true);
+      }),
+
+    trackView: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { incrementVideoViewCount } = await import("./db");
+        await incrementVideoViewCount(input.id);
+        return { success: true };
       }),
 
     admin: router({
