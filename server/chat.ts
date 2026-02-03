@@ -11,8 +11,16 @@ export function setupChat(httpServer: HTTPServer) {
     cors: {
       origin: "*",
       methods: ["GET", "POST"],
+      credentials: true,
     },
     path: "/socket.io/",
+    // Allow both polling and websocket transports
+    transports: ["polling", "websocket"],
+    // Allow upgrade from polling to websocket
+    allowUpgrades: true,
+    // Increase timeouts for production
+    pingTimeout: 60000,
+    pingInterval: 25000,
   });
 
   io.use(async (socket, next) => {

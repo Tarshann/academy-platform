@@ -85,6 +85,14 @@ export default function Chat() {
       auth: {
         token: chatTokenQuery.data.token,
       },
+      // Use polling first, then upgrade to websocket
+      // This helps with proxies that may block websocket upgrades
+      transports: ["polling", "websocket"],
+      upgrade: true,
+      // Increase timeout for slow connections
+      timeout: 20000,
+      // Force new connection on reconnect
+      forceNew: true,
     });
 
     newSocket.on("connect", () => {
