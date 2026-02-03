@@ -145,12 +145,12 @@ export default function Programs() {
                       POPULAR
                     </div>
                     <CardTitle className="text-foreground">Academy Group Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • Best value</CardDescription>
+                    <CardDescription className="text-muted-foreground">Experienced athletes • Best value</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">
-                      Unlimited access to group sessions throughout the month. Perfect for dedicated players 
-                      who want consistent training and development.
+                      Unlimited access to group sessions and Shooting Lab throughout the month. Perfect for dedicated players 
+                      who want consistent training and development. Small group sizes (max 8 players) in a competitive training environment.
                     </p>
                     <div className="border-t border-border pt-4 mt-4">
                       <p className="text-2xl font-bold text-primary mb-2">$150 <span className="text-sm text-muted-foreground font-normal">per month</span></p>

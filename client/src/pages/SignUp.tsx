@@ -21,15 +21,15 @@ const MEMBERSHIP_PRODUCTS = [
   {
     id: "academy-group-membership",
     name: "Academy Group Membership",
-    description: "Unlimited group sessions",
+    description: "Unlimited group sessions + Shooting Lab",
     price: 150,
     intervalLabel: "/month",
     badge: "POPULAR",
     features: [
       "Unlimited group workout sessions",
+      "Shooting Lab access included",
       "Small group sizes (max 8 players)",
       "Competitive training environment",
-      "Youth athletes of all levels",
     ],
   },
   {
@@ -42,8 +42,8 @@ const MEMBERSHIP_PRODUCTS = [
     features: [
       "Unlimited skills classes",
       "Unlimited open gym access",
-      "Shooting lab access included",
-      "Youth athletes of all levels",
+      "Shooting Lab access included",
+      "For dedicated athletes",
     ],
   },
 ];
