@@ -301,3 +301,11 @@
 - [x] Add coach filter (All, Coach Mac, Coach O)
 - [x] Add status tabs (pending, confirmed, completed, cancelled)
 - [x] Add route /coach-dashboard to App.tsx
+
+
+## Summer Camp Pricing Correction
+- [x] Fix Summer Basketball Camp pricing to $185 total ($20 registration + $165 camp fee)
+
+## OAuth Database Error Fix
+- [x] Added stripeCustomerId column to users table via SQL
+- [ ] User needs to test login on cspringsacademy.com after publishing
