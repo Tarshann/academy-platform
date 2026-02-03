@@ -43,6 +43,7 @@ export default function Chat() {
   });
   const chatEnabled = import.meta.env.VITE_ENABLE_SOCKET_IO !== "false";
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
@@ -88,10 +89,26 @@ export default function Chat() {
 
     newSocket.on("connect", () => {
       logger.info("Connected to chat server");
+      setIsConnected(true);
+      toast.success("Connected to chat");
       // Join all rooms to receive notifications
       CHAT_ROOMS.forEach(room => {
         newSocket.emit("join_room", { room: room.id });
       });
+    });
+
+    newSocket.on("connect_error", (error) => {
+      logger.error("Chat connection error:", error);
+      toast.error("Failed to connect to chat. Please refresh the page.");
+    });
+
+    newSocket.on("disconnect", (reason) => {
+      logger.warn("Disconnected from chat:", reason);
+      setIsConnected(false);
+      if (reason === "io server disconnect") {
+        // Server disconnected, try to reconnect
+        newSocket.connect();
+      }
     });
 
     newSocket.on("message_history", (history: Message[]) => {
@@ -160,7 +177,18 @@ export default function Chat() {
   }, [messages]);
 
   const handleSendMessage = () => {
-    if (!socket || !user || !newMessage.trim()) return;
+    if (!socket || !user || !newMessage.trim()) {
+      if (!socket) {
+        toast.error("Not connected to chat. Please wait or refresh the page.");
+      }
+      return;
+    }
+
+    if (!socket.connected) {
+      toast.error("Connection lost. Reconnecting...");
+      socket.connect();
+      return;
+    }
 
     socket.emit("send_message", {
       room: currentRoom,
@@ -409,8 +437,8 @@ export default function Chat() {
                   </div>
                   
                   <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                    <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                    {onlineUsers.length} online
+                    <Circle className={`h-2 w-2 ${isConnected ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
+                    {isConnected ? `${onlineUsers.length} online` : 'Connecting...'}
                   </div>
                 </div>
               </CardHeader>
