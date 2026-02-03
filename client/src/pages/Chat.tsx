@@ -61,6 +61,10 @@ export default function Chat() {
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [allUsers, setAllUsers] = useState<OnlineUser[]>([]);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -222,9 +226,63 @@ export default function Chat() {
     }
   }, [messages]);
 
+  // Handle image selection
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be less than 5MB");
+        return;
+      }
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Clear selected image
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Upload image to S3
+  const uploadImage = async (file: File): Promise<{ url: string; key: string } | null> => {
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("token", chatTokenQuery.data?.token || "");
+      
+      const response = await fetch("/api/chat/upload-image", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+      
+      const data = await response.json();
+      return { url: data.url, key: data.key };
+    } catch (error) {
+      logger.error("[Chat] Failed to upload image:", error);
+      toast.error("Failed to upload image");
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Send message via HTTP POST
   const handleSendMessage = async () => {
-    if (!user || !newMessage.trim() || !chatTokenQuery.data?.token) {
+    if (!user || (!newMessage.trim() && !selectedImage) || !chatTokenQuery.data?.token) {
       if (!isConnected) {
         toast.error("Not connected to chat. Please wait or refresh the page.");
       }
@@ -243,6 +301,21 @@ export default function Chat() {
       .map(u => u.id);
 
     try {
+      // Upload image first if selected
+      let imageUrl: string | undefined;
+      let imageKey: string | undefined;
+      
+      if (selectedImage) {
+        const uploadResult = await uploadImage(selectedImage);
+        if (uploadResult) {
+          imageUrl = uploadResult.url;
+          imageKey = uploadResult.key;
+        } else {
+          setIsSending(false);
+          return; // Don't send message if image upload failed
+        }
+      }
+
       const response = await fetch("/api/chat/send", {
         method: "POST",
         headers: {
@@ -251,7 +324,9 @@ export default function Chat() {
         body: JSON.stringify({
           token: chatTokenQuery.data.token,
           room: currentRoom,
-          message: newMessage.trim(),
+          message: newMessage.trim() || (imageUrl ? "📷 Shared an image" : ""),
+          imageUrl,
+          imageKey,
           mentions: mentionedUserIds.length > 0 ? mentionedUserIds : undefined,
         }),
       });
@@ -262,6 +337,7 @@ export default function Chat() {
 
       setNewMessage("");
       setShowMentions(false);
+      clearSelectedImage();
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
@@ -572,22 +648,59 @@ export default function Chat() {
                   </div>
                 )}
 
+                {/* Image Preview */}
+                {imagePreview && (
+                  <div className="relative inline-block mb-2">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="max-h-32 rounded border"
+                    />
+                    <button
+                      onClick={clearSelectedImage}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+
                 {/* Input Area */}
                 <div className="flex gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSending || isUploading}
+                    title="Attach image"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </Button>
                   <Input
                     value={newMessage}
                     onChange={handleInputChange}
                     onKeyPress={handleKeyPress}
                     placeholder={`Message #${currentRoomData?.name || currentRoom}... (use @ to mention)`}
                     className="flex-1"
-                    disabled={isSending}
+                    disabled={isSending || isUploading}
                   />
                   <Button 
                     onClick={handleSendMessage} 
                     size="icon" 
-                    disabled={!newMessage.trim() || isSending}
+                    disabled={(!newMessage.trim() && !selectedImage) || isSending || isUploading}
                   >
-                    <Send className="h-4 w-4" />
+                    {isUploading ? (
+                      <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
                   </Button>
                 </div>
               </CardContent>

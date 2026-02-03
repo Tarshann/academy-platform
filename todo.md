@@ -401,3 +401,13 @@
 - [x] Rename Academy League to Academy Offseason with summer tournament description
 
 - [x] Remove sports filter section from Programs page
+
+
+## Chat Image Sharing & Content Pages
+- [ ] Add image upload button to chat
+- [ ] Implement S3 upload for chat images
+- [ ] Display images in chat messages
+- [ ] Build Gallery page with photo grid
+- [ ] Build Videos page with video content
+- [ ] Build Shop page with merchandise
+- [ ] Build Blog page with posts

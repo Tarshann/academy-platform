@@ -1,4 +1,5 @@
-import type { Express, Request, Response } from "express";
+import { Express, Request, Response } from "express";
+import multer from "multer";
 import { getDb } from "./db";
 import { chatMessages, users } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
@@ -281,6 +282,81 @@ export function setupSSEChat(app: Express) {
     } catch (error) {
       logger.error("[Chat] Failed to get users:", error);
       res.status(500).json({ error: "Failed to get users" });
+    }
+  });
+  
+  // Upload image for chat
+  app.post("/api/chat/upload-image", async (req: Request, res: Response) => {
+    try {
+      const { storagePut } = await import("./storage");
+      
+      const upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+        fileFilter: (_req, file, cb) => {
+          if (file.mimetype.startsWith("image/")) {
+            cb(null, true);
+          } else {
+            cb(new Error("Only image files are allowed"));
+          }
+        },
+      }).single("file");
+      
+      upload(req, res, async (err: unknown) => {
+        if (err) {
+          logger.error("[Chat] Image upload error:", err);
+          const errorMessage = err instanceof Error ? err.message : "Upload failed";
+          return res.status(400).json({ error: errorMessage });
+        }
+        
+        const file = (req as Request & { file?: Express.Multer.File }).file;
+        const token = req.body.token;
+        
+        if (!file) {
+          return res.status(400).json({ error: "No file provided" });
+        }
+        
+        if (!token) {
+          return res.status(401).json({ error: "No token provided" });
+        }
+        
+        // Verify token
+        let user: { id: number; name: string } | null = null;
+        try {
+          const session = await verifySession(token);
+          if (session) {
+            const db = await getDb();
+            if (db) {
+              const [dbUser] = await db.select().from(users).where(eq(users.openId, session.openId)).limit(1);
+              if (dbUser) {
+                user = { id: dbUser.id, name: dbUser.name || "User" };
+              }
+            }
+          }
+        } catch (error) {
+          logger.error("[Chat] Token verification failed:", error);
+          return res.status(401).json({ error: "Invalid token" });
+        }
+        
+        if (!user) {
+          return res.status(401).json({ error: "User not found" });
+        }
+        
+        // Generate unique filename
+        const ext = file.originalname.split(".").pop() || "jpg";
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const key = `chat-images/${user.id}-${timestamp}-${randomSuffix}.${ext}`;
+        
+        // Upload to S3
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        
+        logger.info(`[Chat] Image uploaded: ${key}`);
+        res.json({ url, key });
+      });
+    } catch (error) {
+      logger.error("[Chat] Image upload failed:", error);
+      res.status(500).json({ error: "Failed to upload image" });
     }
   });
   
