@@ -464,3 +464,7 @@
 ## Video Thumbnails Update
 - [x] Replace photo thumbnails with platform-specific placeholders (TikTok/Instagram branded)
 - [x] Add custom thumbnail upload option in admin video form (URL field available, platform placeholders as default)
+
+
+## Hero Section Fix
+- [x] Replace hero background with Academy training photo (Coach instructing athletes)

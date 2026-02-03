@@ -19,7 +19,6 @@ type FormatOption = typeof formatOptions[number];
 export default function Home() {
   const heroRef = useRef<HTMLDivElement>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [videoLoaded, setVideoLoaded] = useState(false);
   const [showMobileCTA, setShowMobileCTA] = useState(false);
   
   // Program Finder state
@@ -191,41 +190,14 @@ export default function Home() {
           ref={heroRef}
           className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
         >
-          {/* Video Background - respects prefers-reduced-motion */}
+          {/* Hero Background - Academy Training Photo */}
           <div className="absolute inset-0 overflow-hidden">
-            {prefersReducedMotion ? (
-              <img 
-                src="/images/hero-poster.jpg"
-                alt=""
-                className="absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110"
-                style={{ filter: 'sepia(0.1)' }}
-                aria-hidden="true"
-              />
-            ) : (
-              <>
-                {/* Poster image shown until video loads */}
-                <img 
-                  src="/images/hero-poster.jpg"
-                  alt=""
-                  className={`absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110 transition-opacity duration-500 ${videoLoaded ? 'opacity-0' : ''}`}
-                  style={{ filter: 'sepia(0.1)' }}
-                  aria-hidden="true"
-                />
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  poster="/images/hero-poster.jpg"
-                  onCanPlay={() => setVideoLoaded(true)}
-                  className={`absolute w-full h-full object-cover opacity-40 saturate-[0.7] brightness-110 ${videoLoaded ? 'video-fade-in' : 'opacity-0'}`}
-                  style={{ filter: 'sepia(0.1)' }}
-                >
-                  <source src="/images/hero-video.mp4" type="video/mp4" />
-                </video>
-              </>
-            )}
+            <img 
+              src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/YoeYbBWtxqzEHYHH.jpeg"
+              alt="Academy basketball training session"
+              className="absolute w-full h-full object-cover opacity-50 saturate-[0.8] brightness-105"
+              style={{ filter: 'sepia(0.05)', objectPosition: 'center 30%' }}
+            />
           </div>
           {/* Warm overlay gradient for text contrast */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
