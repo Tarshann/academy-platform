@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, email, name, role FROM users ORDER BY id DESC LIMIT 20",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute SELECT id, email, name, role FROM users ORDER BY id DESC LIMIT 20",
+  "rows": [
+    {
+      "id": "480001",
+      "email": "smithsolutions1102@gmail.com",
+      "name": "Tekia Smith",
+      "role": "user"
+    },
+    {
+      "id": "210002",
+      "email": "tarshann@gmail.com",
+      "name": "The Academy",
+      "role": "admin"
+    },
+    {
+      "id": "1",
+      "email": "velarisgroup@proton.me",
+      "name": "velarisgroup",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\n480001\tsmithsolutions1102@gmail.com\tTekia Smith\tuser\n210002\ttarshann@gmail.com\tThe Academy\tadmin\n1\tvelarisgroup@proton.me\tvelarisgroup\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 58
+}

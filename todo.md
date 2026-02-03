@@ -350,3 +350,13 @@
 - [x] Update drizzle.config.ts for MySQL dialect
 - [x] Test database connection locally
 - [ ] Test OAuth login on live site (needs publish)
+
+
+## Realtime Chat Enhancement (GroupMe Replacement)
+- [x] Review existing chat implementation
+- [x] Add multiple chat channels/rooms (General, Announcements, Parents, Coaches)
+- [x] Add user presence indicators (online/offline)
+- [x] Add message timestamps and read receipts
+- [x] Make chat mobile-friendly and accessible from navigation
+- [x] Add unread message badges and notifications
+- [ ] Test realtime messaging functionality
