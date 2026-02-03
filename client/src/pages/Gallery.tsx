@@ -11,14 +11,14 @@ const galleryPhotos = [
     id: 1,
     url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
     title: "Summer Camp Group",
-    category: "events",
+    category: "highlights",
     description: "Youth athletes at our annual summer basketball camp"
   },
   {
     id: 2,
     url: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
     title: "Girls Team",
-    category: "teams",
+    category: "highlights",
     description: "Academy girls team ready for tournament competition"
   },
   {
@@ -82,8 +82,7 @@ const galleryPhotos = [
 const categories = [
   { value: "all", label: "All Photos" },
   { value: "training", label: "Training" },
-  { value: "teams", label: "Teams" },
-  { value: "events", label: "Events" },
+  { value: "highlights", label: "Highlights" },
 ];
 
 export default function Gallery() {
@@ -124,7 +123,7 @@ export default function Gallery() {
               Photo Gallery
             </h1>
             <p className="text-xl text-center text-muted-foreground max-w-2xl mx-auto">
-              See our athletes in action - training sessions, team moments, and Academy events
+              See our athletes in action - training sessions and Academy highlights
             </p>
           </div>
         </section>

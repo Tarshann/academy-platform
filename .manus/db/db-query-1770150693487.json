@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE videos ADD COLUMN url varchar(500) NOT NULL DEFAULT ''; ALTER TABLE videos ADD COLUMN thumbnail varchar(500); ALTER TABLE videos ADD COLUMN platform enum('tiktok', 'instagram') NOT NULL DEFAULT 'tiktok'; ALTER TABLE videos MODIFY COLUMN category enum('training', 'highlights') NOT NULL DEFAULT 'training';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute ALTER TABLE videos ADD COLUMN url varchar(500) NOT NULL DEFAULT ''; ALTER TABLE videos ADD COLUMN thumbnail varchar(500); ALTER TABLE videos ADD COLUMN platform enum('tiktok', 'instagram') NOT NULL DEFAULT 'tiktok'; ALTER TABLE videos MODIFY COLUMN category enum('training', 'highlights') NOT NULL DEFAULT 'training';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2941
+}

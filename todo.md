@@ -426,3 +426,8 @@
 - [x] Add infinite scroll to replace Load More button
 - [x] Add video sorting (newest, oldest, platform, A-Z)
 - [x] Add search functionality for videos
+
+## Category Simplification
+- [x] Simplify Gallery categories to Training and Highlights only
+- [x] Simplify Videos categories to Training and Highlights only
+- [x] Add admin video upload form for managing TikTok/Instagram links

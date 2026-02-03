@@ -1,0 +1,8 @@
+{
+  "query": "INSERT INTO videos (title, url, category, platform) VALUES ('Test Video', 'https://www.tiktok.com/@test/video/123', 'training', 'tiktok');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute INSERT INTO videos (title, url, category, platform) VALUES ('Test Video', 'https://www.tiktok.com/@test/video/123', 'training', 'tiktok');",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1364 (HY000) at line 1: Field 'videoUrl' doesn't have a default value"
+  ]
+}

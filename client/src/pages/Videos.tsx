@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { trpc } from "@/lib/trpc";
 
-// TikTok videos from The Academy
-const tiktokVideos = [
+// Default/fallback videos (used when database is empty)
+const defaultVideos = [
   {
     id: "tt1",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426665432193920298",
     title: "Training Highlights",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+    platform: "tiktok" as const,
     date: "2024-12-01"
   },
   {
@@ -23,14 +25,16 @@ const tiktokVideos = [
     title: "Skills Development",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png",
+    platform: "tiktok" as const,
     date: "2024-11-28"
   },
   {
     id: "tt3",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426651330054538539",
     title: "Dribbling Drills",
-    category: "drills",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png",
+    platform: "tiktok" as const,
     date: "2024-11-25"
   },
   {
@@ -39,6 +43,7 @@ const tiktokVideos = [
     title: "Shooting Practice",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png",
+    platform: "tiktok" as const,
     date: "2024-11-20"
   },
   {
@@ -47,38 +52,43 @@ const tiktokVideos = [
     title: "Team Training",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png",
+    platform: "tiktok" as const,
     date: "2024-11-15"
   },
   {
     id: "tt6",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426649426347912491",
     title: "Ball Handling",
-    category: "drills",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/EHhkFKpZPIRhKBhk.jpeg",
+    platform: "tiktok" as const,
     date: "2024-11-10"
   },
   {
     id: "tt7",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426648763882748203",
     title: "Footwork Fundamentals",
-    category: "drills",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ycReYGSogWWXZoQk.jpeg",
+    platform: "tiktok" as const,
     date: "2024-11-05"
   },
   {
     id: "tt8",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426648066550359339",
     title: "Conditioning",
-    category: "conditioning",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/QxrXovSzWgTZmpuQ.jpeg",
+    platform: "tiktok" as const,
     date: "2024-10-30"
   },
   {
     id: "tt9",
     url: "https://www.tiktok.com/@cspringsacademy/video/7426647407243523371",
     title: "Game Prep",
-    category: "games",
+    category: "highlights",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    platform: "tiktok" as const,
     date: "2024-10-25"
   },
   {
@@ -87,6 +97,7 @@ const tiktokVideos = [
     title: "Youth Development",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
+    platform: "tiktok" as const,
     date: "2024-10-20"
   },
   {
@@ -95,26 +106,25 @@ const tiktokVideos = [
     title: "Academy Life",
     category: "highlights",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    platform: "tiktok" as const,
     date: "2024-10-15"
   },
-];
-
-// Instagram posts and reels
-const instagramVideos = [
   {
     id: "ig1",
     url: "https://www.instagram.com/reel/DDVpkOWRPTc/",
     title: "Training Session",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+    platform: "instagram" as const,
     date: "2024-12-02"
   },
   {
     id: "ig2",
     url: "https://www.instagram.com/reel/DDVpJcMRVgJ/",
     title: "Skills Work",
-    category: "drills",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/sUtbjurQhVuawLiA.png",
+    platform: "instagram" as const,
     date: "2024-11-30"
   },
   {
@@ -123,6 +133,7 @@ const instagramVideos = [
     title: "Practice Highlights",
     category: "highlights",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ocpoHaLBcigVkfYx.png",
+    platform: "instagram" as const,
     date: "2024-11-27"
   },
   {
@@ -131,6 +142,7 @@ const instagramVideos = [
     title: "Team Photo",
     category: "highlights",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/LoTkDHgnwoQfPrSa.png",
+    platform: "instagram" as const,
     date: "2024-11-22"
   },
   {
@@ -139,6 +151,7 @@ const instagramVideos = [
     title: "Camp Moments",
     category: "highlights",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/WnUtjaTtiicfvTcM.png",
+    platform: "instagram" as const,
     date: "2024-11-18"
   },
   {
@@ -147,14 +160,16 @@ const instagramVideos = [
     title: "Shooting Form",
     category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/bHWlHCSeLtHjxEEQ.png",
+    platform: "instagram" as const,
     date: "2024-11-12"
   },
   {
     id: "ig7",
     url: "https://www.instagram.com/p/DDVn4rnRgvH/",
     title: "Dribble Moves",
-    category: "drills",
+    category: "training",
     thumbnail: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/ZrvwDrwlNAjLdWMh.png",
+    platform: "instagram" as const,
     date: "2024-11-08"
   },
 ];
@@ -162,10 +177,7 @@ const instagramVideos = [
 const categories = [
   { value: "all", label: "All Videos" },
   { value: "training", label: "Training" },
-  { value: "drills", label: "Drills" },
   { value: "highlights", label: "Highlights" },
-  { value: "conditioning", label: "Conditioning" },
-  { value: "games", label: "Games" },
 ];
 
 const sortOptions = [
@@ -177,11 +189,6 @@ const sortOptions = [
   { value: "za", label: "Z-A" },
 ];
 
-const allVideos = [
-  ...tiktokVideos.map(v => ({ ...v, platform: "tiktok" as const })),
-  ...instagramVideos.map(v => ({ ...v, platform: "instagram" as const })),
-];
-
 const VIDEOS_PER_PAGE = 8;
 
 export default function Videos() {
@@ -191,6 +198,27 @@ export default function Videos() {
   const [visibleCount, setVisibleCount] = useState(VIDEOS_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // Fetch videos from database
+  const { data: dbVideos } = trpc.videos.list.useQuery(undefined, {
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+  });
+
+  // Use database videos if available, otherwise use defaults
+  const allVideos = useMemo(() => {
+    if (dbVideos && dbVideos.length > 0) {
+      return dbVideos.map((v: any) => ({
+        id: v.id.toString(),
+        url: v.url,
+        title: v.title,
+        category: v.category,
+        thumbnail: v.thumbnail || "https://files.manuscdn.com/user_upload_by_module/session_file/310519663204873520/cneaVkHZVVMAdQwz.png",
+        platform: v.platform as "tiktok" | "instagram",
+        date: v.createdAt ? new Date(v.createdAt).toISOString().split('T')[0] : "2024-01-01"
+      }));
+    }
+    return defaultVideos;
+  }, [dbVideos]);
 
   // Filter and sort videos
   const processedVideos = useMemo(() => {
@@ -241,7 +269,7 @@ export default function Videos() {
     }
 
     return videos;
-  }, [selectedCategory, sortBy, searchQuery]);
+  }, [allVideos, selectedCategory, sortBy, searchQuery]);
 
   // Reset visible count when filters change
   useEffect(() => {
@@ -297,7 +325,7 @@ export default function Videos() {
               Video Library
             </h1>
             <p className="text-xl text-center text-muted-foreground max-w-2xl mx-auto">
-              Watch training clips, drills, and highlights from The Academy
+              Watch training clips and highlights from The Academy
             </p>
             <div className="flex justify-center gap-4 mt-6">
               <a

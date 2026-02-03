@@ -858,16 +858,10 @@ export const appRouter = router({
           z.object({
             title: z.string(),
             description: z.string().optional(),
-            videoUrl: z.string(),
-            thumbnailUrl: z.string().optional(),
-            category: z.enum([
-              "drills",
-              "technique",
-              "conditioning",
-              "games",
-              "other",
-            ]),
-            duration: z.number().optional(),
+            url: z.string(),
+            thumbnail: z.string().optional(),
+            category: z.enum(["training", "highlights"]),
+            platform: z.enum(["tiktok", "instagram"]),
           })
         )
         .mutation(async ({ input }) => {
@@ -882,23 +876,17 @@ export const appRouter = router({
             id: z.number(),
             title: z.string().optional(),
             description: z.string().optional(),
-            videoUrl: z.string().optional(),
-            thumbnailUrl: z.string().optional(),
-            category: z
-              .enum(["drills", "technique", "conditioning", "games", "other"])
-              .optional(),
-            duration: z.number().optional(),
+            url: z.string().optional(),
+            thumbnail: z.string().optional(),
+            category: z.enum(["training", "highlights"]).optional(),
+            platform: z.enum(["tiktok", "instagram"]).optional(),
             isPublished: z.boolean().optional(),
           })
         )
         .mutation(async ({ input }) => {
           const { updateVideo } = await import("./db");
           const { id, ...updates } = input;
-          const dbUpdates: any = { ...updates };
-          if (updates.isPublished !== undefined) {
-            dbUpdates.isPublished = updates.isPublished;
-          }
-          await updateVideo(id, dbUpdates);
+          await updateVideo(id, updates);
           return { success: true };
         }),
 

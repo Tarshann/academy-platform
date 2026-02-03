@@ -86,11 +86,12 @@ export const orderStatusEnum = mysqlEnum("order_status", [
   "cancelled",
 ]);
 export const videoCategoryEnum = mysqlEnum("video_category", [
-  "drills",
-  "technique",
-  "conditioning",
-  "games",
-  "other",
+  "training",
+  "highlights",
+]);
+export const videoPlatformEnum = mysqlEnum("video_platform", [
+  "tiktok",
+  "instagram",
 ]);
 export const attendanceStatusEnum = mysqlEnum("attendance_status", [
   "present",
@@ -302,11 +303,11 @@ export const videos = mysqlTable("videos", {
   id: int("id").primaryKey().autoincrement(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  videoUrl: varchar("videoUrl", { length: 500 }).notNull(),
-  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
-  category: mysqlEnum("category", ["drills", "technique", "conditioning", "games", "other"]).notNull().default("other"),
+  url: varchar("url", { length: 500 }).notNull(),
+  thumbnail: varchar("thumbnail", { length: 500 }),
+  category: mysqlEnum("category", ["training", "highlights"]).notNull().default("training"),
+  platform: mysqlEnum("platform", ["tiktok", "instagram"]).notNull().default("tiktok"),
   viewCount: int("viewCount").default(0),
-  duration: int("duration"),
   isPublished: boolean("isPublished").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
