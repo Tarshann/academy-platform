@@ -971,6 +971,52 @@ export const appRouter = router({
       const { getUserSubscriptions } = await import("./db");
       return await getUserSubscriptions(ctx.user.id);
     }),
+
+    getCheckoutSessionDetails: publicProcedure
+      .input(z.object({ sessionId: z.string() }))
+      .query(async ({ input }) => {
+        const { ENV } = await import("./_core/env");
+        const Stripe = (await import("stripe")).default;
+        const stripe = new Stripe(ENV.stripeSecretKey);
+        const { getProduct } = await import("./products");
+
+        try {
+          const session = await stripe.checkout.sessions.retrieve(input.sessionId, {
+            expand: ["line_items", "payment_intent"],
+          });
+
+          // Extract product details from line items
+          const items = (session.line_items?.data || []).map((item) => {
+            const productId = item.price?.metadata?.product_id || "";
+            const product = getProduct(productId);
+            return {
+              name: item.description || "Unknown Item",
+              quantity: item.quantity || 1,
+              amount: item.amount_total || 0,
+              productId,
+              product,
+            };
+          });
+
+          return {
+            id: session.id,
+            amount: session.amount_total || 0,
+            currency: session.currency || "usd",
+            status: session.payment_status,
+            customerEmail: session.customer_email || "",
+            items,
+            createdAt: new Date(session.created * 1000),
+            paymentIntentId: typeof session.payment_intent === "string" 
+              ? session.payment_intent 
+              : session.payment_intent?.id,
+          };
+        } catch (error) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Checkout session not found",
+          });
+        }
+      }),
   }),
 
   attendance: router({
