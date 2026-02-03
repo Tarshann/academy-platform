@@ -1,40 +1,12 @@
 import { Link } from "wouter";
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { trpc } from "@/lib/trpc";
-import { Loader2 } from "lucide-react";
 import { ProgramStructuredData } from "@/components/StructuredData";
-import { ProgramCardSkeleton } from "@/components/skeletons/ProgramCardSkeleton";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 
-const sportLabels: Record<string, string> = {
-  basketball: "Basketball",
-  football: "Football",
-  soccer: "Soccer",
-  multi_sport: "Multi-Sport",
-  saq: "SAQ Training",
-};
-
 export default function Programs() {
-  const { data: programs, isLoading } = trpc.programs.list.useQuery();
-  const [selectedSport, setSelectedSport] = useState<string | null>(null);
-  
-  const filteredPrograms = selectedSport
-    ? programs?.filter((p: any) => p.sport === selectedSport)
-    : programs;
-  
-  const sportOptions = [
-    { value: null, label: "All Sports" },
-    { value: "basketball", label: "Basketball" },
-    { value: "football", label: "Football" },
-    { value: "soccer", label: "Soccer" },
-    { value: "multi_sport", label: "Multi-Sport" },
-    { value: "saq", label: "SAQ Training" },
-  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -67,80 +39,8 @@ export default function Programs() {
         {/* Programs List */}
         <section className="py-16">
           <div className="container">
-            {/* Sport Filter */}
-            <div className="mb-8 flex flex-wrap gap-2 justify-center">
-              {sportOptions.map((option) => (
-                <Button
-                  key={option.value || "all"}
-                  variant={selectedSport === option.value ? "default" : "outline"}
-                  onClick={() => setSelectedSport(option.value)}
-                  size="sm"
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </div>
-            
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <ProgramCardSkeleton />
-                <ProgramCardSkeleton />
-                <ProgramCardSkeleton />
-              </div>
-            ) : filteredPrograms && filteredPrograms.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredPrograms.map((program: any) => {
-                  const anchorId = program.slug ? `program-${program.slug}` : `program-${program.id}`;
-                  return (
-                    <Card key={program.id} id={anchorId} className="bg-card border-border scroll-mt-24">
-                    <CardHeader>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <CardTitle className="text-foreground">{program.name}</CardTitle>
-                          <CardDescription className="text-muted-foreground">
-                            Ages {program.ageMin}-{program.ageMax}
-                            {program.maxParticipants && ` • Max ${program.maxParticipants} participants`}
-                          </CardDescription>
-                        </div>
-                        {program.sport && (
-                          <Badge variant="outline" className="shrink-0">
-                            {sportLabels[program.sport] || program.sport}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground mb-4 line-clamp-4">
-                        {program.description}
-                      </p>
-                      <div className="border-t border-border pt-4 mt-4">
-                        <p className="text-2xl font-bold text-primary mb-2">
-                          ${program.price} <span className="text-sm text-muted-foreground font-normal">per {program.category === 'membership' ? 'month' : 'session'}</span>
-                        </p>
-                        <Link href="/signup">
-                          <Button className="w-full">Register Now</Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground text-lg">
-                  {selectedSport ? `No ${sportLabels[selectedSport] || selectedSport} programs available.` : "No programs available yet."}
-                </p>
-                {selectedSport && (
-                  <Button variant="outline" onClick={() => setSelectedSport(null)} className="mt-4">
-                    Show All Programs
-                  </Button>
-                )}
-              </div>
-            )}
-            
-            {/* Legacy hardcoded programs (fallback if no DB programs) */}
-            {(!filteredPrograms || filteredPrograms.length === 0) && (
+            {/* Legacy hardcoded programs */}
+            {true && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {/* Group Sessions */}
                 <Card id="program-group-sessions" className="bg-card border-border scroll-mt-24">

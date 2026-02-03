@@ -399,3 +399,5 @@
 - [x] Fix Summer Camp pricing ($185 total, $20 deposit, $165 due after)
 - [x] Chat functionality confirmed working
 - [x] Rename Academy League to Academy Offseason with summer tournament description
+
+- [x] Remove sports filter section from Programs page
