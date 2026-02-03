@@ -186,6 +186,13 @@ export default function Navigation() {
               Register
             </Link>
             <Link
+              href="/schedule"
+              className={getLinkClassName("/schedule")}
+              aria-current={isActiveRoute("/schedule") ? "page" : undefined}
+            >
+              Schedule
+            </Link>
+            <Link
               href="/about"
               className={getLinkClassName("/about")}
               aria-current={isActiveRoute("/about") ? "page" : undefined}
@@ -340,6 +347,14 @@ export default function Navigation() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Register
+              </Link>
+              <Link
+                href="/schedule"
+                className={getLinkClassName("/schedule", false, true)}
+                aria-current={isActiveRoute("/schedule") ? "page" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Schedule
               </Link>
               <Link
                 href="/about"

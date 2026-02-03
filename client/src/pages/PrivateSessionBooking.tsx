@@ -214,6 +214,26 @@ export default function PrivateSessionBooking() {
             </p>
           </div>
 
+          {/* Schedule Availability Info */}
+          <Card className="bg-blue-50 border-blue-200 mb-8">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <Calendar className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-blue-900 mb-2">Typical Availability</h3>
+                  <div className="space-y-2 text-sm text-blue-800">
+                    <p><strong>Saturdays & Sundays:</strong> Private sessions primarily available</p>
+                    <p><strong>Tuesdays & Thursdays:</strong> Group Sessions, Skills Classes, and SAQ Training (limited private session availability)</p>
+                    <p><strong>Other Weekdays:</strong> Limited private session availability</p>
+                  </div>
+                  <p className="text-xs text-blue-700 mt-3">
+                    Your coach will work with you to find the best time based on current availability.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Coach Selection */}
           <Card className="bg-card border-border mb-8">
             <CardHeader>

@@ -309,3 +309,10 @@
 ## OAuth Database Error Fix
 - [x] Added stripeCustomerId column to users table via SQL
 - [ ] User needs to test login on cspringsacademy.com after publishing
+
+
+## Weekly Schedule Feature
+- [x] Update private session booking form with schedule availability information
+- [x] Create schedule page showing weekly program times
+- [x] Add schedule information: Sat/Sun (Private Sessions), Tue/Thu (Group Sessions, Skills Classes, SAQ Training)
+- [x] Update navigation to include Schedule link (desktop and mobile)

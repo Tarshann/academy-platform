@@ -29,6 +29,8 @@ const Videos = lazy(() => import("./pages/Videos"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Schedule = lazy(() => import("./pages/Schedule"));
+const PrivateSessionBooking = lazy(() => import("./pages/PrivateSessionBooking"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -93,6 +95,14 @@ function Router() {
         <Route path={"/coach-dashboard"}>
           <SEO title="Coach Dashboard" description="Manage private session booking requests." />
           <CoachDashboard />
+        </Route>
+        <Route path={"/schedule"}>
+          <SEO title="Schedule" description="View our weekly program schedule including group sessions, skills classes, SAQ training, and private sessions." />
+          <Schedule />
+        </Route>
+        <Route path={"/private-session-booking"}>
+          <SEO title="Book Private Session" description="Book a private training session with Coach Mac or Coach O." />
+          <PrivateSessionBooking />
         </Route>
         <Route path={"/gallery"}>
           <SEO title="Gallery" description="View photos from The Academy's training sessions, events, and activities." />
