@@ -1,0 +1,58 @@
+{
+  "query": "SELECT * FROM users",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user AcXERCaCsbgdFHD.root --database bbHXx7a7VbAs5icaZpy3GL --execute SELECT * FROM users",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "BseNG75NWJtPvuWbc6Ksr6",
+      "name": "velarisgroup",
+      "email": "velarisgroup@proton.me",
+      "loginMethod": "email",
+      "role": "admin",
+      "createdAt": "2026-01-16 20:14:32",
+      "updatedAt": "2026-02-03 17:15:17",
+      "lastSignedIn": "2026-02-03 17:15:18",
+      "stripeCustomerId": "NULL"
+    },
+    {
+      "id": "210002",
+      "openId": "3XpPtSWYCGGzJB8F9xK29A",
+      "name": "The Academy",
+      "email": "tarshann@gmail.com",
+      "loginMethod": "google",
+      "role": "admin",
+      "createdAt": "2026-01-20 03:02:43",
+      "updatedAt": "2026-01-20 03:11:04",
+      "lastSignedIn": "2026-01-20 03:11:04",
+      "stripeCustomerId": "NULL"
+    },
+    {
+      "id": "480001",
+      "openId": "3LnAMmyGqrQqRZe6gm5icu",
+      "name": "Tekia Smith",
+      "email": "smithsolutions1102@gmail.com",
+      "loginMethod": "google",
+      "role": "user",
+      "createdAt": "2026-02-03 16:59:28",
+      "updatedAt": "2026-02-03 16:59:29",
+      "lastSignedIn": "2026-02-03 16:59:29",
+      "stripeCustomerId": "NULL"
+    },
+    {
+      "id": "480002",
+      "openId": "agw95nQbRpBuy5bWu9JQ6m",
+      "name": "Omar Philmore",
+      "email": "omarphilmore@gmail.com",
+      "loginMethod": "google",
+      "role": "admin",
+      "createdAt": "2026-02-03 17:08:44",
+      "updatedAt": "2026-02-03 17:15:28",
+      "lastSignedIn": "2026-02-03 17:08:45",
+      "stripeCustomerId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\tloginMethod\trole\tcreatedAt\tupdatedAt\tlastSignedIn\tstripeCustomerId\n1\tBseNG75NWJtPvuWbc6Ksr6\tvelarisgroup\tvelarisgroup@proton.me\temail\tadmin\t2026-01-16 20:14:32\t2026-02-03 17:15:17\t2026-02-03 17:15:18\tNULL\n210002\t3XpPtSWYCGGzJB8F9xK29A\tThe Academy\ttarshann@gmail.com\tgoogle\tadmin\t2026-01-20 03:02:43\t2026-01-20 03:11:04\t2026-01-20 03:11:04\tNULL\n480001\t3LnAMmyGqrQqRZe6gm5icu\tTekia Smith\tsmithsolutions1102@gmail.com\tgoogle\tuser\t2026-02-03 16:59:28\t2026-02-03 16:59:29\t2026-02-03 16:59:29\tNULL\n480002\tagw95nQbRpBuy5bWu9JQ6m\tOmar Philmore\tomarphilmore@gmail.com\tgoogle\tadmin\t2026-02-03 17:08:44\t2026-02-03 17:15:28\t2026-02-03 17:08:45\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 56
+}

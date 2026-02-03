@@ -12,8 +12,7 @@ export const ENV = {
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   siteUrl: process.env.VITE_SITE_URL ?? process.env.SITE_URL ?? "",
   enableSocketIo:
-    process.env.ENABLE_SOCKET_IO === "true" ||
-    (process.env.NODE_ENV !== "production" && process.env.ENABLE_SOCKET_IO !== "false"),
+    process.env.ENABLE_SOCKET_IO !== "false",
   storageMaxBytes: Number(process.env.STORAGE_MAX_BYTES ?? 0),
   storageAllowedContentTypes: process.env.STORAGE_ALLOWED_CONTENT_TYPES ?? "",
   // Clerk authentication
