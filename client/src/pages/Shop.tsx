@@ -240,7 +240,7 @@ export default function Shop() {
       {visibleCampaigns.length > 0 && (
         <section className="py-12 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-y border-amber-500/20">
           <div className="container px-6">
-            {visibleCampaigns.map((campaign) => (
+            {visibleCampaigns.map((campaign: any) => (
               <motion.div
                 key={campaign.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -287,7 +287,7 @@ export default function Shop() {
               animate="visible"
               className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {visibleProducts.map((product) => (
+              {visibleProducts.map((product: any) => (
                 <motion.div key={product.id} variants={itemVariants}>
                   <ShopProductCard product={product} onAddToCart={addToCart} />
                 </motion.div>

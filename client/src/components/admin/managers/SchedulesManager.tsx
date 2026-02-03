@@ -448,7 +448,7 @@ export function SchedulesManager() {
                     </TableCell>
                     <TableCell>
                       {programs?.find(
-                        program => program.id === schedule.programId
+                        (program: any) => program.id === schedule.programId
                       )?.name || "—"}
                     </TableCell>
                     <TableCell>

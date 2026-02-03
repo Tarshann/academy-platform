@@ -68,7 +68,7 @@ export function SearchBar() {
 
     // Search programs
     if (programs) {
-      programs.forEach(program => {
+      programs.forEach((program: any) => {
         if (
           program.name.toLowerCase().includes(searchTerm) ||
           program.description?.toLowerCase().includes(searchTerm) ||
@@ -92,7 +92,7 @@ export function SearchBar() {
 
     // Search products
     if (products) {
-      products.forEach(product => {
+      products.forEach((product: any) => {
         if (
           product.name.toLowerCase().includes(searchTerm) ||
           product.description?.toLowerCase().includes(searchTerm) ||
@@ -112,7 +112,7 @@ export function SearchBar() {
 
     // Search gallery photos
     if (photos) {
-      photos.forEach(photo => {
+      photos.forEach((photo: any) => {
         if (
           photo.title.toLowerCase().includes(searchTerm) ||
           photo.description?.toLowerCase().includes(searchTerm) ||

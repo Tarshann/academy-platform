@@ -117,7 +117,7 @@ export function CoachDashboard() {
             </div>
           ) : bookings && bookings.length > 0 ? (
             <div className="grid gap-4">
-              {bookings.map((booking) => (
+              {bookings.map((booking: any) => (
                 <Card key={booking.id}>
                   <CardHeader>
                     <div className="flex items-start justify-between">

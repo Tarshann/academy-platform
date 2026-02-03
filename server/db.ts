@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import { ENV } from "./_core/env";
 import { logger } from "./_core/logger";
 import { eq, and, or, desc, asc, inArray, gte, lte, sql } from "drizzle-orm";
@@ -48,8 +48,8 @@ import {
 // DATABASE CONNECTION
 // ============================================================================
 
-let _db: ReturnType<typeof drizzle> | null = null;
-let _client: ReturnType<typeof postgres> | null = null;
+let _db: any = null;
+let _pool: mysql.Pool | null = null;
 
 export async function getDb() {
   if (!ENV.databaseUrl) {
@@ -57,16 +57,17 @@ export async function getDb() {
     return null;
   }
 
-  if (_db && _client) {
+  if (_db && _pool) {
     return _db;
   }
 
   try {
-    _client = postgres(ENV.databaseUrl, {
-      ssl: ENV.isProduction ? "require" : undefined,
-      max: ENV.isProduction ? 10 : 5,
+    _pool = mysql.createPool({
+      uri: ENV.databaseUrl,
+      ssl: ENV.isProduction ? { rejectUnauthorized: true } : undefined,
+      connectionLimit: ENV.isProduction ? 10 : 5,
     });
-    _db = drizzle(_client);
+    _db = drizzle(_pool);
     return _db;
   } catch (error) {
     logger.error("[DB] Failed to connect:", error);
@@ -113,7 +114,7 @@ export async function upsertUser(
         .limit(1)
     )[0];
   } else {
-    const result = await db
+    await db
       .insert(users)
       .values({
         openId: userData.openId,
@@ -122,9 +123,14 @@ export async function upsertUser(
         loginMethod: userData.loginMethod ?? null,
         lastSignedIn: userData.lastSignedIn ?? new Date(),
         role: userData.role ?? "user",
-      })
-      .returning();
-    return result[0];
+      });
+    // Fetch the newly inserted user
+    const inserted = await db
+      .select()
+      .from(users)
+      .where(eq(users.openId, userData.openId))
+      .limit(1);
+    return inserted[0];
   }
 }
 
@@ -191,8 +197,10 @@ export async function getProgramById(id: number) {
 export async function createProgram(programData: InsertProgram) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(programs).values(programData).returning();
-  return result[0];
+  const result = await db.insert(programs).values(programData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(programs).where(eq(programs.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateProgram(
@@ -238,9 +246,10 @@ export async function createAnnouncement(announcementData: InsertAnnouncement) {
   if (!db) throw new Error("Database not available");
   const result = await db
     .insert(announcements)
-    .values(announcementData)
-    .returning();
-  return result[0];
+    .values(announcementData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(announcements).where(eq(announcements.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function publishAnnouncement(id: number) {
@@ -293,8 +302,10 @@ export async function getScheduleById(id: number) {
 export async function createSchedule(scheduleData: InsertSchedule) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(schedules).values(scheduleData).returning();
-  return result[0];
+  const result = await db.insert(schedules).values(scheduleData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(schedules).where(eq(schedules.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateSchedule(
@@ -339,9 +350,10 @@ export async function createSessionRegistration(
       scheduleId,
       paymentId: paymentId ?? null,
       status: "registered",
-    })
-    .returning();
-  return result[0];
+    });
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(sessionRegistrations).where(eq(sessionRegistrations.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function getUserRegistrations(userId: number) {
@@ -365,9 +377,10 @@ export async function createContactSubmission(
   if (!db) throw new Error("Database not available");
   const result = await db
     .insert(contactSubmissions)
-    .values(submissionData)
-    .returning();
-  return result[0];
+    .values(submissionData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(contactSubmissions).where(eq(contactSubmissions.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function getContactSubmissions() {
@@ -416,7 +429,7 @@ export async function getAllGalleryPhotos() {
     );
 
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
-  return photos.sort((a, b) => {
+  return photos.sort((a: any, b: any) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
 
@@ -446,7 +459,7 @@ export async function getGalleryPhotosByCategory(category: string) {
     );
 
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
-  return photos.sort((a, b) => {
+  return photos.sort((a: any, b: any) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
 
@@ -463,8 +476,10 @@ export async function getGalleryPhotosByCategory(category: string) {
 export async function createGalleryPhoto(photoData: InsertGalleryPhoto) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(galleryPhotos).values(photoData).returning();
-  return result[0];
+  const result = await db.insert(galleryPhotos).values(photoData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(galleryPhotos).where(eq(galleryPhotos.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function deleteGalleryPhoto(id: number) {
@@ -519,8 +534,10 @@ export async function getBlogPostBySlug(slug: string) {
 export async function createBlogPost(postData: InsertBlogPost) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(blogPosts).values(postData).returning();
-  return result[0];
+  const result = await db.insert(blogPosts).values(postData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(blogPosts).where(eq(blogPosts.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateBlogPost(
@@ -604,8 +621,10 @@ export async function incrementVideoViewCount(id: number) {
 export async function createVideo(videoData: InsertVideo) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(videos).values(videoData).returning();
-  return result[0];
+  const result = await db.insert(videos).values(videoData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(videos).where(eq(videos.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateVideo(id: number, updates: Partial<InsertVideo>) {
@@ -654,8 +673,10 @@ export async function getProductById(id: number) {
 export async function createProduct(productData: InsertProduct) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(products).values(productData).returning();
-  return result[0];
+  const result = await db.insert(products).values(productData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(products).where(eq(products.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateProduct(
@@ -715,8 +736,10 @@ export async function getActiveCampaigns() {
 export async function createCampaign(campaignData: InsertCampaign) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(campaigns).values(campaignData).returning();
-  return result[0];
+  const result = await db.insert(campaigns).values(campaignData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(campaigns).where(eq(campaigns.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateCampaign(
@@ -789,9 +812,10 @@ export async function createOrder(orderData: {
       totalAmount: orderData.totalAmount,
       status: "pending",
       shippingAddress: orderData.shippingAddress ?? null,
-    })
-    .returning();
-  return result[0];
+    });
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(orders).where(eq(orders.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function createOrderItem(itemData: {
@@ -802,8 +826,10 @@ export async function createOrderItem(itemData: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(orderItems).values(itemData).returning();
-  return result[0];
+  const result = await db.insert(orderItems).values(itemData);
+  const insertId = result[0].insertId;
+  const inserted = await db.select().from(orderItems).where(eq(orderItems.id, insertId)).limit(1);
+  return inserted[0];
 }
 
 export async function updateOrderStatus(
@@ -865,8 +891,8 @@ export async function getLocationById(id: number) {
 export async function createLocation(locationData: InsertLocation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(locations).values(locationData).returning();
-  return result[0].id;
+  const result = await db.insert(locations).values(locationData);
+  return result[0].insertId;
 }
 
 export async function updateLocation(
@@ -918,8 +944,8 @@ export async function getCoachById(id: number) {
 export async function createCoach(coachData: InsertCoach) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(coaches).values(coachData).returning();
-  return result[0].id;
+  const result = await db.insert(coaches).values(coachData);
+  return result[0].insertId;
 }
 
 export async function updateCoach(id: number, updates: Partial<InsertCoach>) {
@@ -969,9 +995,8 @@ export async function createCoachAssignment(
   if (!db) throw new Error("Database not available");
   const result = await db
     .insert(coachAssignments)
-    .values(assignmentData)
-    .returning();
-  return result[0].id;
+    .values(assignmentData);
+  return result[0].insertId;
 }
 
 export async function deleteCoachAssignment(id: number) {
@@ -1053,9 +1078,8 @@ export async function markAttendance(attendanceData: InsertAttendanceRecord) {
     // Create new
     const result = await db
       .insert(attendanceRecords)
-      .values(attendanceData)
-      .returning();
-    return result[0].id;
+      .values(attendanceData);
+    return result[0].insertId;
   }
 }
 
@@ -1101,10 +1125,10 @@ export async function getAttendanceStats(
     .where(and(...conditions));
 
   const stats = {
-    present: records.filter(r => r.status === "present").length,
-    absent: records.filter(r => r.status === "absent").length,
-    excused: records.filter(r => r.status === "excused").length,
-    late: records.filter(r => r.status === "late").length,
+    present: records.filter((r: any) => r.status === "present").length,
+    absent: records.filter((r: any) => r.status === "absent").length,
+    excused: records.filter((r: any) => r.status === "excused").length,
+    late: records.filter((r: any) => r.status === "late").length,
     total: records.length,
   };
 
@@ -1154,9 +1178,8 @@ export async function createUserRelation(relation: InsertUserRelation) {
   if (!db) throw new Error("Database not available");
   const result = await db
     .insert(userRelations)
-    .values(relation)
-    .returning({ id: userRelations.id });
-  return result[0].id;
+    .values(relation);
+  return result[0].insertId;
 }
 
 export async function deleteUserRelation(id: number) {
@@ -1174,7 +1197,7 @@ export async function getChildrenForParent(parentId: number) {
     .from(userRelations)
     .where(eq(userRelations.parentId, parentId));
 
-  const childIds = relations.map(r => r.childId);
+  const childIds = relations.map((r: any) => r.childId);
   if (childIds.length === 0) return [];
 
   return await db.select().from(users).where(inArray(users.id, childIds));
@@ -1189,7 +1212,7 @@ export async function getParentsForChild(childId: number) {
     .from(userRelations)
     .where(eq(userRelations.childId, childId));
 
-  const parentIds = relations.map(r => r.parentId);
+  const parentIds = relations.map((r: any) => r.parentId);
   if (parentIds.length === 0) return [];
 
   return await db.select().from(users).where(inArray(users.id, parentIds));

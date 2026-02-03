@@ -130,7 +130,7 @@ export default function BlogPost({
 
             {post.tags && (
               <div className="mt-8 flex flex-wrap gap-2">
-                {post.tags.split(",").map((tag, index) => (
+                {post.tags.split(",").map((tag: string, index: number) => (
                   <Badge key={index} variant="outline">
                     {tag.trim()}
                   </Badge>

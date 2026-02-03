@@ -188,7 +188,7 @@ export default function About() {
               </div>
             ) : locations && locations.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {locations.map((location) => {
+                {locations.map((location: any) => {
                   const directionsUrl = buildDirectionsUrl(location);
                   const addressParts = [
                     location.address,

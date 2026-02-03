@@ -233,7 +233,7 @@ export const appRouter = router({
 
         const registrations = await getScheduleRegistrations(input.scheduleId);
         const alreadyRegistered = registrations.some(
-          registration => registration.userId === ctx.user.id
+          (registration: any) => registration.userId === ctx.user.id
         );
         if (alreadyRegistered) {
           throw new TRPCError({
@@ -1115,8 +1115,8 @@ export const appRouter = router({
               notes: input.notes || null,
               stripeSessionId: input.stripeSessionId || null,
               status: "pending",
-            })
-            .returning({ id: privateSessionBookings.id });
+            });
+          const bookingId = result[0].insertId;
 
           // Send notification to owner
           await notifyOwner({
@@ -1126,7 +1126,7 @@ export const appRouter = router({
 
           return {
             success: true,
-            bookingId: result[0]?.id,
+            bookingId,
           };
         } catch (error) {
           console.error("Booking submission error:", error);

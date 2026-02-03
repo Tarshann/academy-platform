@@ -343,3 +343,10 @@
 - [x] Ensure all webhook responses return 200 status
 - [ ] Configure live Stripe keys in Settings → Payment
 - [ ] Verify webhook in Stripe Dashboard
+
+## Database Conversion: PostgreSQL to MySQL
+- [x] Convert drizzle/schema.ts from PostgreSQL to MySQL syntax
+- [x] Update server/db.ts to use mysql2 driver
+- [x] Update drizzle.config.ts for MySQL dialect
+- [x] Test database connection locally
+- [ ] Test OAuth login on live site (needs publish)
