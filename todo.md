@@ -285,3 +285,19 @@
 ## Recent Updates
 - [x] Added flag_football to sports enum in database schema
 - [x] Added Summer Basketball Camp product ($205 total: $185 + $20 registration)
+
+
+## OAuth Login Error Fix (academytn.com)
+- [x] Investigate OAuth callback error on academytn.com
+- [x] Add detailed error logging to OAuth callback
+- [ ] User needs to publish latest checkpoint to academytn.com
+- [ ] Test login flow after publishing
+
+## Coach Dashboard
+- [x] Design coach dashboard layout and features
+- [x] Build backend API for viewing booking requests (getCoachBookings, updateBookingStatus)
+- [x] Create coach dashboard UI with booking list
+- [x] Add booking actions (confirm, complete, cancel, reopen)
+- [x] Add coach filter (All, Coach Mac, Coach O)
+- [x] Add status tabs (pending, confirmed, completed, cancelled)
+- [x] Add route /coach-dashboard to App.tsx

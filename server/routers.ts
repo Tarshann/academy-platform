@@ -1018,6 +1018,61 @@ export const appRouter = router({
         }
       }),
 
+    // Coach Dashboard Queries
+    getCoachBookings: protectedProcedure
+      .input(
+        z.object({
+          coachId: z.number().optional(),
+          status: z.enum(["pending", "confirmed", "completed", "cancelled"]).optional(),
+        })
+      )
+      .query(async ({ input, ctx }) => {
+        const { db } = await import("./db");
+        const { privateSessionBookings } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        
+        const conditions = [];
+        if (input.coachId) {
+          conditions.push(eq(privateSessionBookings.coachId, input.coachId));
+        }
+        if (input.status) {
+          conditions.push(eq(privateSessionBookings.status, input.status));
+        }
+        
+        const bookings = await db
+          .select()
+          .from(privateSessionBookings)
+          .where(conditions.length > 0 ? and(...conditions) : undefined)
+          .orderBy(privateSessionBookings.createdAt);
+        
+        return bookings;
+      }),
+
+    updateBookingStatus: protectedProcedure
+      .input(
+        z.object({
+          bookingId: z.number(),
+          status: z.enum(["pending", "confirmed", "completed", "cancelled"]),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { db } = await import("./db");
+        const { privateSessionBookings } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        
+        await db
+          .update(privateSessionBookings)
+          .set({
+            status: input.status,
+            notes: input.notes || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(privateSessionBookings.id, input.bookingId));
+        
+        return { success: true };
+      }),
+
     submitPrivateSessionBooking: publicProcedure
       .input(
         z.object({

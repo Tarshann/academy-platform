@@ -20,6 +20,7 @@ const SignUpPage = lazy(() => import("./pages/SignUpPage").then(m => ({ default:
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const CoachDashboard = lazy(() => import("./pages/CoachDashboard").then(m => ({ default: m.CoachDashboard })));
 const Gallery = lazy(() => import("./pages/Gallery"));
 const Chat = lazy(() => import("./pages/Chat"));
 const Shop = lazy(() => import("./pages/Shop"));
@@ -88,6 +89,10 @@ function Router() {
         <Route path={"/admin"}>
           <SEO title="Admin Dashboard" description="Admin dashboard for managing programs, schedules, and announcements." />
           <AdminDashboard />
+        </Route>
+        <Route path={"/coach-dashboard"}>
+          <SEO title="Coach Dashboard" description="Manage private session booking requests." />
+          <CoachDashboard />
         </Route>
         <Route path={"/gallery"}>
           <SEO title="Gallery" description="View photos from The Academy's training sessions, events, and activities." />
