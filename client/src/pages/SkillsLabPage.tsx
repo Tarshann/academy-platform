@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "wouter";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const BLUE = "#2563EB";
 const DARK = "#1A1A1A";
@@ -10,6 +12,8 @@ export default function SkillsLabPage() {
   }, []);
 
   return (
+    <>
+    <Navigation />
     <div style={{ fontFamily: "'DM Sans', sans-serif", color: DARK, background: "#FAFAFA" }}>
       {/* Hero */}
       <div style={{
@@ -281,5 +285,7 @@ export default function SkillsLabPage() {
         </p>
       </section>
     </div>
+    <Footer />
+    </>
   );
 }

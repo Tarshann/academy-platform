@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const BLUE = "#2563EB";
 const DARK = "#1A1A1A";
@@ -82,6 +84,8 @@ export default function SkillsLabRegisterPage() {
 
   if (status === "success") {
     return (
+      <>
+      <Navigation />
       <div style={{
         fontFamily: "'DM Sans', sans-serif",
         minHeight: "80vh",
@@ -143,6 +147,8 @@ export default function SkillsLabRegisterPage() {
           </Link>
         </div>
       </div>
+      <Footer />
+      </>
     );
   }
 
@@ -166,6 +172,8 @@ export default function SkillsLabRegisterPage() {
   };
 
   return (
+    <>
+    <Navigation />
     <div style={{ fontFamily: "'DM Sans', sans-serif", color: DARK, background: "#FAFAFA" }}>
       {/* Header */}
       <div style={{
@@ -327,5 +335,7 @@ export default function SkillsLabRegisterPage() {
         </form>
       </div>
     </div>
+    <Footer />
+    </>
   );
 }

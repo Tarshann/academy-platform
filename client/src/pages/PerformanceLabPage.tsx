@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const ORANGE = "#E8722A";
 const DARK = "#1A1A1A";
@@ -27,6 +29,8 @@ export default function PerformanceLabPage() {
   }, []);
 
   return (
+    <>
+    <Navigation />
     <div style={{ fontFamily: "'DM Sans', sans-serif", color: DARK, background: "#FAFAFA" }}>
       {/* Hero */}
       <div ref={heroRef} style={{
@@ -413,6 +417,8 @@ export default function PerformanceLabPage() {
         </div>
       )}
     </div>
+    <Footer />
+    </>
   );
 }
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const ORANGE = "#E8722A";
 const DARK = "#1A1A1A";
@@ -66,6 +68,8 @@ export default function PerformanceLabApplyPage() {
 
   if (status === "success") {
     return (
+      <>
+      <Navigation />
       <div style={{
         fontFamily: "'DM Sans', sans-serif",
         minHeight: "80vh",
@@ -121,6 +125,8 @@ export default function PerformanceLabApplyPage() {
           </Link>
         </div>
       </div>
+      <Footer />
+      </>
     );
   }
 
@@ -144,6 +150,8 @@ export default function PerformanceLabApplyPage() {
   };
 
   return (
+    <>
+    <Navigation />
     <div style={{ fontFamily: "'DM Sans', sans-serif", color: DARK, background: "#FAFAFA" }}>
       {/* Header */}
       <div style={{
@@ -306,5 +314,7 @@ export default function PerformanceLabApplyPage() {
         </form>
       </div>
     </div>
+    <Footer />
+    </>
   );
 }
