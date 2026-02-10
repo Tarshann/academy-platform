@@ -1,0 +1,161 @@
+@import "tailwindcss";
+
+/* ── Design System Tokens ── */
+:root {
+  --color-brand-gold: #d4a843;
+  --color-brand-gold-light: #e8c96a;
+  --color-brand-gold-dark: #b8922e;
+  --color-brand-black: #0a0a0a;
+  --color-brand-white: #fafafa;
+  --color-brand-gray: #6b7280;
+  --color-brand-gray-light: #f3f4f6;
+  --color-brand-gray-dark: #374151;
+
+  --font-display: "Oswald", system-ui, sans-serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+}
+
+/* ── Base ── */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-brand-black);
+  background: var(--color-brand-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* ── Button Utilities ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: var(--color-brand-gold);
+  color: var(--color-brand-black);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0.5rem;
+  transition: all 150ms ease-out;
+  text-decoration: none;
+  border: 2px solid var(--color-brand-gold);
+}
+
+.btn-primary:hover {
+  background: var(--color-brand-gold-dark);
+  border-color: var(--color-brand-gold-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(212, 168, 67, 0.3);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: transparent;
+  color: var(--color-brand-white);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--color-brand-white);
+  border-radius: 0.5rem;
+  transition: all 150ms ease-out;
+  text-decoration: none;
+}
+
+.btn-secondary:hover {
+  background: var(--color-brand-white);
+  color: var(--color-brand-black);
+  transform: translateY(-1px);
+}
+
+/* Dark variant */
+.btn-secondary-dark {
+  color: var(--color-brand-black);
+  border-color: var(--color-brand-black);
+}
+
+.btn-secondary-dark:hover {
+  background: var(--color-brand-black);
+  color: var(--color-brand-white);
+}
+
+/* ── Section Utilities ── */
+.section-dark {
+  background: var(--color-brand-black);
+  color: var(--color-brand-white);
+}
+
+.section-light {
+  background: var(--color-brand-white);
+  color: var(--color-brand-black);
+}
+
+.section-gray {
+  background: var(--color-brand-gray-light);
+  color: var(--color-brand-black);
+}
+
+/* ── Diagonal Clip Paths ── */
+.clip-diagonal {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+}
+
+.clip-diagonal-reverse {
+  clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+}
+
+/* ── Reveal Animations ── */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* ── Container ── */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+/* ── Star Rating ── */
+.stars {
+  display: flex;
+  gap: 2px;
+  color: var(--color-brand-gold);
+}
