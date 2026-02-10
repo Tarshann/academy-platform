@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy Performance Lab | The Academy — Gallatin + Sumner County</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="description" content="The Academy Performance Lab: 3 sessions/week, 3 training environments, groups capped at 6–8. Strength + speed + skill + confidence for ages 8–14 in Gallatin & Sumner County.">
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --navy-deep: #0F1A2E;
+    --orange: #E8722A;
+    --orange-hover: #D4601E;
+    --orange-light: #FFF3E8;
+    --cream: #FAF8F5;
+    --white: #FFFFFF;
+    --gray-100: #F5F5F5;
+    --gray-200: #E8E8E8;
+    --gray-400: #999999;
+    --gray-600: #666666;
+    --gray-800: #333333;
+    --text: #2A2A2A;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text);
+    line-height: 1.6;
+    background: var(--white);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- NAV ---- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(15, 26, 46, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 0 2rem;
+    height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--white);
+    text-decoration: none;
+    letter-spacing: 2px;
+  }
+  .nav-cta {
+    background: var(--orange);
+    color: var(--white);
+    padding: 10px 24px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--orange-hover); }
+
+  /* ---- HERO ---- */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(165deg, var(--navy-deep) 0%, var(--navy) 60%, #243B5E 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 6rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 70% 20%, rgba(232,114,42,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(232,114,42,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 200px;
+    background: linear-gradient(to top, var(--white), transparent);
+    pointer-events: none;
+  }
+  .hero-inner {
+    max-width: 800px;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    animation: fadeUp 0.8s ease-out;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(232,114,42,0.15);
+    border: 1px solid rgba(232,114,42,0.3);
+    color: var(--orange);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 8px 20px;
+    border-radius: 100px;
+    margin-bottom: 2rem;
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    color: var(--white);
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 span { color: var(--orange); }
+  .hero-sub {
+    font-size: 1.15rem;
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    margin-bottom: 3rem;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    text-align: center;
+  }
+  .hero-stat-number {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    color: var(--orange);
+    letter-spacing: 1px;
+  }
+  .hero-stat-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 4px;
+  }
+  .hero-cta {
+    display: inline-block;
+    background: var(--orange);
+    color: var(--white);
+    padding: 16px 48px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    transition: all 0.3s;
+    box-shadow: 0 4px 24px rgba(232,114,42,0.3);
+  }
+  .hero-cta:hover {
+    background: var(--orange-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 32px rgba(232,114,42,0.4);
+  }
+  .hero-micro {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 1rem;
+  }
+
+  /* ---- SECTIONS ---- */
+  section { padding: 5rem 2rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--navy);
+    letter-spacing: 1px;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+  .section-text {
+    font-size: 1.05rem;
+    color: var(--gray-600);
+    max-width: 680px;
+    line-height: 1.7;
+  }
+
+  /* ---- PROBLEM ---- */
+  .problem { background: var(--cream); }
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3rem;
+    align-items: center;
+  }
+  .problem-numbers {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .problem-stat {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--orange);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .problem-stat-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--navy);
+    letter-spacing: 1px;
+  }
+  .problem-stat-desc {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-top: 4px;
+  }
+  .problem-quote {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--navy);
+    line-height: 1.2;
+    letter-spacing: 0.5px;
+  }
+  .problem-quote span { color: var(--orange); }
+
+  /* ---- PROMISE ---- */
+  .promise {
+    background: var(--navy);
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  .promise-text {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+    color: var(--white);
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.3;
+    letter-spacing: 1px;
+  }
+  .promise-text span { color: var(--orange); }
+  .promise-sub {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 1rem;
+  }
+
+  /* ---- INCLUDED ---- */
+  .included-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .included-card {
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 1px solid var(--gray-200);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .included-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+  .included-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    background: var(--orange-light);
+    color: var(--orange);
+    font-weight: 700;
+  }
+  .included-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--navy);
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  .included-card p {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    line-height: 1.6;
+  }
+  .included-card .loc {
+    font-size: 0.8rem;
+    color: var(--orange);
+    font-weight: 600;
+    margin-top: 0.75rem;
+  }
+  .included-callout {
+    grid-column: 1 / -1;
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .included-callout span {
+    color: var(--white);
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .callout-check {
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  /* ---- SPACES ---- */
+  .spaces { background: var(--cream); }
+  .spaces-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .space-card {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+  }
+  .space-card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .space-card-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .space-card:nth-child(1) .space-card-tag { color: var(--orange); }
+  .space-card:nth-child(2) .space-card-tag { color: #2E7DB5; }
+  .space-card:nth-child(3) .space-card-tag { color: #3A8B4C; }
+  .space-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    color: var(--navy);
+    letter-spacing: 0.5px;
+  }
+  .space-card-body {
+    padding: 1.5rem;
+  }
+  .space-card-role {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 0.75rem;
+  }
+  .space-card-list {
+    list-style: none;
+    padding: 0;
+  }
+  .space-card-list li {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--gray-100);
+    padding-left: 1.2rem;
+    position: relative;
+  }
+  .space-card-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translateY(-50%);
+  }
+  .space-card:nth-child(1) .space-card-list li::before { background: var(--orange); }
+  .space-card:nth-child(2) .space-card-list li::before { background: #2E7DB5; }
+  .space-card:nth-child(3) .space-card-list li::before { background: #3A8B4C; }
+  .space-card-list li:last-child { border-bottom: none; }
+
+  /* ---- PRICING ---- */
+  .pricing { text-align: center; }
+  .pricing-card {
+    background: var(--white);
+    border: 2px solid var(--navy);
+    border-radius: 16px;
+    max-width: 520px;
+    margin: 3rem auto 0;
+    overflow: hidden;
+  }
+  .pricing-header {
+    background: var(--navy);
+    padding: 2rem;
+  }
+  .pricing-price {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    color: var(--orange);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .pricing-per {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 4px;
+  }
+  .pricing-body { padding: 2rem; }
+  .pricing-includes {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+  }
+  .pricing-includes li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 0.95rem;
+    color: var(--gray-800);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pricing-includes li:last-child { border-bottom: none; }
+  .pricing-check {
+    color: var(--orange);
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .pricing-compare {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--orange-light);
+    border-radius: 10px;
+    text-align: center;
+  }
+  .pricing-compare p {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+  }
+  .pricing-compare strong {
+    color: var(--navy);
+  }
+  .pricing-cta {
+    display: inline-block;
+    background: var(--orange);
+    color: var(--white);
+    padding: 16px 48px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: all 0.3s;
+    margin-top: 1.5rem;
+    box-shadow: 0 4px 24px rgba(232,114,42,0.3);
+  }
+  .pricing-cta:hover {
+    background: var(--orange-hover);
+    transform: translateY(-2px);
+  }
+  .pricing-note {
+    font-size: 0.8rem;
+    color: var(--gray-400);
+    margin-top: 1rem;
+  }
+
+  /* ---- FAQ ---- */
+  .faq { background: var(--cream); }
+  .faq-list {
+    max-width: 700px;
+    margin: 3rem auto 0;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 1.25rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--navy);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-body);
+    transition: color 0.2s;
+  }
+  .faq-question:hover { color: var(--orange); }
+  .faq-toggle {
+    font-size: 1.5rem;
+    color: var(--orange);
+    transition: transform 0.3s;
+    flex-shrink: 0;
+    margin-left: 1rem;
+  }
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s;
+  }
+  .faq-answer-inner {
+    padding-bottom: 1.25rem;
+    font-size: 0.95rem;
+    color: var(--gray-600);
+    line-height: 1.7;
+  }
+  .faq-item.active .faq-toggle { transform: rotate(45deg); }
+  .faq-item.active .faq-answer { max-height: 300px; }
+
+  /* ---- FINAL CTA ---- */
+  .final-cta {
+    background: var(--navy);
+    text-align: center;
+    padding: 5rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .final-cta::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(232,114,42,0.1) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .final-cta h2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    color: var(--white);
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    position: relative;
+  }
+  .final-cta p {
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .final-cta a {
+    position: relative;
+  }
+  .final-micro {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.35);
+    margin-top: 1.5rem;
+    position: relative;
+  }
+
+  /* ---- FOOTER ---- */
+  .footer {
+    background: var(--navy-deep);
+    padding: 2rem;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .footer p {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.3);
+  }
+  .footer a { color: var(--orange); text-decoration: none; }
+
+  /* ---- STICKY MOBILE CTA ---- */
+  .mobile-sticky {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--navy);
+    padding: 12px 16px;
+    border-top: 2px solid var(--orange);
+    text-align: center;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+  }
+  .mobile-sticky.visible { transform: translateY(0); }
+  .mobile-sticky a {
+    display: block;
+    background: var(--orange);
+    color: var(--white);
+    padding: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.3px;
+  }
+  @media (max-width: 768px) {
+    .mobile-sticky { display: block; }
+    .footer { padding-bottom: 80px; }
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 768px) {
+    .problem-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .included-grid { grid-template-columns: 1fr; }
+    .spaces-grid { grid-template-columns: 1fr; }
+    .hero-stats { gap: 2rem; }
+    .included-callout { flex-direction: column; gap: 0.75rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a href="/" class="nav-logo">THE ACADEMY</a>
+  <a href="/contact?subject=ADM%20Application" class="nav-cta">Apply for Performance Lab</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">Gallatin + Sumner County · Ages 8–14</div>
+    <h1>BUILD COMPLETE <span>ATHLETES.</span><br>NOT JUST BETTER PLAYERS.</h1>
+    <p class="hero-sub">
+      Year-round strength, speed, skill, and confidence training — all in one membership, one schedule, and one coaching staff. So you don't have to piece it together yourself.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-number">2</div>
+        <div class="hero-stat-label">Sessions / Week</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-number">3</div>
+        <div class="hero-stat-label">Training Environments</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-number">6–8</div>
+        <div class="hero-stat-label">Athletes / Group</div>
+      </div>
+    </div>
+    <a href="/contact?subject=ADM%20Application" class="hero-cta">Apply for Performance Lab</a>
+    <p class="hero-micro">Limited spots · Groups capped for coaching quality</p>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem">
+  <div class="container">
+    <div class="section-label">The Problem</div>
+    <div class="section-title">MOST FAMILIES ARE DOING "RANDOM TRAINING."</div>
+    <div class="problem-grid">
+      <div class="problem-numbers">
+        <div class="problem-stat">
+          <div class="problem-stat-value">$340–$440+</div>
+          <div class="problem-stat-desc">What most parents spend monthly across fragmented programs</div>
+        </div>
+        <div class="problem-stat">
+          <div class="problem-stat-value">3–4</div>
+          <div class="problem-stat-desc">Separate locations, schedules, and coaching staffs to manage</div>
+        </div>
+        <div class="problem-stat">
+          <div class="problem-stat-value">0</div>
+          <div class="problem-stat-desc">System connecting any of it into real development</div>
+        </div>
+      </div>
+      <div>
+        <p class="problem-quote">
+          RANDOM TRAINING PRODUCES <span>RANDOM RESULTS.</span>
+        </p>
+        <p style="color: var(--gray-600); font-size: 0.95rem; margin-top: 1.5rem; line-height: 1.7;">
+          You're spending the money. You're making the drives. You're showing up. But without a system behind it, your child's development is left to chance. The Academy changes that with one integrated program that replaces the chaos.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROMISE -->
+<section class="promise">
+  <div class="container">
+    <p class="promise-text">
+      IF YOUR CHILD TRAINS WITH THE ACADEMY, THEY WILL BE <span>STRONGER, FASTER, MORE COORDINATED, AND MORE CONFIDENT</span> — REGARDLESS OF SPORT.
+    </p>
+    <p class="promise-sub">That's not a tagline. It's the only promise we make.</p>
+  </div>
+</section>
+
+<!-- WHAT'S INCLUDED -->
+<section class="included">
+  <div class="container">
+    <div class="section-label">What You Get</div>
+    <div class="section-title">EVERYTHING. NO ADD-ONS. NO MENUS.</div>
+    <p class="section-text">Every Performance Lab athlete receives the exact same comprehensive program. No tiers to compare. No upsells to dodge. Consistency is the product.</p>
+    <div class="included-grid">
+      <div class="included-card">
+        <div class="included-icon">⚡</div>
+        <h3>WEEKLY PERFORMANCE TRAINING</h3>
+        <p>Strength, speed, agility, coordination, and injury prevention. The athletic base layer that makes every sport easier.</p>
+        <div class="loc">Academy Performance Center or Outdoor Field · 1x/week</div>
+      </div>
+      <div class="included-card">
+        <div class="included-icon">🏀</div>
+        <h3>WEEKLY SKILL SESSION</h3>
+        <p>Shooting, ball handling, decision-making, and live reps. Game confidence built through structured, competitive drills.</p>
+        <div class="loc">Indoor Gym (Tue / Thu / Sun) · 1x/week</div>
+      </div>
+      <div class="included-card">
+        <div class="included-icon">📅</div>
+        <h3>SEASONAL PROGRAMMING</h3>
+        <p>Off-season: strength & speed. Pre-season: explosiveness. In-season: durability & movement quality. Your child's training adapts automatically.</p>
+        <div class="loc">Year-round · Built into every session</div>
+      </div>
+      <div class="included-card">
+        <div class="included-icon">🏠</div>
+        <h3>AT-HOME PLAN + PARENT UPDATES</h3>
+        <p>Monthly 15–20 min homework plan (no equipment needed) plus progress notes so you always know what's happening and why.</p>
+        <div class="loc">Delivered monthly · Clear structure, zero guesswork</div>
+      </div>
+      <div class="included-callout">
+        <span><span class="callout-check">✓</span> No upsells</span>
+        <span><span class="callout-check">✓</span> No add-ons</span>
+        <span><span class="callout-check">✓</span> No drop-ins</span>
+        <span><span class="callout-check">✓</span> No menus</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THREE SPACES -->
+<section class="spaces">
+  <div class="container">
+    <div class="section-label">Three Environments, One System</div>
+    <div class="section-title">EVERY SPACE HAS A JOB.</div>
+    <p class="section-text">Most programs train kids in one gym and call it development. We use three purpose-built environments — each designed to develop a different layer of athleticism.</p>
+    <div class="spaces-grid">
+      <div class="space-card">
+        <div class="space-card-header">
+          <div class="space-card-tag">Performance HQ</div>
+          <h3>ACADEMY PERFORMANCE CENTER</h3>
+        </div>
+        <div class="space-card-body">
+          <div class="space-card-role">Where athletes are built.</div>
+          <ul class="space-card-list">
+            <li>Strength training & functional movement</li>
+            <li>Speed mechanics & acceleration</li>
+            <li>Agility & change of direction</li>
+            <li>Injury prevention & body awareness</li>
+          </ul>
+        </div>
+      </div>
+      <div class="space-card">
+        <div class="space-card-header">
+          <div class="space-card-tag">Skill Expression</div>
+          <h3>INDOOR GYMS</h3>
+        </div>
+        <div class="space-card-body">
+          <div class="space-card-role">Where basketball skill meets game confidence.</div>
+          <ul class="space-card-list">
+            <li>Shooting form & high-rep shooting volume</li>
+            <li>Ball handling & decision-making</li>
+            <li>Live reps & competitive scenarios</li>
+            <li>Game IQ development</li>
+          </ul>
+        </div>
+      </div>
+      <div class="space-card">
+        <div class="space-card-header">
+          <div class="space-card-tag">Athletic Translation</div>
+          <h3>OUTDOOR FIELD</h3>
+        </div>
+        <div class="space-card-body">
+          <div class="space-card-role">Where speed transfers to real sport.</div>
+          <ul class="space-card-list">
+            <li>Sprint & acceleration patterns</li>
+            <li>Change of direction & deceleration</li>
+            <li>Multi-sport movement transfer</li>
+            <li>Open-field spatial awareness</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label">Membership Investment</div>
+    <div class="section-title">ONE PRICE. EVERYTHING INCLUDED.</div>
+    <div class="pricing-card">
+      <div class="pricing-header">
+        <div class="pricing-price">$280</div>
+        <div class="pricing-per">per athlete / month</div>
+      </div>
+      <div class="pricing-body">
+        <ul class="pricing-includes">
+          <li><span class="pricing-check">✓</span> Weekly Performance Training (strength, speed, agility)</li>
+          <li><span class="pricing-check">✓</span> Weekly Basketball Skill Session</li>
+          <li><span class="pricing-check">✓</span> Seasonal programming (auto-adapts year-round)</li>
+          <li><span class="pricing-check">✓</span> Monthly at-home development plan</li>
+          <li><span class="pricing-check">✓</span> Monthly parent progress updates</li>
+          <li><span class="pricing-check">✓</span> Sunday makeup / open session access</li>
+          <li><span class="pricing-check">✓</span> Leadership opportunities for older athletes (ages 13–14, by invitation)</li>
+        </ul>
+        <div class="pricing-compare">
+          <p>Most families spend <strong>$340–$440+/month</strong> across 3–4 fragmented programs.<br>
+          Performance Lab replaces all of it — for <strong>less money with better results</strong>.</p>
+        </div>
+        <a href="/contact?subject=ADM%20Application" class="pricing-cta">Apply for Performance Lab</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq">
+  <div class="container">
+    <div class="section-label">Common Questions</div>
+    <div class="section-title">PARENTS ASK. WE ANSWER.</div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-question">Is this just basketball training?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Basketball is our primary sport vehicle, but we're building athletes first. Your child gets strength, speed, agility, and coordination training that transfers to every sport they play. Soccer players, football players, multi-sport kids — they all benefit equally.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">My kid already does basketball training. Why switch?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Most basketball programs only work on basketball skills. They skip the athletic foundation — the strength, speed, and agility work that actually makes skill development stick. We combine both, so your child progresses faster and is less likely to get injured.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">$280/month seems like a lot. Can we do one session a week?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Performance Lab is a membership because consistency is the product — three sessions per week is the effective dose for real development. Most families are already spending $340–$440+/month across fragmented training. Performance Lab replaces the chaos with one system at $280/month.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What if my child plays a different sport in-season?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">That's exactly who this is for. Our seasonal programming adjusts automatically. During their sport's season, we focus on movement quality, durability, and injury prevention. During the off-season, we build the strength and explosiveness that gives them an edge when their season starts.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What ages is this for?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Performance Lab is designed for athletes ages 8–14. Groups are organized by age and ability level to keep training effective and appropriately challenging for every athlete in the group. Our oldest members (13–14) also have the opportunity to earn leadership roles within The Academy.</div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-question">What if we miss a session?<span class="faq-toggle">+</span></button>
+        <div class="faq-answer"><div class="faq-answer-inner">Sunday is built into the schedule as a makeup and open skill session. Life happens — we've designed the program to accommodate that without falling behind.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final-cta" id="apply">
+  <h2>READY TO BUILD A COMPLETE ATHLETE?</h2>
+  <p>Apply now. Coach Mac will follow up within 24 hours to confirm fit and placement.</p>
+  <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 2rem; position: relative;">Groups are capped. We place athletes by age and ability after a quick call.</p>
+  <a href="/contact?subject=ADM%20Application" class="hero-cta">Apply for Performance Lab</a>
+  <p class="final-micro">Limited spots · Groups capped at 6–8 athletes · Waitlist after capacity</p>
+</section>
+
+<!-- STICKY MOBILE CTA -->
+<div class="mobile-sticky" id="mobileCta">
+  <a href="/contact?subject=ADM%20Application">Apply for Performance Lab — Limited Spots</a>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>© 2026 The Academy · Gallatin, TN · <a href="tel:5712920833">(571) 292-0833</a> · <a href="https://academytn.com">academytn.com</a></p>
+</footer>
+
+<script>
+  // FAQ toggle
+  document.querySelectorAll('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const wasActive = item.classList.contains('active');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+      if (!wasActive) item.classList.add('active');
+    });
+  });
+
+  // Sticky mobile CTA - show after scrolling past hero, hide near footer
+  const mobileCta = document.getElementById('mobileCta');
+  const hero = document.querySelector('.hero');
+  const footer = document.querySelector('.footer');
+  
+  if (mobileCta && hero && footer) {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.target === hero) {
+          if (!e.isIntersecting) mobileCta.classList.add('visible');
+          else mobileCta.classList.remove('visible');
+        }
+        if (e.target === footer) {
+          if (e.isIntersecting) mobileCta.classList.remove('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+    observer.observe(hero);
+    observer.observe(footer);
+  }
+</script>
+</body>
+</html>
