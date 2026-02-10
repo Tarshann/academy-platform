@@ -246,7 +246,7 @@ export default function Gallery() {
               Join The Academy and become part of our growing community of athletes
             </p>
             <Button size="lg" asChild>
-              <a href="/signup">Register Now</a>
+              <a href="/programs">Get Started</a>
             </Button>
           </div>
         </section>
