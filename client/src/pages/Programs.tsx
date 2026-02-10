@@ -30,7 +30,7 @@ export default function Programs() {
                 foundational athletic qualities that translate across all sports.
               </p>
               <p className="text-sm text-muted-foreground/80">
-                Explore what we offer below, then head to <Link href="/signup" className="text-primary hover:underline font-medium">Registration</Link> when you're ready to sign up.
+                Explore what we offer below. Each program has its own page with full details.
               </p>
             </div>
           </div>
@@ -39,210 +39,92 @@ export default function Programs() {
         {/* Programs List */}
         <section className="py-16">
           <div className="container">
-            {/* Legacy hardcoded programs */}
-            {true && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* Group Sessions */}
-                <Card id="program-group-sessions" className="bg-card border-border scroll-mt-24">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">Group Sessions</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Group basketball sessions focus on skill development, game IQ, and competitive drills. 
-                      These sessions build basketball-specific skills including ball handling, shooting form, 
-                      defensive positioning, and court awareness in a high-energy team environment.
-                    </p>
-                    <p className="text-muted-foreground mb-4">
-                      Players develop fundamental basketball skills, build confidence through proper technique, 
-                      and compete in a supportive environment that emphasizes long-term growth over short-term results.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$25 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Individual Workouts */}
-                <Card id="program-individual-workouts" className="bg-card border-border scroll-mt-24">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">Individual Workouts</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • One-on-one training</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      One-on-one sessions are tailored to each athlete's sport, position, and performance goals.
-                      Training plans blend SAQ work, strength fundamentals, and skill development to build complete
-                      athletes across basketball, football, and soccer.
-                    </p>
-                    <p className="text-muted-foreground mb-4">
-                      Coaches focus on each athlete's unique strengths, ensuring meaningful progress through
-                      personalized programming and targeted feedback.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$60 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Shooting Lab */}
-                <Card id="program-shooting-lab" className="bg-card border-border scroll-mt-24">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">Shooting Lab</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • Limited to 8 players per session</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Specialized sessions using our Dr Dish shooting machine focused on proper shooting technique 
-                      and mechanics. The Dr Dish acts as an automatic rebounder, instantly rebounding made or 
-                      missed shots and delivering return passes. Fires up to 1800 shots per hour for high-volume 
-                      repetition.
-                    </p>
-                    <p className="text-muted-foreground mb-4">
-                      Perfect for developing muscle memory, refining form, and improving shooting consistency through 
-                      focused technical work. <strong>Included with Academy Group Membership only.</strong>
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$25 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Skills Class */}
-                <Card id="program-skills-class" className="bg-card border-border scroll-mt-24">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">Skills Class</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • Fundamentals focus</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Focused development sessions covering footwork, balance, coordination, and sport-specific
-                      fundamentals. Perfect for athletes looking to build a strong foundation across multiple sports.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$15 <span className="text-sm text-muted-foreground font-normal">per class</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* SAQ Lab */}
-                <Card id="program-saq-lab" className="bg-card border-border scroll-mt-24">
-                  <CardHeader>
-                    <CardTitle className="text-foreground">SAQ Lab</CardTitle>
-                    <CardDescription className="text-muted-foreground">Youth athletes • Tuesdays & Thursdays 7-8pm</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Speed, Agility, and Quickness training combined with conditioning. Build explosive athleticism, 
-                      improve reaction time, and develop the foundational movement skills that translate across all sports.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$15 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Academy Group Membership */}
-                <Card id="program-academy-group-membership" className="bg-card border-border border-primary scroll-mt-24">
-                  <CardHeader>
-                    <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-2">
-                      POPULAR
-                    </div>
-                    <CardTitle className="text-foreground">Academy Group Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Experienced athletes • Best value</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Unlimited access to group sessions and Shooting Lab throughout the month. Perfect for dedicated players 
-                      who want consistent training and development. Small group sizes (max 8 players) in a competitive training environment.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$150 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Complete Player Membership */}
-                <Card id="program-complete-player-membership" className="bg-card border-border border-primary scroll-mt-24">
-                  <CardHeader>
-                    <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-2">
-                      BEST VALUE
-                    </div>
-                    <CardTitle className="text-foreground">Complete Player Membership</CardTitle>
-                    <CardDescription className="text-muted-foreground">Dedicated athletes • Skills focus</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">
-                      Unlimited access to skills classes and open gyms (when available seasonally). Perfect for 
-                      dedicated athletes focused on fundamentals and year-round development.
-                    </p>
-                    <div className="border-t border-border pt-4 mt-4">
-                      <p className="text-2xl font-bold text-primary mb-2">$100 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
-                      <Link href="/signup">
-                        <Button className="w-full">Register Now</Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* Additional Programs */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <Card id="program-academy-summer-camp" className="bg-card border-border scroll-mt-24">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Academy Performance Lab - Featured */}
+              <Card id="program-performance-lab" className="bg-card border-primary ring-1 ring-primary/20 scroll-mt-24">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Academy Summer Camp</CardTitle>
-                  <CardDescription className="text-muted-foreground">Youth athletes • 3rd Annual at Sumner Academy</CardDescription>
+                  <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full mb-2">
+                    FLAGSHIP PROGRAM
+                  </div>
+                  <CardTitle className="text-foreground">Academy Performance Lab</CardTitle>
+                  <CardDescription className="text-muted-foreground">Year-round structured development for committed young athletes</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Join us for our 3rd annual summer camp at Sumner Academy! Intensive week-long training 
-                    designed to accelerate player development during the off-season. Full-day sessions with 
-                    skill work, games, and competition.
+                    Three sessions per week of SAQ training, strength conditioning, and sport-specific skill development.
+                    Capped at 6–8 athletes per group for maximum coaching attention.
                   </p>
+                  <p className="text-sm text-muted-foreground/80 mb-2">
+                    Tuesday &amp; Thursday 7:15–8:15 PM &bull; Sunday 11:00 AM–12:00 PM
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {["3 sessions per week", "SAQ & strength conditioning", "Sport-specific skill development", "Leadership opportunities (ages 13–14, by invitation)", "Sunday makeup/open session access"].map((item) => (
+                      <span key={item} className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$185 <span className="text-sm text-muted-foreground font-normal">per week</span></p>
-                    <p className="text-sm text-muted-foreground mb-4">$20 deposit (included in total) • $165 due after deposit</p>
-                    <Link href="/signup">
-                      <Button className="w-full">Register Now</Button>
+                    <p className="text-2xl font-bold text-primary mb-2">$280 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
+                    <Link href="/performance-lab">
+                      <Button className="w-full">Apply for Performance Lab</Button>
                     </Link>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card id="program-academy-offseason" className="bg-card border-border scroll-mt-24">
+              {/* Academy Skills Lab */}
+              <Card id="program-skills-lab" className="bg-card border-border scroll-mt-24">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Academy Offseason</CardTitle>
-                  <CardDescription className="text-muted-foreground">Youth athletes • Summer tournament preparation</CardDescription>
+                  <CardTitle className="text-foreground">Academy Skills Lab</CardTitle>
+                  <CardDescription className="text-muted-foreground">Community drop-in for fundamentals, movement, and fun</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">
-                    Join summer tournaments representing The Academy! Includes practices and SAQ training 
-                    to prepare athletes for the upcoming season. Build team chemistry and competitive experience.
+                    Open sessions focused on movement fundamentals, coordination, and positive competition.
+                    No commitment required — just show up and play.
                   </p>
+                  <p className="text-sm text-muted-foreground/80 mb-2">
+                    Tuesday &amp; Thursday 6:00–7:00 PM
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {["Movement prep & fundamentals", "Skill stations", "Competitive games", "All ages and skill levels welcome"].map((item) => (
+                      <span key={item} className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-lg text-muted-foreground mb-4">Contact us for availability and pricing</p>
+                    <p className="text-2xl font-bold text-primary mb-2">$10 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
+                    <Link href="/skills-lab">
+                      <Button className="w-full">Register for Skills Lab</Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Private Training */}
+              <Card id="program-private-training" className="bg-card border-border scroll-mt-24">
+                <CardHeader>
+                  <CardTitle className="text-foreground">Private Training</CardTitle>
+                  <CardDescription className="text-muted-foreground">Personalized 1-on-1 coaching with Coach Mac or Coach O</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    One-on-one sessions tailored to your athlete's specific goals. Personalized plans
+                    for sport-specific development and athletic growth.
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {["Personalized training plan", "Sport-specific skill development", "Flexible scheduling", "Direct coach attention"].map((item) => (
+                      <span key={item} className="text-xs px-2.5 py-1 bg-primary/5 text-muted-foreground rounded-md border border-primary/10">
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="border-t border-border pt-4 mt-4">
+                    <p className="text-2xl font-bold text-primary mb-2">$60 <span className="text-sm text-muted-foreground font-normal">per session</span></p>
                     <Link href="/contact">
-                      <Button className="w-full">Contact Us</Button>
+                      <Button className="w-full">Book a Session</Button>
                     </Link>
                   </div>
                 </CardContent>
