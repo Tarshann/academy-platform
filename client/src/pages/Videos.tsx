@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { Play, ExternalLink, Search, SortAsc, Loader2, Eye } from "lucide-react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { Play, ExternalLink, Search, SortAsc, Loader2, Eye, X } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,124 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { trpc } from "@/lib/trpc";
+
+// Extract TikTok video ID from URL
+function getTikTokVideoId(url: string): string | null {
+  const match = url.match(/\/video\/(\d+)/);
+  return match ? match[1] : null;
+}
+
+// Extract Instagram shortcode from URL
+function getInstagramShortcode(url: string): string | null {
+  const match = url.match(/\/(reel|p)\/([A-Za-z0-9_-]+)/);
+  return match ? match[2] : null;
+}
+
+// Video embed modal
+function VideoEmbedModal({
+  video,
+  onClose,
+}: {
+  video: { url: string; title: string; platform: "tiktok" | "instagram" } | null;
+  onClose: () => void;
+}) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!video) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleEsc);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
+    };
+  }, [video, onClose]);
+
+  // Load Instagram embed script when showing an Instagram video
+  useEffect(() => {
+    if (!video || video.platform !== "instagram") return;
+    const existing = document.querySelector('script[src*="instagram.com/embed.js"]');
+    if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      document.body.appendChild(script);
+    } else if ((window as any).instgrm) {
+      (window as any).instgrm.Embeds.process();
+    }
+  }, [video]);
+
+  // Re-process Instagram embeds once the script loads
+  useEffect(() => {
+    if (!video || video.platform !== "instagram") return;
+    const interval = setInterval(() => {
+      if ((window as any).instgrm) {
+        (window as any).instgrm.Embeds.process();
+        clearInterval(interval);
+      }
+    }, 200);
+    return () => clearInterval(interval);
+  }, [video]);
+
+  if (!video) return null;
+
+  return (
+    <div
+      ref={overlayRef}
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === overlayRef.current) onClose(); }}
+    >
+      <div className="relative max-w-lg w-full max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-white font-semibold truncate pr-4">{video.title}</h3>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <a
+              href={video.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/70 hover:text-white transition-colors text-xs flex items-center gap-1"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Open original
+            </a>
+            <button
+              onClick={onClose}
+              className="text-white/70 hover:text-white transition-colors p-1"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        <div className="overflow-auto rounded-xl bg-black flex items-center justify-center">
+          {video.platform === "tiktok" ? (
+            <iframe
+              src={`https://www.tiktok.com/embed/v2/${getTikTokVideoId(video.url)}`}
+              width="325"
+              height="575"
+              frameBorder="0"
+              allowFullScreen
+              allow="encrypted-media"
+              className="mx-auto"
+            />
+          ) : (
+            <div className="p-4 w-full flex justify-center">
+              <blockquote
+                className="instagram-media"
+                data-instgrm-permalink={video.url}
+                data-instgrm-version="14"
+                style={{ maxWidth: 400, width: "100%", margin: "0 auto" }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // Platform-specific placeholder component
 const PlatformPlaceholder = ({ platform, title }: { platform: "tiktok" | "instagram"; title: string }) => {
@@ -173,6 +291,7 @@ export default function Videos() {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(VIDEOS_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<{ url: string; title: string; platform: "tiktok" | "instagram" } | null>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Fetch videos from database
@@ -278,19 +397,21 @@ export default function Videos() {
 
   const visibleVideos = filteredVideos.slice(0, visibleCount);
 
-  const handleVideoClick = (video: typeof allVideos[0]) => {
+  const handleVideoClick = useCallback((video: typeof allVideos[0]) => {
     // Track view if it's a database video
     if (video.numericId) {
       trackViewMutation.mutate({ id: video.numericId });
     }
-    // Open video in new tab
-    window.open(video.url, '_blank');
-  };
+    // Open inline embed modal
+    setSelectedVideo({ url: video.url, title: video.title, platform: video.platform });
+  }, [trackViewMutation]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       
+      <VideoEmbedModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
+
       <main id="main-content" className="flex-1">
         <div className="container pt-6">
           <Breadcrumbs items={[{ label: "Videos" }]} />
@@ -411,7 +532,7 @@ export default function Videos() {
                           </span>
                         </div>
                         <div className="absolute bottom-3 right-3">
-                          <ExternalLink className="h-5 w-5 text-white drop-shadow-lg" />
+                          <Play className="h-5 w-5 text-white drop-shadow-lg fill-white" />
                         </div>
                         {video.viewCount > 0 && (
                           <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
