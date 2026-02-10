@@ -179,6 +179,20 @@ export default function Navigation() {
               Programs
             </Link>
             <Link
+              href="/performance-lab"
+              className={getLinkClassName("/performance-lab")}
+              aria-current={isActiveRoute("/performance-lab") ? "page" : undefined}
+            >
+              Performance Lab
+            </Link>
+            <Link
+              href="/skills-lab"
+              className={getLinkClassName("/skills-lab")}
+              aria-current={isActiveRoute("/skills-lab") ? "page" : undefined}
+            >
+              Skills Lab
+            </Link>
+            <Link
               href="/signup"
               className={getLinkClassName("/signup", true)}
               aria-current={isActiveRoute("/signup") ? "page" : undefined}
@@ -339,6 +353,22 @@ export default function Navigation() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Programs
+              </Link>
+              <Link
+                href="/performance-lab"
+                className={getLinkClassName("/performance-lab", false, true)}
+                aria-current={isActiveRoute("/performance-lab") ? "page" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Performance Lab
+              </Link>
+              <Link
+                href="/skills-lab"
+                className={getLinkClassName("/skills-lab", false, true)}
+                aria-current={isActiveRoute("/skills-lab") ? "page" : undefined}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Skills Lab
               </Link>
               <Link
                 href="/signup"

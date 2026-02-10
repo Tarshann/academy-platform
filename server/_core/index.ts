@@ -69,7 +69,19 @@ async function startServer() {
   
   // Body parser for JSON requests
   app.use(express.json());
-  
+
+  // Skills Lab registration endpoint
+  app.post("/api/skills-lab-register", async (req, res) => {
+    const { handleSkillsLabRegister } = await import("../skills-lab-register");
+    return handleSkillsLabRegister(req, res);
+  });
+
+  // Performance Lab application endpoint
+  app.post("/api/performance-lab-apply", async (req, res) => {
+    const { handlePerformanceLabApply } = await import("../performance-lab-apply");
+    return handlePerformanceLabApply(req, res);
+  });
+
   // Setup SSE-based chat (works on all hosting platforms)
   const { setupSSEChat } = await import("../chat-sse");
   setupSSEChat(app);
