@@ -1,8 +1,30 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { Facebook, Instagram, MapPin, Clock, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, MapPin, Clock, Mail, Phone, MessageCircle } from "lucide-react";
 
 export default function Footer() {
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.trim()) {
+      setSubscribed(true);
+      setEmail("");
+    }
+  };
+
   return (
+    <>
+      {/* Floating SMS button — mobile only */}
+      <a
+        href="sms:+15712920633?body=Hi%2C%20I%27m%20interested%20in%20The%20Academy%20programs"
+        className="fixed bottom-5 right-5 z-40 md:hidden w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all"
+        aria-label="Text us"
+      >
+        <MessageCircle size={24} />
+      </a>
+
     <footer className="bg-card border-t border-border mt-auto">
       {/* Gold accent line at top */}
       <div className="h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent" />
@@ -99,7 +121,10 @@ export default function Footer() {
               </div>
               <div className="flex items-start gap-2">
                 <Clock size={16} className="text-primary mt-0.5 flex-shrink-0" />
-                <span>Sessions by appointment</span>
+                <div>
+                  <span className="block">Tue &amp; Thu 6:00–8:00 PM</span>
+                  <span className="block">Sun 11:00 AM–12:00 PM</span>
+                </div>
               </div>
             </div>
           </div>
@@ -117,16 +142,44 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Phone size={16} className="text-primary flex-shrink-0" />
-                <a href="tel:5712920833" className="hover:text-primary transition-colors">
-                  (571) 292-0833
+                <a href="tel:5712920633" className="hover:text-primary transition-colors">
+                  (571) 292-0633
                 </a>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Social proof line */}
+        {/* Email capture */}
         <div className="mt-12 pt-8 border-t border-border">
+          <div className="max-w-md mx-auto text-center mb-8">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-2">Stay Updated</h3>
+            <p className="text-sm text-muted-foreground mb-4">Get schedule updates, session reminders, and Academy news.</p>
+            {subscribed ? (
+              <p className="text-sm text-primary font-medium">Thanks! You're on the list.</p>
+            ) : (
+              <form onSubmit={handleSubscribe} className="flex gap-2">
+                <input
+                  type="email"
+                  required
+                  placeholder="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-4 py-2 text-sm bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                >
+                  Subscribe
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {/* Social proof line */}
+        <div className="pt-4">
           <p className="text-center text-sm text-muted-foreground/70 mb-8">
             Proudly serving athletes in <span className="text-muted-foreground">Gallatin</span>, <span className="text-muted-foreground">Hendersonville</span>, and <span className="text-muted-foreground">Sumner County</span>
           </p>
@@ -148,5 +201,6 @@ export default function Footer() {
         </div>
       </div>
     </footer>
+    </>
   );
 }

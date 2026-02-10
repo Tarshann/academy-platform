@@ -7,10 +7,17 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <meta name="theme-color" content="#CFB87C" />
-    <meta name="description" content="Elite youth multi-sport training focused on speed, agility, quickness, and strength development." />
+    <meta name="description" content="Youth athletic training in Gallatin, TN — basketball, flag football, and soccer. SAQ, strength, and skill development for ages 8–14. Small groups, real coaching." />
+    <meta property="og:title" content="The Academy — Youth Athletic Training in Gallatin, TN" />
+    <meta property="og:description" content="Elite multi-sport training for young athletes. Performance Lab, Skills Lab, and Private Training in Gallatin, Tennessee." />
+    <meta property="og:image" content="/academy-logo.jpeg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="The Academy — Youth Athletic Training in Gallatin, TN" />
+    <meta name="twitter:description" content="Elite multi-sport training for young athletes. Performance Lab, Skills Lab, and Private Training in Gallatin, Tennessee." />
     <link rel="manifest" href="/manifest.json" />
     <link rel="apple-touch-icon" href="/academy-logo.jpeg" />
-    <title>The Academy</title>
+    <title>The Academy — Youth Athletic Training in Gallatin, TN</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet" />
@@ -19,72 +26,6 @@
 
   <body>
     <div id="root"></div>
-    <!-- Safari iOS validation suppression - runs BEFORE React loads -->
-    <!-- This prevents "The string did not match the expected pattern" errors -->
-    <script>
-      (function() {
-        // Only apply on /signup page to avoid affecting other pages
-        if (window.location.pathname !== '/signup') return;
-        var searchParams = new URLSearchParams(window.location.search);
-        var isDebugMode = searchParams.get('debugValidation') === '1';
-        if (isDebugMode) {
-          window.__signupValidationDebug = true;
-          return;
-        }
-        
-        // Override prototype methods to always return true
-        HTMLFormElement.prototype.reportValidity = function() { return true; };
-        HTMLFormElement.prototype.checkValidity = function() { return true; };
-        HTMLInputElement.prototype.reportValidity = function() { return true; };
-        HTMLInputElement.prototype.checkValidity = function() { return true; };
-        HTMLSelectElement.prototype.reportValidity = function() { return true; };
-        HTMLSelectElement.prototype.checkValidity = function() { return true; };
-        HTMLTextAreaElement.prototype.reportValidity = function() { return true; };
-        HTMLTextAreaElement.prototype.checkValidity = function() { return true; };
-        
-        // Capture and suppress invalid events at document level
-        document.addEventListener('invalid', function(e) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        }, true);
-        
-        // Capture and suppress submit events
-        document.addEventListener('submit', function(e) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-        }, true);
-        
-        // MutationObserver to add novalidate to all forms
-        var observer = new MutationObserver(function(mutations) {
-          mutations.forEach(function(mutation) {
-            mutation.addedNodes.forEach(function(node) {
-              if (node.nodeType === 1) {
-                if (node.tagName === 'FORM') {
-                  node.setAttribute('novalidate', 'true');
-                  node.noValidate = true;
-                }
-                var forms = node.querySelectorAll ? node.querySelectorAll('form') : [];
-                forms.forEach(function(form) {
-                  form.setAttribute('novalidate', 'true');
-                  form.noValidate = true;
-                });
-              }
-            });
-          });
-        });
-        
-        // Start observing once body is available
-        if (document.body) {
-          observer.observe(document.body, { childList: true, subtree: true });
-        } else {
-          document.addEventListener('DOMContentLoaded', function() {
-            observer.observe(document.body, { childList: true, subtree: true });
-          });
-        }
-        
-        console.log('[Safari Validation Fix] Early suppression active on /signup');
-      })();
-    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 

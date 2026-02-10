@@ -154,7 +154,7 @@ export default function About() {
                   </p>
                   <div className="space-y-1 text-sm text-muted-foreground">
                     <p>Email: <a href="mailto:omarphilmore@yahoo.com" className="text-primary hover:underline">omarphilmore@yahoo.com</a></p>
-                    <p>Phone: <a href="tel:5712920833" className="text-primary hover:underline">(571) 292-0833</a></p>
+                    <p>Phone: <a href="tel:5712920633" className="text-primary hover:underline">(571) 292-0633</a></p>
                   </div>
                 </CardContent>
               </Card>

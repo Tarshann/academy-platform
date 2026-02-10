@@ -18,7 +18,7 @@ const SCHEDULE_DATA = [
       {
         name: "Academy Performance Lab",
         time: "7:00–8:00 PM",
-        details: "Members only, $280/month",
+        details: "Members only, $245/month",
         href: "/performance-lab",
       },
     ],
@@ -35,7 +35,7 @@ const SCHEDULE_DATA = [
       {
         name: "Academy Performance Lab",
         time: "7:00–8:00 PM",
-        details: "Members only, $280/month",
+        details: "Members only, $245/month",
         href: "/performance-lab",
       },
     ],
@@ -46,7 +46,7 @@ const SCHEDULE_DATA = [
       {
         name: "Academy Performance Lab",
         time: "11:00 AM–12:00 PM",
-        details: "Members only, $280/month",
+        details: "Members only, $245/month",
         href: "/performance-lab",
       },
     ],

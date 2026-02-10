@@ -188,7 +188,7 @@ export default function PerformanceLabPage() {
             </div>
             <div style={{ padding: 32 }}>
               <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <span style={{ fontSize: 48, fontWeight: 800 }}>$280</span>
+                <span style={{ fontSize: 48, fontWeight: 800 }}>$245</span>
                 <span style={{ fontSize: 18, color: "#777" }}>/month</span>
               </div>
               <ul style={{
@@ -324,7 +324,7 @@ export default function PerformanceLabPage() {
             },
             {
               q: "Is there a contract?",
-              a: "Performance Lab is a monthly membership at $280/month. There is no long-term contract, but this program is designed for athletes who are committed to consistent, year-round training.",
+              a: "Performance Lab is a monthly membership at $245/month. There is no long-term contract, but this program is designed for athletes who are committed to consistent, year-round training.",
             },
             {
               q: "What about siblings?",

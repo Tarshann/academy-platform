@@ -48,23 +48,23 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path={"/"}>
-          <SEO title="Home" description="Elite youth multi-sport training for basketball, flag football, and soccer athletes." />
+          <SEO title="Youth Athletic Training in Gallatin, TN" description="The Academy offers elite youth multi-sport training in Gallatin, Tennessee. Basketball, flag football, and soccer development with SAQ, strength, and skill training for ages 8–14." />
           <Home />
         </Route>
         <Route path={"/programs"}>
-          <SEO title="Programs" description="Comprehensive athletic development programs for basketball, flag football, and soccer athletes. SAQ training, strength conditioning, and sport-specific skill development." />
+          <SEO title="Programs" description="Youth athletic training programs in Gallatin, TN. Performance Lab ($245/mo, ages 8–14), Skills Lab ($10/session, all ages), and Private Training. SAQ, strength, and sport-specific development." />
           <Programs />
         </Route>
         <Route path={"/about"}>
-          <SEO title="About Us" description="Learn about The Academy's coaching philosophy, values, and commitment to developing confident, skilled, and resilient young athletes." />
+          <SEO title="About Us" description="Meet Coach Mac and Coach O at The Academy in Gallatin, TN. Our coaching philosophy develops confident, skilled, and resilient young athletes through multi-sport training." />
           <About />
         </Route>
         <Route path={"/contact"}>
-          <SEO title="Contact Us" description="Have questions? Want to volunteer? Contact The Academy. We'd love to hear from you." />
+          <SEO title="Contact Us" description="Contact The Academy in Gallatin, TN. Questions about youth athletic training programs? Call (571) 292-0633 or email us." />
           <Contact />
         </Route>
         <Route path={"/faqs"}>
-          <SEO title="FAQs" description="Frequently asked questions about The Academy's programs, registration, and training approach." />
+          <SEO title="FAQs" description="Frequently asked questions about The Academy's youth training programs in Gallatin, TN. Registration, pricing, schedules, and what to expect." />
           <FAQs />
         </Route>
         <Route path={"/signup"}>
@@ -98,7 +98,7 @@ function Router() {
           <CoachDashboard />
         </Route>
         <Route path={"/schedule"}>
-          <SEO title="Schedule" description="View our weekly program schedule including group sessions, skills classes, SAQ training, and private sessions." />
+          <SEO title="Schedule" description="Weekly training schedule for The Academy in Gallatin, TN. Skills Lab Tue/Thu 6:00–6:50 PM. Performance Lab Tue/Thu 7:00–8:00 PM, Sun 11 AM–12 PM." />
           <Schedule />
         </Route>
         <Route path={"/private-session-booking"}>
@@ -106,7 +106,7 @@ function Router() {
           <PrivateSessionBooking />
         </Route>
         <Route path={"/gallery"}>
-          <SEO title="Gallery" description="View photos from The Academy's training sessions, events, and activities." />
+          <SEO title="Gallery" description="Photos from The Academy's youth training sessions, events, and activities in Gallatin, TN." />
           <Gallery />
         </Route>
         <Route path={"/chat"}>
@@ -132,19 +132,19 @@ function Router() {
           {(params) => <BlogPost params={params} />}
         </Route>
         <Route path={"/performance-lab"}>
-          <SEO title="Performance Lab" description="Year-round structured athletic development for serious young athletes ages 8-14. Three sessions per week, small groups, real development." />
+          <SEO title="Performance Lab — Youth Athletic Training" description="Academy Performance Lab in Gallatin, TN. Year-round structured training for athletes ages 8–14. Three sessions per week, capped at 6–8 per group. $245/month." />
           <PerformanceLabPage />
         </Route>
         <Route path={"/performance-lab/apply"}>
-          <SEO title="Apply — Performance Lab" description="Apply for the Academy Performance Lab. Structured year-round training for athletes ages 8-14." />
+          <SEO title="Apply — Performance Lab" description="Apply for the Academy Performance Lab in Gallatin, TN. Structured year-round multi-sport training for athletes ages 8–14." />
           <PerformanceLabApplyPage />
         </Route>
         <Route path={"/skills-lab"}>
-          <SEO title="Skills Lab" description="Community drop-in sessions focused on fundamentals, movement, and positive competition. Open to all ages. $10 per session." />
+          <SEO title="Skills Lab — Drop-In Youth Training" description="Academy Skills Lab in Gallatin, TN. Drop-in sessions for fundamentals, movement, and competitive games. All ages welcome. $10 per session, Tue/Thu 6:00–6:50 PM." />
           <SkillsLabPage />
         </Route>
         <Route path={"/skills-lab/register"}>
-          <SEO title="Register — Skills Lab" description="Register for an Academy Skills Lab session. Tuesday and Thursday evenings, $10 per session." />
+          <SEO title="Register — Skills Lab" description="Register for an Academy Skills Lab session in Gallatin, TN. Tuesday and Thursday 6:00–6:50 PM, $10 per session." />
           <SkillsLabRegisterPage />
         </Route>
         <Route path={"/settings"}>
