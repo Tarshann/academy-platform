@@ -89,7 +89,8 @@ export default function Home() {
     {
       title: "Academy Performance Lab",
       label: "Membership",
-      description: "Year-round structured development with SAQ training, strength conditioning, and sport-specific skills. Capped at 6\u20138 athletes per group.",
+      description: "Year-round structured development with SAQ training, strength conditioning, and sport-specific skills.",
+      scarcity: "Limited to 6–8 athletes per group",
       bestFor: "Committed athletes ages 8\u201314",
       schedule: "Tue & Thu 7:00\u20138:00 PM \u2022 Sun 11:00 AM\u201312:00 PM",
       icon: Zap,
@@ -352,8 +353,14 @@ export default function Home() {
                       <p className="text-muted-foreground leading-relaxed text-sm flex-grow">
                         {program.description}
                       </p>
+                      {/* Scarcity signal */}
+                      {(program as any).scarcity && (
+                        <p className="text-[11px] text-orange-600 font-semibold mt-3">
+                          {(program as any).scarcity}
+                        </p>
+                      )}
                       {/* Program fit micro-line */}
-                      <p className="text-[11px] text-muted-foreground/60 mt-3">
+                      <p className="text-[11px] text-muted-foreground/60 mt-1">
                         Best for: <span className="text-muted-foreground">{program.bestFor}</span>
                       </p>
                       {program.schedule && (

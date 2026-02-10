@@ -50,9 +50,11 @@ export default function Programs() {
                   <CardDescription className="text-muted-foreground">Year-round structured development for committed young athletes</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-muted-foreground mb-2">
                     Three sessions per week of SAQ training, strength conditioning, and sport-specific skill development.
-                    Capped at 6–8 athletes per group for maximum coaching attention.
+                  </p>
+                  <p className="text-sm text-orange-600 font-semibold mb-4">
+                    Limited to 6–8 athletes per group — spots fill fast
                   </p>
                   <p className="text-sm text-muted-foreground/80 mb-2">
                     Tuesday &amp; Thursday 7:00–8:00 PM &bull; Sunday 11:00 AM–12:00 PM
@@ -68,6 +70,9 @@ export default function Programs() {
                     <p className="text-2xl font-bold text-primary mb-2">$280 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
                     <Link href="/performance-lab">
                       <Button className="w-full">Apply for Performance Lab</Button>
+                    </Link>
+                    <Link href="/contact">
+                      <Button variant="outline" className="w-full mt-2 text-sm">Schedule a Free Assessment</Button>
                     </Link>
                   </div>
                 </CardContent>
