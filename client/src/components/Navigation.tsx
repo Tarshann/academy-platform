@@ -193,11 +193,11 @@ export default function Navigation() {
               Skills Lab
             </Link>
             <Link
-              href="/signup"
-              className={getLinkClassName("/signup", true)}
-              aria-current={isActiveRoute("/signup") ? "page" : undefined}
+              href="/programs"
+              className={getLinkClassName("/programs", true)}
+              aria-current={isActiveRoute("/programs") ? "page" : undefined}
             >
-              Register
+              Get Started
             </Link>
             <Link
               href="/schedule"
@@ -371,12 +371,12 @@ export default function Navigation() {
                 Skills Lab
               </Link>
               <Link
-                href="/signup"
-                className={getLinkClassName("/signup", true, true)}
-                aria-current={isActiveRoute("/signup") ? "page" : undefined}
+                href="/programs"
+                className={getLinkClassName("/programs", true, true)}
+                aria-current={isActiveRoute("/programs") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Register
+                Get Started
               </Link>
               <Link
                 href="/schedule"

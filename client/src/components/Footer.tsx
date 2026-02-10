@@ -73,8 +73,11 @@ export default function Footer() {
               <Link href="/programs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 All Programs
               </Link>
-              <Link href="/signup" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                Register Now
+              <Link href="/performance-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Performance Lab
+              </Link>
+              <Link href="/skills-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                Skills Lab
               </Link>
               <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 About Us
