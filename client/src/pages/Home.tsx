@@ -94,7 +94,7 @@ export default function Home() {
       bestFor: "Committed athletes ages 8\u201314",
       schedule: "Tue & Thu 7:00\u20138:00 PM \u2022 Sun 11:00 AM\u201312:00 PM",
       icon: Zap,
-      price: "$280",
+      price: "$245",
       unit: "per month",
       featured: true,
       cta: "Learn More",

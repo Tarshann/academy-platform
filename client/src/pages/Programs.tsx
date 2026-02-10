@@ -67,7 +67,7 @@ export default function Programs() {
                     ))}
                   </div>
                   <div className="border-t border-border pt-4 mt-4">
-                    <p className="text-2xl font-bold text-primary mb-2">$280 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
+                    <p className="text-2xl font-bold text-primary mb-2">$245 <span className="text-sm text-muted-foreground font-normal">per month</span></p>
                     <Link href="/performance-lab">
                       <Button className="w-full">Apply for Performance Lab</Button>
                     </Link>

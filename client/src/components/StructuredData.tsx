@@ -83,7 +83,7 @@ export function OrganizationStructuredData({
         { "@type": "City", name: "Hendersonville, TN" },
         { "@type": "AdministrativeArea", name: "Sumner County, TN" },
       ],
-      priceRange: "$10–$280",
+      priceRange: "$10–$245",
       openingHoursSpecification: [
         { "@type": "OpeningHoursSpecification", dayOfWeek: "Tuesday", opens: "18:00", closes: "20:00" },
         { "@type": "OpeningHoursSpecification", dayOfWeek: "Thursday", opens: "18:00", closes: "20:00" },
@@ -103,9 +103,9 @@ export function OrganizationStructuredData({
           {
             "@type": "Offer",
             itemOffered: { "@type": "Service", name: "Performance Lab", description: "Year-round structured training for athletes ages 8–14. 3 sessions/week, capped at 6–8 per group." },
-            price: "280",
+            price: "245",
             priceCurrency: "USD",
-            priceSpecification: { "@type": "UnitPriceSpecification", price: "280", priceCurrency: "USD", unitText: "month" },
+            priceSpecification: { "@type": "UnitPriceSpecification", price: "245", priceCurrency: "USD", unitText: "month" },
           },
           {
             "@type": "Offer",

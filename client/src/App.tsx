@@ -52,7 +52,7 @@ function Router() {
           <Home />
         </Route>
         <Route path={"/programs"}>
-          <SEO title="Programs" description="Youth athletic training programs in Gallatin, TN. Performance Lab ($280/mo, ages 8–14), Skills Lab ($10/session, all ages), and Private Training. SAQ, strength, and sport-specific development." />
+          <SEO title="Programs" description="Youth athletic training programs in Gallatin, TN. Performance Lab ($245/mo, ages 8–14), Skills Lab ($10/session, all ages), and Private Training. SAQ, strength, and sport-specific development." />
           <Programs />
         </Route>
         <Route path={"/about"}>
@@ -132,7 +132,7 @@ function Router() {
           {(params) => <BlogPost params={params} />}
         </Route>
         <Route path={"/performance-lab"}>
-          <SEO title="Performance Lab — Youth Athletic Training" description="Academy Performance Lab in Gallatin, TN. Year-round structured training for athletes ages 8–14. Three sessions per week, capped at 6–8 per group. $280/month." />
+          <SEO title="Performance Lab — Youth Athletic Training" description="Academy Performance Lab in Gallatin, TN. Year-round structured training for athletes ages 8–14. Three sessions per week, capped at 6–8 per group. $245/month." />
           <PerformanceLabPage />
         </Route>
         <Route path={"/performance-lab/apply"}>
