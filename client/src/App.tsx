@@ -31,6 +31,10 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const PrivateSessionBooking = lazy(() => import("./pages/PrivateSessionBooking"));
+const PerformanceLabPage = lazy(() => import("./pages/PerformanceLabPage"));
+const PerformanceLabApplyPage = lazy(() => import("./pages/PerformanceLabApplyPage"));
+const SkillsLabPage = lazy(() => import("./pages/SkillsLabPage"));
+const SkillsLabRegisterPage = lazy(() => import("./pages/SkillsLabRegisterPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -129,6 +133,22 @@ function Router() {
         </Route>
         <Route path={"/blog/:slug"}>
           {(params) => <BlogPost params={params} />}
+        </Route>
+        <Route path={"/performance-lab"}>
+          <SEO title="Performance Lab" description="Year-round structured athletic development for serious young athletes ages 8-14. Three sessions per week, small groups, real development." />
+          <PerformanceLabPage />
+        </Route>
+        <Route path={"/performance-lab/apply"}>
+          <SEO title="Apply — Performance Lab" description="Apply for the Academy Performance Lab. Structured year-round training for athletes ages 8-14." />
+          <PerformanceLabApplyPage />
+        </Route>
+        <Route path={"/skills-lab"}>
+          <SEO title="Skills Lab" description="Community drop-in sessions focused on fundamentals, movement, and positive competition. Open to all ages. $10 per session." />
+          <SkillsLabPage />
+        </Route>
+        <Route path={"/skills-lab/register"}>
+          <SEO title="Register — Skills Lab" description="Register for an Academy Skills Lab session. Tuesday and Thursday evenings, $10 per session." />
+          <SkillsLabRegisterPage />
         </Route>
         <Route path={"/settings"}>
           <SEO title="Settings" description="Manage your notification preferences and account settings." />
