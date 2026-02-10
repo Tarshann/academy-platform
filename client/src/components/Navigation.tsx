@@ -212,13 +212,6 @@ export default function Navigation() {
               Gallery
             </Link>
             <Link
-              href="/videos"
-              className={getLinkClassName("/videos")}
-              aria-current={isActiveRoute("/videos") ? "page" : undefined}
-            >
-              Videos
-            </Link>
-            <Link
               href="/shop"
               className={getLinkClassName("/shop")}
               aria-current={isActiveRoute("/shop") ? "page" : undefined}
@@ -382,14 +375,6 @@ export default function Navigation() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Gallery
-              </Link>
-              <Link
-                href="/videos"
-                className={getLinkClassName("/videos", false, true)}
-                aria-current={isActiveRoute("/videos") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Videos
               </Link>
               <Link
                 href="/shop"

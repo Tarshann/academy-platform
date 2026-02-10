@@ -7,8 +7,8 @@ const BLUE = "#2563EB";
 const DARK = "#1A1A1A";
 
 const SESSION_OPTIONS = [
-  "Tuesday 6:00-7:00 PM",
-  "Thursday 6:00-7:00 PM",
+  "Tuesday 6:00-6:50 PM",
+  "Thursday 6:00-6:50 PM",
 ];
 
 interface FormData {

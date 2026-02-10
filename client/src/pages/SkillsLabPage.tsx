@@ -116,8 +116,8 @@ export default function SkillsLabPage() {
             marginBottom: 24,
           }}>
             {[
-              { day: "Tuesday", time: "6:00 - 7:00 PM" },
-              { day: "Thursday", time: "6:00 - 7:00 PM" },
+              { day: "Tuesday", time: "6:00 - 6:50 PM" },
+              { day: "Thursday", time: "6:00 - 6:50 PM" },
             ].map((s, i) => (
               <div key={i} style={{
                 display: "flex",

@@ -109,7 +109,7 @@ export default function PerformanceLabPage() {
           gap: 24,
         }}>
           {[
-            { title: "Three Sessions Per Week", desc: "Tuesday and Thursday evenings (7:15-8:15 PM) plus Sunday (11:00 AM-12:00 PM). Consistent structure builds consistent athletes." },
+            { title: "Three Sessions Per Week", desc: "Tuesday and Thursday evenings (7:00-8:00 PM) plus Sunday (11:00 AM-12:00 PM). Consistent structure builds consistent athletes." },
             { title: "Small Group Training", desc: "Capped at 6-8 athletes per group. Every athlete gets coaching attention, every session." },
             { title: "Multi-Sport Approach", desc: "Speed, agility, strength, coordination, and competitive games. We develop athletes, not just sport-specific skills." },
           ].map((item, i) => (
@@ -138,8 +138,8 @@ export default function PerformanceLabPage() {
           </h2>
           <div style={{ display: "grid", gap: 16 }}>
             {[
-              { day: "Tuesday", time: "7:15 - 8:15 PM" },
-              { day: "Thursday", time: "7:15 - 8:15 PM" },
+              { day: "Tuesday", time: "7:00 - 8:00 PM" },
+              { day: "Thursday", time: "7:00 - 8:00 PM" },
               { day: "Sunday", time: "11:00 AM - 12:00 PM" },
             ].map((s, i) => (
               <div key={i} style={{
@@ -308,7 +308,7 @@ export default function PerformanceLabPage() {
           {[
             {
               q: "How many sessions per week?",
-              a: "Three sessions per week: Tuesday and Thursday evenings (7:15-8:15 PM) and Sunday (11:00 AM-12:00 PM).",
+              a: "Three sessions per week: Tuesday and Thursday evenings (7:00-8:00 PM) and Sunday (11:00 AM-12:00 PM).",
             },
             {
               q: "What ages are accepted?",
