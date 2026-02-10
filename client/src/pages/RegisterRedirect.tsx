@@ -5,7 +5,7 @@ export default function RegisterRedirect() {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    setLocation("/signup");
+    setLocation("/programs");
   }, [setLocation]);
 
   return (

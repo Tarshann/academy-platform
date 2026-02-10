@@ -212,7 +212,7 @@ export default function Blog() {
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
               Join The Academy and take your game to the next level
             </p>
-            <Link href="/signup">
+            <Link href="/programs">
               <Button size="lg">View Programs</Button>
             </Link>
           </div>

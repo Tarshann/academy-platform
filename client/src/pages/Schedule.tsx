@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Clock, MapPin, Users } from "lucide-react";
+import { Calendar, Clock } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
@@ -10,25 +10,16 @@ const SCHEDULE_DATA = [
     day: "Tuesday",
     programs: [
       {
-        name: "Group Workout Sessions",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Team-based training focusing on fundamentals and game situations",
-        icon: Users,
+        name: "Academy Skills Lab",
+        time: "6:00–7:00 PM",
+        details: "Drop-in, $10/session, all ages",
+        href: "/skills-lab",
       },
       {
-        name: "Skills Classes",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Skill-specific training for ball handling, shooting, and footwork",
-        icon: Users,
-      },
-      {
-        name: "SAQ Training",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Speed, Agility, and Quickness development",
-        icon: Users,
+        name: "Academy Performance Lab",
+        time: "7:15–8:15 PM",
+        details: "Members only, $280/month",
+        href: "/performance-lab",
       },
     ],
   },
@@ -36,37 +27,16 @@ const SCHEDULE_DATA = [
     day: "Thursday",
     programs: [
       {
-        name: "Group Workout Sessions",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Team-based training focusing on fundamentals and game situations",
-        icon: Users,
+        name: "Academy Skills Lab",
+        time: "6:00–7:00 PM",
+        details: "Drop-in, $10/session, all ages",
+        href: "/skills-lab",
       },
       {
-        name: "Skills Classes",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Skill-specific training for ball handling, shooting, and footwork",
-        icon: Users,
-      },
-      {
-        name: "SAQ Training",
-        time: "Various Times",
-        location: "TBD - Contact for details",
-        description: "Speed, Agility, and Quickness development",
-        icon: Users,
-      },
-    ],
-  },
-  {
-    day: "Saturday",
-    programs: [
-      {
-        name: "Private Training Sessions",
-        time: "By Appointment",
-        location: "TBD - Confirmed with coach",
-        description: "One-on-one personalized training with Coach Mac or Coach O",
-        icon: Users,
+        name: "Academy Performance Lab",
+        time: "7:15–8:15 PM",
+        details: "Members only, $280/month",
+        href: "/performance-lab",
       },
     ],
   },
@@ -74,11 +44,10 @@ const SCHEDULE_DATA = [
     day: "Sunday",
     programs: [
       {
-        name: "Private Training Sessions",
-        time: "By Appointment",
-        location: "TBD - Confirmed with coach",
-        description: "One-on-one personalized training with Coach Mac or Coach O",
-        icon: Users,
+        name: "Academy Performance Lab",
+        time: "11:00 AM–12:00 PM",
+        details: "Members only, $280/month",
+        href: "/performance-lab",
       },
     ],
   },
@@ -95,8 +64,7 @@ export default function Schedule() {
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Weekly Schedule</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              View our typical weekly program schedule. Contact us for specific times and
-              locations for each program.
+              View our weekly program schedule. Private training available by appointment.
             </p>
           </div>
 
@@ -107,27 +75,27 @@ export default function Schedule() {
                 <div className="flex items-start gap-3">
                   <Calendar className="h-6 w-6 text-primary mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Weekends</h3>
+                    <h3 className="font-semibold mb-1">Tuesdays &amp; Thursdays</h3>
                     <p className="text-sm text-muted-foreground">
-                      Private sessions primarily available on Saturdays & Sundays
+                      Skills Lab (6:00–7:00 PM) &amp; Performance Lab (7:15–8:15 PM)
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Users className="h-6 w-6 text-primary mt-1" />
+                  <Calendar className="h-6 w-6 text-primary mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Tuesdays & Thursdays</h3>
+                    <h3 className="font-semibold mb-1">Sundays</h3>
                     <p className="text-sm text-muted-foreground">
-                      Group Sessions, Skills Classes, and SAQ Training
+                      Performance Lab (11:00 AM–12:00 PM)
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Clock className="h-6 w-6 text-primary mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Other Weekdays</h3>
+                    <h3 className="font-semibold mb-1">Private Training</h3>
                     <p className="text-sm text-muted-foreground">
-                      Limited private session availability
+                      By appointment — contact Coach Mac or Coach O
                     </p>
                   </div>
                 </div>
@@ -146,51 +114,52 @@ export default function Schedule() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {daySchedule.programs.map((program, idx) => {
-                      const Icon = program.icon;
-                      return (
-                        <div
-                          key={idx}
-                          className="p-4 border border-border rounded-lg hover:bg-muted/50 transition"
-                        >
-                          <div className="flex items-start gap-3 mb-3">
-                            <Icon className="h-5 w-5 text-primary mt-0.5" />
-                            <h4 className="font-semibold text-foreground">{program.name}</h4>
-                          </div>
-                          <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {daySchedule.programs.map((program, idx) => (
+                      <Link key={idx} href={program.href} className="block">
+                        <div className="p-4 border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition cursor-pointer">
+                          <h4 className="font-semibold text-foreground mb-2">{program.name}</h4>
+                          <div className="space-y-1 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4" />
                               <span>{program.time}</span>
                             </div>
-                            <div className="flex items-start gap-2">
-                              <MapPin className="h-4 w-4 mt-0.5" />
-                              <span>{program.location}</span>
-                            </div>
-                            <p className="pt-2">{program.description}</p>
+                            <p className="pt-1">{program.details}</p>
                           </div>
                         </div>
-                      );
-                    })}
+                      </Link>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
+          {/* Private Training Note */}
+          <Card className="bg-muted/30 border-border mt-8">
+            <CardContent className="py-6 text-center">
+              <h3 className="text-lg font-semibold mb-2">Private Training</h3>
+              <p className="text-muted-foreground mb-4">
+                By appointment. Contact Coach Mac or Coach O to schedule a 1-on-1 session ($60/session).
+              </p>
+              <Link href="/contact">
+                <Button variant="outline">Contact Us to Schedule</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           {/* CTA Section */}
           <Card className="bg-primary/5 border-primary/20 mt-12">
             <CardContent className="py-8 text-center">
               <h3 className="text-2xl font-bold mb-4">Ready to Get Started?</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Register for group programs or book a private session with one of our coaches.
-                Contact us for specific times and availability.
+                Explore our programs or book a private session with one of our coaches.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register">
+                <Link href="/programs">
                   <Button size="lg">Browse Programs</Button>
                 </Link>
-                <Link href="/private-session-booking">
+                <Link href="/contact">
                   <Button size="lg" variant="outline">
                     Book Private Session
                   </Button>

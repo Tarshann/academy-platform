@@ -114,9 +114,9 @@ export default function Shop() {
                 Register for Academy training programs to get exclusive early access and member discounts when the shop launches.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/signup">
+                <Link href="/programs">
                   <Button size="lg">
-                    Register for Training
+                    View Programs
                   </Button>
                 </Link>
                 <Link href="/contact">

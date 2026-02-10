@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Route, Switch, Redirect } from "wouter";
 import { lazy, Suspense } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -13,8 +13,7 @@ const Programs = lazy(() => import("./pages/Programs"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const FAQs = lazy(() => import("./pages/FAQs"));
-const SignUp = lazy(() => import("./pages/SignUp"));
-const Register = lazy(() => import("./pages/Register"));
+const SignupRedirect = () => <Redirect to="/programs" />;
 const SignInPage = lazy(() => import("./pages/SignIn").then(m => ({ default: m.default })));
 const SignUpPage = lazy(() => import("./pages/SignUpPage").then(m => ({ default: m.default })));
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
@@ -69,12 +68,10 @@ function Router() {
           <FAQs />
         </Route>
         <Route path={"/signup"}>
-          <SEO title="Sign Up" description="Register for The Academy's multi-sport training programs." />
-          <SignUp />
+          <SignupRedirect />
         </Route>
         <Route path={"/register"}>
-          <SEO title="Register" description="Register for The Academy's multi-sport training programs. Guest checkout available." />
-          <Register />
+          <SignupRedirect />
         </Route>
         <Route path={"/sign-in"}>
           <SEO title="Sign In" description="Sign in to your Academy account." />
