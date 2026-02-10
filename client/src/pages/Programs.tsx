@@ -55,7 +55,7 @@ export default function Programs() {
                     Capped at 6–8 athletes per group for maximum coaching attention.
                   </p>
                   <p className="text-sm text-muted-foreground/80 mb-2">
-                    Tuesday &amp; Thursday 7:15–8:15 PM &bull; Sunday 11:00 AM–12:00 PM
+                    Tuesday &amp; Thursday 7:00–8:00 PM &bull; Sunday 11:00 AM–12:00 PM
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {["3 sessions per week", "SAQ & strength conditioning", "Sport-specific skill development", "Leadership opportunities (ages 13–14, by invitation)", "Sunday makeup/open session access"].map((item) => (
@@ -85,7 +85,7 @@ export default function Programs() {
                     No commitment required — just show up and play.
                   </p>
                   <p className="text-sm text-muted-foreground/80 mb-2">
-                    Tuesday &amp; Thursday 6:00–7:00 PM
+                    Tuesday &amp; Thursday 6:00–6:50 PM
                   </p>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {["Movement prep & fundamentals", "Skill stations", "Competitive games", "All ages and skill levels welcome"].map((item) => (

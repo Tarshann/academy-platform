@@ -11,13 +11,13 @@ const SCHEDULE_DATA = [
     programs: [
       {
         name: "Academy Skills Lab",
-        time: "6:00–7:00 PM",
+        time: "6:00–6:50 PM",
         details: "Drop-in, $10/session, all ages",
         href: "/skills-lab",
       },
       {
         name: "Academy Performance Lab",
-        time: "7:15–8:15 PM",
+        time: "7:00–8:00 PM",
         details: "Members only, $280/month",
         href: "/performance-lab",
       },
@@ -28,13 +28,13 @@ const SCHEDULE_DATA = [
     programs: [
       {
         name: "Academy Skills Lab",
-        time: "6:00–7:00 PM",
+        time: "6:00–6:50 PM",
         details: "Drop-in, $10/session, all ages",
         href: "/skills-lab",
       },
       {
         name: "Academy Performance Lab",
-        time: "7:15–8:15 PM",
+        time: "7:00–8:00 PM",
         details: "Members only, $280/month",
         href: "/performance-lab",
       },
@@ -77,7 +77,7 @@ export default function Schedule() {
                   <div>
                     <h3 className="font-semibold mb-1">Tuesdays &amp; Thursdays</h3>
                     <p className="text-sm text-muted-foreground">
-                      Skills Lab (6:00–7:00 PM) &amp; Performance Lab (7:15–8:15 PM)
+                      Skills Lab (6:00–6:50 PM) &amp; Performance Lab (7:00–8:00 PM)
                     </p>
                   </div>
                 </div>
