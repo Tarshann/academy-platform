@@ -42,8 +42,13 @@ export default function CoachesPage() {
                 key={coach.name}
                 className="bg-white rounded-xl border border-[var(--color-brand-gray-light)] overflow-hidden hover:shadow-lg transition-shadow duration-150"
               >
-                {/* Photo placeholder */}
-                <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative">
+                <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative overflow-hidden">
+                  <img
+                    src={coach.photo}
+                    alt={`${coach.name} coaching athletes`}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-brand-black)]/80 via-transparent to-transparent" />
                   <div className="absolute bottom-6 left-6">
                     <h2 className="text-3xl font-bold text-white">

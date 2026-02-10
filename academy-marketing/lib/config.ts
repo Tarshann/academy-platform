@@ -8,8 +8,8 @@ export const SITE = {
     "Youth athletic training in Gallatin, TN. Basketball, flag football, and soccer development with SAQ, strength, and skill training.",
   url: "https://academytn.com",
   foundingYear: 2021,
-  logo: "/images/logo.png",
-  ogImage: "/images/og-default.jpg",
+  logo: "/images/logo.jpeg",
+  ogImage: "/images/training-photo-1.jpeg",
 };
 
 export const CONTACT = {

@@ -47,7 +47,14 @@ export default function HomePage() {
     <>
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center section-dark clip-diagonal">
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-black)] via-[var(--color-brand-black)]/90 to-[var(--color-brand-gold)]/10" />
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src="/images/training-photo-1.jpeg"
+            alt="Academy basketball training session"
+            className="absolute w-full h-full object-cover opacity-40"
+          />
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-black)]/90 via-[var(--color-brand-black)]/80 to-[var(--color-brand-gold)]/10" />
         <div className="container relative z-10 text-center py-32">
           <p
             className="text-[var(--color-brand-gold)] text-sm font-semibold uppercase tracking-widest mb-6"
@@ -184,8 +191,16 @@ export default function HomePage() {
       </section>
 
       {/* Differentiator — Outdoor Training */}
-      <section className="py-24 md:py-32 section-dark clip-diagonal-reverse">
-        <div className="container">
+      <section className="relative py-24 md:py-32 section-dark clip-diagonal-reverse">
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src="/images/training-photo-2.jpeg"
+            alt="Athletes training outdoors"
+            loading="lazy"
+            className="absolute w-full h-full object-cover opacity-20"
+          />
+        </div>
+        <div className="container relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <RevealSection>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
@@ -222,7 +237,13 @@ export default function HomePage() {
             {COACHES.map((coach, i) => (
               <RevealSection key={coach.name} delay={i + 1}>
                 <div className="bg-white rounded-xl border border-[var(--color-brand-gray-light)] overflow-hidden h-full">
-                  <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative">
+                  <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative overflow-hidden">
+                    <img
+                      src={coach.photo}
+                      alt={`${coach.name} instructing athletes`}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-brand-black)]/80 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-6">
                       <h3 className="text-2xl font-bold text-white">{coach.name}</h3>
