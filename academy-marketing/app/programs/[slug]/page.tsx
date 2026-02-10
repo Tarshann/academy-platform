@@ -10,8 +10,9 @@ export function generateStaticParams() {
   return PROGRAMS.map((program) => ({ slug: program.slug }));
 }
 
-export function generateMetadata({ params }: { params: { slug: string } }) {
-  const program = PROGRAMS.find((p) => p.slug === params.slug);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const program = PROGRAMS.find((p) => p.slug === slug);
   if (!program) return {};
 
   return generatePageMetadata({
@@ -21,12 +22,13 @@ export function generateMetadata({ params }: { params: { slug: string } }) {
   });
 }
 
-export default function ProgramDetailPage({
+export default async function ProgramDetailPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const program = PROGRAMS.find((p) => p.slug === params.slug);
+  const { slug } = await params;
+  const program = PROGRAMS.find((p) => p.slug === slug);
   if (!program) notFound();
 
   return (
