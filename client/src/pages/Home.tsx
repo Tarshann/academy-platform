@@ -645,6 +645,69 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Parent Testimonials */}
+        <section className="py-24 md:py-32 bg-muted/30">
+          <div className="container px-6">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={sectionHeader}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                What Parents Are Saying
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Real feedback from Academy families
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={staggerContainer}
+              className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
+            >
+              {[
+                {
+                  quote: "We've seen more growth in our child's confidence and skill in a few months at The Academy than we did in years of other programs. The coaches truly teach the game\u2014footwork, decision-making, and fundamentals\u2014not just running plays. My child walks into the gym excited and leaves feeling accomplished every time.",
+                  author: "Academy Parent",
+                },
+                {
+                  quote: "What sets The Academy apart is the structure and intention behind every session. The coaches meet kids where they are, push them to improve, and genuinely care about their development on and off the court. It's not about wins\u2014it's about building confident, disciplined athletes. We couldn't ask for a better environment.",
+                  author: "Academy Parent",
+                },
+                {
+                  quote: "As a parent, I appreciate how organized and professional The Academy is\u2014from communication to training quality. My child has learned how to practice with purpose, compete the right way, and believe in themselves. You can tell this program is about long-term growth, not shortcuts.",
+                  author: "Academy Parent",
+                },
+              ].map((testimonial, index) => (
+                <motion.div key={index} variants={fadeInUp}>
+                  <Card className="bg-card border-border h-full">
+                    <CardContent className="p-6 md:p-8 flex flex-col h-full">
+                      <div className="flex gap-1 mb-4 text-primary">
+                        {[...Array(5)].map((_, i) => (
+                          <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <blockquote className="text-muted-foreground text-sm leading-relaxed flex-grow">
+                        "{testimonial.quote}"
+                      </blockquote>
+                      <p className="text-foreground font-semibold text-sm mt-4 pt-4 border-t border-border">
+                        {testimonial.author}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="py-24 md:py-32 bg-foreground text-background">
           <div className="container px-6">
