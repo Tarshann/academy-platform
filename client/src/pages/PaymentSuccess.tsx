@@ -478,7 +478,7 @@ function downloadReceiptPDF(receiptContent: any, sessionId: string) {
     yPosition += 8;
     doc.text('For questions, contact:', margin, yPosition);
     yPosition += lineHeight;
-    doc.text('Email: omarphilmore@yahoo.com | Phone: (571) 292-0833', margin, yPosition);
+    doc.text('Email: omarphilmore@yahoo.com | Phone: (571) 292-0633', margin, yPosition);
     yPosition += 15;
 
     doc.setFontSize(8);
@@ -490,7 +490,7 @@ function downloadReceiptPDF(receiptContent: any, sessionId: string) {
   } catch (error) {
     console.error('PDF generation error:', error);
     // Fallback to text receipt
-    const receiptText = 'THE ACADEMY - PAYMENT RECEIPT\n================================\n\nTransaction ID: ' + receiptContent.transactionId + '\nDate: ' + receiptContent.date + '\nEmail: ' + receiptContent.email + '\n\nITEMS PURCHASED\n================================\n' + receiptContent.items.map((item: any) => item.name + '\nQuantity: ' + item.quantity + '\nAmount: ' + new Intl.NumberFormat('en-US', { style: 'currency', currency: receiptContent.currency?.toUpperCase() || 'USD' }).format(item.amount / 100) + '\n').join('\n') + '\nTOTAL: ' + receiptContent.total + '\n\nThank you for your registration!\n\nFor questions, contact:\nEmail: omarphilmore@yahoo.com\nPhone: (571) 292-0833\n\n================================\nThis is your receipt. Please keep it for your records.';
+    const receiptText = 'THE ACADEMY - PAYMENT RECEIPT\n================================\n\nTransaction ID: ' + receiptContent.transactionId + '\nDate: ' + receiptContent.date + '\nEmail: ' + receiptContent.email + '\n\nITEMS PURCHASED\n================================\n' + receiptContent.items.map((item: any) => item.name + '\nQuantity: ' + item.quantity + '\nAmount: ' + new Intl.NumberFormat('en-US', { style: 'currency', currency: receiptContent.currency?.toUpperCase() || 'USD' }).format(item.amount / 100) + '\n').join('\n') + '\nTOTAL: ' + receiptContent.total + '\n\nThank you for your registration!\n\nFor questions, contact:\nEmail: omarphilmore@yahoo.com\nPhone: (571) 292-0633\n\n================================\nThis is your receipt. Please keep it for your records.';
 
     const blob = new Blob([receiptText], { type: 'text/plain' });
     const url = window.URL.createObjectURL(blob);

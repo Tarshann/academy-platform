@@ -37,7 +37,7 @@ export function OrganizationStructuredData({
   description = "Elite youth multi-sport training for basketball, flag football, and soccer athletes.",
   url,
   logo,
-  phone = "(571) 292-0833",
+  phone = "(571) 292-0633",
   email = "omarphilmore@yahoo.com",
   socialMedia = [
     "https://www.facebook.com/share/1DY8v2AEuN/?mibextid=wwXIfr",

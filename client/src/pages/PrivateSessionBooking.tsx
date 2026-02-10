@@ -178,8 +178,8 @@ export default function PrivateSessionBooking() {
                     </a>
                   </p>
                   <p>
-                    <a href="tel:+15712920833" className="text-primary hover:underline">
-                      (571) 292-0833
+                    <a href="tel:+15712920633" className="text-primary hover:underline">
+                      (571) 292-0633
                     </a>
                   </p>
                 </div>
