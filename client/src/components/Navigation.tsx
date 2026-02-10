@@ -97,8 +97,6 @@ export default function Navigation() {
     return location === path || location.startsWith(`${path}/`);
   };
 
-  const isSignupRoute = location === "/signup" || location.startsWith("/signup/");
-
   const getLinkClassName = (path: string, isRegister = false, isMobile = false) => {
     // Pixel-perfect: consistent 2px underline, aligned insets, proper vertical rhythm
     if (isMobile) {
@@ -333,11 +331,9 @@ export default function Navigation() {
           >
             {/* Mobile links with 44px+ tap targets */}
             <div className="flex flex-col gap-1 px-2">
-              {!isSignupRoute && (
-                <div className="px-4 pb-2">
-                  <SearchBar />
-                </div>
-              )}
+              <div className="px-4 pb-2">
+                <SearchBar />
+              </div>
               <Link
                 href="/"
                 className={getLinkClassName("/", false, true)}
