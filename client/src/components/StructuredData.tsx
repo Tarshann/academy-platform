@@ -65,6 +65,7 @@ export function OrganizationStructuredData({
       url: url || siteUrl,
       logo: logo || `${siteUrl}/academy-logo.jpeg`,
       image: logo || `${siteUrl}/academy-logo.jpeg`,
+      foundingDate: "2021",
       telephone: phone,
       email,
       address: {
@@ -96,6 +97,32 @@ export function OrganizationStructuredData({
         email,
       },
       sameAs: socialMedia,
+      review: [
+        {
+          "@type": "Review",
+          reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+          author: { "@type": "Person", name: "Academy Parent" },
+          reviewBody: "We've seen more growth in our child's confidence and skill in a few months at The Academy than we did in years of other programs. The coaches truly teach the game—footwork, decision-making, and fundamentals—not just running plays.",
+        },
+        {
+          "@type": "Review",
+          reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+          author: { "@type": "Person", name: "Academy Parent" },
+          reviewBody: "What sets The Academy apart is the structure and intention behind every session. The coaches meet kids where they are, push them to improve, and genuinely care about their development on and off the court.",
+        },
+        {
+          "@type": "Review",
+          reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
+          author: { "@type": "Person", name: "Academy Parent" },
+          reviewBody: "As a parent, I appreciate how organized and professional The Academy is—from communication to training quality. My child has learned how to practice with purpose, compete the right way, and believe in themselves.",
+        },
+      ],
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "5",
+        reviewCount: "3",
+        bestRating: "5",
+      },
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "Training Programs",

@@ -40,6 +40,7 @@ export default function Footer() {
                 className="h-10 w-10 rounded-full"
               />
               <span className="text-xl font-bold text-foreground">THE ACADEMY</span>
+              <span className="text-xs text-muted-foreground/60 ml-2">Est. 2021</span>
             </div>
             <p className="text-muted-foreground text-sm leading-relaxed mb-6">
               Building complete athletes through multi-sport development in basketball, flag football, and soccer.

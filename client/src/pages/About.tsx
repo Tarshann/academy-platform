@@ -31,7 +31,7 @@ export default function About() {
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-6 text-center text-foreground">Our Mission</h2>
               <p className="text-lg text-muted-foreground leading-relaxed text-center mb-8">
-                The Academy is a comprehensive athletic development program serving youth basketball, flag football, and soccer athletes. 
+                Founded in 2021, The Academy is a comprehensive athletic development program serving youth basketball, flag football, and soccer athletes. 
                 We specialize in speed, agility, and quickness (SAQ) training combined with strength conditioning to build complete athletes. 
                 Our focus extends beyond sport-specific skills to develop character, work ethic, and mental toughness through hard work, 
                 accountability, competitiveness, and sportsmanship.
