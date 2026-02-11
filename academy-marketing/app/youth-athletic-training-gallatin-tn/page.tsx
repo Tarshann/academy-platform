@@ -15,7 +15,7 @@ export const metadata = generatePageMetadata({
   title:
     "Youth Athletic Training in Gallatin, TN — Sumner County & Middle Tennessee",
   description:
-    "The Academy offers youth athletic training in Gallatin, TN serving Sumner County, Hendersonville, and Middle Tennessee. Basketball, flag football, soccer, SAQ training, and strength conditioning for ages 8-14.",
+    "Youth athletic training in Gallatin, TN serving Sumner County and Middle Tennessee. Basketball, flag football, soccer, SAQ, and strength training for ages 8-14.",
   path: "/youth-athletic-training-gallatin-tn",
 });
 
