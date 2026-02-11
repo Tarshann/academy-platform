@@ -75,6 +75,16 @@ for (const path of PAGES) {
   });
 }
 
+test("homepage has both LocalBusiness and Organization JSON-LD", async ({ page }) => {
+  await page.goto("/");
+  const scripts = await page.locator('script[type="application/ld+json"]').allTextContents();
+  const hasLocalBusiness = scripts.some((s) => s.includes('"LocalBusiness"'));
+  const hasOrganization = scripts.some((s) => s.includes('"Organization"'));
+  expect(hasLocalBusiness).toBeTruthy();
+  expect(hasOrganization).toBeTruthy();
+  expect(scripts.length).toBeGreaterThanOrEqual(2);
+});
+
 test("program pages have Service JSON-LD", async ({ page }) => {
   for (const slug of ["performance-lab", "skills-lab", "private-training"]) {
     await page.goto(`/programs/${slug}`);

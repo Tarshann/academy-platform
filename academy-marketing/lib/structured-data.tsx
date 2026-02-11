@@ -90,6 +90,38 @@ export function LocalBusinessJsonLd() {
   );
 }
 
+export function OrganizationJsonLd() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE.url,
+    logo: `${SITE.url}${SITE.logo}`,
+    description: SITE.description,
+    foundingDate: String(SITE.foundingYear),
+    contactPoint: {
+      "@type": "ContactPoint",
+      telephone: CONTACT.phone,
+      email: CONTACT.email,
+      contactType: "customer service",
+    },
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: ADDRESS.locality,
+      addressRegion: ADDRESS.region,
+      addressCountry: ADDRESS.country,
+    },
+    sameAs: SOCIAL_URLS,
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
+
 export function ServiceJsonLd({
   name,
   description,

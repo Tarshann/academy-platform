@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Zap, Users, Target, Shield, Heart } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
+import { OrganizationJsonLd } from "@/lib/structured-data";
 import {
   SITE,
   PROGRAMS,
@@ -45,6 +46,8 @@ const VALUES = [
 export default function HomePage() {
   return (
     <>
+      <OrganizationJsonLd />
+
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center section-dark clip-diagonal">
         <div className="absolute inset-0 overflow-hidden">
