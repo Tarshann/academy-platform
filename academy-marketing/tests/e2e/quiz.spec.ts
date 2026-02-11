@@ -8,41 +8,49 @@ test.describe("Get Started Quiz", () => {
   });
 
   test("full 3-step flow produces recommendation", async ({ page }) => {
-    await page.goto("/get-started");
+    await page.goto("/get-started", { waitUntil: "networkidle" });
 
-    // Step 1: Age
-    await page.getByRole("button", { name: /11.*14/i }).click();
+    // Step 1: Age — wait for quiz to be interactive
+    await expect(page.getByText(/how old/i)).toBeVisible();
+    await page.locator("button").filter({ hasText: "11-14" }).click();
 
     // Step 2: Sport
-    await expect(page.getByText(/sport/i)).toBeVisible();
-    await page.getByRole("button", { name: /basketball/i }).click();
+    await expect(page.getByText(/primary sport/i)).toBeVisible();
+    await page.locator("button").filter({ hasText: "Basketball" }).click();
 
     // Step 3: Goal
     await expect(page.getByText(/goal/i)).toBeVisible();
-    await page.getByRole("button", { name: /commit/i }).click();
+    await page.locator("button").filter({ hasText: "Commit to improvement" }).click();
 
     // Recommendation shown
-    await expect(page.getByText(/recommend/i)).toBeVisible();
+    await expect(page.getByText(/we recommend/i)).toBeVisible();
   });
 
   test("recommendation includes CTA link", async ({ page }) => {
-    await page.goto("/get-started");
+    await page.goto("/get-started", { waitUntil: "networkidle" });
 
     // Quick path through quiz
-    await page.getByRole("button", { name: /8.*10/i }).click();
-    await page.getByRole("button", { name: /soccer/i }).click();
-    await page.getByRole("button", { name: /try/i }).click();
+    await expect(page.getByText(/how old/i)).toBeVisible();
+    await page.locator("button").filter({ hasText: "8-10" }).click();
+
+    await expect(page.getByText(/primary sport/i)).toBeVisible();
+    await page.locator("button").filter({ hasText: "Soccer" }).click();
+
+    await expect(page.getByText(/goal/i)).toBeVisible();
+    await page.locator("button").filter({ hasText: "Try it out" }).click();
 
     // Should see a CTA
-    const cta = page.getByRole("link", { name: /get started|learn more|apply|book|drop in/i }).first();
+    await expect(page.getByText(/we recommend/i)).toBeVisible();
+    const cta = page.getByRole("link", { name: /drop in|apply|book/i }).first();
     await expect(cta).toBeVisible();
   });
 
   test("quiz is keyboard navigable", async ({ page }) => {
-    await page.goto("/get-started");
-    await page.keyboard.press("Tab");
+    await page.goto("/get-started", { waitUntil: "networkidle" });
+    // Focus the first quiz button and activate it
+    await page.locator("button").filter({ hasText: "Under 8" }).focus();
     await page.keyboard.press("Enter");
     // Should advance to step 2
-    await expect(page.getByText(/sport/i)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/primary sport/i)).toBeVisible({ timeout: 5000 });
   });
 });

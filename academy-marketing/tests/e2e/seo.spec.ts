@@ -26,30 +26,38 @@ for (const path of PAGES) {
 
     test("has meta description ≤160 chars", async ({ page }) => {
       await page.goto(path);
-      const desc = await page
-        .locator('meta[name="description"]')
-        .getAttribute("content");
+      const desc = await page.evaluate(() =>
+        document
+          .querySelector('meta[name="description"]')
+          ?.getAttribute("content") ?? null
+      );
       expect(desc).toBeTruthy();
       expect(desc!.length).toBeLessThanOrEqual(160);
     });
 
     test("has OG tags", async ({ page }) => {
       await page.goto(path);
-      const ogTitle = await page
-        .locator('meta[property="og:title"]')
-        .getAttribute("content");
-      const ogDesc = await page
-        .locator('meta[property="og:description"]')
-        .getAttribute("content");
+      const ogTitle = await page.evaluate(() =>
+        document
+          .querySelector('meta[property="og:title"]')
+          ?.getAttribute("content") ?? null
+      );
+      const ogDesc = await page.evaluate(() =>
+        document
+          .querySelector('meta[property="og:description"]')
+          ?.getAttribute("content") ?? null
+      );
       expect(ogTitle).toBeTruthy();
       expect(ogDesc).toBeTruthy();
     });
 
     test("has twitter:card", async ({ page }) => {
       await page.goto(path);
-      const card = await page
-        .locator('meta[name="twitter:card"]')
-        .getAttribute("content");
+      const card = await page.evaluate(() =>
+        document
+          .querySelector('meta[name="twitter:card"]')
+          ?.getAttribute("content") ?? null
+      );
       expect(card).toBe("summary_large_image");
     });
 

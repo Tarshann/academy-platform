@@ -2,11 +2,15 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Accessibility", () => {
   test("all images have alt attributes", async ({ page }) => {
-    await page.goto("/");
-    const images = await page.locator("img").all();
-    for (const img of images) {
-      const alt = await img.getAttribute("alt");
-      expect(alt, `Image missing alt: ${await img.getAttribute("src")}`).toBeTruthy();
+    await page.goto("/", { waitUntil: "networkidle" });
+    const results = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("img")).map((img) => ({
+        src: img.getAttribute("src"),
+        alt: img.getAttribute("alt"),
+      }))
+    );
+    for (const img of results) {
+      expect(img.alt, `Image missing alt: ${img.src}`).toBeTruthy();
     }
   });
 
@@ -43,12 +47,13 @@ test.describe("Accessibility", () => {
   });
 
   test("FAQ items are keyboard accessible", async ({ page }) => {
-    await page.goto("/faq");
-    const firstQuestion = page.locator("button").filter({ hasText: /\?/ }).first();
+    await page.goto("/faq", { waitUntil: "networkidle" });
+    const firstQuestion = page.locator("button[aria-expanded]").first();
+    await expect(firstQuestion).toBeVisible();
     await firstQuestion.focus();
     await page.keyboard.press("Enter");
     // Should expand the answer
-    await page.waitForTimeout(300);
+    await expect(firstQuestion).toHaveAttribute("aria-expanded", "true");
   });
 
   test("phone links use tel: protocol", async ({ page }) => {
