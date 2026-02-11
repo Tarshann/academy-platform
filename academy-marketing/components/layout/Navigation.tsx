@@ -95,6 +95,13 @@ export default function Navigation() {
               </Link>
             )
           )}
+          <a
+            href="https://app.academytn.com"
+            className="text-sm font-medium text-[var(--color-brand-white)]/80 hover:text-[var(--color-brand-gold)] transition-colors"
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            Member Login
+          </a>
           <Link href="/get-started" className="btn-primary text-sm py-2.5 px-5">
             Get Started
           </Link>
@@ -140,6 +147,14 @@ export default function Navigation() {
                 )}
               </div>
             ))}
+            <a
+              href="https://app.academytn.com"
+              onClick={() => setMobileOpen(false)}
+              className="block text-lg text-[var(--color-brand-white)] hover:text-[var(--color-brand-gold)] transition-colors"
+              style={{ fontFamily: "var(--font-display)", textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
+              Member Login
+            </a>
             <Link
               href="/get-started"
               onClick={() => setMobileOpen(false)}
