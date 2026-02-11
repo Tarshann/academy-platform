@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Users, Trophy, Zap, ArrowRight, Phone, ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, Trophy, ArrowRight, Phone, ChevronRight } from 'lucide-react';
 
 export const metadata: Metadata = {
   title: 'Summer Camps 2026 — Basketball & Speed/Agility | The Academy',
@@ -70,8 +70,8 @@ const camps = [
     ],
     price: 185,
     location: 'Sumner Academy',
-    icon: Zap,
-    color: '#4ade80',
+    icon: Trophy,
+    color: 'var(--color-brand-gold)',
     description: 'Athletes learn how to accelerate, stop, change direction, and move efficiently while improving overall athletic performance — skills that transfer to every sport.',
     includes: [
       'Dynamic warm-ups and movement prep',
@@ -109,6 +109,7 @@ const camps = [
   },
 ];
 
+// JSON-LD Event structured data
 function generateEventJsonLd() {
   return camps.map((camp) => ({
     '@context': 'https://schema.org',
@@ -140,7 +141,7 @@ function generateEventJsonLd() {
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
       validFrom: '2026-02-01',
-      url: 'https://academytn.com/events',
+      url: 'https://www.sumneracademy.org/form/~form-uuid/a8523700-e262-4c18-b1fa-e3897161a4ec',
     },
     performer: {
       '@type': 'Organization',
@@ -311,7 +312,7 @@ export default function EventsPage() {
                     </div>
 
                     {/* Ideal For */}
-                    <div className="bg-gray-50 rounded-xl px-6 py-5">
+                    <div className="bg-gray-50 rounded-xl px-6 py-5 mb-6">
                       <h4 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-brand-black)] mb-2" style={{ fontFamily: 'var(--font-display)' }}>
                         Ideal For
                       </h4>
@@ -319,6 +320,17 @@ export default function EventsPage() {
                         {camp.idealFor}
                       </p>
                     </div>
+
+                    {/* Register CTA */}
+                    <a
+                      href="https://www.sumneracademy.org/form/~form-uuid/a8523700-e262-4c18-b1fa-e3897161a4ec"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary w-full text-center py-3.5 inline-flex items-center justify-center gap-2"
+                    >
+                      Register for {camp.subtitle}
+                      <ArrowRight className="w-5 h-5" />
+                    </a>
                   </div>
                 </div>
               );
@@ -360,7 +372,8 @@ export default function EventsPage() {
                   Register Online
                 </h3>
                 <p className="text-white/60 text-sm leading-relaxed">
-                  Complete registration through Sumner Academy&#39;s website. We&#39;ll send you the direct link.
+                  Complete registration through{' '}
+                  <a href="https://www.sumneracademy.org/form/~form-uuid/a8523700-e262-4c18-b1fa-e3897161a4ec" target="_blank" rel="noopener noreferrer" className="text-[var(--color-brand-gold)] underline hover:no-underline">Sumner Academy&#39;s website</a>.
                 </p>
               </div>
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
@@ -378,19 +391,21 @@ export default function EventsPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a
-                href="tel:+15712920633"
+                href="https://www.sumneracademy.org/form/~form-uuid/a8523700-e262-4c18-b1fa-e3897161a4ec"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-primary text-lg px-10 py-4 inline-flex items-center justify-center gap-2"
               >
-                <Phone className="w-5 h-5" />
-                Call (571) 292-0633
+                Register Now
+                <ArrowRight className="w-5 h-5" />
               </a>
-              <Link
-                href="/get-started"
+              <a
+                href="tel:+15712920633"
                 className="btn-secondary text-lg px-10 py-4 inline-flex items-center justify-center gap-2"
               >
-                Message Us
-                <ArrowRight className="w-5 h-5" />
-              </Link>
+                <Phone className="w-5 h-5" />
+                Questions? Call Us
+              </a>
             </div>
             <p className="text-white/40 text-sm mt-6">
               Registration closes May 15, 2026. Camp pricing is $185 per week
