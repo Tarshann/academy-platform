@@ -1,9 +1,11 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Desktop Navigation", () => {
+  test.use({ viewport: { width: 1280, height: 720 } });
+
   test("has all primary nav links", async ({ page }) => {
     await page.goto("/");
-    const nav = page.locator("header nav");
+    const nav = page.locator("header nav").first();
     await expect(nav.getByRole("link", { name: /home/i })).toBeVisible();
     await expect(nav.getByRole("link", { name: /programs/i })).toBeVisible();
     await expect(nav.getByRole("link", { name: /coaches/i })).toBeVisible();
@@ -17,16 +19,16 @@ test.describe("Desktop Navigation", () => {
   });
 
   test("programs dropdown shows sub-links on hover", async ({ page }) => {
-    await page.goto("/");
-    await page.locator("header").getByRole("link", { name: /programs/i }).hover();
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.locator("header").getByRole("link", { name: /programs/i }).first().hover();
     await expect(
       page.getByRole("link", { name: /performance lab/i }).first()
     ).toBeVisible();
   });
 
   test("navigates to programs page", async ({ page }) => {
-    await page.goto("/");
-    await page.locator("header nav").getByRole("link", { name: /programs/i }).click();
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.locator("header nav").first().getByRole("link", { name: /programs/i }).click();
     await expect(page).toHaveURL(/\/programs/);
   });
 });
@@ -35,18 +37,22 @@ test.describe("Mobile Navigation", () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   test("hamburger menu opens and closes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     const toggle = page.getByRole("button", { name: /open menu|close menu/i });
     await toggle.click();
-    await expect(page.locator("header nav")).toBeVisible();
+    // Mobile drawer renders a second nav; verify it's visible
+    await expect(page.locator("header nav").nth(1)).toBeVisible();
     await toggle.click();
   });
 
   test("mobile menu has navigation links", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /open menu/i }).click();
-    await expect(page.getByRole("link", { name: /programs/i }).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /coaches/i }).first()).toBeVisible();
+    // Target the mobile drawer nav (second nav in header)
+    const mobileNav = page.locator("header nav").nth(1);
+    await expect(mobileNav).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: /programs/i })).toBeVisible();
+    await expect(mobileNav.getByRole("link", { name: /coaches/i })).toBeVisible();
   });
 });
 
