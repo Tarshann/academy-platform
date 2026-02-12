@@ -338,6 +338,25 @@ export const appRouter = router({
       return await db.select().from(leads).orderBy(desc(leads.createdAt));
     }),
 
+    // Unsubscribe a lead from nurture emails
+    unsubscribe: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { leads } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        await db
+          .update(leads)
+          .set({ status: "unsubscribed", updatedAt: new Date() })
+          .where(eq(leads.email, input.email));
+
+        return { success: true };
+      }),
+
     // Trigger nurture queue processing (call from cron or admin)
     processNurture: adminProcedure.mutation(async () => {
       const { processNurtureQueue } = await import("./nurture");

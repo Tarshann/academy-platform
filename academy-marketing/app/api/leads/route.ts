@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
 
     // Send notification email via Resend (always, as a reliable fallback)
     const resendKey = process.env.RESEND_API_KEY;
-    const notifyEmail = process.env.LEAD_NOTIFY_EMAIL || "omarphilmore@yahoo.com";
+    const notifyEmail = process.env.LEAD_NOTIFY_EMAIL;
 
-    if (resendKey) {
+    if (resendKey && notifyEmail) {
       await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
