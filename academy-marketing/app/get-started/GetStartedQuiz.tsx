@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 import { CONTACT } from "@/lib/config";
 import { trackEvent } from "@/components/seo/Analytics";
 
@@ -107,6 +107,10 @@ export default function GetStartedQuiz() {
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null
   );
+  const [parentName, setParentName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   function handleAgeSelect(value: AgeRange) {
     setAge(value);
@@ -124,13 +128,53 @@ export default function GetStartedQuiz() {
     setGoal(value);
     const rec = getRecommendation(age!, sport!, value);
     setRecommendation(rec);
-    setStep(4);
+    setStep(4); // Contact capture step
+    trackEvent("quiz_step_3", { goal: value });
+  }
+
+  async function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) return;
+    setSubmitting(true);
+
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: parentName || undefined,
+          email,
+          phone: phone || undefined,
+          source: "quiz",
+          athleteAge: age,
+          sport,
+          goal,
+          recommendedProgram: recommendation?.program,
+        }),
+      });
+    } catch {
+      // Don't block the user if the API fails
+    }
+
     trackEvent("quiz_complete", {
       age: age!,
       sport: sport!,
-      goal: value,
-      recommendation: rec.program,
+      goal: goal!,
+      recommendation: recommendation?.program || "",
     });
+
+    setSubmitting(false);
+    setStep(5); // Show recommendation
+  }
+
+  function handleSkipContact() {
+    trackEvent("quiz_complete", {
+      age: age!,
+      sport: sport!,
+      goal: goal!,
+      recommendation: recommendation?.program || "",
+    });
+    setStep(5);
   }
 
   function handleBack() {
@@ -144,6 +188,8 @@ export default function GetStartedQuiz() {
       setStep(3);
       setRecommendation(null);
       setGoal(null);
+    } else if (step === 5) {
+      setStep(4);
     }
   }
 
@@ -153,6 +199,9 @@ export default function GetStartedQuiz() {
     setSport(null);
     setGoal(null);
     setRecommendation(null);
+    setParentName("");
+    setEmail("");
+    setPhone("");
   }
 
   return (
@@ -183,7 +232,7 @@ export default function GetStartedQuiz() {
           <div className="max-w-2xl mx-auto">
             {/* Progress Bar */}
             <div className="flex items-center gap-2 mb-12">
-              {[1, 2, 3].map((s) => (
+              {[1, 2, 3, 4].map((s) => (
                 <div key={s} className="flex-1 h-1.5 rounded-full overflow-hidden bg-[var(--color-brand-gray-light)]">
                   <div
                     className="h-full rounded-full transition-all duration-300"
@@ -298,8 +347,90 @@ export default function GetStartedQuiz() {
               </div>
             )}
 
-            {/* Step 4: Recommendation */}
+            {/* Step 4: Contact Capture */}
             {step === 4 && recommendation && (
+              <div>
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1 text-sm text-[var(--color-brand-gray)] mb-6 hover:text-[var(--color-brand-black)] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft size={16} />
+                  Back
+                </button>
+                <h2 className="text-3xl md:text-4xl font-bold mb-2">
+                  Where Should We Send Your Recommendation?
+                </h2>
+                <p className="text-[var(--color-brand-gray)] mb-8">
+                  Enter your info and we&apos;ll send program details, pricing,
+                  and next steps straight to your inbox.
+                </p>
+                <form onSubmit={handleContactSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="parentName" className="block text-sm font-medium mb-1">
+                      Your Name
+                    </label>
+                    <input
+                      id="parentName"
+                      type="text"
+                      value={parentName}
+                      onChange={(e) => setParentName(e.target.value)}
+                      placeholder="First and last name"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-[var(--color-brand-gray-light)] focus:border-[var(--color-brand-gold)] focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium mb-1">
+                      Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-[var(--color-brand-gray-light)] focus:border-[var(--color-brand-gold)] focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium mb-1">
+                      Phone <span className="text-[var(--color-brand-gray)] text-xs">(optional)</span>
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="(615) 555-0123"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-[var(--color-brand-gray-light)] focus:border-[var(--color-brand-gold)] focus:outline-none transition-colors"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={submitting || !email}
+                    className="btn-primary w-full text-center py-3 inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {submitting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <>
+                        See My Recommendation
+                        <ArrowRight size={16} />
+                      </>
+                    )}
+                  </button>
+                </form>
+                <button
+                  onClick={handleSkipContact}
+                  className="mt-4 text-sm text-[var(--color-brand-gray)] underline hover:text-[var(--color-brand-black)] transition-colors cursor-pointer"
+                >
+                  Skip for now
+                </button>
+              </div>
+            )}
+
+            {/* Step 5: Recommendation */}
+            {step === 5 && recommendation && (
               <div>
                 <button
                   onClick={handleBack}

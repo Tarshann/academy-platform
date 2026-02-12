@@ -268,6 +268,83 @@ export const appRouter = router({
       }),
   }),
 
+  // Lead capture — public endpoint for the marketing site (academytn.com)
+  leads: router({
+    submit: publicProcedure
+      .input(
+        z.object({
+          name: z.string().optional(),
+          email: z.string().email(),
+          phone: z.string().optional(),
+          source: z.string().default("quiz"),
+          athleteAge: z.string().optional(),
+          sport: z.string().optional(),
+          goal: z.string().optional(),
+          recommendedProgram: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { leads } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+        // Upsert: if email already exists, update the record
+        const existing = await db.select().from(leads).where(eq(leads.email, input.email)).limit(1);
+        if (existing.length > 0) {
+          await db.update(leads).set({
+            name: input.name || existing[0].name,
+            phone: input.phone || existing[0].phone,
+            athleteAge: input.athleteAge || existing[0].athleteAge,
+            sport: input.sport || existing[0].sport,
+            goal: input.goal || existing[0].goal,
+            recommendedProgram: input.recommendedProgram || existing[0].recommendedProgram,
+            source: input.source,
+            updatedAt: new Date(),
+          }).where(eq(leads.email, input.email));
+        } else {
+          await db.insert(leads).values({
+            name: input.name || null,
+            email: input.email,
+            phone: input.phone || null,
+            source: input.source,
+            athleteAge: input.athleteAge || null,
+            sport: input.sport || null,
+            goal: input.goal || null,
+            recommendedProgram: input.recommendedProgram || null,
+            status: "new",
+            nurtureStep: 0,
+          });
+        }
+
+        // Notify owner of new lead
+        await notifyOwner({
+          title: "New Lead from Website",
+          content: `${input.name || "Unknown"} (${input.email}) — ${input.recommendedProgram || input.source}\nAge: ${input.athleteAge || "N/A"} | Sport: ${input.sport || "N/A"} | Goal: ${input.goal || "N/A"}`,
+        });
+
+        return { success: true };
+      }),
+
+    list: adminProcedure.query(async () => {
+      const { getDb } = await import("./db");
+      const { leads } = await import("../drizzle/schema");
+      const { desc } = await import("drizzle-orm");
+
+      const db = await getDb();
+      if (!db) return [];
+      return await db.select().from(leads).orderBy(desc(leads.createdAt));
+    }),
+
+    // Trigger nurture queue processing (call from cron or admin)
+    processNurture: adminProcedure.mutation(async () => {
+      const { processNurtureQueue } = await import("./nurture");
+      return await processNurtureQueue();
+    }),
+  }),
+
   contact: router({
     submit: publicProcedure
       .input(
