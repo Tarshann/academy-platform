@@ -91,6 +91,8 @@ export const PROGRAMS = [
     ],
     cta: "Apply for Performance Lab",
     ctaHref: "/get-started",
+    productId: "performance-lab",
+    checkoutCta: "Enroll Now — $245/mo",
   },
   {
     slug: "skills-lab",
@@ -136,6 +138,8 @@ export const PROGRAMS = [
     ],
     cta: "Drop In to Skills Lab",
     ctaHref: "/get-started",
+    productId: "skills-lab-dropin",
+    checkoutCta: "Buy Drop-In — $10",
   },
   {
     slug: "private-training",
@@ -177,6 +181,8 @@ export const PROGRAMS = [
     ],
     cta: "Book a Private Session",
     ctaHref: "/get-started",
+    productId: "individual-training",
+    checkoutCta: "Book Now — $60",
   },
 ];
 

@@ -18,6 +18,16 @@ export interface StripeProduct {
 
 export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
   // Memberships (Recurring)
+  'performance-lab': {
+    id: 'performance-lab',
+    name: 'Academy Performance Lab',
+    description: 'Three sessions per week with baseline testing, 90-day progress cycles, and individualized coaching for athletes ages 8–14.',
+    priceInCents: 24500, // $245.00
+    currency: 'usd',
+    type: 'recurring',
+    interval: 'month',
+    category: 'membership',
+  },
   'academy-group-membership': {
     id: 'academy-group-membership',
     name: 'Academy Group Membership',
@@ -40,6 +50,15 @@ export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
   },
 
   // Individual Sessions (One-time)
+  'skills-lab-dropin': {
+    id: 'skills-lab-dropin',
+    name: 'Academy Skills Lab — Drop-In',
+    description: 'Single drop-in session for fundamentals, movement, and competitive games. All ages welcome.',
+    priceInCents: 1000, // $10.00
+    currency: 'usd',
+    type: 'one_time',
+    category: 'group',
+  },
   'group-workout': {
     id: 'group-workout',
     name: 'Group Workout Session',
