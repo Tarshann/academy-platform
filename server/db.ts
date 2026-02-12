@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { ENV } from "./_core/env";
 import { logger } from "./_core/logger";
 import { eq, and, or, desc, asc, inArray, gte, lte, sql } from "drizzle-orm";
@@ -49,7 +49,7 @@ import {
 // ============================================================================
 
 let _db: any = null;
-let _pool: mysql.Pool | null = null;
+let _client: any = null;
 
 export async function getDb() {
   if (!ENV.databaseUrl) {
@@ -57,17 +57,16 @@ export async function getDb() {
     return null;
   }
 
-  if (_db && _pool) {
+  if (_db && _client) {
     return _db;
   }
 
   try {
-    _pool = mysql.createPool({
-      uri: ENV.databaseUrl,
-      ssl: ENV.isProduction ? { rejectUnauthorized: true } : undefined,
-      connectionLimit: ENV.isProduction ? 10 : 5,
+    _client = postgres(ENV.databaseUrl, {
+      ssl: ENV.isProduction ? "require" : undefined,
+      max: ENV.isProduction ? 10 : 5,
     });
-    _db = drizzle(_pool);
+    _db = drizzle(_client);
     return _db;
   } catch (error) {
     logger.error("[DB] Failed to connect:", error);
@@ -197,10 +196,8 @@ export async function getProgramById(id: number) {
 export async function createProgram(programData: InsertProgram) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(programs).values(programData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(programs).where(eq(programs.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(programs).values(programData).returning();
+  return inserted;
 }
 
 export async function updateProgram(
@@ -244,12 +241,11 @@ export async function getAllAnnouncementsAdmin() {
 export async function createAnnouncement(announcementData: InsertAnnouncement) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(announcements)
-    .values(announcementData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(announcements).where(eq(announcements.id, insertId)).limit(1);
-  return inserted[0];
+    .values(announcementData)
+    .returning();
+  return inserted;
 }
 
 export async function publishAnnouncement(id: number) {
@@ -302,10 +298,8 @@ export async function getScheduleById(id: number) {
 export async function createSchedule(scheduleData: InsertSchedule) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(schedules).values(scheduleData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(schedules).where(eq(schedules.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(schedules).values(scheduleData).returning();
+  return inserted;
 }
 
 export async function updateSchedule(
@@ -343,17 +337,16 @@ export async function createSessionRegistration(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(sessionRegistrations)
     .values({
       userId,
       scheduleId,
       paymentId: paymentId ?? null,
       status: "registered",
-    });
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(sessionRegistrations).where(eq(sessionRegistrations.id, insertId)).limit(1);
-  return inserted[0];
+    })
+    .returning();
+  return inserted;
 }
 
 export async function getUserRegistrations(userId: number) {
@@ -375,12 +368,11 @@ export async function createContactSubmission(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(contactSubmissions)
-    .values(submissionData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(contactSubmissions).where(eq(contactSubmissions.id, insertId)).limit(1);
-  return inserted[0];
+    .values(submissionData)
+    .returning();
+  return inserted;
 }
 
 export async function getContactSubmissions() {
@@ -476,10 +468,8 @@ export async function getGalleryPhotosByCategory(category: string) {
 export async function createGalleryPhoto(photoData: InsertGalleryPhoto) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(galleryPhotos).values(photoData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(galleryPhotos).where(eq(galleryPhotos.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(galleryPhotos).values(photoData).returning();
+  return inserted;
 }
 
 export async function deleteGalleryPhoto(id: number) {
@@ -534,10 +524,8 @@ export async function getBlogPostBySlug(slug: string) {
 export async function createBlogPost(postData: InsertBlogPost) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(blogPosts).values(postData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(blogPosts).where(eq(blogPosts.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(blogPosts).values(postData).returning();
+  return inserted;
 }
 
 export async function updateBlogPost(
@@ -621,10 +609,8 @@ export async function incrementVideoViewCount(id: number) {
 export async function createVideo(videoData: InsertVideo) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(videos).values(videoData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(videos).where(eq(videos.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(videos).values(videoData).returning();
+  return inserted;
 }
 
 export async function updateVideo(id: number, updates: Partial<InsertVideo>) {
@@ -673,10 +659,8 @@ export async function getProductById(id: number) {
 export async function createProduct(productData: InsertProduct) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(products).values(productData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(products).where(eq(products.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(products).values(productData).returning();
+  return inserted;
 }
 
 export async function updateProduct(
@@ -736,10 +720,8 @@ export async function getActiveCampaigns() {
 export async function createCampaign(campaignData: InsertCampaign) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(campaigns).values(campaignData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(campaigns).where(eq(campaigns.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(campaigns).values(campaignData).returning();
+  return inserted;
 }
 
 export async function updateCampaign(
@@ -804,7 +786,7 @@ export async function createOrder(orderData: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(orders)
     .values({
       userId: orderData.userId,
@@ -812,10 +794,9 @@ export async function createOrder(orderData: {
       totalAmount: orderData.totalAmount,
       status: "pending",
       shippingAddress: orderData.shippingAddress ?? null,
-    });
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(orders).where(eq(orders.id, insertId)).limit(1);
-  return inserted[0];
+    })
+    .returning();
+  return inserted;
 }
 
 export async function createOrderItem(itemData: {
@@ -826,10 +807,8 @@ export async function createOrderItem(itemData: {
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(orderItems).values(itemData);
-  const insertId = result[0].insertId;
-  const inserted = await db.select().from(orderItems).where(eq(orderItems.id, insertId)).limit(1);
-  return inserted[0];
+  const [inserted] = await db.insert(orderItems).values(itemData).returning();
+  return inserted;
 }
 
 export async function updateOrderStatus(
@@ -891,8 +870,8 @@ export async function getLocationById(id: number) {
 export async function createLocation(locationData: InsertLocation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(locations).values(locationData);
-  return result[0].insertId;
+  const [inserted] = await db.insert(locations).values(locationData).returning();
+  return inserted.id;
 }
 
 export async function updateLocation(
@@ -944,8 +923,8 @@ export async function getCoachById(id: number) {
 export async function createCoach(coachData: InsertCoach) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db.insert(coaches).values(coachData);
-  return result[0].insertId;
+  const [inserted] = await db.insert(coaches).values(coachData).returning();
+  return inserted.id;
 }
 
 export async function updateCoach(id: number, updates: Partial<InsertCoach>) {
@@ -993,10 +972,11 @@ export async function createCoachAssignment(
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(coachAssignments)
-    .values(assignmentData);
-  return result[0].insertId;
+    .values(assignmentData)
+    .returning();
+  return inserted.id;
 }
 
 export async function deleteCoachAssignment(id: number) {
@@ -1076,10 +1056,11 @@ export async function markAttendance(attendanceData: InsertAttendanceRecord) {
     return existing[0].id;
   } else {
     // Create new
-    const result = await db
+    const [inserted] = await db
       .insert(attendanceRecords)
-      .values(attendanceData);
-    return result[0].insertId;
+      .values(attendanceData)
+      .returning();
+    return inserted.id;
   }
 }
 
@@ -1176,10 +1157,11 @@ export async function getUserRelations(parentId?: number, childId?: number) {
 export async function createUserRelation(relation: InsertUserRelation) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  const result = await db
+  const [inserted] = await db
     .insert(userRelations)
-    .values(relation);
-  return result[0].insertId;
+    .values(relation)
+    .returning();
+  return inserted.id;
 }
 
 export async function deleteUserRelation(id: number) {
@@ -1279,8 +1261,8 @@ export async function getOrCreateConversation(userId1: number, userId2: number) 
   }
 
   // Create new conversation
-  const result = await db.insert(dmConversations).values({});
-  const conversationId = result[0].insertId;
+  const [newConv] = await db.insert(dmConversations).values({}).returning();
+  const conversationId = newConv.id;
 
   // Add both participants
   await db.insert(dmParticipants).values([
@@ -1416,12 +1398,12 @@ export async function sendDmMessage(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(dmMessages).values({
+  const [newMessage] = await db.insert(dmMessages).values({
     conversationId,
     senderId,
     senderName,
     content,
-  });
+  }).returning();
 
   // Update conversation lastMessageAt
   await db
@@ -1429,14 +1411,7 @@ export async function sendDmMessage(
     .set({ lastMessageAt: new Date(), updatedAt: new Date() })
     .where(eq(dmConversations.id, conversationId));
 
-  const insertId = result[0].insertId;
-  const message = await db
-    .select()
-    .from(dmMessages)
-    .where(eq(dmMessages.id, insertId))
-    .limit(1);
-
-  return message[0];
+  return newMessage;
 }
 
 // Mark messages as read
@@ -1562,13 +1537,13 @@ export async function blockUser(blockerId: number, blockedId: number, reason?: s
 
   if (existing.length > 0) return existing[0].id;
 
-  const result = await db.insert(userBlocks).values({
+  const [inserted] = await db.insert(userBlocks).values({
     blockerId,
     blockedId,
     reason,
-  });
+  }).returning();
 
-  return result[0].insertId;
+  return inserted.id;
 }
 
 // Unblock a user
@@ -1784,15 +1759,15 @@ export async function savePushSubscription(
     return existing[0].id;
   }
 
-  const result = await db.insert(pushSubscriptions).values({
+  const [inserted] = await db.insert(pushSubscriptions).values({
     userId,
     endpoint,
     p256dh,
     auth,
     userAgent,
-  });
+  }).returning();
 
-  return result[0].insertId;
+  return inserted.id;
 }
 
 // Get user's push subscriptions
@@ -1873,15 +1848,15 @@ export async function logNotification(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(notificationLogs).values({
+  const [inserted] = await db.insert(notificationLogs).values({
     userId,
     type,
     title,
     body,
     data,
-  });
+  }).returning();
 
-  return result[0].insertId;
+  return inserted.id;
 }
 
 // Update notification log status

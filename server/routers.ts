@@ -1199,7 +1199,7 @@ export const appRouter = router({
           if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
           
           // Insert booking request into database
-          const result = await db
+          const [inserted] = await db
             .insert(privateSessionBookings)
             .values({
               customerName: input.customerName,
@@ -1212,8 +1212,9 @@ export const appRouter = router({
               notes: input.notes || null,
               stripeSessionId: input.stripeSessionId || null,
               status: "pending",
-            });
-          const bookingId = result[0].insertId;
+            })
+            .returning();
+          const bookingId = inserted.id;
 
           // Send notification to owner
           await notifyOwner({
