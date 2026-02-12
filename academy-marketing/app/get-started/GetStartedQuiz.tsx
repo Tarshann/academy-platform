@@ -17,6 +17,8 @@ interface Recommendation {
   unit: string;
   description: string;
   cta: string;
+  productId: string;
+  checkoutCta: string;
 }
 
 const RECOMMENDATIONS: Record<string, Recommendation> = {
@@ -28,6 +30,8 @@ const RECOMMENDATIONS: Record<string, Recommendation> = {
     description:
       "A great starting point. Drop in to a Skills Lab session to experience our coaching style, work on fundamentals, and see if structured training is the right fit.",
     cta: "Drop In to Skills Lab",
+    productId: "skills-lab-dropin",
+    checkoutCta: "Buy Drop-In — $10",
   },
   "performance-lab": {
     program: "Performance Lab",
@@ -37,6 +41,8 @@ const RECOMMENDATIONS: Record<string, Recommendation> = {
     description:
       "Our flagship program for committed athletes. Three sessions per week with baseline testing, 90-day progress cycles, and individualized coaching to build speed, agility, and strength.",
     cta: "Apply for Performance Lab",
+    productId: "performance-lab",
+    checkoutCta: "Enroll Now — $245/mo",
   },
   "private-training": {
     program: "Private Training",
@@ -46,6 +52,8 @@ const RECOMMENDATIONS: Record<string, Recommendation> = {
     description:
       "One-on-one sessions tailored to your athlete's specific goals. Ideal for tryout prep, position-specific work, or accelerated development with undivided coaching attention.",
     cta: "Book a Private Session",
+    productId: "individual-training",
+    checkoutCta: "Book Now — $60",
   },
 };
 
@@ -111,6 +119,8 @@ export default function GetStartedQuiz() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   function handleAgeSelect(value: AgeRange) {
     setAge(value);
@@ -202,6 +212,35 @@ export default function GetStartedQuiz() {
     setParentName("");
     setEmail("");
     setPhone("");
+  }
+
+  async function handleCheckout() {
+    if (!recommendation) return;
+    setCheckingOut(true);
+    setCheckoutError(null);
+
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: recommendation.productId,
+          ...(email && { email }),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setCheckoutError(
+          data.error || "Unable to start checkout. Please try again."
+        );
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError("Something went wrong. Please try again.");
+    } finally {
+      setCheckingOut(false);
+    }
   }
 
   return (
@@ -469,13 +508,20 @@ export default function GetStartedQuiz() {
                     {recommendation.description}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <Link
-                      href={`/programs/${recommendation.slug}`}
-                      className="btn-primary flex-1 text-center py-3"
+                    <button
+                      onClick={handleCheckout}
+                      disabled={checkingOut}
+                      className="btn-primary flex-1 text-center py-3 inline-flex items-center justify-center gap-2 disabled:opacity-60"
                     >
-                      {recommendation.cta}
-                      <ArrowRight size={16} />
-                    </Link>
+                      {checkingOut ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <>
+                          {recommendation.checkoutCta}
+                          <ArrowRight size={16} />
+                        </>
+                      )}
+                    </button>
                     <a
                       href={`tel:${CONTACT.phoneRaw}`}
                       className="btn-secondary-dark flex-1 text-center py-3"
@@ -483,6 +529,18 @@ export default function GetStartedQuiz() {
                       Call {CONTACT.phone}
                     </a>
                   </div>
+                  {checkoutError && (
+                    <p className="text-red-500 text-sm mt-2">{checkoutError}</p>
+                  )}
+                  <p className="text-sm text-[var(--color-brand-gray)] mt-4">
+                    Want to learn more first?{" "}
+                    <Link
+                      href={`/programs/${recommendation.slug}`}
+                      className="text-[var(--color-brand-gold-dark)] underline hover:no-underline"
+                    >
+                      View program details
+                    </Link>
+                  </p>
                 </div>
 
                 <button

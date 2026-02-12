@@ -5,6 +5,7 @@ import { generatePageMetadata } from "@/lib/metadata";
 import { PROGRAMS, CONTACT } from "@/lib/config";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/lib/structured-data";
 import ProgramFAQ from "./ProgramFAQ";
+import CheckoutButton from "@/components/ui/CheckoutButton";
 
 export function generateStaticParams() {
   return PROGRAMS.map((program) => ({ slug: program.slug }));
@@ -70,13 +71,11 @@ export default async function ProgramDetailPage({
               <span className="text-lg text-white/60">{program.unit}</span>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/get-started"
+              <CheckoutButton
+                productId={program.productId}
+                label={program.checkoutCta}
                 className="btn-primary text-lg px-10 py-4"
-              >
-                {program.cta}
-                <ArrowRight size={20} />
-              </Link>
+              />
               <a
                 href={`tel:${CONTACT.phoneRaw}`}
                 className="btn-secondary text-lg px-10 py-4"
@@ -84,6 +83,12 @@ export default async function ProgramDetailPage({
                 Call {CONTACT.phone}
               </a>
             </div>
+            <p className="mt-4 text-sm text-white/50">
+              Not sure which program?{" "}
+              <Link href="/get-started" className="text-[var(--color-brand-gold)] underline hover:no-underline">
+                Take the quiz
+              </Link>
+            </p>
           </div>
         </div>
       </section>
@@ -225,17 +230,15 @@ export default async function ProgramDetailPage({
             <span className="text-[var(--color-brand-gold)]">Join?</span>
           </h2>
           <p className="text-lg text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Get started with a free assessment. We will evaluate your athlete
-            and help you choose the right path.
+            Secure your spot now. Register online and we&apos;ll reach out with
+            everything you need before your first session.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/get-started"
+            <CheckoutButton
+              productId={program.productId}
+              label={program.checkoutCta}
               className="btn-primary text-lg px-10 py-4"
-            >
-              {program.cta}
-              <ArrowRight size={20} />
-            </Link>
+            />
             <a
               href={`tel:${CONTACT.phoneRaw}`}
               className="btn-secondary text-lg px-10 py-4"
