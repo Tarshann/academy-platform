@@ -6,7 +6,7 @@
   "framework": null,
   "redirects": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "has": [{ "type": "host", "value": "app.academytn.com" }],
       "destination": "https://academytn.com/",
       "statusCode": 302
