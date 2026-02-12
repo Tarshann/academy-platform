@@ -5,9 +5,12 @@ const CANONICAL_HOST = "academytn.com";
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
 
-  // Redirect app.academytn.com to main site until the member portal has its own deployment
-  if (host.startsWith("app.")) {
-    return NextResponse.redirect(new URL("https://academytn.com"), 302);
+  // Redirect app subdomain (member portal not yet deployed)
+  if (host === "app.academytn.com") {
+    const url = request.nextUrl.clone();
+    url.host = CANONICAL_HOST;
+    url.pathname = "/";
+    return NextResponse.redirect(url, 301);
   }
 
   // Redirect non-canonical domains (e.g. cspringsacademy.com) to the canonical domain
