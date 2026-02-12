@@ -9,11 +9,31 @@ import { logger } from "./_core/logger";
  * through the sequence.
  */
 
+const TOTAL_STEPS = 4;
+
+interface LeadContext {
+  email: string;
+  name?: string | null;
+  recommendedProgram?: string | null;
+  athleteAge?: string | null;
+  sport?: string | null;
+}
+
 interface NurtureStep {
   step: number;
   delayDays: number;
   subject: string;
-  html: (lead: { name?: string | null; recommendedProgram?: string | null; athleteAge?: string | null; sport?: string | null }) => string;
+  html: (lead: LeadContext) => string;
+}
+
+function unsubscribeFooter(email: string): string {
+  const encoded = encodeURIComponent(email);
+  return `
+    <div style="text-align:center;padding:20px;margin-top:20px;border-top:1px solid #e5e7eb;font-size:12px;color:#999;">
+      <p>You're receiving this because you signed up at academytn.com.</p>
+      <p><a href="https://academytn.com/api/unsubscribe?email=${encoded}" style="color:#999;text-decoration:underline;">Unsubscribe</a> from future emails.</p>
+      <p>The Academy &middot; Gallatin, TN</p>
+    </div>`;
 }
 
 const NURTURE_SEQUENCE: NurtureStep[] = [
@@ -46,6 +66,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <p>Or just reply to this email with any questions — Coach Mac and Coach O are happy to help.</p>
           <p style="margin-top:24px;">— The Academy Team<br><span style="color:#999;">Gallatin, TN</span></p>
         </div>
+        ${unsubscribeFooter(lead.email)}
       </body>
       </html>
     `,
@@ -83,6 +104,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <p>Questions? Call or text us at <a href="tel:+15712920633">(571) 292-0633</a>.</p>
           <p>— The Academy Team</p>
         </div>
+        ${unsubscribeFooter(lead.email)}
       </body>
       </html>
     `,
@@ -118,6 +140,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <p>Registration closes May 15. Don't wait on this one.</p>
           <p>— The Academy Team</p>
         </div>
+        ${unsubscribeFooter(lead.email)}
       </body>
       </html>
     `,
@@ -150,6 +173,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <p>Or text Coach Mac at <a href="tel:+15712920633">(571) 292-0633</a> to ask anything.</p>
           <p>— The Academy Team</p>
         </div>
+        ${unsubscribeFooter(lead.email)}
       </body>
       </html>
     `,
@@ -171,7 +195,7 @@ export async function processNurtureQueue(): Promise<{ sent: number; errors: num
     return { sent: 0, errors: 0 };
   }
 
-  // Get all active leads (new or nurturing) that haven't finished the sequence
+  // Get all active leads (new or nurturing) — excludes unsubscribed and converted
   const activeLeads = await db
     .select()
     .from(leads)
@@ -187,7 +211,14 @@ export async function processNurtureQueue(): Promise<{ sent: number; errors: num
     const stepDef = NURTURE_SEQUENCE.find((s) => s.step === nextStep);
 
     if (!stepDef) {
-      // Lead has completed the sequence
+      // Lead has completed the sequence — mark as converted so we stop processing
+      if (lead.nurtureStep >= TOTAL_STEPS && lead.status !== "converted") {
+        await db
+          .update(leads)
+          .set({ status: "converted", convertedAt: new Date(), updatedAt: new Date() })
+          .where(eq(leads.id, lead.id));
+        logger.info(`[Nurture] Lead ${lead.email} completed sequence, marked converted`);
+      }
       continue;
     }
 
@@ -223,6 +254,7 @@ export async function processNurtureQueue(): Promise<{ sent: number; errors: num
 
     // Send the email
     const html = stepDef.html({
+      email: lead.email,
       name: lead.name,
       recommendedProgram: lead.recommendedProgram,
       athleteAge: lead.athleteAge,
@@ -283,6 +315,7 @@ export async function sendWelcomeEmail(leadEmail: string): Promise<void> {
 
   const step1 = NURTURE_SEQUENCE[0];
   const html = step1.html({
+    email: lead.email,
     name: lead.name,
     recommendedProgram: lead.recommendedProgram,
     athleteAge: lead.athleteAge,
