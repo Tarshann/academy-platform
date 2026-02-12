@@ -5,15 +5,8 @@ const CANONICAL_HOST = "academytn.com";
 export function middleware(request: NextRequest) {
   const host = request.headers.get("host") ?? "";
 
-  // Redirect app subdomain (member portal not yet deployed)
-  if (host === "app.academytn.com") {
-    const url = request.nextUrl.clone();
-    url.host = CANONICAL_HOST;
-    url.pathname = "/";
-    return NextResponse.redirect(url, 301);
-  }
-
-  // Redirect non-canonical domains (e.g. cspringsacademy.com) to the canonical domain
+  // Redirect non-canonical domains (e.g. cspringsacademy.com) to the canonical domain.
+  // Note: app.academytn.com is handled by the platform project's vercel.json, not here.
   if (host && !host.includes(CANONICAL_HOST) && !host.includes("vercel.app") && !host.includes("localhost")) {
     const url = request.nextUrl.clone();
     url.host = CANONICAL_HOST;
