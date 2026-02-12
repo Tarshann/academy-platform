@@ -728,3 +728,49 @@ export const notificationLogs = mysqlTable("notificationLogs", {
 
 export type NotificationLog = typeof notificationLogs.$inferSelect;
 export type InsertNotificationLog = typeof notificationLogs.$inferInsert;
+
+// ============================================================================
+// LEAD CAPTURE & NURTURE TABLES
+// ============================================================================
+
+/**
+ * Leads captured from the marketing site (academytn.com).
+ * Quiz completions, form submissions, and camp inquiries flow here.
+ */
+export const leads = mysqlTable("leads", {
+  id: int("id").primaryKey().autoincrement(),
+  name: varchar("name", { length: 255 }),
+  email: varchar("email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  source: varchar("source", { length: 100 }).notNull().default("quiz"),
+  athleteAge: varchar("athleteAge", { length: 20 }),
+  sport: varchar("sport", { length: 50 }),
+  goal: varchar("goal", { length: 50 }),
+  recommendedProgram: varchar("recommendedProgram", { length: 100 }),
+  status: mysqlEnum("lead_status", ["new", "nurturing", "converted", "unsubscribed"]).notNull().default("new"),
+  nurtureStep: int("nurtureStep").notNull().default(0),
+  lastNurtureAt: timestamp("lastNurtureAt"),
+  convertedAt: timestamp("convertedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = typeof leads.$inferInsert;
+
+/**
+ * Log of nurture emails sent to leads.
+ * Tracks which email in the sequence was sent and when.
+ */
+export const nurtureEmailLog = mysqlTable("nurtureEmailLog", {
+  id: int("id").primaryKey().autoincrement(),
+  leadId: int("leadId").notNull(),
+  step: int("step").notNull(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  opened: boolean("opened").notNull().default(false),
+  clicked: boolean("clicked").notNull().default(false),
+});
+
+export type NurtureEmailLog = typeof nurtureEmailLog.$inferSelect;
+export type InsertNurtureEmailLog = typeof nurtureEmailLog.$inferInsert;

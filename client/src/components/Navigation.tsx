@@ -149,7 +149,7 @@ export default function Navigation() {
       <div className="container">
         <div className="flex items-center justify-between h-16">
           {/* Logo - aligned baseline with nav items */}
-          <Link href="/" className="flex items-center gap-3 py-1">
+          <Link href="/member" className="flex items-center gap-3 py-1">
             <img
               src="/academy-logo.jpeg"
               alt="The Academy"
@@ -160,35 +160,14 @@ export default function Navigation() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation — authenticated portal only */}
           <div className="hidden md:flex items-center gap-6">
             <Link
-              href="/"
-              className={getLinkClassName("/")}
-              aria-current={isActiveRoute("/") ? "page" : undefined}
+              href="/member"
+              className={getLinkClassName("/member")}
+              aria-current={isActiveRoute("/member") ? "page" : undefined}
             >
-              Home
-            </Link>
-            <Link
-              href="/programs"
-              className={getLinkClassName("/programs")}
-              aria-current={isActiveRoute("/programs") ? "page" : undefined}
-            >
-              Programs
-            </Link>
-            <Link
-              href="/performance-lab"
-              className={getLinkClassName("/performance-lab")}
-              aria-current={isActiveRoute("/performance-lab") ? "page" : undefined}
-            >
-              Performance Lab
-            </Link>
-            <Link
-              href="/skills-lab"
-              className={getLinkClassName("/skills-lab")}
-              aria-current={isActiveRoute("/skills-lab") ? "page" : undefined}
-            >
-              Skills Lab
+              Dashboard
             </Link>
             <Link
               href="/schedule"
@@ -198,20 +177,6 @@ export default function Navigation() {
               Schedule
             </Link>
             <Link
-              href="/about"
-              className={getLinkClassName("/about")}
-              aria-current={isActiveRoute("/about") ? "page" : undefined}
-            >
-              About
-            </Link>
-            <Link
-              href="/gallery"
-              className={getLinkClassName("/gallery")}
-              aria-current={isActiveRoute("/gallery") ? "page" : undefined}
-            >
-              Gallery
-            </Link>
-            <Link
               href="/shop"
               className={getLinkClassName("/shop")}
               aria-current={isActiveRoute("/shop") ? "page" : undefined}
@@ -219,36 +184,15 @@ export default function Navigation() {
               Shop
             </Link>
             <Link
-              href="/blog"
-              className={getLinkClassName("/blog")}
-              aria-current={isActiveRoute("/blog") ? "page" : undefined}
+              href="/chat"
+              className={getLinkClassName("/chat")}
+              aria-current={isActiveRoute("/chat") ? "page" : undefined}
             >
-              Blog
-            </Link>
-            <Link
-              href="/faqs"
-              className={getLinkClassName("/faqs")}
-              aria-current={isActiveRoute("/faqs") ? "page" : undefined}
-            >
-              FAQs
-            </Link>
-            <Link
-              href="/contact"
-              className={getLinkClassName("/contact")}
-              aria-current={isActiveRoute("/contact") ? "page" : undefined}
-            >
-              Contact
+              Chat
             </Link>
 
             {isAuthenticatedFinal ? (
               <>
-                <Link
-                  href="/member"
-                  className={getLinkClassName("/member")}
-                  aria-current={isActiveRoute("/member") ? "page" : undefined}
-                >
-                  Dashboard
-                </Link>
                 {user?.role === "admin" && (
                   <Link
                     href="/admin"
@@ -315,42 +259,18 @@ export default function Navigation() {
             role="navigation"
             aria-label="Main navigation"
           >
-            {/* Mobile links with 44px+ tap targets */}
+            {/* Mobile links — authenticated portal only */}
             <div className="flex flex-col gap-1 px-2">
               <div className="px-4 pb-2">
                 <SearchBar />
               </div>
               <Link
-                href="/"
-                className={getLinkClassName("/", false, true)}
-                aria-current={isActiveRoute("/") ? "page" : undefined}
+                href="/member"
+                className={getLinkClassName("/member", false, true)}
+                aria-current={isActiveRoute("/member") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Home
-              </Link>
-              <Link
-                href="/programs"
-                className={getLinkClassName("/programs", false, true)}
-                aria-current={isActiveRoute("/programs") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Programs
-              </Link>
-              <Link
-                href="/performance-lab"
-                className={getLinkClassName("/performance-lab", false, true)}
-                aria-current={isActiveRoute("/performance-lab") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Performance Lab
-              </Link>
-              <Link
-                href="/skills-lab"
-                className={getLinkClassName("/skills-lab", false, true)}
-                aria-current={isActiveRoute("/skills-lab") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Skills Lab
+                Dashboard
               </Link>
               <Link
                 href="/schedule"
@@ -361,22 +281,6 @@ export default function Navigation() {
                 Schedule
               </Link>
               <Link
-                href="/about"
-                className={getLinkClassName("/about", false, true)}
-                aria-current={isActiveRoute("/about") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/gallery"
-                className={getLinkClassName("/gallery", false, true)}
-                aria-current={isActiveRoute("/gallery") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Gallery
-              </Link>
-              <Link
                 href="/shop"
                 className={getLinkClassName("/shop", false, true)}
                 aria-current={isActiveRoute("/shop") ? "page" : undefined}
@@ -385,40 +289,16 @@ export default function Navigation() {
                 Shop
               </Link>
               <Link
-                href="/blog"
-                className={getLinkClassName("/blog", false, true)}
-                aria-current={isActiveRoute("/blog") ? "page" : undefined}
+                href="/chat"
+                className={getLinkClassName("/chat", false, true)}
+                aria-current={isActiveRoute("/chat") ? "page" : undefined}
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Blog
-              </Link>
-              <Link
-                href="/faqs"
-                className={getLinkClassName("/faqs", false, true)}
-                aria-current={isActiveRoute("/faqs") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                FAQs
-              </Link>
-              <Link
-                href="/contact"
-                className={getLinkClassName("/contact", false, true)}
-                aria-current={isActiveRoute("/contact") ? "page" : undefined}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
+                Chat
               </Link>
 
               {isAuthenticatedFinal ? (
                 <>
-                  <Link
-                    href="/member"
-                    className={getLinkClassName("/member", false, true)}
-                    aria-current={isActiveRoute("/member") ? "page" : undefined}
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
                   {user?.role === "admin" && (
                     <Link
                       href="/admin"
