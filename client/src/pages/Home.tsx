@@ -156,7 +156,7 @@ export default function Home() {
         {/* Hero Section - Premium Light Aesthetic with Video Background */}
         <motion.section
           ref={heroRef}
-          className="relative min-h-[90vh] flex items-center justify-center overflow-hidden"
+          className="relative z-10 min-h-[90vh] flex items-center justify-center"
         >
           {/* Hero Background - Academy Training Photo */}
           <div className="absolute inset-0 overflow-hidden">
@@ -175,7 +175,7 @@ export default function Home() {
 
           <motion.div 
             style={{ opacity: heroOpacity, y: heroY }}
-            className="container relative z-10 px-6 py-24"
+            className="container relative z-10 px-6 py-16 sm:py-24"
           >
             <div className="max-w-4xl mx-auto text-center">
               <motion.div
@@ -256,7 +256,7 @@ export default function Home() {
         </motion.section>
 
         {/* Trust Signals */}
-        <section className="py-16 md:py-20 border-b border-border">
+        <section className="relative z-0 py-16 md:py-20 border-b border-border">
           <div className="container px-6">
             <motion.div
               initial="hidden"
