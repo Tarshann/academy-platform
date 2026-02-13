@@ -273,7 +273,7 @@ export default function MemberDashboard() {
                     className="w-full justify-start"
                     asChild
                   >
-                    <a href="/programs">
+                    <a href="https://academytn.com/programs">
                       <Users className="mr-2" size={18} />
                       Browse Programs
                     </a>
@@ -633,7 +633,7 @@ export default function MemberDashboard() {
                         see your schedule here.
                       </p>
                       <Button asChild>
-                        <a href="/programs">Browse Programs</a>
+                        <a href="https://academytn.com/programs">Browse Programs</a>
                       </Button>
                     </div>
                   )}
