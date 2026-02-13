@@ -3,7 +3,7 @@ import { getAuth } from "@clerk/express";
 import { ENV } from "./env";
 import { logger } from "./logger";
 import * as db from "../db";
-import { ONE_YEAR_MS } from "@shared/const";
+import { ONE_YEAR_MS } from "../../shared/const";
 import { SignJWT, jwtVerify } from "jose";
 import type { Request } from "express";
 

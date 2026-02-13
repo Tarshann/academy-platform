@@ -1,5 +1,5 @@
-import { COOKIE_NAME } from "@shared/const";
-import { toCents } from "@shared/money";
+import { COOKIE_NAME } from "../shared/const";
+import { toCents } from "../shared/money";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { ENV } from "./_core/env";
 import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";

@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { HttpError, ErrorCode } from "@shared/_core/errors";
+import { HttpError, ErrorCode } from "../../shared/_core/errors";
 
 /**
  * Transform domain errors to tRPC errors
