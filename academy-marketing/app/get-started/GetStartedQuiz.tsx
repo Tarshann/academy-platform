@@ -42,7 +42,7 @@ const RECOMMENDATIONS: Record<string, Recommendation> = {
       "Our flagship program for committed athletes. Three sessions per week with baseline testing, 90-day progress cycles, and individualized coaching to build speed, agility, and strength.",
     cta: "Apply for Performance Lab",
     productId: "performance-lab",
-    checkoutCta: "Enroll Now — $245/mo",
+    checkoutCta: "Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo",
   },
   "private-training": {
     program: "Private Training",

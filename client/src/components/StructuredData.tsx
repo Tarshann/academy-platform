@@ -101,20 +101,20 @@ export function OrganizationStructuredData({
         {
           "@type": "Review",
           reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
-          author: { "@type": "Person", name: "Academy Parent" },
-          reviewBody: "We've seen more growth in our child's confidence and skill in a few months at The Academy than we did in years of other programs. The coaches truly teach the game—footwork, decision-making, and fundamentals—not just running plays.",
+          author: { "@type": "Person", name: "Judy" },
+          reviewBody: "He made the Ellis summer team! 5 tryouts later and he finally did it! Thank you for all the help you've given him. He loves his Academy pals.",
         },
         {
           "@type": "Review",
           reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
-          author: { "@type": "Person", name: "Academy Parent" },
-          reviewBody: "What sets The Academy apart is the structure and intention behind every session. The coaches meet kids where they are, push them to improve, and genuinely care about their development on and off the court.",
+          author: { "@type": "Person", name: "Shafer Middle School Coach" },
+          reviewBody: "Every single kid that participates at the Academy was head and shoulders above all others. It\u2019s a clear noticeable difference. Thank you for investing into these kids. It\u2019s working.",
         },
         {
           "@type": "Review",
           reviewRating: { "@type": "Rating", ratingValue: "5", bestRating: "5" },
-          author: { "@type": "Person", name: "Academy Parent" },
-          reviewBody: "As a parent, I appreciate how organized and professional The Academy is—from communication to training quality. My child has learned how to practice with purpose, compete the right way, and believe in themselves.",
+          author: { "@type": "Person", name: "Academy Athlete" },
+          reviewBody: "Coach we lost but I promise you I will be putting in that work, I\u2019m working my butt off this offseason\u2026 can we get in the gym this week?",
         },
       ],
       aggregateRating: {

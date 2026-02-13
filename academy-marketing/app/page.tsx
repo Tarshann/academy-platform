@@ -290,14 +290,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-24 md:py-32 section-light">
+      {/* Testimonials — Dark background with gold accents */}
+      <section className="py-24 md:py-32" style={{ background: "var(--color-brand-dark, #1A1A1A)" }}>
         <div className="container">
           <RevealSection className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-white">
               What Parents Are Saying
             </h2>
-            <p className="text-lg text-[var(--color-brand-gray)] max-w-2xl mx-auto">
+            <p className="text-lg text-white/60 max-w-2xl mx-auto">
               Real feedback from Academy families
             </p>
           </RevealSection>
@@ -305,20 +305,21 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {TESTIMONIALS.map((t, i) => (
               <RevealSection key={i} delay={i + 1}>
-                <div className="bg-white rounded-xl border border-[var(--color-brand-gray-light)] p-6 md:p-8 h-full flex flex-col">
-                  <div className="stars mb-4">
-                    {[...Array(5)].map((_, j) => (
-                      <svg key={j} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <blockquote className="text-[var(--color-brand-gray)] text-sm leading-relaxed flex-grow">
-                    &ldquo;{t.quote}&rdquo;
+                <div className="rounded-xl border border-white/10 bg-white/[0.06] backdrop-blur-sm p-6 md:p-8 h-full flex flex-col">
+                  <span className="text-4xl font-serif leading-none mb-3 select-none" style={{ color: "var(--color-brand-orange, #E8722A)" }}>&ldquo;</span>
+                  <blockquote className="text-white/80 text-sm leading-relaxed flex-grow">
+                    {t.quote}
                   </blockquote>
-                  <p className="font-semibold text-sm mt-4 pt-4 border-t border-[var(--color-brand-gray-light)]">
-                    {t.author}
-                  </p>
+                  <div className="mt-6 pt-4 border-t border-white/10">
+                    <p className="font-semibold text-sm text-white">
+                      {t.author}
+                    </p>
+                    {"detail" in t && (
+                      <p className="text-white/50 text-xs mt-0.5">
+                        {(t as any).detail}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </RevealSection>
             ))}
