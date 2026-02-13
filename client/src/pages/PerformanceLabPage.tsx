@@ -80,7 +80,7 @@ export default function PerformanceLabPage() {
               cursor: "pointer",
               textDecoration: "none",
             }}>
-              Apply for Performance Lab
+              Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo
             </span>
           </Link>
         </div>
@@ -234,7 +234,7 @@ export default function PerformanceLabPage() {
                   cursor: "pointer",
                   textDecoration: "none",
                 }}>
-                  Apply for Performance Lab
+                  Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo
                 </span>
               </Link>
             </div>
@@ -374,7 +374,7 @@ export default function PerformanceLabPage() {
               cursor: "pointer",
               textDecoration: "none",
             }}>
-              Apply for Performance Lab
+              Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo
             </span>
           </Link>
         </div>
@@ -411,7 +411,7 @@ export default function PerformanceLabPage() {
               width: "100%",
               maxWidth: 360,
             }}>
-              Apply for Performance Lab
+              Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo
             </span>
           </Link>
         </div>
