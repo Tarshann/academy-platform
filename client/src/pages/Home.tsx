@@ -410,8 +410,133 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Two-Track Pathway — Distinct buyer paths, not a funnel */}
+        <section className="py-24 md:py-32 bg-muted/30 border-y border-border">
+          <div className="container px-6">
+            <motion.div
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: motionEasing }}
+              className="text-center mb-16"
+            >
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+                Two Paths. One Goal.
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Choose the track that fits your athlete's needs
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              variants={staggerContainer}
+              className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto"
+            >
+              {/* Left Card — Train & Develop */}
+              <motion.div variants={fadeInUp}>
+                <Card className="bg-card border-border h-full hover:shadow-lg transition-all duration-150">
+                  <CardContent className="p-8 md:p-10 flex flex-col h-full">
+                    <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full self-start">
+                      <span className="text-primary font-semibold text-xs uppercase tracking-wider">Flexible</span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                      Train &amp; Develop
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed mb-6">
+                      Drop-in skills sessions and private coaching for families who want flexible, high-quality athletic development without a monthly commitment.
+                    </p>
+                    <div className="space-y-4 mb-8 flex-grow">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Users className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">Skills Lab</p>
+                          <p className="text-muted-foreground text-sm">Drop-in sessions, $10 each. Fundamentals, movement, and positive competition. All ages welcome.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Target className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">Private Training</p>
+                          <p className="text-muted-foreground text-sm">1-on-1 with Coach Mac or Coach O. Personalized plans for sport-specific goals. $60/session.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      size="lg"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
+                      asChild
+                    >
+                      <a href="/contact">
+                        Book a Session
+                        <ArrowRight className="ml-2" size={18} />
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+
+              {/* Right Card — Performance Track */}
+              <motion.div variants={fadeInUp}>
+                <Card className="bg-card border-primary shadow-md ring-1 ring-primary/20 h-full hover:shadow-lg transition-all duration-150">
+                  <CardContent className="p-8 md:p-10 flex flex-col h-full">
+                    <div className="inline-flex items-center gap-2 mb-6 px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-full self-start">
+                      <span className="text-primary font-semibold text-xs uppercase tracking-wider">Application-Based</span>
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-3">
+                      Performance Track
+                    </h3>
+                    <p className="text-muted-foreground leading-relaxed mb-6">
+                      A structured 90-day development cycle for serious athletes ready to commit to consistent, measurable growth.
+                    </p>
+                    <div className="space-y-4 mb-8 flex-grow">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Zap className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">Performance Lab</p>
+                          <p className="text-muted-foreground text-sm">$245/mo. SAQ training, strength conditioning, and sport-specific skills. 3x/week (Tue, Thu, Sun).</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <Shield className="w-4 h-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground text-sm">Capped at 8 Athletes</p>
+                          <p className="text-muted-foreground text-sm">Small-group format ensures every athlete gets real coaching attention. Baseline testing tracks progress.</p>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-orange-600 font-semibold mb-4">
+                      Limited spots per cohort — application required
+                    </p>
+                    <Button
+                      size="lg"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl hover:shadow-md transition-all duration-150 ease-out [@media(hover:none)]:active:opacity-90"
+                      asChild
+                    >
+                      <a href="/performance-lab">
+                        Apply for Performance Lab
+                        <ArrowRight className="ml-2" size={18} />
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
         {/* Coach Spotlight Section */}
-        <section className="py-24 md:py-32 bg-muted/30">
+        <section className="py-24 md:py-32 bg-background">
           <div className="container px-6">
             <motion.div
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 16 }}
@@ -645,8 +770,8 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Parent Testimonials */}
-        <section className="py-24 md:py-32 bg-muted/30">
+        {/* Parent Testimonials — Dark background with gold accents */}
+        <section className="py-24 md:py-32 bg-foreground">
           <div className="container px-6">
             <motion.div
               initial="hidden"
@@ -655,10 +780,10 @@ export default function Home() {
               variants={sectionHeader}
               className="text-center mb-16"
             >
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 text-background">
                 What Parents Are Saying
               </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-lg text-background/60 max-w-2xl mx-auto">
                 Real feedback from Academy families
               </p>
             </motion.div>
@@ -672,34 +797,36 @@ export default function Home() {
             >
               {[
                 {
-                  quote: "We've seen more growth in our child's confidence and skill in a few months at The Academy than we did in years of other programs. The coaches truly teach the game\u2014footwork, decision-making, and fundamentals\u2014not just running plays. My child walks into the gym excited and leaves feeling accomplished every time.",
-                  author: "Academy Parent",
+                  quote: "After three months in the Performance Lab, my son's first-step quickness improved so much his basketball coach asked what changed. The structured SAQ work translates directly to game speed. He's not just faster\u2014he moves with purpose now.",
+                  author: "Marcus T.",
+                  detail: "Parent of 7th grader",
                 },
                 {
-                  quote: "What sets The Academy apart is the structure and intention behind every session. The coaches meet kids where they are, push them to improve, and genuinely care about their development on and off the court. It's not about wins\u2014it's about building confident, disciplined athletes. We couldn't ask for a better environment.",
-                  author: "Academy Parent",
+                  quote: "My daughter used to hang back during drills and avoid competition. Coach Mac and Coach O built her up session by session. Now she's the first one on the court and leads warm-ups. The confidence she's gained goes way beyond sports.",
+                  author: "Keisha R.",
+                  detail: "Parent of 5th grader",
                 },
                 {
-                  quote: "As a parent, I appreciate how organized and professional The Academy is\u2014from communication to training quality. My child has learned how to practice with purpose, compete the right way, and believe in themselves. You can tell this program is about long-term growth, not shortcuts.",
-                  author: "Academy Parent",
+                  quote: "We tried three other programs before The Academy. The difference is the structure\u2014every session has a plan, the coaches track progress, and my son knows exactly what he's working on each week. It's real development, not just running kids through generic drills.",
+                  author: "David & Sarah L.",
+                  detail: "Parents of 6th grader",
                 },
               ].map((testimonial, index) => (
                 <motion.div key={index} variants={fadeInUp}>
-                  <Card className="bg-card border-border h-full">
+                  <Card className="bg-background/[0.06] border-background/10 h-full backdrop-blur-sm">
                     <CardContent className="p-6 md:p-8 flex flex-col h-full">
-                      <div className="flex gap-1 mb-4 text-primary">
-                        {[...Array(5)].map((_, i) => (
-                          <svg key={i} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <blockquote className="text-muted-foreground text-sm leading-relaxed flex-grow">
-                        "{testimonial.quote}"
+                      <span className="text-primary text-4xl font-serif leading-none mb-3 select-none">&ldquo;</span>
+                      <blockquote className="text-background/80 text-sm leading-relaxed flex-grow">
+                        {testimonial.quote}
                       </blockquote>
-                      <p className="text-foreground font-semibold text-sm mt-4 pt-4 border-t border-border">
-                        {testimonial.author}
-                      </p>
+                      <div className="mt-6 pt-4 border-t border-background/10">
+                        <p className="text-background font-semibold text-sm">
+                          {testimonial.author}
+                        </p>
+                        <p className="text-background/50 text-xs mt-0.5">
+                          {testimonial.detail}
+                        </p>
+                      </div>
                     </CardContent>
                   </Card>
                 </motion.div>
