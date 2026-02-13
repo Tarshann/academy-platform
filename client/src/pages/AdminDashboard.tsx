@@ -5,7 +5,8 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image } from "lucide-react";
+import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList } from "lucide-react";
+import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
 import { AttendanceManager } from "@/components/admin/managers/AttendanceManager";
@@ -60,6 +61,10 @@ export default function AdminDashboard() {
                 <Calendar className="h-4 w-4" />
                 <span className="hidden sm:inline">Schedules</span>
               </TabsTrigger>
+              <TabsTrigger value="members" className="flex items-center gap-2">
+                <ClipboardList className="h-4 w-4" />
+                <span className="hidden sm:inline">Members</span>
+              </TabsTrigger>
               <TabsTrigger value="programs" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span className="hidden sm:inline">Programs</span>
@@ -100,6 +105,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="schedules">
               <SchedulesManager />
+            </TabsContent>
+
+            <TabsContent value="members">
+              <MembersManager />
             </TabsContent>
 
             <TabsContent value="programs">

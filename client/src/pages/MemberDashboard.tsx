@@ -25,6 +25,7 @@ import {
   Clock,
   MapPin,
   Settings,
+  X,
 } from "lucide-react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -79,6 +80,27 @@ export default function MemberDashboard() {
     : 0;
   const registerForSession = trpc.schedules.register.useMutation();
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem("dismissed-announcements");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const visibleAnnouncements = announcements?.filter(
+    (a: any) => !dismissedAnnouncements.has(a.id)
+  );
+
+  const dismissAnnouncement = (id: number) => {
+    setDismissedAnnouncements(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem("dismissed-announcements", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const locationLookup = useMemo(() => {
     const lookup = new Map<number, any>();
@@ -202,6 +224,38 @@ export default function MemberDashboard() {
               Welcome back, {user.name || "Member"}!
             </p>
           </div>
+
+          {/* Dismissible Announcement Banners */}
+          {visibleAnnouncements && visibleAnnouncements.length > 0 && (
+            <div className="mb-6 space-y-2">
+              {visibleAnnouncements.slice(0, 3).map((announcement: any) => (
+                <div
+                  key={announcement.id}
+                  className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3"
+                >
+                  <Bell className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{announcement.title}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-3">
+                      {announcement.content}
+                    </p>
+                    {announcement.publishedAt && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(announcement.publishedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => dismissAnnouncement(announcement.id)}
+                    className="text-muted-foreground hover:text-foreground shrink-0"
+                    title="Dismiss"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Sidebar */}

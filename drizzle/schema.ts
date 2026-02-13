@@ -177,6 +177,21 @@ export type Program = typeof programs.$inferSelect;
 export type InsertProgram = typeof programs.$inferInsert;
 
 /**
+ * User-program enrollments (many-to-many join table)
+ */
+export const userPrograms = pgTable("userPrograms", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  programId: integer("programId").notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
+  enrolledAt: timestamp("enrolledAt", { mode: 'date' }).defaultNow().notNull(),
+  cancelledAt: timestamp("cancelledAt", { mode: 'date' }),
+});
+
+export type UserProgram = typeof userPrograms.$inferSelect;
+export type InsertUserProgram = typeof userPrograms.$inferInsert;
+
+/**
  * Announcements for members
  */
 export const announcements = pgTable("announcements", {
