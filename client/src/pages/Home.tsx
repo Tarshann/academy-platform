@@ -797,19 +797,19 @@ export default function Home() {
             >
               {[
                 {
-                  quote: "After three months in the Performance Lab, my son's first-step quickness improved so much his basketball coach asked what changed. The structured SAQ work translates directly to game speed. He's not just faster\u2014he moves with purpose now.",
-                  author: "Marcus T.",
-                  detail: "Parent of 7th grader",
+                  quote: "He made the Ellis summer team! 5 tryouts later and he finally did it! Thank you for all the help you've given him. He loves his Academy pals.",
+                  author: "Judy",
+                  detail: "Academy Parent",
                 },
                 {
-                  quote: "My daughter used to hang back during drills and avoid competition. Coach Mac and Coach O built her up session by session. Now she's the first one on the court and leads warm-ups. The confidence she's gained goes way beyond sports.",
-                  author: "Keisha R.",
-                  detail: "Parent of 5th grader",
+                  quote: "And once again\u2026 every single kid that participates at the Academy was head and shoulders above all others. It's a clear noticeable difference. Thank you for investing into these kids. It's working.",
+                  author: "Shafer Middle School Coach",
+                  detail: "School Partner",
                 },
                 {
-                  quote: "We tried three other programs before The Academy. The difference is the structure\u2014every session has a plan, the coaches track progress, and my son knows exactly what he's working on each week. It's real development, not just running kids through generic drills.",
-                  author: "David & Sarah L.",
-                  detail: "Parents of 6th grader",
+                  quote: "Coach we lost but I promise you I will be putting in that work, I'm working my butt off this offseason\u2026 can we get in the gym this week?",
+                  author: "Academy Athlete",
+                  detail: "Academy Member",
                 },
               ].map((testimonial, index) => (
                 <motion.div key={index} variants={fadeInUp}>
