@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import { handleStripeWebhook } from "../stripe-webhook";
+import { handleStripeWebhook } from "./stripe-webhook";
 
 const app = express();
 

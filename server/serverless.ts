@@ -2,11 +2,11 @@ import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { clerkMiddleware } from "@clerk/express";
-import { appRouter } from "../routers";
-import { createContext } from "../_core/context";
-import { ENV } from "../_core/env";
-import { getHealthStatus } from "../_core/health";
-import { apiRateLimiter } from "../_core/rateLimiter";
+import { appRouter } from "./routers";
+import { createContext } from "./_core/context";
+import { ENV } from "./_core/env";
+import { getHealthStatus } from "./_core/health";
+import { apiRateLimiter } from "./_core/rateLimiter";
 
 const app = express();
 
@@ -25,16 +25,14 @@ app.use(express.json());
 
 // Skills Lab registration
 app.post("/api/skills-lab-register", async (req, res) => {
-  const { handleSkillsLabRegister } = await import(
-    "../skills-lab-register"
-  );
+  const { handleSkillsLabRegister } = await import("./skills-lab-register");
   return handleSkillsLabRegister(req, res);
 });
 
 // Performance Lab application
 app.post("/api/performance-lab-apply", async (req, res) => {
   const { handlePerformanceLabApply } = await import(
-    "../performance-lab-apply"
+    "./performance-lab-apply"
   );
   return handlePerformanceLabApply(req, res);
 });
