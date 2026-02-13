@@ -1,16 +1,2 @@
-import "dotenv/config";
-import express from "express";
-import { handleStripeWebhook } from "../../server/stripe-webhook";
-
-const app = express();
-
-// Stripe webhook needs raw body for signature verification
-app.post(
-  "/api/stripe/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    return handleStripeWebhook(req, res);
-  }
-);
-
+import app from "../../dist/serverless-stripe.js";
 export default app;

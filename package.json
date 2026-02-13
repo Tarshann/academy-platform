@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && esbuild 'api/[...path].ts' --bundle --platform=node --packages=external --format=esm --outfile='api/[...path].js' && esbuild api/stripe/webhook.ts --bundle --platform=node --packages=external --format=esm --outfile=api/stripe/webhook.js",
+    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && esbuild server/serverless.ts --bundle --platform=node --packages=external --format=esm --outfile=dist/serverless.js && esbuild server/serverless-stripe.ts --bundle --platform=node --packages=external --format=esm --outfile=dist/serverless-stripe.js",
     "start": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
