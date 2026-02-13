@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import { Screen } from '../../components/Screen';
 
@@ -118,7 +119,11 @@ export default function SignUpScreen() {
         style={styles.keyboardView}
       >
         <View style={styles.container}>
-          <Text style={styles.title}>The Academy</Text>
+          <Image
+            source={require('../../assets/academy-logo.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
           <Text style={styles.subtitle}>Create your account</Text>
 
           <TextInput
@@ -175,8 +180,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  logo: {
+    width: 160,
+    height: 120,
+    alignSelf: 'center',
+    marginBottom: 16,
+    borderRadius: 12,
+  },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
