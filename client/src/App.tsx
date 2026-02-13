@@ -39,9 +39,17 @@ function Router() {
         <Route path={"/"}>
           <Redirect to="/member" />
         </Route>
+        <Route path={"/sign-in/:rest*"}>
+          <SEO title="Sign In" description="Sign in to your Academy account." />
+          <SignInPage />
+        </Route>
         <Route path={"/sign-in"}>
           <SEO title="Sign In" description="Sign in to your Academy account." />
           <SignInPage />
+        </Route>
+        <Route path={"/sign-up/:rest*"}>
+          <SEO title="Sign Up" description="Create your Academy account." />
+          <SignUpPage />
         </Route>
         <Route path={"/sign-up"}>
           <SEO title="Sign Up" description="Create your Academy account." />
