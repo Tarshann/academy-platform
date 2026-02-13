@@ -92,7 +92,7 @@ export const PROGRAMS = [
     cta: "Apply for Performance Lab",
     ctaHref: "/get-started",
     productId: "performance-lab",
-    checkoutCta: "Enroll Now — $245/mo",
+    checkoutCta: "Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo",
   },
   {
     slug: "skills-lab",
@@ -227,20 +227,23 @@ export const FOUNDERS = [
 export const TESTIMONIALS = [
   {
     quote:
-      "We've seen more growth in our child's confidence and skill in a few months at The Academy than we did in years of other programs. The coaches truly teach the game\u2014footwork, decision-making, and fundamentals\u2014not just running plays. My child walks into the gym excited and leaves feeling accomplished every time.",
-    author: "Academy Parent",
+      "He made the Ellis summer team! 5 tryouts later and he finally did it! Thank you for all the help you've given him. He loves his Academy pals.",
+    author: "Judy",
+    detail: "Academy Parent",
     rating: 5,
   },
   {
     quote:
-      "What sets The Academy apart is the structure and intention behind every session. The coaches meet kids where they are, push them to improve, and genuinely care about their development on and off the court. It\u2019s not about wins\u2014it\u2019s about building confident, disciplined athletes. We couldn\u2019t ask for a better environment.",
-    author: "Academy Parent",
+      "And once again\u2026 every single kid that participates at the Academy was head and shoulders above all others. It\u2019s a clear noticeable difference. Thank you for investing into these kids. It\u2019s working.",
+    author: "Shafer Middle School Coach",
+    detail: "School Partner",
     rating: 5,
   },
   {
     quote:
-      "As a parent, I appreciate how organized and professional The Academy is\u2014from communication to training quality. My child has learned how to practice with purpose, compete the right way, and believe in themselves. You can tell this program is about long-term growth, not shortcuts.",
-    author: "Academy Parent",
+      "Coach we lost but I promise you I will be putting in that work, I\u2019m working my butt off this offseason\u2026 can we get in the gym this week?",
+    author: "Academy Athlete",
+    detail: "Academy Member",
     rating: 5,
   },
 ];
