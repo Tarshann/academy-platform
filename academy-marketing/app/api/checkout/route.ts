@@ -44,8 +44,34 @@ export async function POST(request: NextRequest) {
     if (!res.ok) {
       const text = await res.text();
       console.error("[checkout] Platform error:", res.status, text);
+
+      // Surface tRPC error messages when available
+      let detail = "Unable to create checkout session. Please try again.";
+      try {
+        const parsed = JSON.parse(text);
+        const trpcMsg =
+          parsed?.error?.json?.message ||
+          parsed?.error?.message ||
+          parsed?.message;
+        if (trpcMsg) detail = trpcMsg;
+      } catch {
+        // If the platform returned HTML instead of JSON, the server
+        // is not deployed — flag that explicitly.
+        if (text.includes("<!DOCTYPE") || text.includes("<html")) {
+          detail =
+            "Platform API is not running. The server may still be deploying.";
+        }
+      }
+
+      return NextResponse.json({ error: detail }, { status: 502 });
+    }
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      const text = await res.text();
+      console.error("[checkout] Non-JSON response:", contentType, text.slice(0, 200));
       return NextResponse.json(
-        { error: "Unable to create checkout session. Please try again." },
+        { error: "Platform API returned an unexpected response. The server may still be deploying." },
         { status: 502 }
       );
     }

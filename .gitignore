@@ -97,6 +97,10 @@ jspm_packages/
 .out
 .storybook-out
 
+# Playwright
+playwright-report/
+test-results/
+
 # Temporary folders
 tmp/
 temp/
