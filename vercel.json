@@ -4,17 +4,13 @@
   "outputDirectory": "dist/public",
   "installCommand": "pnpm install",
   "framework": null,
-  "redirects": [
-    {
-      "source": "/((?!api/).*)",
-      "has": [{ "type": "host", "value": "app.academytn.com" }],
-      "destination": "https://academytn.com/",
-      "statusCode": 302
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/trpc/:path*",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/chat/:path*",
       "destination": "/api/[...path]"
     },
     {

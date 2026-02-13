@@ -617,6 +617,149 @@ export const appRouter = router({
         }),
     }),
 
+    // Members / Roster management
+    members: router({
+      list: adminProcedure.query(async () => {
+        const { getDb } = await import("./db");
+        const { users, userPrograms, programs } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) return [];
+
+        const allUsers = await db.select().from(users);
+        const allEnrollments = await db.select().from(userPrograms);
+        const allPrograms = await db.select().from(programs);
+
+        const programMap = new Map(allPrograms.map((p: any) => [p.id, p]));
+
+        return allUsers.map((user: any) => ({
+          ...user,
+          programs: allEnrollments
+            .filter((e: any) => e.userId === user.id && e.status === "active")
+            .map((e: any) => ({
+              enrollmentId: e.id,
+              programId: e.programId,
+              programName: programMap.get(e.programId)?.name || "Unknown",
+              enrolledAt: e.enrolledAt,
+            })),
+        }));
+      }),
+
+      assignProgram: adminProcedure
+        .input(z.object({ userId: z.number(), programId: z.number() }))
+        .mutation(async ({ input }) => {
+          const { getDb } = await import("./db");
+          const { userPrograms } = await import("../drizzle/schema");
+          const { eq, and } = await import("drizzle-orm");
+
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Check for existing active enrollment
+          const existing = await db
+            .select()
+            .from(userPrograms)
+            .where(
+              and(
+                eq(userPrograms.userId, input.userId),
+                eq(userPrograms.programId, input.programId),
+                eq(userPrograms.status, "active")
+              )
+            )
+            .limit(1);
+
+          if (existing.length > 0) {
+            throw new TRPCError({ code: "CONFLICT", message: "User already enrolled in this program" });
+          }
+
+          await db.insert(userPrograms).values({
+            userId: input.userId,
+            programId: input.programId,
+            status: "active",
+          });
+
+          return { success: true };
+        }),
+
+      removeProgram: adminProcedure
+        .input(z.object({ enrollmentId: z.number() }))
+        .mutation(async ({ input }) => {
+          const { getDb } = await import("./db");
+          const { userPrograms } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          await db
+            .update(userPrograms)
+            .set({ status: "cancelled", cancelledAt: new Date() })
+            .where(eq(userPrograms.id, input.enrollmentId));
+
+          return { success: true };
+        }),
+
+      updateRole: adminProcedure
+        .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
+        .mutation(async ({ input }) => {
+          const { getDb } = await import("./db");
+          const { users } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          await db
+            .update(users)
+            .set({ role: input.role, updatedAt: new Date() })
+            .where(eq(users.id, input.userId));
+
+          return { success: true };
+        }),
+
+      create: adminProcedure
+        .input(z.object({
+          name: z.string().min(1),
+          email: z.string().email(),
+        }))
+        .mutation(async ({ input }) => {
+          const { getDb } = await import("./db");
+          const { users } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Check if email already exists
+          const existing = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, input.email))
+            .limit(1);
+
+          if (existing.length > 0) {
+            throw new TRPCError({ code: "CONFLICT", message: "A user with this email already exists" });
+          }
+
+          // Create placeholder user with a generated openId
+          const openId = `placeholder_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
+          const [newUser] = await db
+            .insert(users)
+            .values({
+              openId,
+              name: input.name,
+              email: input.email,
+              role: "user",
+              loginMethod: "placeholder",
+            })
+            .returning();
+
+          return { success: true, userId: newUser.id };
+        }),
+    }),
+
     // Contact submissions
     contacts: router({
       markRead: adminProcedure

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle, Image as ImageIcon, AtSign } from "lucide-react";
+import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle, Image as ImageIcon, AtSign, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc";
@@ -43,15 +43,15 @@ const CHAT_ROOMS: Omit<ChatRoom, 'unreadCount'>[] = [
   { id: "coaches", name: "Coaches", description: "Coach coordination channel", icon: <UserCheck className="h-4 w-4" /> },
 ];
 
+const POLL_INTERVAL = 3000;
+
 export default function Chat() {
   const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
   });
-  
-  const [isConnected, setIsConnected] = useState(false);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [currentRoom, setCurrentRoom] = useState("general");
   const [rooms, setRooms] = useState<ChatRoom[]>(
     CHAT_ROOMS.map(r => ({ ...r, unreadCount: 0 }))
@@ -64,17 +64,44 @@ export default function Chat() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<number>>(() => {
+    try {
+      const stored = localStorage.getItem("dismissed-announcements");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const scrollRef = useRef<HTMLDivElement>(null);
-  const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastMessageIdRef = useRef<number | undefined>(undefined);
+
   const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, {
     enabled: Boolean(user),
     retry: false,
     refetchOnWindowFocus: false,
   });
+
+  // Fetch announcements for banner
+  const { data: announcements } = trpc.announcements.list.useQuery(undefined, {
+    enabled: isAuthenticated,
+  });
+
+  const visibleAnnouncements = announcements?.filter(
+    (a: any) => !dismissedAnnouncements.has(a.id)
+  );
+
+  const dismissAnnouncement = (id: number) => {
+    setDismissedAnnouncements(prev => {
+      const next = new Set(prev);
+      next.add(id);
+      localStorage.setItem("dismissed-announcements", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -99,127 +126,55 @@ export default function Chat() {
     }
   }, [chatTokenQuery.data?.token]);
 
-  // Setup SSE connection
-  const connectSSE = useCallback(() => {
-    if (!user || !chatTokenQuery.data?.token) return;
-
-    // Close existing connection
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    const token = chatTokenQuery.data.token;
-    const sseUrl = `/api/chat/stream?token=${encodeURIComponent(token)}`;
-    
-    logger.info("[Chat] Connecting to SSE...");
-    const eventSource = new EventSource(sseUrl);
-    eventSourceRef.current = eventSource;
-
-    eventSource.addEventListener("connected", (event) => {
-      const data = JSON.parse(event.data);
-      logger.info("[Chat] SSE connected:", data);
-      setIsConnected(true);
-      toast.success("Connected to chat");
-      
-      // Fetch initial message history
-      fetchMessageHistory(currentRoom);
-    });
-
-    eventSource.addEventListener("new_message", (event) => {
-      const message = JSON.parse(event.data) as Message;
-      
-      // Only add message if it's for the current room
-      if (message.room === currentRoom) {
-        setMessages(prev => [...prev, message]);
-      } else if (message.userId !== user.id) {
-        // Increment unread count for other rooms
-        setRooms(prev => prev.map(r => 
-          r.id === message.room 
-            ? { ...r, unreadCount: r.unreadCount + 1 }
-            : r
-        ));
-        toast.info(`New message in #${message.room} from ${message.userName}`);
-      }
-    });
-
-    eventSource.addEventListener("mention", (event) => {
-      const data = JSON.parse(event.data);
-      toast.info(`${data.from} mentioned you in #${data.room}`);
-    });
-
-    eventSource.addEventListener("online_users", (event) => {
-      const users = JSON.parse(event.data) as OnlineUser[];
-      setOnlineUsers(users);
-    });
-
-    eventSource.addEventListener("ping", () => {
-      // Keep-alive ping received
-    });
-
-    eventSource.onerror = () => {
-      logger.error("[Chat] SSE connection error");
-      setIsConnected(false);
-      eventSource.close();
-      
-      // Attempt to reconnect after 5 seconds
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      reconnectTimeoutRef.current = setTimeout(() => {
-        logger.info("[Chat] Attempting to reconnect...");
-        connectSSE();
-      }, 5000);
-    };
-
-    return () => {
-      eventSource.close();
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [user, chatTokenQuery.data?.token, currentRoom]);
-
-  // Connect to SSE when token is available
-  useEffect(() => {
-    if (chatTokenQuery.data?.token && user) {
-      connectSSE();
-    }
-
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-    };
-  }, [chatTokenQuery.data?.token, user, connectSSE]);
-
   // Fetch message history for a room
-  const fetchMessageHistory = async (room: string) => {
+  const fetchMessageHistory = useCallback(async (room: string) => {
     try {
       const response = await fetch(`/api/chat/history/${room}?limit=50`);
       if (response.ok) {
-        const history = await response.json();
-        setMessages(history);
+        const history = await response.json() as Message[];
+        setMessages(prev => {
+          // Compare last message ID to detect new messages
+          const newLastId = history.length > 0 ? history[history.length - 1].id : undefined;
+          const prevLastId = lastMessageIdRef.current;
+          lastMessageIdRef.current = newLastId;
+
+          // If message IDs changed, update
+          if (newLastId !== prevLastId || prev.length === 0) {
+            return history;
+          }
+          return prev;
+        });
+        if (!isPolling) {
+          setIsPolling(true);
+        }
       }
     } catch (error) {
       logger.error("[Chat] Failed to fetch message history:", error);
     }
-  };
+  }, [isPolling]);
 
-  // Fetch history when switching rooms
+  // Start polling when token is available
   useEffect(() => {
-    if (isConnected && currentRoom) {
-      fetchMessageHistory(currentRoom);
-      // Clear unread count for current room
-      setRooms(prev => prev.map(r => 
-        r.id === currentRoom ? { ...r, unreadCount: 0 } : r
-      ));
-    }
-  }, [isConnected, currentRoom]);
+    if (!chatTokenQuery.data?.token || !user) return;
 
-  // Auto-scroll to bottom
+    // Initial fetch
+    lastMessageIdRef.current = undefined;
+    fetchMessageHistory(currentRoom);
+
+    // Set up polling interval
+    pollIntervalRef.current = setInterval(() => {
+      fetchMessageHistory(currentRoom);
+    }, POLL_INTERVAL);
+
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, [chatTokenQuery.data?.token, user, currentRoom, fetchMessageHistory]);
+
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -259,16 +214,16 @@ export default function Chat() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("token", chatTokenQuery.data?.token || "");
-      
+
       const response = await fetch("/api/chat/upload-image", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to upload image");
       }
-      
+
       const data = await response.json();
       return { url: data.url, key: data.key };
     } catch (error) {
@@ -283,19 +238,19 @@ export default function Chat() {
   // Send message via HTTP POST
   const handleSendMessage = async () => {
     if (!user || (!newMessage.trim() && !selectedImage) || !chatTokenQuery.data?.token) {
-      if (!isConnected) {
+      if (!chatTokenQuery.data?.token) {
         toast.error("Not connected to chat. Please wait or refresh the page.");
       }
       return;
     }
 
     setIsSending(true);
-    
+
     // Extract mentions from message
     const mentionRegex = /@(\w+)/g;
     const mentionedNames = [...newMessage.matchAll(mentionRegex)].map(m => m[1]);
     const mentionedUserIds = allUsers
-      .filter(u => mentionedNames.some(name => 
+      .filter(u => mentionedNames.some(name =>
         u.name.toLowerCase().includes(name.toLowerCase())
       ))
       .map(u => u.id);
@@ -304,7 +259,7 @@ export default function Chat() {
       // Upload image first if selected
       let imageUrl: string | undefined;
       let imageKey: string | undefined;
-      
+
       if (selectedImage) {
         const uploadResult = await uploadImage(selectedImage);
         if (uploadResult) {
@@ -324,7 +279,7 @@ export default function Chat() {
         body: JSON.stringify({
           token: chatTokenQuery.data.token,
           room: currentRoom,
-          message: newMessage.trim() || (imageUrl ? "📷 Shared an image" : ""),
+          message: newMessage.trim() || (imageUrl ? "Shared an image" : ""),
           imageUrl,
           imageKey,
           mentions: mentionedUserIds.length > 0 ? mentionedUserIds : undefined,
@@ -338,6 +293,9 @@ export default function Chat() {
       setNewMessage("");
       setShowMentions(false);
       clearSelectedImage();
+
+      // Immediately fetch new messages after sending
+      fetchMessageHistory(currentRoom);
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
@@ -356,7 +314,7 @@ export default function Chat() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewMessage(value);
-    
+
     // Check for @ mentions
     const lastAtIndex = value.lastIndexOf("@");
     if (lastAtIndex !== -1 && lastAtIndex === value.length - 1) {
@@ -385,13 +343,18 @@ export default function Chat() {
   const switchRoom = (roomId: string) => {
     setCurrentRoom(roomId);
     setMessages([]); // Clear messages while loading new room
+    lastMessageIdRef.current = undefined;
     setMobileMenuOpen(false);
+    // Clear unread count for new room
+    setRooms(prev => prev.map(r =>
+      r.id === roomId ? { ...r, unreadCount: 0 } : r
+    ));
   };
 
   const currentRoomData = rooms.find(r => r.id === currentRoom);
   const totalUnread = rooms.reduce((sum, r) => sum + r.unreadCount, 0);
-  
-  const filteredMentionUsers = allUsers.filter(u => 
+
+  const filteredMentionUsers = allUsers.filter(u =>
     u.name.toLowerCase().includes(mentionFilter.toLowerCase())
   ).slice(0, 5);
 
@@ -441,6 +404,30 @@ export default function Chat() {
       <Navigation />
       <main id="main-content" className="flex-1 p-2 md:p-4">
         <div className="container max-w-6xl mx-auto h-[calc(100vh-10rem)]">
+          {/* Announcement Banner */}
+          {visibleAnnouncements && visibleAnnouncements.length > 0 && (
+            <div className="mb-3 space-y-2">
+              {visibleAnnouncements.slice(0, 2).map((announcement: any) => (
+                <div
+                  key={announcement.id}
+                  className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3"
+                >
+                  <Bell className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground">{announcement.title}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{announcement.content}</p>
+                  </div>
+                  <button
+                    onClick={() => dismissAnnouncement(announcement.id)}
+                    className="text-muted-foreground hover:text-foreground shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex h-full gap-4">
             {/* Sidebar - Desktop */}
             <div className="hidden md:flex flex-col w-64 bg-card rounded-lg border">
@@ -475,24 +462,12 @@ export default function Chat() {
                   ))}
                 </div>
               </ScrollArea>
-              
-              {/* Online Users */}
+
+              {/* Connection Status */}
               <div className="p-4 border-t">
-                <h3 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
-                  <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                  Online ({onlineUsers.length})
-                </h3>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {onlineUsers.slice(0, 10).map((u) => (
-                    <div key={u.id} className="text-sm text-muted-foreground truncate">
-                      {u.name}
-                    </div>
-                  ))}
-                  {onlineUsers.length > 10 && (
-                    <div className="text-xs text-muted-foreground">
-                      +{onlineUsers.length - 10} more
-                    </div>
-                  )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Circle className={`h-2 w-2 ${isPolling ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
+                  {isPolling ? 'Connected' : 'Connecting...'}
                 </div>
               </div>
             </div>
@@ -561,7 +536,7 @@ export default function Chat() {
                       </span>
                     )}
                   </Button>
-                  
+
                   <div className="flex-1">
                     <CardTitle className="text-xl flex items-center gap-2">
                       {currentRoomData?.icon}
@@ -571,14 +546,14 @@ export default function Chat() {
                       {currentRoomData?.description}
                     </p>
                   </div>
-                  
+
                   <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                    <Circle className={`h-2 w-2 ${isConnected ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
-                    {isConnected ? `${onlineUsers.length} online` : 'Connecting...'}
+                    <Circle className={`h-2 w-2 ${isPolling ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
+                    {isPolling ? 'Connected' : 'Connecting...'}
                   </div>
                 </div>
               </CardHeader>
-              
+
               <CardContent className="flex-1 flex flex-col min-h-0">
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
@@ -594,7 +569,7 @@ export default function Chat() {
                       messages.map((msg, index) => {
                         const isOwnMessage = msg.userId === user.id;
                         const showAvatar = index === 0 || messages[index - 1]?.userId !== msg.userId;
-                        
+
                         return (
                           <div
                             key={msg.id || index}
@@ -611,9 +586,9 @@ export default function Chat() {
                                 <p className="text-xs font-semibold mb-1">{msg.userName}</p>
                               )}
                               {msg.imageUrl && (
-                                <img 
-                                  src={msg.imageUrl} 
-                                  alt="Shared image" 
+                                <img
+                                  src={msg.imageUrl}
+                                  alt="Shared image"
                                   className="max-w-full rounded mb-2"
                                 />
                               )}
@@ -651,9 +626,9 @@ export default function Chat() {
                 {/* Image Preview */}
                 {imagePreview && (
                   <div className="relative inline-block mb-2">
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
                       className="max-h-32 rounded border"
                     />
                     <button
@@ -691,9 +666,9 @@ export default function Chat() {
                     className="flex-1"
                     disabled={isSending || isUploading}
                   />
-                  <Button 
-                    onClick={handleSendMessage} 
-                    size="icon" 
+                  <Button
+                    onClick={handleSendMessage}
+                    size="icon"
                     disabled={(!newMessage.trim() && !selectedImage) || isSending || isUploading}
                   >
                     {isUploading ? (
