@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "wouter";
 import { Facebook, Instagram, MapPin, Clock, Mail, Phone, MessageCircle } from "lucide-react";
 
 export default function Footer() {
@@ -93,21 +92,21 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Programs</h3>
             <div className="w-8 h-0.5 bg-primary mb-4" />
             <div className="flex flex-col gap-3">
-              <Link href="/programs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+              <a href="https://academytn.com/programs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 All Programs
-              </Link>
-              <Link href="/performance-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+              </a>
+              <a href="https://academytn.com/performance-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Performance Lab
-              </Link>
-              <Link href="/skills-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+              </a>
+              <a href="https://academytn.com/skills-lab" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 Skills Lab
-              </Link>
-              <Link href="/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+              </a>
+              <a href="https://academytn.com/about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 About Us
-              </Link>
-              <Link href="/faqs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+              </a>
+              <a href="https://academytn.com/faqs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                 FAQs
-              </Link>
+              </a>
             </div>
           </div>
 
@@ -192,12 +191,12 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} The Academy. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <Link href="/contact" className="hover:text-primary transition-colors">
+            <a href="https://academytn.com/contact" className="hover:text-primary transition-colors">
               Contact
-            </Link>
-            <Link href="/faqs" className="hover:text-primary transition-colors">
+            </a>
+            <a href="https://academytn.com/faqs" className="hover:text-primary transition-colors">
               FAQs
-            </Link>
+            </a>
           </div>
         </div>
       </div>

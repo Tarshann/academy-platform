@@ -2,7 +2,6 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock } from "lucide-react";
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 const SCHEDULE_DATA = [
@@ -13,13 +12,13 @@ const SCHEDULE_DATA = [
         name: "Academy Skills Lab",
         time: "6:00–6:50 PM",
         details: "Drop-in, $10/session, all ages",
-        href: "/skills-lab",
+        href: "https://academytn.com/skills-lab",
       },
       {
         name: "Academy Performance Lab",
         time: "7:00–8:00 PM",
         details: "Members only, $245/month",
-        href: "/performance-lab",
+        href: "https://academytn.com/performance-lab",
       },
     ],
   },
@@ -30,13 +29,13 @@ const SCHEDULE_DATA = [
         name: "Academy Skills Lab",
         time: "6:00–6:50 PM",
         details: "Drop-in, $10/session, all ages",
-        href: "/skills-lab",
+        href: "https://academytn.com/skills-lab",
       },
       {
         name: "Academy Performance Lab",
         time: "7:00–8:00 PM",
         details: "Members only, $245/month",
-        href: "/performance-lab",
+        href: "https://academytn.com/performance-lab",
       },
     ],
   },
@@ -47,7 +46,7 @@ const SCHEDULE_DATA = [
         name: "Academy Performance Lab",
         time: "11:00 AM–12:00 PM",
         details: "Members only, $245/month",
-        href: "/performance-lab",
+        href: "https://academytn.com/performance-lab",
       },
     ],
   },
@@ -116,7 +115,7 @@ export default function Schedule() {
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-4">
                     {daySchedule.programs.map((program, idx) => (
-                      <Link key={idx} href={program.href} className="block">
+                      <a key={idx} href={program.href} className="block">
                         <div className="p-4 border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition cursor-pointer">
                           <h4 className="font-semibold text-foreground mb-2">{program.name}</h4>
                           <div className="space-y-1 text-sm text-muted-foreground">
@@ -127,7 +126,7 @@ export default function Schedule() {
                             <p className="pt-1">{program.details}</p>
                           </div>
                         </div>
-                      </Link>
+                      </a>
                     ))}
                   </div>
                 </CardContent>
@@ -142,9 +141,9 @@ export default function Schedule() {
               <p className="text-muted-foreground mb-4">
                 By appointment. Contact Coach Mac or Coach O to schedule a 1-on-1 session ($60/session).
               </p>
-              <Link href="/contact">
+              <a href="https://academytn.com/contact">
                 <Button variant="outline">Contact Us to Schedule</Button>
-              </Link>
+              </a>
             </CardContent>
           </Card>
 
@@ -156,14 +155,14 @@ export default function Schedule() {
                 Explore our programs or book a private session with one of our coaches.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/programs">
+                <a href="https://academytn.com/programs">
                   <Button size="lg">Browse Programs</Button>
-                </Link>
-                <Link href="/contact">
+                </a>
+                <a href="https://academytn.com/contact">
                   <Button size="lg" variant="outline">
                     Book Private Session
                   </Button>
-                </Link>
+                </a>
               </div>
               <div className="mt-6 text-sm text-muted-foreground">
                 <p>Questions? Contact us at:</p>

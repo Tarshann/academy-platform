@@ -349,15 +349,15 @@ export default function PaymentSuccess() {
               </>
             )}
             
-            <Link href="/register">
+            <a href="https://academytn.com/programs">
               <Button variant="outline" className="w-full" size="lg">
-                Register for More Programs
+                Browse More Programs
               </Button>
-            </Link>
+            </a>
 
             <div className="text-center pt-4">
               <p className="text-sm text-muted-foreground">
-                Questions? <Link href="/contact"><span className="text-primary hover:underline">Contact us</span></Link> or email us at{' '}
+                Questions? <a href="https://academytn.com/contact" className="text-primary hover:underline">Contact us</a> or email us at{' '}
                 <a href="mailto:omarphilmore@yahoo.com" className="text-primary hover:underline">omarphilmore@yahoo.com</a>
               </p>
             </div>

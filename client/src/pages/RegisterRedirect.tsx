@@ -1,12 +1,9 @@
 import { useEffect } from "react";
-import { useLocation } from "wouter";
 
 export default function RegisterRedirect() {
-  const [, setLocation] = useLocation();
-
   useEffect(() => {
-    setLocation("/programs");
-  }, [setLocation]);
+    window.location.href = "https://academytn.com/programs";
+  }, []);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

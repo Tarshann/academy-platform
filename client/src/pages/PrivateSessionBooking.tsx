@@ -156,9 +156,9 @@ export default function PrivateSessionBooking() {
                   </p>
 
                   <div className="flex flex-col gap-2 pt-4">
-                    <Link href="/register">
+                    <a href="https://academytn.com/programs">
                       <Button className="w-full">Browse More Programs</Button>
-                    </Link>
+                    </a>
                     <Link href="/">
                       <Button variant="outline" className="w-full">
                         Return to Home

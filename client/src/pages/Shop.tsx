@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Link } from "wouter";
+
 
 const upcomingProducts = [
   {
@@ -114,16 +114,16 @@ export default function Shop() {
                 Register for Academy training programs to get exclusive early access and member discounts when the shop launches.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/programs">
+                <a href="https://academytn.com/programs">
                   <Button size="lg">
                     View Programs
                   </Button>
-                </Link>
-                <Link href="/contact">
+                </a>
+                <a href="https://academytn.com/contact">
                   <Button size="lg" variant="outline">
                     Contact Us
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </div>
