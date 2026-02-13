@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/clerk-expo';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, Image, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
@@ -39,10 +39,17 @@ export default function DashboardScreen() {
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View>
-          <View style={styles.welcomeRow}>
-            <Text style={styles.welcome}>
-              Welcome, {user?.firstName || 'Member'}
-            </Text>
+          <View style={styles.headerRow}>
+            <Image
+              source={require('../../assets/academy-logo.jpeg')}
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.welcome}>
+                Welcome, {user?.firstName || 'Member'}
+              </Text>
+            </View>
             {isAdmin && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>Admin</Text>
@@ -104,10 +111,16 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  welcomeRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
+  },
+  headerLogo: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    marginRight: 12,
   },
   welcome: {
     fontSize: 24,
