@@ -114,7 +114,7 @@ app.post("/api/chat/send", async (req, res) => {
         imageKey: imageKey || null,
         mentions: mentions ? JSON.stringify(mentions) : null,
       })
-      .$returningId();
+      .returning();
 
     const savedMessage = {
       id: newMessage.id,

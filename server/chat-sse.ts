@@ -225,7 +225,7 @@ export function setupSSEChat(app: Express) {
         imageUrl: imageUrl || null,
         imageKey: imageKey || null,
         mentions: mentions ? JSON.stringify(mentions) : null,
-      }).$returningId();
+      }).returning();
       
       const savedMessage = {
         id: newMessage.id,
