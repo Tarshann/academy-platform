@@ -631,7 +631,7 @@ export const appRouter = router({
         const allEnrollments = await db.select().from(userPrograms);
         const allPrograms = await db.select().from(programs);
 
-        const programMap = new Map(allPrograms.map((p: any) => [p.id, p]));
+        const programMap = new Map<number, any>(allPrograms.map((p: any) => [p.id, p]));
 
         return allUsers.map((user: any) => ({
           ...user,
