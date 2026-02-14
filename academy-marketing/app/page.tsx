@@ -10,6 +10,7 @@ import {
   TRUST_STATS,
   TRUSTED_SCHOOLS,
   CONTACT,
+  CONTACTS,
 } from "@/lib/config";
 import { RevealSection } from "./HomepageClient";
 import StickyCTA from "@/components/ui/StickyCTA";
@@ -395,12 +396,15 @@ export default function HomePage() {
               <Link href="/get-started" className="btn-primary text-lg px-10 py-4">
                 Get Started
               </Link>
-              <a
-                href={`tel:${CONTACT.phoneRaw}`}
-                className="btn-secondary text-lg px-10 py-4"
-              >
-                Call {CONTACT.phone}
-              </a>
+              {CONTACTS.map((c) => (
+                <a
+                  key={c.name}
+                  href={`tel:${c.phoneRaw}`}
+                  className="btn-secondary text-lg px-8 py-4"
+                >
+                  {c.name}: {c.phone}
+                </a>
+              ))}
             </div>
           </RevealSection>
         </div>

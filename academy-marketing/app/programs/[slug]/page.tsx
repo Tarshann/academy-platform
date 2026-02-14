@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
-import { PROGRAMS, CONTACT } from "@/lib/config";
+import { PROGRAMS, CONTACT, CONTACTS } from "@/lib/config";
 import { ServiceJsonLd, BreadcrumbJsonLd } from "@/lib/structured-data";
 import ProgramFAQ from "./ProgramFAQ";
 import CheckoutButton from "@/components/ui/CheckoutButton";
@@ -76,12 +76,15 @@ export default async function ProgramDetailPage({
                 label={program.checkoutCta}
                 className="btn-primary text-lg px-10 py-4"
               />
-              <a
-                href={`tel:${CONTACT.phoneRaw}`}
-                className="btn-secondary text-lg px-10 py-4"
-              >
-                Call {CONTACT.phone}
-              </a>
+              {CONTACTS.map((c) => (
+                <a
+                  key={c.name}
+                  href={`tel:${c.phoneRaw}`}
+                  className="btn-secondary text-lg px-8 py-4"
+                >
+                  {c.name}: {c.phone}
+                </a>
+              ))}
             </div>
             <p className="mt-4 text-sm text-white/50">
               Not sure which program?{" "}
@@ -239,12 +242,15 @@ export default async function ProgramDetailPage({
               label={program.checkoutCta}
               className="btn-primary text-lg px-10 py-4"
             />
-            <a
-              href={`tel:${CONTACT.phoneRaw}`}
-              className="btn-secondary text-lg px-10 py-4"
-            >
-              Call {CONTACT.phone}
-            </a>
+            {CONTACTS.map((c) => (
+              <a
+                key={c.name}
+                href={`tel:${c.phoneRaw}`}
+                className="btn-secondary text-lg px-8 py-4"
+              >
+                {c.name}: {c.phone}
+              </a>
+            ))}
           </div>
         </div>
       </section>

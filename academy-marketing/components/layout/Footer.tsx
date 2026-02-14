@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE, CONTACT, ADDRESS, SOCIAL } from "@/lib/config";
+import { SITE, CONTACT, CONTACTS, ADDRESS, SOCIAL } from "@/lib/config";
 import { Facebook, Instagram, MapPin, Clock, Mail, Phone } from "lucide-react";
 
 export default function Footer() {
@@ -108,19 +108,24 @@ export default function Footer() {
               Contact
             </h3>
             <div className="w-8 h-0.5 bg-[var(--color-brand-gold)] mb-4" />
-            <div className="flex flex-col gap-3 text-sm text-white/60">
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-[var(--color-brand-gold)] flex-shrink-0" />
-                <a href={`mailto:${CONTACT.email}`} className="hover:text-[var(--color-brand-gold)] transition-colors">
-                  {CONTACT.email}
-                </a>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-[var(--color-brand-gold)] flex-shrink-0" />
-                <a href={`tel:${CONTACT.phoneRaw}`} className="hover:text-[var(--color-brand-gold)] transition-colors">
-                  {CONTACT.phone}
-                </a>
-              </div>
+            <div className="flex flex-col gap-4 text-sm text-white/60">
+              {CONTACTS.map((c) => (
+                <div key={c.name} className="flex flex-col gap-1">
+                  <span className="text-white/80 font-medium text-xs uppercase tracking-wide">{c.name}</span>
+                  <div className="flex items-center gap-2">
+                    <Phone size={14} className="text-[var(--color-brand-gold)] flex-shrink-0" />
+                    <a href={`tel:${c.phoneRaw}`} className="hover:text-[var(--color-brand-gold)] transition-colors">
+                      {c.phone}
+                    </a>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Mail size={14} className="text-[var(--color-brand-gold)] flex-shrink-0" />
+                    <a href={`mailto:${c.email}`} className="hover:text-[var(--color-brand-gold)] transition-colors">
+                      {c.email}
+                    </a>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

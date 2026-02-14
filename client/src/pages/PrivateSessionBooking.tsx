@@ -169,19 +169,8 @@ export default function PrivateSessionBooking() {
 
                 <div className="text-sm text-muted-foreground pt-4 border-t">
                   <p className="mb-2">Questions? Contact us:</p>
-                  <p>
-                    <a
-                      href="mailto:omarphilmore@yahoo.com"
-                      className="text-primary hover:underline"
-                    >
-                      omarphilmore@yahoo.com
-                    </a>
-                  </p>
-                  <p>
-                    <a href="tel:+15712920633" className="text-primary hover:underline">
-                      (571) 292-0633
-                    </a>
-                  </p>
+                  <p><span className="font-medium">Coach O:</span> <a href="tel:+15712920633" className="text-primary hover:underline">(571) 292-0633</a> · <a href="mailto:omarphilmore@yahoo.com" className="text-primary hover:underline">omarphilmore@yahoo.com</a></p>
+                  <p><span className="font-medium">Coach Mac:</span> <a href="tel:+13155426222" className="text-primary hover:underline">(315) 542-6222</a> · <a href="mailto:Tarshann@gmail.com" className="text-primary hover:underline">Tarshann@gmail.com</a></p>
                 </div>
               </CardContent>
             </Card>

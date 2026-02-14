@@ -133,18 +133,28 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-4">Contact</h3>
             <div className="w-8 h-0.5 bg-primary mb-4" />
-            <div className="flex flex-col gap-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Mail size={16} className="text-primary flex-shrink-0" />
-                <a href="mailto:omarphilmore@yahoo.com" className="hover:text-primary transition-colors">
-                  omarphilmore@yahoo.com
-                </a>
+            <div className="flex flex-col gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1">
+                <span className="text-foreground/80 font-medium text-xs uppercase tracking-wide">Coach O</span>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-primary flex-shrink-0" />
+                  <a href="tel:+15712920633" className="hover:text-primary transition-colors">(571) 292-0633</a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-primary flex-shrink-0" />
+                  <a href="mailto:omarphilmore@yahoo.com" className="hover:text-primary transition-colors">omarphilmore@yahoo.com</a>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Phone size={16} className="text-primary flex-shrink-0" />
-                <a href="tel:5712920633" className="hover:text-primary transition-colors">
-                  (571) 292-0633
-                </a>
+              <div className="flex flex-col gap-1">
+                <span className="text-foreground/80 font-medium text-xs uppercase tracking-wide">Coach Mac</span>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-primary flex-shrink-0" />
+                  <a href="tel:+13155426222" className="hover:text-primary transition-colors">(315) 542-6222</a>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-primary flex-shrink-0" />
+                  <a href="mailto:Tarshann@gmail.com" className="hover:text-primary transition-colors">Tarshann@gmail.com</a>
+                </div>
               </div>
             </div>
           </div>

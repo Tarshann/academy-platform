@@ -102,7 +102,7 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
     };
 
     await sendEmail({
-      to: "omarphilmore@yahoo.com",
+      to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
       subject: `New Performance Lab Application: ${body.athleteName}`,
       html: `
         <h2>New Performance Lab Application</h2>

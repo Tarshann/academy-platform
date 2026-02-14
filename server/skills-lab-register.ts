@@ -87,7 +87,7 @@ export async function handleSkillsLabRegister(req: Request, res: Response) {
 
     // Send notification to coach/admin
     await sendEmail({
-      to: "omarphilmore@yahoo.com",
+      to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
       subject: `New Skills Lab Registration: ${body.athleteName}`,
       html: `
         <h2>New Skills Lab Registration</h2>

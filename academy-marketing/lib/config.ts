@@ -19,6 +19,18 @@ export const CONTACT = {
   smsBody: "Hi, I'm interested in The Academy programs",
 };
 
+export const CONTACT_COACH_MAC = {
+  name: "Coach Mac",
+  phone: "(315) 542-6222",
+  phoneRaw: "+13155426222",
+  email: "Tarshann@gmail.com",
+};
+
+export const CONTACTS = [
+  { name: "Coach O", phone: "(571) 292-0633", phoneRaw: "+15712920633", email: "omarphilmore@yahoo.com" },
+  { name: "Coach Mac", phone: "(315) 542-6222", phoneRaw: "+13155426222", email: "Tarshann@gmail.com" },
+];
+
 export const ADDRESS = {
   locality: "Gallatin",
   region: "TN",

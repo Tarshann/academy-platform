@@ -1,5 +1,5 @@
 import { generatePageMetadata } from "@/lib/metadata";
-import { SITE, CONTACT } from "@/lib/config";
+import { SITE, CONTACT, CONTACTS } from "@/lib/config";
 
 export const metadata = generatePageMetadata({
   title: "Privacy Policy",
@@ -190,25 +190,17 @@ export default function PrivacyPage() {
                   make a data request, please contact us:
                 </p>
                 <div className="mt-4 bg-[var(--color-brand-gray-light)] rounded-xl p-6">
-                  <p className="font-semibold mb-1">{SITE.name}</p>
-                  <p className="text-[var(--color-brand-gray)]">
-                    Email:{" "}
-                    <a
-                      href={`mailto:${CONTACT.email}`}
-                      className="text-[var(--color-brand-gold-dark)] hover:underline"
-                    >
-                      {CONTACT.email}
-                    </a>
-                  </p>
-                  <p className="text-[var(--color-brand-gray)]">
-                    Phone:{" "}
-                    <a
-                      href={`tel:${CONTACT.phoneRaw}`}
-                      className="text-[var(--color-brand-gold-dark)] hover:underline"
-                    >
-                      {CONTACT.phone}
-                    </a>
-                  </p>
+                  <p className="font-semibold mb-2">{SITE.name}</p>
+                  {CONTACTS.map((c) => (
+                    <div key={c.name} className="mb-2 last:mb-0">
+                      <p className="text-[var(--color-brand-gray)] font-medium text-sm">{c.name}</p>
+                      <p className="text-[var(--color-brand-gray)]">
+                        <a href={`mailto:${c.email}`} className="text-[var(--color-brand-gold-dark)] hover:underline">{c.email}</a>
+                        {" · "}
+                        <a href={`tel:${c.phoneRaw}`} className="text-[var(--color-brand-gold-dark)] hover:underline">{c.phone}</a>
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
