@@ -321,7 +321,7 @@ export const FAQ = [
   },
   {
     q: "How do I get started?",
-    a: "The easiest way is to take our quick assessment quiz or drop in to a Skills Lab session. You can also call us at (571) 292-0633.",
+    a: "The easiest way is to take our quick assessment quiz or drop in to a Skills Lab session. You can also call Coach O at (571) 292-0633 or Coach Mac at (315) 542-6222.",
   },
 ];
 
