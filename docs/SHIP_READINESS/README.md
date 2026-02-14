@@ -8,6 +8,14 @@ This folder contains the ship-readiness checklist, acceptance criteria, and the 
 2. Fill in the evidence files (`link-crawl.json`, `auth-matrix.md`, `env-audit.md`, `realtime-decision.md`, `vercel-prod-check.md`).
 3. Use `acceptance-criteria.md` as the final ship gate.
 
+## Evidence status
+
+- `link-crawl.json` + `link-crawl-summary.md`: Pending Playwright crawl
+- `auth-matrix.md`: Up to date (routes + APIs)
+- `env-audit.md`: Pending update for production values
+- `realtime-decision.md`: Pending confirmation of realtime provider
+- `vercel-prod-check.md`: Pending production checklist
+
 ## Files
 
 - `deployment-audit-checklist.md` — Deployment-grade audit checklist.

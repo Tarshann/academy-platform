@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 const categoryLabels: Record<string, string> = {
   training_tips: "Training Tips",
@@ -82,11 +83,11 @@ export default function BlogPost({
 
             {post.featuredImage && (
               <div className="aspect-video w-full overflow-hidden rounded-lg mb-8">
-                <img
+                <ResponsiveImage
                   src={post.featuredImage}
                   alt={post.title}
                   className="w-full h-full object-cover"
-                  loading="lazy"
+                  sizes="(min-width: 1024px) 768px, 100vw"
                 />
               </div>
             )}

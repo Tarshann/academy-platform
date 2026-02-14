@@ -1,13 +1,19 @@
 import { SignIn } from "@clerk/clerk-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { getClerkPublishableKey, isValidClerkPublishableKey } from "@/const";
+import { getClerkPublishableKey } from "@/const";
 
 export default function SignInPage() {
   const clerkKey = getClerkPublishableKey();
-  const hasValidClerkKey = isValidClerkPublishableKey(clerkKey);
+  const searchParams = new URLSearchParams(window.location.search);
+  const redirectParam = searchParams.get("redirect")?.trim();
+  const redirectPath =
+    redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/member";
+  const signUpUrl = `/sign-up?redirect=${encodeURIComponent(redirectPath)}`;
   
-  if (!hasValidClerkKey) {
+  if (!clerkKey) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navigation />
@@ -31,8 +37,8 @@ export default function SignInPage() {
         <SignIn 
           routing="path" 
           path="/sign-in"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/member"
+          signUpUrl={signUpUrl}
+          afterSignInUrl={redirectPath}
         />
       </main>
       <Footer />

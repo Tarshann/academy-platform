@@ -2,6 +2,7 @@
   "status": "pending",
   "generatedAt": null,
   "baseUrl": null,
+  "notes": "Pending Playwright crawl. See docs/SHIP_READINESS/instruction-pack.md.",
   "pagesVisited": [],
   "ctaClicks": [],
   "brokenLinks": [],

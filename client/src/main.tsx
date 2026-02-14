@@ -13,13 +13,45 @@ import {
   isValidClerkPublishableKey,
 } from "./const";
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 import {
   ClerkStateFallbackProvider,
   ClerkStateProvider,
 } from "@/contexts/ClerkStateContext";
 import "./index.css";
 
-const queryClient = new QueryClient();
+const isRetryableError = (error: unknown) => {
+  if (error instanceof TRPCClientError) {
+    const code = error.data?.code;
+    return (
+      code === "INTERNAL_SERVER_ERROR" ||
+      code === "TIMEOUT" ||
+      code === "UNAVAILABLE"
+    );
+  }
+
+  if (error instanceof Error) {
+    return /network|timeout|fetch/i.test(error.message);
+  }
+
+  return false;
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) =>
+        isRetryableError(error) && failureCount < 2,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: (failureCount, error) =>
+        isRetryableError(error) && failureCount < 1,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 3000),
+    },
+  },
+});
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -43,6 +75,9 @@ queryClient.getQueryCache().subscribe(event => {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
     logger.error("[API Query Error]", error);
+    if (isRetryableError(error)) {
+      toast.error("We hit a network issue. Retrying now...");
+    }
   }
 });
 
@@ -51,6 +86,9 @@ queryClient.getMutationCache().subscribe(event => {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
     logger.error("[API Mutation Error]", error);
+    if (isRetryableError(error)) {
+      toast.error("Network error. Please try again.");
+    }
   }
 });
 

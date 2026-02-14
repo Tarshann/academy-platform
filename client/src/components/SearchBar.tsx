@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 interface SearchResult {
   type: "program" | "product" | "gallery" | "video";
@@ -235,11 +236,13 @@ export function SearchBar() {
                   >
                     <div className="flex items-start gap-3">
                       {result.imageUrl && (
-                        <img
+                        <ResponsiveImage
                           src={result.imageUrl}
                           alt={result.title}
                           className="w-12 h-12 object-cover rounded"
-                          loading="lazy"
+                          sizes="48px"
+                          width={48}
+                          height={48}
                         />
                       )}
                       <div className="flex-1 min-w-0">

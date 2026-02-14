@@ -42,63 +42,57 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Premium Athletic Academy - Light-first, disciplined, modern
-   Vibe: Elite training facility × modern SaaS × Nike-level restraint
-   Colors: Warm white, matte championship gold, deep charcoal */
+/* Colorado Buffaloes Color Scheme: Black, Gold (#CFB87C), Silver */
 :root {
-  /* Primary: Matte Championship Gold (#C9A24D) */
-  --primary: oklch(0.72 0.10 85);
-  --primary-foreground: oklch(0.13 0.01 85);
-  --sidebar-primary: oklch(0.72 0.10 85);
-  --sidebar-primary-foreground: oklch(0.13 0.01 85);
+  /* Primary: Gold */
+  --primary: oklch(0.75 0.08 85);
+  --primary-foreground: oklch(0.15 0.01 85);
+  --sidebar-primary: oklch(0.75 0.08 85);
+  --sidebar-primary-foreground: oklch(0.15 0.01 85);
   
-  /* Charts - Gold gradient */
-  --chart-1: oklch(0.72 0.10 85);
-  --chart-2: oklch(0.65 0.08 85);
-  --chart-3: oklch(0.58 0.06 85);
-  --chart-4: oklch(0.50 0.05 85);
-  --chart-5: oklch(0.42 0.04 85);
+  /* Charts */
+  --chart-1: oklch(0.75 0.08 85);
+  --chart-2: oklch(0.65 0.06 85);
+  --chart-3: oklch(0.55 0.05 85);
+  --chart-4: oklch(0.45 0.04 85);
+  --chart-5: oklch(0.35 0.03 85);
   
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   
-  /* Background: Warm white (#FAFAF8) */
-  --background: oklch(0.98 0.003 90);
-  /* Foreground: Deep charcoal (#111111) */
-  --foreground: oklch(0.13 0.005 85);
+  /* Light theme with warm gray background */
+  --background: oklch(0.95 0.005 85);
+  --foreground: oklch(0.15 0.01 85);
   
-  /* Card: Pure white with warmth */
-  --card: oklch(0.995 0.002 90);
-  --card-foreground: oklch(0.13 0.005 85);
+  --card: oklch(0.98 0.003 85);
+  --card-foreground: oklch(0.15 0.01 85);
   
-  --popover: oklch(0.995 0.002 90);
-  --popover-foreground: oklch(0.13 0.005 85);
+  --popover: oklch(0.98 0.003 85);
+  --popover-foreground: oklch(0.15 0.01 85);
   
-  /* Secondary: Warm gray */
-  --secondary: oklch(0.94 0.003 90);
-  --secondary-foreground: oklch(0.25 0.005 85);
+  /* Secondary: Silver/Gray */
+  --secondary: oklch(0.85 0.005 240);
+  --secondary-foreground: oklch(0.2 0.01 240);
   
-  /* Muted: Subtle warm gray (#5E5E5E for text) */
-  --muted: oklch(0.96 0.002 90);
-  --muted-foreground: oklch(0.45 0.005 85);
+  --muted: oklch(0.90 0.005 85);
+  --muted-foreground: oklch(0.45 0.01 85);
   
-  /* Accent: Soft gold highlight */
-  --accent: oklch(0.92 0.04 85);
-  --accent-foreground: oklch(0.13 0.005 85);
+  /* Accent: Gold highlight */
+  --accent: oklch(0.88 0.06 85);
+  --accent-foreground: oklch(0.15 0.01 85);
   
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
   
-  /* Border: Subtle warm gray (#E6E6E3) */
-  --border: oklch(0.91 0.003 90);
-  --input: oklch(0.91 0.003 90);
-  --ring: oklch(0.72 0.10 85);
+  --border: oklch(0.88 0.01 85);
+  --input: oklch(0.88 0.01 85);
+  --ring: oklch(0.75 0.08 85);
   
-  --sidebar: oklch(0.995 0.002 90);
-  --sidebar-foreground: oklch(0.13 0.005 85);
-  --sidebar-accent: oklch(0.92 0.04 85);
-  --sidebar-accent-foreground: oklch(0.13 0.005 85);
-  --sidebar-border: oklch(0.91 0.003 90);
-  --sidebar-ring: oklch(0.72 0.10 85);
+  --sidebar: oklch(0.98 0.003 85);
+  --sidebar-foreground: oklch(0.15 0.01 85);
+  --sidebar-accent: oklch(0.88 0.06 85);
+  --sidebar-accent-foreground: oklch(0.15 0.01 85);
+  --sidebar-border: oklch(0.88 0.01 85);
+  --sidebar-ring: oklch(0.75 0.08 85);
 }
 
 .dark {
@@ -156,18 +150,7 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    line-height: 1.65;
-  }
-  h1, h2, h3, h4, h5, h6 {
-    letter-spacing: -0.02em;
-    font-weight: 700;
-  }
-  h1 {
-    letter-spacing: -0.03em;
-    font-weight: 800;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -179,18 +162,6 @@
   input[type="checkbox"]:not(:disabled),
   input[type="radio"]:not(:disabled) {
     @apply cursor-pointer;
-  }
-}
-
-@layer base {
-  /* Focus ring styles for keyboard accessibility */
-  :focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary;
-  }
-  
-  /* Remove default focus outline, use focus-visible instead */
-  :focus:not(:focus-visible) {
-    outline: none;
   }
 }
 
@@ -235,45 +206,4 @@
       max-width: 1280px; /* Standard content width */
     }
   }
-}
-
-/* Phase 3.5: Gate hover effects for touch devices */
-@media (hover: hover) {
-  .hover-lift:hover {
-    transform: translateY(-2px);
-  }
-  .hover-lift-sm:hover {
-    transform: translateY(-1px);
-  }
-  .hover-scale:hover {
-    transform: scale(1.02);
-  }
-}
-
-/* Touch devices: simpler active states */
-@media (hover: none) {
-  .hover-lift:active,
-  .hover-lift-sm:active {
-    transform: translateY(0);
-    opacity: 0.9;
-  }
-  .hover-scale:active {
-    transform: scale(1);
-    opacity: 0.9;
-  }
-}
-
-/* Hero video fade-in animation */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.video-fade-in {
-  animation: fadeIn 0.8s ease-out forwards;
-}
-
-/* Safe area padding for iOS devices with home indicator */
-.safe-area-pb {
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }

@@ -13,6 +13,10 @@ export default function ShopOrderSuccess() {
   const { isAuthenticated } = useAuth();
   const clerkPublishableKey = getClerkPublishableKey();
   const loginUrl = getLoginUrl();
+  const ordersRedirectPath = "/orders";
+  const signInRedirectUrl = loginUrl.startsWith("/sign-in")
+    ? `/sign-in?redirect=${encodeURIComponent(ordersRedirectPath)}`
+    : loginUrl;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -71,7 +75,7 @@ export default function ShopOrderSuccess() {
               </Button>
             </Link>
             {isAuthenticated ? (
-              <Link href="/member">
+              <Link href={ordersRedirectPath}>
                 <Button
                   size="lg"
                   className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
@@ -80,7 +84,7 @@ export default function ShopOrderSuccess() {
                 </Button>
               </Link>
             ) : clerkPublishableKey ? (
-              <Link href="/sign-in">
+              <Link href={signInRedirectUrl}>
                 <Button
                   size="lg"
                   className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 text-black font-bold"
@@ -89,7 +93,7 @@ export default function ShopOrderSuccess() {
                 </Button>
               </Link>
             ) : (
-              <a href={loginUrl}>
+              <a href={signInRedirectUrl}>
                 <Button
                   size="lg"
                   disabled={loginUrl === "#"}
