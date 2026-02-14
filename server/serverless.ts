@@ -128,6 +128,15 @@ app.post("/api/chat/send", async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
+    // Publish to Ably for real-time delivery
+    const { publishChatMessage } = await import("./ably");
+    await publishChatMessage(room, savedMessage);
+
+    // Send push notifications to offline users (fire-and-forget)
+    import("./push").then(({ notifyChatMessage }) =>
+      notifyChatMessage(dbUser.id, dbUser.name || "User", room, message)
+    ).catch(() => {});
+
     res.json({ success: true, message: savedMessage });
   } catch (error) {
     res.status(500).json({ error: "Failed to send message" });

@@ -26,4 +26,6 @@ export const ENV = {
   // Web Push VAPID keys
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
+  // Ably real-time messaging
+  ablyApiKey: process.env.ABLY_API_KEY ?? "",
 };
