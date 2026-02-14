@@ -704,14 +704,21 @@ export type InsertUserMessagingRole = typeof userMessagingRoles.$inferInsert;
 
 /**
  * Push Subscriptions table
- * Stores Web Push API subscriptions for users
+ * Stores both Web Push and Expo Push subscriptions.
+ * - Web Push: uses endpoint + p256dh + auth
+ * - Expo Push: uses expoPushToken
+ * Platform distinguishes between them.
  */
 export const pushSubscriptions = pgTable("pushSubscriptions", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
-  endpoint: text("endpoint").notNull(),
-  p256dh: varchar("p256dh", { length: 255 }).notNull(),
-  auth: varchar("auth", { length: 255 }).notNull(),
+  platform: varchar("platform", { length: 20 }).notNull().default("web"), // "web" | "ios" | "android"
+  // Web Push fields (nullable for Expo tokens)
+  endpoint: text("endpoint"),
+  p256dh: varchar("p256dh", { length: 255 }),
+  auth: varchar("auth", { length: 255 }),
+  // Expo Push token (nullable for Web Push)
+  expoPushToken: varchar("expoPushToken", { length: 255 }),
   userAgent: text("userAgent"),
   isActive: boolean("isActive").notNull().default(true),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),

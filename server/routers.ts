@@ -183,6 +183,20 @@ export const appRouter = router({
 
       return { token, expiresInMs: CHAT_TOKEN_TTL_MS };
     }),
+    ablyToken: protectedProcedure.query(async ({ ctx }) => {
+      const { createAblyTokenRequest } = await import("./ably");
+      const tokenRequest = await createAblyTokenRequest(
+        ctx.user.id,
+        ctx.user.name || "User"
+      );
+      if (!tokenRequest) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Real-time not configured",
+        });
+      }
+      return tokenRequest;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -1729,6 +1743,28 @@ export const appRouter = router({
           ctx.user.name || "Unknown",
           input.content
         );
+
+        // Publish to Ably for real-time delivery
+        const { publishDmMessage } = await import("./ably");
+        await publishDmMessage(input.conversationId, {
+          id: (message as any).id,
+          conversationId: input.conversationId,
+          senderId: ctx.user.id,
+          senderName: ctx.user.name || "Unknown",
+          content: input.content,
+          createdAt: new Date().toISOString(),
+        });
+
+        // Send push notifications to DM recipient (fire-and-forget)
+        import("./push").then(({ notifyDmMessage }) =>
+          notifyDmMessage(
+            input.conversationId,
+            ctx.user.id,
+            ctx.user.name || "Unknown",
+            input.content
+          )
+        ).catch(() => {});
+
         return message;
       }),
 
@@ -1935,6 +1971,47 @@ export const appRouter = router({
       // Return the VAPID public key from environment
       return { publicKey: ENV.vapidPublicKey || null };
     }),
+
+    // Register an Expo push token (mobile app)
+    registerExpoToken: protectedProcedure
+      .input(
+        z.object({
+          expoPushToken: z.string(),
+          platform: z.enum(["ios", "android"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { pushSubscriptions } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+        // Upsert: deactivate any existing token for this user+platform, then insert
+        await db
+          .update(pushSubscriptions)
+          .set({ isActive: false })
+          .where(
+            and(
+              eq(pushSubscriptions.userId, ctx.user.id),
+              eq(pushSubscriptions.platform, input.platform)
+            )
+          );
+
+        await db.insert(pushSubscriptions).values({
+          userId: ctx.user.id,
+          platform: input.platform,
+          expoPushToken: input.expoPushToken,
+          isActive: true,
+        });
+
+        // Enable push in notification settings
+        const { updateNotificationSettings } = await import("./db");
+        await updateNotificationSettings(ctx.user.id, { pushEnabled: true });
+
+        return { success: true };
+      }),
   }),
 
   // Blog routes (public)

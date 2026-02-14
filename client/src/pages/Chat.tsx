@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import * as Ably from "ably";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,8 +44,6 @@ const CHAT_ROOMS: Omit<ChatRoom, 'unreadCount'>[] = [
   { id: "coaches", name: "Coaches", description: "Coach coordination channel", icon: <UserCheck className="h-4 w-4" /> },
 ];
 
-const POLL_INTERVAL = 3000;
-
 export default function Chat() {
   const { user, isAuthenticated, loading, authConfigured } = useAuth({
     redirectOnUnauthenticated: true,
@@ -64,7 +63,7 @@ export default function Chat() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isPolling, setIsPolling] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [dismissedAnnouncements, setDismissedAnnouncements] = useState<Set<number>>(() => {
     try {
       const stored = localStorage.getItem("dismissed-announcements");
@@ -76,10 +75,17 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastMessageIdRef = useRef<number | undefined>(undefined);
+  const ablyRef = useRef<Ably.Realtime | null>(null);
+  const channelRef = useRef<Ably.RealtimeChannel | null>(null);
 
   const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, {
+    enabled: Boolean(user),
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
+
+  // Ably token for real-time — falls back gracefully if not configured
+  const ablyTokenQuery = trpc.auth.ablyToken.useQuery(undefined, {
     enabled: Boolean(user),
     retry: false,
     refetchOnWindowFocus: false,
@@ -126,53 +132,78 @@ export default function Chat() {
     }
   }, [chatTokenQuery.data?.token]);
 
-  // Fetch message history for a room
+  // Fetch message history for a room (one-time load, not polling)
   const fetchMessageHistory = useCallback(async (room: string) => {
     try {
       const response = await fetch(`/api/chat/history/${room}?limit=50`);
       if (response.ok) {
         const history = await response.json() as Message[];
-        setMessages(prev => {
-          // Compare last message ID to detect new messages
-          const newLastId = history.length > 0 ? history[history.length - 1].id : undefined;
-          const prevLastId = lastMessageIdRef.current;
-          lastMessageIdRef.current = newLastId;
-
-          // If message IDs changed, update
-          if (newLastId !== prevLastId || prev.length === 0) {
-            return history;
-          }
-          return prev;
-        });
-        if (!isPolling) {
-          setIsPolling(true);
-        }
+        setMessages(history);
       }
     } catch (error) {
       logger.error("[Chat] Failed to fetch message history:", error);
     }
-  }, [isPolling]);
+  }, []);
 
-  // Start polling when token is available
+  // Initialize Ably and subscribe to current room
   useEffect(() => {
-    if (!chatTokenQuery.data?.token || !user) return;
+    if (!user || !chatTokenQuery.data?.token) return;
 
-    // Initial fetch
-    lastMessageIdRef.current = undefined;
+    // Load initial history
     fetchMessageHistory(currentRoom);
 
-    // Set up polling interval
-    pollIntervalRef.current = setInterval(() => {
-      fetchMessageHistory(currentRoom);
-    }, POLL_INTERVAL);
-
-    return () => {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
+    // If Ably token is available, set up real-time
+    if (ablyTokenQuery.data) {
+      // Clean up previous connection
+      if (ablyRef.current) {
+        ablyRef.current.close();
       }
-    };
-  }, [chatTokenQuery.data?.token, user, currentRoom, fetchMessageHistory]);
+
+      const ably = new Ably.Realtime({
+        authCallback: (_params, callback) => {
+          callback(null, ablyTokenQuery.data as any);
+        },
+      });
+
+      ably.connection.on("connected", () => {
+        setConnectionStatus("connected");
+        logger.info("[Chat] Ably connected");
+      });
+      ably.connection.on("disconnected", () => setConnectionStatus("disconnected"));
+      ably.connection.on("failed", () => setConnectionStatus("disconnected"));
+
+      ablyRef.current = ably;
+
+      // Subscribe to current room
+      const channel = ably.channels.get(`chat:${currentRoom}`);
+      channel.subscribe("message", (msg) => {
+        const incomingMessage = msg.data as Message;
+        setMessages(prev => {
+          // Deduplicate by ID
+          if (incomingMessage.id && prev.some(m => m.id === incomingMessage.id)) {
+            return prev;
+          }
+          return [...prev, incomingMessage];
+        });
+      });
+      channelRef.current = channel;
+
+      return () => {
+        channel.unsubscribe();
+        ably.close();
+        ablyRef.current = null;
+        channelRef.current = null;
+      };
+    }
+
+    // Fallback: poll if Ably is not available
+    setConnectionStatus("connected");
+    const pollInterval = setInterval(() => {
+      fetchMessageHistory(currentRoom);
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [user, chatTokenQuery.data?.token, ablyTokenQuery.data, currentRoom, fetchMessageHistory]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -294,8 +325,10 @@ export default function Chat() {
       setShowMentions(false);
       clearSelectedImage();
 
-      // Immediately fetch new messages after sending
-      fetchMessageHistory(currentRoom);
+      // If Ably isn't connected, fetch manually to show the sent message
+      if (!ablyRef.current || ablyRef.current.connection.state !== "connected") {
+        fetchMessageHistory(currentRoom);
+      }
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
@@ -343,7 +376,6 @@ export default function Chat() {
   const switchRoom = (roomId: string) => {
     setCurrentRoom(roomId);
     setMessages([]); // Clear messages while loading new room
-    lastMessageIdRef.current = undefined;
     setMobileMenuOpen(false);
     // Clear unread count for new room
     setRooms(prev => prev.map(r =>
@@ -466,8 +498,8 @@ export default function Chat() {
               {/* Connection Status */}
               <div className="p-4 border-t">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Circle className={`h-2 w-2 ${isPolling ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
-                  {isPolling ? 'Connected' : 'Connecting...'}
+                  <Circle className={`h-2 w-2 ${connectionStatus === 'connected' ? 'fill-green-500 text-green-500' : connectionStatus === 'connecting' ? 'fill-yellow-500 text-yellow-500' : 'fill-red-500 text-red-500'}`} />
+                  {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
                 </div>
               </div>
             </div>
@@ -548,8 +580,8 @@ export default function Chat() {
                   </div>
 
                   <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                    <Circle className={`h-2 w-2 ${isPolling ? 'fill-green-500 text-green-500' : 'fill-yellow-500 text-yellow-500'}`} />
-                    {isPolling ? 'Connected' : 'Connecting...'}
+                    <Circle className={`h-2 w-2 ${connectionStatus === 'connected' ? 'fill-green-500 text-green-500' : connectionStatus === 'connecting' ? 'fill-yellow-500 text-yellow-500' : 'fill-red-500 text-red-500'}`} />
+                    {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
                   </div>
                 </div>
               </CardHeader>

@@ -1,12 +1,64 @@
 import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
+import { trpc } from '../lib/trpc';
+import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
 import { Loading } from '../components/Loading';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
+function PushRegistration() {
+  const { isSignedIn } = useAuth();
+  const registerExpoToken = trpc.pushNotifications.registerExpoToken.useMutation();
+  const registered = useRef(false);
+
+  useEffect(() => {
+    if (!isSignedIn || registered.current) return;
+
+    (async () => {
+      const token = await registerForPushNotifications();
+      if (token) {
+        const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+        registerExpoToken.mutate(
+          { expoPushToken: token, platform: platform as 'ios' | 'android' },
+          {
+            onSuccess: () => {
+              registered.current = true;
+              console.log('[Push] Token registered:', token);
+            },
+            onError: (err) => console.error('[Push] Registration failed:', err),
+          }
+        );
+      }
+    })();
+  }, [isSignedIn]);
+
+  return null;
+}
+
+function NotificationHandler() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Handle notification taps — deep link to conversation
+    const cleanup = addNotificationResponseListener((response) => {
+      const data = response.notification.request.content.data;
+      if (data?.type === 'chat' && data?.room) {
+        router.push(`/chat/${data.room}`);
+      } else if (data?.type === 'dm' && data?.conversationId) {
+        router.push(`/dm/${data.conversationId}`);
+      }
+    });
+
+    return cleanup;
+  }, [router]);
+
+  return null;
+}
 
 function AuthGuard() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -27,7 +79,13 @@ function AuthGuard() {
 
   if (!isLoaded) return <Loading />;
 
-  return <Slot />;
+  return (
+    <>
+      <PushRegistration />
+      <NotificationHandler />
+      <Slot />
+    </>
+  );
 }
 
 export default function RootLayout() {
