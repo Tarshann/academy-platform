@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
-import { FAQ, CONTACT } from "@/lib/config";
+import { FAQ, CONTACT, CONTACTS } from "@/lib/config";
 import FAQAccordion from "./FAQAccordion";
 
 export const metadata = generatePageMetadata({
@@ -62,12 +62,15 @@ export default function FAQPage() {
               Get Started
               <ArrowRight size={20} />
             </Link>
-            <a
-              href={`tel:${CONTACT.phoneRaw}`}
-              className="btn-secondary text-lg px-10 py-4"
-            >
-              Call {CONTACT.phone}
-            </a>
+            {CONTACTS.map((c) => (
+              <a
+                key={c.name}
+                href={`tel:${c.phoneRaw}`}
+                className="btn-secondary text-lg px-8 py-4"
+              >
+                {c.name}: {c.phone}
+              </a>
+            ))}
           </div>
         </div>
       </section>

@@ -101,7 +101,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <div style="text-align:center;margin:24px 0;">
             <a href="https://academytn.com/programs" style="display:inline-block;background:#CFB53B;color:#1a1a1a;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;">See All Programs</a>
           </div>
-          <p>Questions? Call or text us at <a href="tel:+15712920633">(571) 292-0633</a>.</p>
+          <p>Questions? Coach O: <a href="tel:+15712920633">(571) 292-0633</a> · Coach Mac: <a href="tel:+13155426222">(315) 542-6222</a></p>
           <p>— The Academy Team</p>
         </div>
         ${unsubscribeFooter(lead.email)}
@@ -170,7 +170,7 @@ const NURTURE_SEQUENCE: NurtureStep[] = [
           <div style="text-align:center;margin:24px 0;">
             <a href="https://academytn.com/get-started" style="display:inline-block;background:#CFB53B;color:#1a1a1a;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:bold;">Get Started</a>
           </div>
-          <p>Or text Coach Mac at <a href="tel:+15712920633">(571) 292-0633</a> to ask anything.</p>
+          <p>Or text Coach Mac at <a href="tel:+13155426222">(315) 542-6222</a> or Coach O at <a href="tel:+15712920633">(571) 292-0633</a> to ask anything.</p>
           <p>— The Academy Team</p>
         </div>
         ${unsubscribeFooter(lead.email)}

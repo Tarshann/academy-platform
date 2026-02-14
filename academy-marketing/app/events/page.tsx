@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Calendar, MapPin, Clock, Users, Trophy, ArrowRight, Phone, ChevronRight } from 'lucide-react';
+import { CONTACTS } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: 'Summer Camps 2026 — Basketball & Speed/Agility | The Academy',
@@ -399,13 +400,18 @@ export default function EventsPage() {
                 Register Now
                 <ArrowRight className="w-5 h-5" />
               </a>
-              <a
-                href="tel:+15712920633"
-                className="btn-secondary text-lg px-10 py-4 inline-flex items-center justify-center gap-2"
-              >
-                <Phone className="w-5 h-5" />
-                Questions? Call Us
-              </a>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {CONTACTS.map((c) => (
+                  <a
+                    key={c.name}
+                    href={`tel:${c.phoneRaw}`}
+                    className="btn-secondary text-base px-8 py-3 inline-flex items-center justify-center gap-2"
+                  >
+                    <Phone className="w-4 h-4" />
+                    {c.name}: {c.phone}
+                  </a>
+                ))}
+              </div>
             </div>
             <p className="text-white/40 text-sm mt-6">
               Registration closes May 15, 2026. Camp pricing is $185 per week

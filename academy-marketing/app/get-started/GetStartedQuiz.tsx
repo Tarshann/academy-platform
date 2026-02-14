@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
-import { CONTACT } from "@/lib/config";
+import { CONTACT, CONTACTS } from "@/lib/config";
 import { trackEvent } from "@/components/seo/Analytics";
 
 type AgeRange = "under-8" | "8-10" | "11-14" | "15+";
@@ -522,12 +522,15 @@ export default function GetStartedQuiz() {
                         </>
                       )}
                     </button>
-                    <a
-                      href={`tel:${CONTACT.phoneRaw}`}
-                      className="btn-secondary-dark flex-1 text-center py-3"
-                    >
-                      Call {CONTACT.phone}
-                    </a>
+                    {CONTACTS.map((c) => (
+                      <a
+                        key={c.name}
+                        href={`tel:${c.phoneRaw}`}
+                        className="btn-secondary-dark flex-1 text-center py-3"
+                      >
+                        {c.name}: {c.phone}
+                      </a>
+                    ))}
                   </div>
                   {checkoutError && (
                     <p className="text-red-500 text-sm mt-2">{checkoutError}</p>

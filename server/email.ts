@@ -17,7 +17,7 @@ function getResend(): Resend | null {
 }
 
 export interface EmailOptions {
-  to: string;
+  to: string | string[];
   subject: string;
   html: string;
   from?: string;
@@ -333,7 +333,8 @@ export async function sendGuestPaymentConfirmationEmail(params: {
         <div class="footer">
           <p><strong>The Academy</strong> | Gallatin, TN</p>
           <p>Building Complete Athletes. Not Just Better Players.</p>
-          <p>omarphilmore@yahoo.com | (571) 292-0833</p>
+          <p>Coach O: (571) 292-0633 · omarphilmore@yahoo.com</p>
+          <p>Coach Mac: (315) 542-6222 · Tarshann@gmail.com</p>
         </div>
       </div>
     </body>

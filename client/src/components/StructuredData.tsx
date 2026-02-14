@@ -90,12 +90,20 @@ export function OrganizationStructuredData({
         { "@type": "OpeningHoursSpecification", dayOfWeek: "Thursday", opens: "18:00", closes: "20:00" },
         { "@type": "OpeningHoursSpecification", dayOfWeek: "Sunday", opens: "11:00", closes: "12:00" },
       ],
-      contactPoint: {
-        "@type": "ContactPoint",
-        telephone: phone,
-        contactType: "Customer Service",
-        email,
-      },
+      contactPoint: [
+        {
+          "@type": "ContactPoint",
+          telephone: phone,
+          contactType: "Customer Service",
+          email,
+        },
+        {
+          "@type": "ContactPoint",
+          telephone: "+13155426222",
+          contactType: "Customer Service",
+          email: "Tarshann@gmail.com",
+        },
+      ],
       sameAs: socialMedia,
       review: [
         {

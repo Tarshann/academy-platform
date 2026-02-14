@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
-import { COACHES, FOUNDERS, CONTACT } from "@/lib/config";
+import { COACHES, FOUNDERS, CONTACT, CONTACTS } from "@/lib/config";
 
 export const metadata = generatePageMetadata({
   title: "Coaches — Meet Your Trainers",
@@ -155,12 +155,15 @@ export default function CoachesPage() {
               Book a Private Session
               <ArrowRight size={20} />
             </Link>
-            <a
-              href={`tel:${CONTACT.phoneRaw}`}
-              className="btn-secondary text-lg px-10 py-4"
-            >
-              Call {CONTACT.phone}
-            </a>
+            {CONTACTS.map((c) => (
+              <a
+                key={c.name}
+                href={`tel:${c.phoneRaw}`}
+                className="btn-secondary text-lg px-8 py-4"
+              >
+                {c.name}: {c.phone}
+              </a>
+            ))}
           </div>
         </div>
       </section>
