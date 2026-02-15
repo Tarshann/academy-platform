@@ -15,7 +15,7 @@
       "backgroundColor": "#1a1a2e"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": ["remote-notification"]
