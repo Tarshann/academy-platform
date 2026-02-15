@@ -712,6 +712,7 @@ export type InsertUserMessagingRole = typeof userMessagingRoles.$inferInsert;
 export const pushSubscriptions = pgTable("pushSubscriptions", {
   id: serial("id").primaryKey(),
   userId: integer("userId").notNull(),
+  deviceId: varchar("deviceId", { length: 255 }), // Stable per-device ID for multi-device support
   platform: varchar("platform", { length: 20 }).notNull().default("web"), // "web" | "ios" | "android"
   // Web Push fields (nullable for Expo tokens)
   endpoint: text("endpoint"),

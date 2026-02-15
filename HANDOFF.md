@@ -165,10 +165,12 @@ academy-platform/
 ### Push Notifications
 | Table | Purpose | Key Columns |
 |-------|---------|-------------|
-| `pushSubscriptions` | Push endpoints | userId, platform (web/ios/android), endpoint, expoPushToken |
+| `pushSubscriptions` | Push endpoints | userId, deviceId, platform (web/ios/android), endpoint, expoPushToken |
 | `notificationSettings` | User prefs | pushEnabled, quietHoursStart/End, dmNotifications, channelNotifications |
 | `notificationLogs` | Delivery log | userId, type (push/email), status (pending/sent/failed/clicked) |
 | `notificationPreferences` | Email prefs | sessionRegistrations, paymentConfirmations, announcements (booleans) |
+
+> **Push device model:** Mobile tokens upsert by `(userId, deviceId)` — one row per physical device. iPhone + iPad for the same user both receive notifications. Web Push keys on `(userId, endpoint)` which is naturally per-browser. The `deviceId` is generated once per install via `expo-secure-store` and persists across app updates.
 
 ### People & Locations
 | Table | Purpose | Key Columns |

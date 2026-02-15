@@ -1978,6 +1978,7 @@ export const appRouter = router({
         z.object({
           expoPushToken: z.string(),
           platform: z.enum(["ios", "android"]),
+          deviceId: z.string().min(1),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -1988,23 +1989,37 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Upsert: deactivate any existing token for this user+platform, then insert
-        await db
-          .update(pushSubscriptions)
-          .set({ isActive: false })
+        // Upsert by (userId, deviceId): one row per device
+        const existing = await db
+          .select()
+          .from(pushSubscriptions)
           .where(
             and(
               eq(pushSubscriptions.userId, ctx.user.id),
-              eq(pushSubscriptions.platform, input.platform)
+              eq(pushSubscriptions.deviceId, input.deviceId)
             )
-          );
+          )
+          .limit(1);
 
-        await db.insert(pushSubscriptions).values({
-          userId: ctx.user.id,
-          platform: input.platform,
-          expoPushToken: input.expoPushToken,
-          isActive: true,
-        });
+        if (existing.length > 0) {
+          await db
+            .update(pushSubscriptions)
+            .set({
+              expoPushToken: input.expoPushToken,
+              platform: input.platform,
+              isActive: true,
+              updatedAt: new Date(),
+            })
+            .where(eq(pushSubscriptions.id, existing[0].id));
+        } else {
+          await db.insert(pushSubscriptions).values({
+            userId: ctx.user.id,
+            deviceId: input.deviceId,
+            platform: input.platform,
+            expoPushToken: input.expoPushToken,
+            isActive: true,
+          });
+        }
 
         // Enable push in notification settings
         const { updateNotificationSettings } = await import("./db");

@@ -7,6 +7,7 @@ import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
 import { trpc } from '../lib/trpc';
 import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
+import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
@@ -20,15 +21,18 @@ function PushRegistration() {
     if (!isSignedIn || registered.current) return;
 
     (async () => {
-      const token = await registerForPushNotifications();
+      const [token, deviceId] = await Promise.all([
+        registerForPushNotifications(),
+        getDeviceId(),
+      ]);
       if (token) {
         const platform = Platform.OS === 'ios' ? 'ios' : 'android';
         registerExpoToken.mutate(
-          { expoPushToken: token, platform: platform as 'ios' | 'android' },
+          { expoPushToken: token, platform: platform as 'ios' | 'android', deviceId },
           {
             onSuccess: () => {
               registered.current = true;
-              console.log('[Push] Token registered:', token);
+              console.log('[Push] Token registered:', token, 'device:', deviceId);
             },
             onError: (err) => console.error('[Push] Registration failed:', err),
           }
