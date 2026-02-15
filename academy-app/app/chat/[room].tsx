@@ -16,7 +16,7 @@ import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 
 const ACADEMY_GOLD = '#CFB87C';
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 
 const ROOM_TITLES: Record<string, string> = {
   general: '#General',

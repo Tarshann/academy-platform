@@ -7,7 +7,11 @@ import type { AppRouter } from '../../server/routers';
 
 export const trpc = createTRPCReact<AppRouter>();
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
+
+if (!API_URL) {
+  console.error('[tRPC] EXPO_PUBLIC_API_URL is not set — API calls will fail');
+}
 
 export const queryClient = new QueryClient({
   defaultOptions: {

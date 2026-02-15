@@ -2,14 +2,31 @@ import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, Text, StyleSheet } from 'react-native';
 import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
 import { trpc } from '../lib/trpc';
 import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
+import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 
-const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+function ConfigError({ message }: { message: string }) {
+  return (
+    <View style={configStyles.container}>
+      <Text style={configStyles.title}>Configuration Error</Text>
+      <Text style={configStyles.message}>{message}</Text>
+    </View>
+  );
+}
+
+const configStyles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e', padding: 24 },
+  title: { fontSize: 20, fontWeight: '700', color: '#CFB87C', marginBottom: 12 },
+  message: { fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20 },
+});
 
 function PushRegistration() {
   const { isSignedIn } = useAuth();
@@ -20,19 +37,26 @@ function PushRegistration() {
     if (!isSignedIn || registered.current) return;
 
     (async () => {
-      const token = await registerForPushNotifications();
-      if (token) {
-        const platform = Platform.OS === 'ios' ? 'ios' : 'android';
-        registerExpoToken.mutate(
-          { expoPushToken: token, platform: platform as 'ios' | 'android' },
-          {
-            onSuccess: () => {
-              registered.current = true;
-              console.log('[Push] Token registered:', token);
-            },
-            onError: (err) => console.error('[Push] Registration failed:', err),
-          }
-        );
+      try {
+        const [token, deviceId] = await Promise.all([
+          registerForPushNotifications(),
+          getDeviceId(),
+        ]);
+        if (token) {
+          const platform = Platform.OS === 'ios' ? 'ios' : 'android';
+          registerExpoToken.mutate(
+            { expoPushToken: token, platform: platform as 'ios' | 'android', deviceId },
+            {
+              onSuccess: () => {
+                registered.current = true;
+                console.log('[Push] Token registered:', token, 'device:', deviceId);
+              },
+              onError: (err) => console.error('[Push] Registration failed:', err),
+            }
+          );
+        }
+      } catch (err) {
+        console.error('[Push] Setup error:', err);
       }
     })();
   }, [isSignedIn]);
@@ -46,11 +70,15 @@ function NotificationHandler() {
   useEffect(() => {
     // Handle notification taps — deep link to conversation
     const cleanup = addNotificationResponseListener((response) => {
-      const data = response.notification.request.content.data;
-      if (data?.type === 'chat' && data?.room) {
-        router.push(`/chat/${data.room}`);
-      } else if (data?.type === 'dm' && data?.conversationId) {
-        router.push(`/dm/${data.conversationId}`);
+      try {
+        const data = response.notification.request.content.data;
+        if (data?.type === 'chat' && data?.room) {
+          router.push(`/chat/${data.room}`);
+        } else if (data?.type === 'dm' && data?.conversationId) {
+          router.push(`/dm/${data.conversationId}`);
+        }
+      } catch (err) {
+        console.error('[Notification] Deep link error:', err);
       }
     });
 
@@ -89,18 +117,26 @@ function AuthGuard() {
 }
 
 export default function RootLayout() {
+  if (!CLERK_PUBLISHABLE_KEY) {
+    return (
+      <ConfigError message="Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Please check your environment configuration and rebuild." />
+    );
+  }
+
   return (
-    <ClerkProvider
-      publishableKey={CLERK_PUBLISHABLE_KEY}
-      tokenCache={tokenCache}
-    >
-      <ClerkLoaded>
-        <QueryClientProvider client={queryClient}>
-          <TRPCProvider>
-            <AuthGuard />
-          </TRPCProvider>
-        </QueryClientProvider>
-      </ClerkLoaded>
-    </ClerkProvider>
+    <ErrorBoundary>
+      <ClerkProvider
+        publishableKey={CLERK_PUBLISHABLE_KEY}
+        tokenCache={tokenCache}
+      >
+        <ClerkLoaded>
+          <QueryClientProvider client={queryClient}>
+            <TRPCProvider>
+              <AuthGuard />
+            </TRPCProvider>
+          </QueryClientProvider>
+        </ClerkLoaded>
+      </ClerkProvider>
+    </ErrorBoundary>
   );
 }
