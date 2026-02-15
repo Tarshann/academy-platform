@@ -269,6 +269,7 @@ export const appRouter = router({
         await createSessionRegistration(ctx.user.id, input.scheduleId);
 
         if (ctx.user.email) {
+<<<<<<< HEAD
           await sendSessionRegistrationEmail({
             to: ctx.user.email,
             userName: ctx.user.name || "Member",
@@ -278,6 +279,22 @@ export const appRouter = router({
           });
         }
 
+=======
+          const { getUserNotificationPreferences } = await import("./db");
+          const preferences = await getUserNotificationPreferences(ctx.user.id);
+          const allowEmail = preferences?.sessionRegistrations ?? true;
+
+          if (allowEmail) {
+            await sendSessionRegistrationEmail({
+              to: ctx.user.email,
+              userName: ctx.user.name || "Member",
+              sessionTitle: schedule.title,
+              sessionDate: schedule.startTime,
+              sessionLocation: schedule.location || "TBA",
+            });
+          }
+        }
+>>>>>>> 3a8b993 (Audit Update)
         return { success: true };
       }),
   }),

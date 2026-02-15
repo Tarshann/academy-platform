@@ -298,6 +298,19 @@ export default function MemberDashboard() {
                       Notification Settings
                     </a>
                   </Button>
+<<<<<<< HEAD
+=======
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    asChild
+                  >
+                    <a href="/orders">
+                      <Package className="mr-2" size={18} />
+                      Order History
+                    </a>
+                  </Button>
+>>>>>>> 3a8b993 (Audit Update)
                 </CardContent>
               </Card>
 

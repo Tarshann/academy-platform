@@ -71,8 +71,8 @@ export default function FAQs() {
                   </AccordionTrigger>
                   <AccordionContent className="text-muted-foreground">
                     You can register through our Sign Up page or contact us directly. We'll guide you 
-                    through the registration process and help you choose the right multi-sport program for 
-                    your child's goals and schedule.
+                    through the registration process and help you choose the right program for your child's 
+                    goals and schedule.
                   </AccordionContent>
                 </AccordionItem>
 
@@ -120,7 +120,7 @@ export default function FAQs() {
                     Memberships provide unlimited access to specific program types (group sessions, skills 
                     classes, or open gyms) for a monthly fee, offering the best value for committed players. 
                     Individual sessions are pay-as-you-go options perfect for those with limited availability 
-                    or who want to try multi-sport training before committing to a membership.
+                    or who want to try programs before committing to a membership.
                   </AccordionContent>
                 </AccordionItem>
 

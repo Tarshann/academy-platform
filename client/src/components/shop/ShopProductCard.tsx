@@ -2,7 +2,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 import { formatUsd } from "@shared/money";
-import { ResponsiveImage } from "@/components/ResponsiveImage";
 
 interface ShopProduct {
   id: number;
@@ -30,11 +29,12 @@ export function ShopProductCard({
     >
       <div className="aspect-square bg-gradient-to-br from-neutral-100 to-neutral-200 relative overflow-hidden">
         {product.imageUrl ? (
-          <ResponsiveImage
+          <img
             src={product.imageUrl}
             alt={product.name}
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

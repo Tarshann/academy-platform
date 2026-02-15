@@ -9,11 +9,11 @@
 
 ## Evidence Links (Fill Before Release)
 
-- Commit/Tag: TBD
-- Test run (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`): TBD
-- Lighthouse report: TBD
-- Link crawl report: `docs/SHIP_READINESS/link-crawl-summary.md`
-- Auth matrix: `docs/SHIP_READINESS/auth-matrix.md`
+- Commit/Tag:
+- Test run (`pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm e2e`):
+- Lighthouse report:
+- Link crawl report:
+- Auth matrix:
 
 ## Executive Summary
 
@@ -269,18 +269,35 @@ The Academy Platform is a well-structured full-stack application built with Reac
 ## Priority Action Items
 
 ### ✅ **None (Ready for Launch)**
-- All previously listed high/medium priority items are verified in code.
-- Remaining work is evidence capture (tests, Lighthouse, link crawl) for release sign-off.
+7. Verify all images have alt text
+8. Test payment flow end-to-end
+
+### **🟡 High Priority (Should Fix Soon)**
+1. Implement code splitting for routes
+2. Add cart persistence (localStorage)
+3. Add breadcrumb navigation
+4. Improve error boundary recovery
+5. Add skip-to-content link
+6. Optimize image sizes and formats
+7. Add structured data (JSON-LD)
+
+### **🟢 Medium Priority (Nice to Have)**
+1. Add search functionality
+2. Implement PWA features
+3. Add rate limiting
+4. Complete blog/news section or remove references
+5. Add online status indicators in chat
+6. Improve empty states
 
 ---
 
 ## Conclusion
 
-The Academy Platform is well-architected and feature-rich with verified fixes in place across SEO, accessibility, and performance. The remaining work is to attach evidence artifacts (tests, Lighthouse, link crawl, auth matrix) for release sign-off.
+The Academy Platform is well-architected and feature-rich, but requires several critical fixes before public launch, particularly in SEO, accessibility, and performance optimization. The codebase shows good practices, but production readiness requires addressing the issues outlined above.
 
-**Estimated Time to Production Ready:** Pending evidence capture (hours, not weeks).
+**Estimated Time to Production Ready:** 2-3 weeks of focused development
 
-**Recommendation:** Capture evidence artifacts and proceed with launch.
+**Recommendation:** Address all Critical and High Priority items before launch. Medium Priority items can be addressed in post-launch iterations.
 
 ---
 

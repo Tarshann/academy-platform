@@ -3,7 +3,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { trpc } from "@/lib/trpc";
 import { Loader2, MapPin, Users, Target, Trophy, Heart } from "lucide-react";
-import { buildDirectionsUrl, buildMapEmbedUrl } from "@/lib/locations";
+import { buildDirectionsUrl } from "@/lib/locations";
 
 export default function About() {
   const { data: locations, isLoading: locationsLoading } =
@@ -190,7 +190,6 @@ export default function About() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                 {locations.map((location: any) => {
                   const directionsUrl = buildDirectionsUrl(location);
-                  const mapEmbedUrl = buildMapEmbedUrl(location);
                   const addressParts = [
                     location.address,
                     location.city,
@@ -213,17 +212,6 @@ export default function About() {
                           <p className="text-muted-foreground mb-4">
                             {location.description}
                           </p>
-                        )}
-                        {mapEmbedUrl && (
-                          <div className="mb-4 overflow-hidden rounded-lg border border-border">
-                            <iframe
-                              title={`Map of ${location.name}`}
-                              src={mapEmbedUrl}
-                              className="h-48 w-full"
-                              loading="lazy"
-                              referrerPolicy="no-referrer-when-downgrade"
-                            />
-                          </div>
                         )}
                         {directionsUrl && (
                           <a

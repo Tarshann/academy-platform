@@ -41,37 +41,3 @@ export const buildDirectionsUrl = (location: LocationDetails) => {
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 };
-
-export const buildMapEmbedUrl = (location: LocationDetails) => {
-  const latitude =
-    location.latitude != null && location.latitude !== ""
-      ? Number(location.latitude)
-      : null;
-  const longitude =
-    location.longitude != null && location.longitude !== ""
-      ? Number(location.longitude)
-      : null;
-
-  if (
-    latitude != null &&
-    longitude != null &&
-    !Number.isNaN(latitude) &&
-    !Number.isNaN(longitude)
-  ) {
-    return `https://www.google.com/maps?q=${latitude},${longitude}&output=embed`;
-  }
-
-  const addressParts = [
-    location.address,
-    location.city,
-    location.state,
-    location.zipCode,
-  ]
-    .filter(Boolean)
-    .join(", ");
-
-  const query = addressParts || location.name;
-  if (!query) return null;
-
-  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
-};

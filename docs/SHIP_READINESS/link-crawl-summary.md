@@ -4,14 +4,14 @@
 
 ## Summary
 
-- Date: TBD (run Playwright crawl)
-- Base URL: TBD
-- Total pages visited: TBD
-- Total CTAs clicked: TBD
-- Broken links: TBD
-- Console errors: TBD
-- Failed network requests: TBD
+- Date:
+- Base URL:
+- Total pages visited:
+- Total CTAs clicked:
+- Broken links: 0 / TBD
+- Console errors: 0 / TBD
+- Failed network requests: 0 / TBD
 
 ## Notes
 
-- Run the crawl from `docs/SHIP_READINESS/instruction-pack.md` and update this file.
+-
