@@ -23,6 +23,8 @@
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification",
+          "remote-notification",
+          "remote-notification",
           "remote-notification"
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -44,6 +46,12 @@
       "eas": {
         "projectId": "4466c5dc-936a-4e80-a814-16170014c5ef"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4466c5dc-936a-4e80-a814-16170014c5ef"
     }
   }
 }
