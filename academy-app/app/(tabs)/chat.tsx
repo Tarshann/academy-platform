@@ -19,18 +19,6 @@ const CHANNELS: ChatChannel[] = [
     icon: 'chatbubbles-outline',
   },
   {
-    id: 'announcements',
-    name: 'Announcements',
-    description: 'Important updates from coaches',
-    icon: 'megaphone-outline',
-  },
-  {
-    id: 'parents',
-    name: 'Parents',
-    description: 'Parent-only discussions',
-    icon: 'people-outline',
-  },
-  {
     id: 'coaches',
     name: 'Coaches',
     description: 'Coach coordination channel',
