@@ -7,8 +7,9 @@ import {
   Platform,
   Text,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToChatRoom, closeAbly } from '../../lib/realtime';
@@ -16,12 +17,10 @@ import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 
 const ACADEMY_GOLD = '#CFB87C';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const ROOM_TITLES: Record<string, string> = {
   general: '#General',
-  announcements: '#Announcements',
-  parents: '#Parents',
   coaches: '#Coaches',
 };
 
@@ -38,6 +37,7 @@ interface ChatMessage {
 
 export default function ChatRoomScreen() {
   const { room } = useLocalSearchParams<{ room: string }>();
+  const router = useRouter();
   const { getToken, userId: clerkUserId } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -141,7 +141,16 @@ export default function ChatRoomScreen() {
   if (isLoading) {
     return (
       <>
-        <Stack.Screen options={{ title: ROOM_TITLES[room!] || `#${room}` }} />
+        <Stack.Screen options={{
+          title: ROOM_TITLES[room!] || `#${room}`,
+          headerStyle: { backgroundColor: '#1a1a2e' },
+          headerTintColor: '#fff',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          ),
+        }} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={ACADEMY_GOLD} />
         </View>
@@ -156,6 +165,11 @@ export default function ChatRoomScreen() {
           title: ROOM_TITLES[room!] || `#${room}`,
           headerStyle: { backgroundColor: '#1a1a2e' },
           headerTintColor: '#fff',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          ),
           headerRight: () => (
             <View style={[styles.statusDot, connected && styles.statusDotConnected]} />
           ),
