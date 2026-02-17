@@ -269,14 +269,6 @@ export const appRouter = router({
         await createSessionRegistration(ctx.user.id, input.scheduleId);
 
         if (ctx.user.email) {
-          await sendSessionRegistrationEmail({
-            to: ctx.user.email,
-            userName: ctx.user.name || "Member",
-            sessionTitle: schedule.title,
-            sessionDate: schedule.startTime,
-            sessionLocation: schedule.location || "TBA",
-          });
-        }
           const { getUserNotificationPreferences } = await import("./db");
           const preferences = await getUserNotificationPreferences(ctx.user.id);
           const allowEmail = preferences?.sessionRegistrations ?? true;
@@ -288,8 +280,9 @@ export const appRouter = router({
               sessionDate: schedule.startTime,
               sessionLocation: schedule.location || "TBA",
             });
-           }
+          }
         }
+
         return { success: true };
       }),
   }),
