@@ -269,7 +269,6 @@ export const appRouter = router({
         await createSessionRegistration(ctx.user.id, input.scheduleId);
 
         if (ctx.user.email) {
-<<<<<<< HEAD
           await sendSessionRegistrationEmail({
             to: ctx.user.email,
             userName: ctx.user.name || "Member",
@@ -278,12 +277,9 @@ export const appRouter = router({
             sessionLocation: schedule.location || "TBA",
           });
         }
-
-=======
           const { getUserNotificationPreferences } = await import("./db");
           const preferences = await getUserNotificationPreferences(ctx.user.id);
           const allowEmail = preferences?.sessionRegistrations ?? true;
-
           if (allowEmail) {
             await sendSessionRegistrationEmail({
               to: ctx.user.email,
@@ -294,11 +290,7 @@ export const appRouter = router({
             });
           }
         }
->>>>>>> 3a8b993 (Audit Update)
         return { success: true };
-      }),
-  }),
-
   // Lead capture — public endpoint for the marketing site (academytn.com)
   leads: router({
     submit: publicProcedure
