@@ -1,1 +1,9 @@
+# Vercel
 .vercel
+
+# Wrong package manager lockfile (this project uses npm)
+pnpm-lock.yaml
+
+# Test artifacts
+playwright-report/
+test-results/
