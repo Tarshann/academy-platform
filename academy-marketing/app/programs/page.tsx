@@ -30,7 +30,7 @@ export default function ProgramsPage() {
             <span className="text-[var(--color-brand-gold)]">Training Path</span>
           </h1>
           <p className="text-xl text-white/70 max-w-2xl mx-auto leading-relaxed">
-            From drop-in sessions to structured year-round development, we have
+            From drop-in sessions to elite development intensives, we have
             a program for every athlete and every goal.
           </p>
         </div>

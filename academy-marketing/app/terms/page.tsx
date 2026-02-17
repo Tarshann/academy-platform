@@ -112,7 +112,7 @@ export default function TermsPage() {
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-[var(--color-brand-gray)] mb-4">
                   <li>
-                    <strong>Performance Lab:</strong> $245 per month
+                    <strong>Performance Lab:</strong> $245 per 6-week intensive
                     (month-to-month membership)
                   </li>
                   <li>

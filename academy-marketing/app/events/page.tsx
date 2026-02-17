@@ -428,8 +428,8 @@ export default function EventsPage() {
             Can&#39;t Wait Until Summer?
           </h2>
           <p className="text-lg text-[var(--color-brand-gray)] mb-8 max-w-2xl mx-auto leading-relaxed">
-            Our year-round programs run every week. Drop in to Skills Lab
-            or join Performance Lab and start building your athlete today.
+            Our training programs are running now. Drop in to Skills Lab
+            or apply for Performance Lab and start building your athlete today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link className="btn-primary text-lg px-10 py-4 inline-flex items-center gap-2" href="/programs">

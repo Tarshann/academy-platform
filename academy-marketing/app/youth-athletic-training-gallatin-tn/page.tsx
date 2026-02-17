@@ -139,11 +139,11 @@ export default function LocalSEOPage() {
 
           <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {[
-              "Structured, year-round athletic development — not just seasonal rec leagues",
+              "Structured, elite athletic development — not just seasonal rec leagues",
               "Multi-sport approach that builds complete athletes, not just sport-specific players",
               "Experienced coaches who know Sumner County youth athletics",
               "Small group sizes (6-8 athletes) for individualized attention",
-              "Baseline testing and 90-day progress cycles with measurable results",
+              "Baseline and post-performance testing with measurable results",
               "Outdoor training on real surfaces where sports are actually played",
               "Affordable drop-in option at $10/session for Skills Lab",
               "Convenient Gallatin location serving families across Middle Tennessee",
