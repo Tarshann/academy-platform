@@ -25,6 +25,7 @@ import {
   Clock,
   MapPin,
   Settings,
+  Package,
   X,
 } from "lucide-react";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -309,8 +310,6 @@ export default function MemberDashboard() {
                       Notification Settings
                     </a>
                   </Button>
-<<<<<<< HEAD
-=======
                   <Button
                     variant="outline"
                     className="w-full justify-start"
@@ -321,7 +320,7 @@ export default function MemberDashboard() {
                       Order History
                     </a>
                   </Button>
->>>>>>> 3a8b993 (Audit Update)
+
                 </CardContent>
               </Card>
 
