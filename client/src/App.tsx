@@ -11,6 +11,8 @@ import { SkipToContent } from "./components/SkipToContent";
 // Public pages live on academytn.com (academy-marketing). This app is the
 // authenticated member portal at app.academytn.com.
 const SignInPage = lazy(() => import("./pages/SignIn").then(m => ({ default: m.default })));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const SignUp = lazy(() => import("./pages/SignUp"));
 const MemberDashboard = lazy(() => import("./pages/MemberDashboard"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
