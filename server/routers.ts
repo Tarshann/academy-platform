@@ -288,10 +288,11 @@ export const appRouter = router({
               sessionDate: schedule.startTime,
               sessionLocation: schedule.location || "TBA",
             });
-          }
+           }
         }
         return { success: true };
-	}),
+      }),
+  }),
   // Lead capture — public endpoint for the marketing site (academytn.com)
   leads: router({
     submit: publicProcedure
