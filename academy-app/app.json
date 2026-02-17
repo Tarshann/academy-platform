@@ -19,7 +19,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "10",
+      "buildNumber": "11",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
