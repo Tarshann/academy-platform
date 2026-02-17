@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "pnpm install --no-frozen-lockfile && pnpm build",
+  "buildCommand": "pnpm build",
   "outputDirectory": "dist/public",
-  "installCommand": "echo 'Skipping default install — handled in buildCommand'",
+  "installCommand": "pnpm install --no-frozen-lockfile",
   "framework": null,
   "rewrites": [
     {
