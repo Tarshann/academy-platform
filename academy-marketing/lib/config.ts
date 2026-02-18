@@ -51,31 +51,32 @@ export const PROGRAMS = [
   {
     slug: "performance-lab",
     name: "Academy Performance Lab",
-    label: "Membership",
+    label: "6-Week Intensive",
     shortName: "Performance Lab",
     price: "$245",
     priceRaw: 245,
-    unit: "per month",
+    unit: "per 6-week cohort",
     schedule: "Tue & Thu 7:00–8:00 PM • Sun 11:00 AM–12:00 PM",
     scheduleDays: ["Tuesday", "Thursday", "Sunday"],
+    nextCohort: "February 24, 2026",
     ages: "8–14",
-    groupSize: "6–8 athletes per group",
+    groupSize: "6–8 athletes per cohort",
     description:
-      "Year-round structured development with SAQ training, strength conditioning, and sport-specific skills.",
+      "6-week intensive development with SAQ training, strength conditioning, and sport-specific skills. Baseline and post-testing included.",
     longDescription:
-      "Our flagship program for committed athletes. Three sessions per week with baseline testing, 90-day progress cycles, and individualized coaching. We build speed, agility, quickness, and strength through a structured curriculum designed for long-term athletic development.",
+      "Our flagship 6-week intensive for committed athletes. Three sessions per week with baseline testing at entry, structured progression, and post-testing to measure gains. We build speed, agility, quickness, and strength through a focused curriculum designed for measurable athletic development.",
     outcomes: [
-      "Measurable speed and agility gains (tested every 90 days)",
+      "Measurable speed and agility gains (pre- and post-tested)",
       "Improved strength and conditioning baseline",
       "Sport-specific skill development across basketball, flag football, and soccer",
       "Mental toughness and competitive confidence",
       "Athletic foundation that transfers across all sports",
     ],
     features: [
-      "3 sessions per week",
+      "3 sessions per week for 6 weeks",
       "Baseline testing on entry",
-      "90-day progress cycles with retesting",
-      "Capped group sizes (6–8 athletes)",
+      "Post-testing to measure progress",
+      "Capped cohort sizes (6–8 athletes)",
       "Individualized coaching within group setting",
       "Multi-sport SAQ curriculum",
     ],
@@ -85,8 +86,8 @@ export const PROGRAMS = [
         a: "Performance Lab is designed for athletes ages 8–14. We group athletes by age and ability level to ensure appropriate training intensity.",
       },
       {
-        q: "Is there a contract?",
-        a: "Performance Lab is a monthly membership at $245/month. There is no long-term contract, but this program is designed for athletes who are committed to consistent, year-round training.",
+        q: "How does the 6-week format work?",
+        a: "Each cohort runs for 6 weeks with 3 sessions per week (Tue, Thu, Sun). Athletes are baseline tested at the start and post-tested at the end so you can see exactly how much they've improved.",
       },
       {
         q: "What about siblings?",
@@ -98,13 +99,13 @@ export const PROGRAMS = [
       },
       {
         q: "How do I know if my child is improving?",
-        a: "Every athlete is baseline tested on entry, then retested every 90 days. You'll see measurable progress in speed, agility, and strength benchmarks.",
+        a: "Every athlete is baseline tested on entry and post-tested at the end of the 6-week cohort. You'll see measurable progress in speed, agility, and strength benchmarks.",
       },
     ],
     cta: "Apply for Performance Lab",
     ctaHref: "/get-started",
     productId: "performance-lab",
-    checkoutCta: "Apply for Performance Lab — 8 Athletes Per Cohort · $245/mo",
+    checkoutCta: "Apply for Performance Lab — 6-Week Cohort · $245",
   },
   {
     slug: "skills-lab",
@@ -305,7 +306,7 @@ export const FAQ = [
   },
   {
     q: "How much does it cost?",
-    a: "Skills Lab is $10 per drop-in session. Performance Lab is $245/month for 3 sessions per week. Private Training is $60 per session.",
+    a: "Skills Lab is $10 per drop-in session. Performance Lab is $245 per 6-week cohort (3 sessions per week). Private Training is $60 per session.",
   },
   {
     q: "Do you offer free trials or assessments?",
@@ -313,7 +314,7 @@ export const FAQ = [
   },
   {
     q: "Is there a contract for Performance Lab?",
-    a: "No long-term contract. Performance Lab is a month-to-month membership at $245/month.",
+    a: "No long-term contract. Performance Lab runs in 6-week cohorts at $245 per cohort. You can sign up for each cohort individually.",
   },
   {
     q: "What should my child wear to a session?",
