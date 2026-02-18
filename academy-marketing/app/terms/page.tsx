@@ -112,8 +112,8 @@ export default function TermsPage() {
                 </p>
                 <ul className="list-disc list-inside space-y-2 text-[var(--color-brand-gray)] mb-4">
                   <li>
-                    <strong>Performance Lab:</strong> $245 per 6-week intensive
-                    (month-to-month membership)
+                    <strong>Performance Lab:</strong> $245 per 6-week cohort
+                    (no long-term contract)
                   </li>
                   <li>
                     <strong>Skills Lab:</strong> $10 per session (drop-in, pay
@@ -134,9 +134,9 @@ export default function TermsPage() {
               <div>
                 <h2 className="text-2xl font-bold mb-4">Refund Policy</h2>
                 <p className="text-[var(--color-brand-gray)] leading-relaxed">
-                  Performance Lab memberships may be cancelled at any time with
-                  notice before the next billing period. Refunds for partial
-                  months are handled on a case-by-case basis. Skills Lab
+                  Performance Lab cohort registrations may be cancelled with
+                  notice before the cohort start date. Refunds for in-progress
+                  cohorts are handled on a case-by-case basis. Skills Lab
                   drop-in payments and Private Training session payments are
                   non-refundable once a session has been attended. If a
                   scheduled private session is cancelled with at least 24 hours

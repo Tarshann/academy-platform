@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!program) return {};
 
   return generatePageMetadata({
-    title: `${program.name} — ${program.price}/${program.unit === "per month" ? "mo" : "session"}`,
+    title: `${program.name} — ${program.price} ${program.unit}`,
     description: program.description,
     path: `/programs/${program.slug}`,
   });
