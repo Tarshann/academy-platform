@@ -1,17 +1,24 @@
-import { useAuth, useUser } from '@clerk/clerk-expo';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { useUser, useAuth } from '@clerk/clerk-expo';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
+import { useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
 
-const ACADEMY_GOLD = '#CFB87C';
+const GOLD = '#CFB87C';
+const NAVY = '#1a1a2e';
+
 
 export default function ProfileScreen() {
-  const { signOut } = useAuth();
   const { user } = useUser();
+  const { signOut } = useAuth();
   const me = trpc.auth.me.useQuery();
 
-  const handleSignOut = () => {
+  const role = me.data?.role ?? 'user';
+  const displayName = me.data?.name || user?.fullName || 'Member';
+  const email = user?.primaryEmailAddress?.emailAddress || me.data?.email || '';
+
+  const onSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -22,157 +29,312 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const [deleting, setDeleting] = useState(false);
+
+  const onDeleteAccount = useCallback(() => {
+    Alert.alert(
+      'Delete Account',
+      'This will permanently delete your account and all associated data. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete My Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert(
+              'Are you absolutely sure?',
+              'Your account, messages, and all data will be permanently removed.',
+              [
+                { text: 'Keep My Account', style: 'cancel' },
+                {
+                  text: 'Yes, Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      setDeleting(true);
+                      await user?.delete();
+                      await signOut();
+                    } catch (error) {
+                      setDeleting(false);
+                      Alert.alert(
+                        'Error',
+                        'Failed to delete account. Please try again or contact support.'
+                      );
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  }, [user, signOut]);
+
+  const onCall = (name: string, phone: string) => {
+    Linking.openURL(`tel:${phone}`);
+  };
+
+  const onText = (name: string, phone: string) => {
+    Linking.openURL(`sms:${phone}`);
+  };
+
   if (me.isLoading) return <Loading />;
 
-  const role = me.data?.role ?? 'user';
-
   return (
-    <View style={styles.container}>
-      <View style={styles.avatarContainer}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      {/* Profile header */}
+      <View style={styles.headerCard}>
         <View style={styles.avatar}>
-          <Ionicons name="person" size={48} color="#999" />
-        </View>
-      </View>
-
-      <Text style={styles.name}>
-        {user?.fullName || me.data?.name || 'Member'}
-      </Text>
-      <Text style={styles.email}>
-        {user?.primaryEmailAddress?.emailAddress || me.data?.email || ''}
-      </Text>
-
-      <View style={styles.roleBadge}>
-        <Text style={styles.roleText}>
-          {role === 'admin' ? 'Administrator' : 'Member'}
-        </Text>
-      </View>
-
-      <View style={styles.infoSection}>
-        <View style={styles.infoRow}>
-          <Ionicons name="mail-outline" size={20} color="#666" />
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue} numberOfLines={1}>
-            {user?.primaryEmailAddress?.emailAddress || '—'}
+          <Text style={styles.avatarText}>
+            {displayName.charAt(0).toUpperCase()}
           </Text>
         </View>
-        <View style={styles.separator} />
-        <View style={styles.infoRow}>
-          <Ionicons name="shield-checkmark-outline" size={20} color="#666" />
-          <Text style={styles.infoLabel}>Role</Text>
-          <Text style={styles.infoValue}>{role}</Text>
-        </View>
-        <View style={styles.separator} />
-        <View style={styles.infoRow}>
-          <Ionicons name="calendar-outline" size={20} color="#666" />
-          <Text style={styles.infoLabel}>Joined</Text>
-          <Text style={styles.infoValue}>
-            {user?.createdAt
-              ? new Date(user.createdAt).toLocaleDateString()
-              : '—'}
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.email}>{email}</Text>
+        <View style={styles.roleBadge}>
+          <Text style={styles.roleText}>
+            {role === 'admin' ? 'Administrator' : role === 'coach' ? 'Coach' : 'Member'}
           </Text>
         </View>
       </View>
 
-      <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-        <Ionicons name="log-out-outline" size={20} color="#e74c3c" />
+      {/* Contact Coaches */}
+      <Text style={styles.sectionLabel}>CONTACT</Text>
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.contactRow} onPress={() => onCall('Coach O', '5712920633')}>
+          <View style={styles.contactIcon}>
+            <Ionicons name="call-outline" size={18} color={GOLD} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.contactName}>Coach O</Text>
+            <Text style={styles.contactDetail}>(571) 292-0633</Text>
+          </View>
+          <TouchableOpacity onPress={() => onText('Coach O', '5712920633')} style={styles.textBtn}>
+            <Ionicons name="chatbox-outline" size={16} color={GOLD} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity style={styles.contactRow} onPress={() => onCall('Coach Mac', '3155426222')}>
+          <View style={styles.contactIcon}>
+            <Ionicons name="call-outline" size={18} color={GOLD} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.contactName}>Coach Mac</Text>
+            <Text style={styles.contactDetail}>(315) 542-6222</Text>
+          </View>
+          <TouchableOpacity onPress={() => onText('Coach Mac', '3155426222')} style={styles.textBtn}>
+            <Ionicons name="chatbox-outline" size={16} color={GOLD} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </View>
+
+      {/* Links */}
+      <Text style={styles.sectionLabel}>RESOURCES</Text>
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => Linking.openURL('https://academytn.com')}
+        >
+          <Ionicons name="globe-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Visit Website</Text>
+          <Ionicons name="open-outline" size={14} color="#ccc" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => Linking.openURL('https://academytn.com/privacy')}
+        >
+          <Ionicons name="shield-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Privacy Policy</Text>
+          <Ionicons name="open-outline" size={14} color="#ccc" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Sign out */}
+      <TouchableOpacity style={styles.signOutBtn} onPress={onSignOut}>
+        <Ionicons name="log-out-outline" size={18} color="#e74c3c" />
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
-    </View>
+
+      {/* Delete account */}
+      <TouchableOpacity
+        style={styles.deleteBtn}
+        onPress={onDeleteAccount}
+        disabled={deleting}
+      >
+        <Ionicons name="trash-outline" size={16} color="#999" />
+        <Text style={styles.deleteText}>
+          {deleting ? 'Deleting Account...' : 'Delete Account'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>The Academy v1.1</Text>
+        <Text style={styles.footerText}>Gallatin, Tennessee</Text>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    paddingTop: 32,
-    paddingHorizontal: 24,
   },
-  avatarContainer: {
-    marginBottom: 16,
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  headerCard: {
+    backgroundColor: NAVY,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 24,
   },
   avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#e8e8e8',
-    justifyContent: 'center',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: GOLD,
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  avatarText: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: NAVY,
   },
   name: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: '#fff',
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
+    color: '#aaa',
+    marginBottom: 10,
   },
   roleBadge: {
-    backgroundColor: ACADEMY_GOLD,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginBottom: 32,
+    backgroundColor: 'rgba(207,184,124,0.15)',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
   },
   roleText: {
-    color: '#1a1a2e',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
+    color: GOLD,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  infoSection: {
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#999',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  section: {
     backgroundColor: '#fff',
-    borderRadius: 16,
-    width: '100%',
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
+  },
+  contactIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f0e8d5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  contactName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: NAVY,
+  },
+  contactDetail: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 1,
+  },
+  textBtn: {
+    padding: 8,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginLeft: 64,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  linkText: {
+    flex: 1,
+    fontSize: 15,
+    color: NAVY,
+  },
+  signOutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 12,
-    flex: 1,
-  },
-  infoValue: {
-    fontSize: 14,
-    color: '#1a1a2e',
-    fontWeight: '500',
-    maxWidth: '50%',
-    textAlign: 'right',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-  },
-  signOutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    width: '100%',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#fdd',
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   signOutText: {
-    color: '#e74c3c',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginLeft: 8,
+    color: '#e74c3c',
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    gap: 6,
+    marginBottom: 24,
+  },
+  deleteText: {
+    fontSize: 13,
+    color: '#999',
+  },
+  footer: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#bbb',
   },
 });
