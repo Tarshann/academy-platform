@@ -470,11 +470,14 @@ export default function SignUp() {
   const { isAuthenticated } = useAuth();
   const checkoutKeyRef = useRef<Map<string, string>>(new Map());
   const [cartItems, setCartItems] = useState<string[]>([]);
+  // Stays true once redirect to Stripe begins — prevents re-clicks while
+  // the browser is navigating and prevents re-checkout via back-button.
+  const [redirecting, setRedirecting] = useState(false);
   const productLookup = useMemo(
     () => new Map(ONE_TIME_PRODUCTS.map((product) => [product.id, product])),
     []
   );
-  
+
   // Enable debug mode with ?debugValidation=1
   const isDebugMode = useValidationDebugger();
 
@@ -486,11 +489,12 @@ export default function SignUp() {
   const clerkPublishableKey = getClerkPublishableKey();
   const hasValidClerkKey = isValidClerkPublishableKey(clerkPublishableKey);
   const loginUrl = getLoginUrl();
-  
+
   // For authenticated users
   const createCheckout = trpc.payment.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
+        setRedirecting(true);
         toast.info("Redirecting to checkout...");
         window.location.assign(data.url);
       }
@@ -499,11 +503,12 @@ export default function SignUp() {
       toast.error(error.message || "Failed to create checkout session");
     },
   });
-  
+
   // For guest users - Stripe will collect email
   const createGuestCheckout = trpc.payment.createGuestCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
+        setRedirecting(true);
         toast.info("Redirecting to checkout...");
         window.location.assign(data.url);
       }
@@ -540,6 +545,8 @@ export default function SignUp() {
   // Simplified checkout handler - no email collection on this page
   // Stripe Checkout will collect email natively
   const handleCheckout = (productIds: string[]) => {
+    if (redirecting) return;
+
     const normalized = productIds.map((id) => id.trim()).filter(Boolean);
     if (normalized.length === 0) {
       toast.error("Select at least one program to continue.");
@@ -569,7 +576,7 @@ export default function SignUp() {
     }
   };
 
-  const isPending = createCheckout.isPending || createGuestCheckout.isPending;
+  const isPending = redirecting || createCheckout.isPending || createGuestCheckout.isPending;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">

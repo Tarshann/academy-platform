@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,6 @@ import { toast } from "sonner";
 export default function PaymentSuccess() {
   const searchParams = new URLSearchParams(window.location.search);
   const sessionId = searchParams.get('session_id');
-  const [loading, setLoading] = useState(true);
   const [downloadingReceipt, setDownloadingReceipt] = useState(false);
   const { isAuthenticated } = useAuth();
   const clerkPublishableKey = getClerkPublishableKey();
@@ -28,15 +27,6 @@ export default function PaymentSuccess() {
     { sessionId: sessionId || "" },
     { enabled: !!sessionId }
   );
-
-  useEffect(() => {
-    if (!isLoadingSession) {
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoadingSession]);
 
   const handleDownloadReceipt = async () => {
     if (!sessionDetails) return;
@@ -72,7 +62,7 @@ export default function PaymentSuccess() {
     }).format(date);
   };
 
-  if (loading || isLoadingSession) {
+  if (isLoadingSession) {
     return (
       <div className="min-h-screen flex flex-col bg-background text-foreground">
         <Navigation />
@@ -80,8 +70,10 @@ export default function PaymentSuccess() {
           <div className="container max-w-2xl">
             <Card className="bg-card border-border text-center py-12">
               <CardContent>
-                <Loader2 className="animate-spin text-primary mx-auto mb-4" size={48} />
-                <p className="text-muted-foreground">Confirming your payment...</p>
+                <CheckCircle2 className="text-green-600 mx-auto mb-4" size={48} />
+                <p className="text-lg font-semibold text-foreground mb-2">Payment Received!</p>
+                <Loader2 className="animate-spin text-muted-foreground mx-auto mb-2" size={24} />
+                <p className="text-muted-foreground">Loading your order details...</p>
               </CardContent>
             </Card>
           </div>
