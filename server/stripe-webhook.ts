@@ -24,8 +24,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   if (!sig) {
     logger.error("[Webhook] No signature provided");
-    // Always return 200 with JSON for Stripe verification
-    return res.status(200).json({ verified: true, error: "No signature" });
+    return res.status(400).json({ error: "No signature" });
   }
 
   let event: Stripe.Event;
@@ -38,9 +37,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     );
   } catch (err) {
     logger.error("[Webhook] Signature verification failed:", err);
-    // Always return 200 with JSON for Stripe verification
-    return res.status(200).json({
-      verified: true,
+    return res.status(400).json({
       error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}`
     });
   }
@@ -240,34 +237,41 @@ async function handlePaymentIntentSucceeded(
     return;
   }
 
-  // Check if payment already recorded
-  const existing = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.stripePaymentIntentId, paymentIntent.id))
-    .limit(1);
+  // Upsert payment record — safe against concurrent webhook deliveries.
+  // First try to update an existing record for this payment intent.
+  const updated = await db
+    .update(payments)
+    .set({ status: "succeeded" })
+    .where(eq(payments.stripePaymentIntentId, paymentIntent.id));
 
-  if (existing.length > 0) {
-    // Update existing payment
-    await db
-      .update(payments)
-      .set({
+  // If no row was updated, insert a new one. A second concurrent webhook
+  // hitting this path would fail or also find zero rows to update and insert,
+  // but Stripe's event-level dedup (lines 67-96) prevents that scenario.
+  if ((updated as any).rowCount === 0) {
+    // Double-check before inserting to guard against any remaining race window
+    const existing = await db
+      .select({ id: payments.id })
+      .from(payments)
+      .where(eq(payments.stripePaymentIntentId, paymentIntent.id))
+      .limit(1);
+
+    if (existing.length === 0) {
+      await db.insert(payments).values({
+        userId,
+        stripePaymentIntentId: paymentIntent.id,
+        amount: (paymentIntent.amount / 100).toFixed(2),
+        currency: paymentIntent.currency,
         status: "succeeded",
-      })
-      .where(eq(payments.stripePaymentIntentId, paymentIntent.id));
-  } else {
-    // Create new payment record
-    await db.insert(payments).values({
-      userId,
-      stripePaymentIntentId: paymentIntent.id,
-      amount: (paymentIntent.amount / 100).toFixed(2),
-      currency: paymentIntent.currency,
-      status: "succeeded",
-      type: metadata.payment_type === "recurring" ? "recurring" : "one_time",
-      description:
-        metadata.product_name || metadata.product_id || "Stripe Payment",
-      createdAt: new Date(),
-    });
+        type: metadata.payment_type === "recurring" ? "recurring" : "one_time",
+        description:
+          metadata.product_name || metadata.product_id || "Stripe Payment",
+        createdAt: new Date(),
+      });
+    } else {
+      logger.info(
+        `[Webhook] Payment already recorded for intent ${paymentIntent.id}, skipping insert`
+      );
+    }
   }
 }
 
