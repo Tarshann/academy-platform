@@ -125,7 +125,7 @@ export default function Chat() {
   // Fetch all users for @mentions
   useEffect(() => {
     if (chatTokenQuery.data?.token) {
-      fetch("/api/chat/users")
+      fetch(`/api/chat/users?token=${encodeURIComponent(chatTokenQuery.data.token)}`)
         .then(res => res.json())
         .then(users => setAllUsers(users))
         .catch(err => logger.error("[Chat] Failed to fetch users:", err));
@@ -134,8 +134,10 @@ export default function Chat() {
 
   // Fetch message history for a room (one-time load, not polling)
   const fetchMessageHistory = useCallback(async (room: string) => {
+    const token = chatTokenQuery.data?.token;
+    if (!token) return;
     try {
-      const response = await fetch(`/api/chat/history/${room}?limit=50`);
+      const response = await fetch(`/api/chat/history/${room}?limit=50&token=${encodeURIComponent(token)}`);
       if (response.ok) {
         const history = await response.json() as Message[];
         setMessages(history);
@@ -143,7 +145,7 @@ export default function Chat() {
     } catch (error) {
       logger.error("[Chat] Failed to fetch message history:", error);
     }
-  }, []);
+  }, [chatTokenQuery.data?.token]);
 
   // Initialize Ably and subscribe to current room
   useEffect(() => {

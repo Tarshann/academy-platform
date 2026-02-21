@@ -57,8 +57,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   const db = await getDb();
   if (!db) {
     logger.error("[Webhook] Database not available");
-    // Always return 200 with JSON for Stripe
-    return res.status(200).json({ verified: true, received: true, error: "Database not available" });
+    // Return 503 so Stripe retries when the DB comes back
+    return res.status(503).json({ error: "Database not available" });
   }
 
   const existingEvent = await db
@@ -145,8 +145,8 @@ export async function handleStripeWebhook(req: Request, res: Response) {
       .update(stripeWebhookEvents)
       .set({ status: "failed", updatedAt: new Date() })
       .where(eq(stripeWebhookEvents.eventId, event.id));
-    // Always return 200 with JSON for Stripe
-    res.status(200).json({ verified: true, received: true, error: "Webhook processing failed" });
+    // Return 500 so Stripe retries (event-level dedup prevents reprocessing)
+    res.status(500).json({ error: "Webhook processing failed" });
   }
 }
 

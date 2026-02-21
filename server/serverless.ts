@@ -6,7 +6,10 @@ import { appRouter } from "./routers";
 import { createContext } from "./_core/context";
 import { ENV } from "./_core/env";
 import { getHealthStatus } from "./_core/health";
-import { apiRateLimiter } from "./_core/rateLimiter";
+import { apiRateLimiter, chatSendRateLimiter } from "./_core/rateLimiter";
+
+const ALLOWED_ROOMS = new Set(["general", "announcements", "parents", "coaches"]);
+const MAX_MESSAGE_LENGTH = 5000;
 
 const app = express();
 
@@ -22,6 +25,28 @@ if (ENV.clerkSecretKey) {
 
 // JSON body parser
 app.use(express.json());
+
+// Shared auth helper — verifies chat token from query or body
+async function verifyChatToken(token: string | undefined): Promise<{ id: number; name: string } | null> {
+  if (!token) return null;
+  try {
+    const { sdk } = await import("./_core/sdk");
+    const session = await sdk.verifySession(token);
+    if (!session || !session.openId) return null;
+
+    const { getDb } = await import("./db");
+    const { users } = await import("../drizzle/schema");
+    const { eq } = await import("drizzle-orm");
+
+    const db = await getDb();
+    if (!db) return null;
+
+    const [dbUser] = await db.select().from(users).where(eq(users.openId, session.openId)).limit(1);
+    return dbUser ? { id: dbUser.id, name: dbUser.name || "User" } : null;
+  } catch {
+    return null;
+  }
+}
 
 // Skills Lab registration
 app.post("/api/skills-lab-register", async (req, res) => {
@@ -45,8 +70,18 @@ app.get("/api/health", async (_req, res) => {
 
 // Chat API routes (serverless-compatible, no SSE)
 app.get("/api/chat/history/:room", async (req, res) => {
+  // Auth required
+  const user = await verifyChatToken(req.query.token as string);
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
+  const { room } = req.params;
+  if (!ALLOWED_ROOMS.has(room)) {
+    return res.status(400).json({ error: "Invalid room" });
+  }
+
   try {
-    const { room } = req.params;
     const limit = parseInt(req.query.limit as string) || 50;
     const { getDb } = await import("./db");
     const { chatMessages } = await import("../drizzle/schema");
@@ -70,11 +105,19 @@ app.get("/api/chat/history/:room", async (req, res) => {
   }
 });
 
-app.post("/api/chat/send", async (req, res) => {
+app.post("/api/chat/send", chatSendRateLimiter, async (req, res) => {
   const { token, room, message, imageUrl, imageKey, mentions } = req.body;
 
   if (!token || !room || !message) {
     return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  if (!ALLOWED_ROOMS.has(room)) {
+    return res.status(400).json({ error: "Invalid room" });
+  }
+
+  if (typeof message !== "string" || message.length > MAX_MESSAGE_LENGTH) {
+    return res.status(400).json({ error: `Message must be at most ${MAX_MESSAGE_LENGTH} characters` });
   }
 
   try {
@@ -143,7 +186,13 @@ app.post("/api/chat/send", async (req, res) => {
   }
 });
 
-app.get("/api/chat/users", async (_req, res) => {
+app.get("/api/chat/users", async (req, res) => {
+  // Auth required
+  const user = await verifyChatToken(req.query.token as string);
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   try {
     const { getDb } = await import("./db");
     const { users } = await import("../drizzle/schema");

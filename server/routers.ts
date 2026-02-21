@@ -1879,32 +1879,24 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Get all users with their messaging roles
+    // Get all users with their messaging roles (single query via LEFT JOIN)
     getUsersWithRoles: adminProcedure.query(async () => {
       const { getDb } = await import("./db");
       const db = await getDb();
       if (!db) return [];
-      
+
       const { users, userMessagingRoles } = await import("../drizzle/schema");
       const { eq } = await import("drizzle-orm");
-      
-      const allUsers = await db.select().from(users);
-      const result = [];
-      
-      for (const user of allUsers) {
-        const role = await db
-          .select()
-          .from(userMessagingRoles)
-          .where(eq(userMessagingRoles.userId, user.id))
-          .limit(1);
-        
-        result.push({
-          ...user,
-          messagingRole: role[0] || null,
-        });
-      }
-      
-      return result;
+
+      const rows = await db
+        .select()
+        .from(users)
+        .leftJoin(userMessagingRoles, eq(users.id, userMessagingRoles.userId));
+
+      return rows.map((row: any) => ({
+        ...row.users,
+        messagingRole: row.userMessagingRoles || null,
+      }));
     }),
   }),
 
