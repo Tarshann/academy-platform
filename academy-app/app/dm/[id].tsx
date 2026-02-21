@@ -97,8 +97,9 @@ export default function DmConversationScreen() {
   }, [ablyTokenQuery.data, conversationId]);
 
   // Combine fetched messages with real-time messages
+  // Server returns messages in DESC order, so reverse to ASC (oldest first)
   const allMessages = useCallback(() => {
-    const fetched = (messagesQuery.data ?? []) as DmMessage[];
+    const fetched = ([...(messagesQuery.data ?? [])] as DmMessage[]).reverse();
     const fetchedIds = new Set(fetched.map((m) => m.id));
     const newRealtime = realtimeMessages.filter((m) => !fetchedIds.has(m.id));
     return [...fetched, ...newRealtime];

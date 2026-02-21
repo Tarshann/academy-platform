@@ -127,15 +127,13 @@ export default function ChatRoomScreen() {
         trackEvent('coach_message_sent', { room });
       }
 
-      // If not connected to Ably, manually add the message
-      if (!connected) {
-        const result = await response.json();
-        if (result.message) {
-          setMessages((prev) => {
-            if (result.message.id && prev.some((m: ChatMessage) => m.id === result.message.id)) return prev;
-            return [...prev, result.message];
-          });
-        }
+      // Always add the sent message locally for instant feedback
+      const result = await response.json();
+      if (result.message) {
+        setMessages((prev) => {
+          if (result.message.id && prev.some((m: ChatMessage) => m.id === result.message.id)) return prev;
+          return [...prev, result.message];
+        });
       }
     } catch (error) {
       console.error('[Chat] Send failed:', error);
