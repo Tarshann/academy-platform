@@ -1,7 +1,8 @@
-import { ClerkProvider, ClerkLoaded, useAuth } from '@clerk/clerk-expo';
+import * as Sentry from '@sentry/react-native';
+import { ClerkProvider, ClerkLoaded, useAuth, useUser } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Slot, useRouter, useSegments } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { Slot, useRouter, useSegments, usePathname } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
@@ -9,7 +10,10 @@ import { trpc } from '../lib/trpc';
 import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
 import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
-import { ErrorBoundary } from '../components/ErrorBoundary';
+import { initSentry, initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
+
+// Initialize Sentry before anything renders
+initSentry();
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -88,6 +92,38 @@ function NotificationHandler() {
   return null;
 }
 
+// Track screen views via Expo Router pathname changes
+function ScreenTracker() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname) {
+      trackEvent('$screen', { $screen_name: pathname });
+    }
+  }, [pathname]);
+
+  return null;
+}
+
+// Sync Clerk user identity to Sentry + PostHog
+function IdentitySync() {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (isSignedIn && user) {
+      identifyUser(user.id, {
+        email: user.primaryEmailAddress?.emailAddress ?? null,
+        name: user.fullName ?? null,
+      });
+    } else if (!isSignedIn) {
+      resetUser();
+    }
+  }, [isSignedIn, user]);
+
+  return null;
+}
+
 function AuthGuard() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
@@ -111,12 +147,18 @@ function AuthGuard() {
     <>
       <PushRegistration />
       <NotificationHandler />
+      <ScreenTracker />
+      <IdentitySync />
       <Slot />
     </>
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
+  useEffect(() => {
+    initPostHog();
+  }, []);
+
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
       <ConfigError message="Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Please check your environment configuration and rebuild." />
@@ -124,7 +166,22 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
+    <Sentry.ErrorBoundary
+      fallback={({ resetError }) => (
+        <View style={configStyles.container}>
+          <Text style={configStyles.title}>Something went wrong</Text>
+          <Text style={configStyles.message}>
+            An unexpected error occurred. Please try again.
+          </Text>
+          <Text
+            style={{ color: '#CFB87C', fontSize: 16, fontWeight: '600', marginTop: 24 }}
+            onPress={resetError}
+          >
+            Try Again
+          </Text>
+        </View>
+      )}
+    >
       <ClerkProvider
         publishableKey={CLERK_PUBLISHABLE_KEY}
         tokenCache={tokenCache}
@@ -137,6 +194,8 @@ export default function RootLayout() {
           </QueryClientProvider>
         </ClerkLoaded>
       </ClerkProvider>
-    </ErrorBoundary>
+    </Sentry.ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(RootLayout);

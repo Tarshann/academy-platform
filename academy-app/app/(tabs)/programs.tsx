@@ -12,6 +12,7 @@ import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
+import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
 const SITE_URL = 'https://academytn.com';
@@ -56,7 +57,12 @@ export default function ProgramsScreen() {
     setRefreshing(false);
   };
 
-  const onProgramTap = (name: string) => {
+  const onProgramTap = (name: string, category?: string) => {
+    trackEvent('session_detail_viewed', {
+      session_name: name,
+      program_type: category ?? null,
+    });
+
     Alert.alert(
       name,
       'Would you like to view this program on our website?',
@@ -104,7 +110,7 @@ export default function ProgramsScreen() {
         return (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => onProgramTap(item.name)}
+            onPress={() => onProgramTap(item.name, item.category)}
             activeOpacity={0.7}
           >
             <View style={styles.cardHeader}>
