@@ -271,8 +271,16 @@ export function setupSSEChat(app: Express) {
         createdAt: new Date().toISOString(),
       };
 
-      // Broadcast to room
+      // Broadcast to room (SSE for web portal)
       broadcastToRoom(room, "new_message", savedMessage);
+
+      // Publish to Ably (for mobile app real-time)
+      try {
+        const { publishChatMessage } = await import("./ably");
+        await publishChatMessage(room, savedMessage);
+      } catch (ablyError) {
+        logger.error("[Chat] Failed to publish to Ably:", ablyError);
+      }
 
       // If there are mentions, notify mentioned users
       if (mentions && Array.isArray(mentions)) {
