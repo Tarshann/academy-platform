@@ -26,7 +26,19 @@ if (ENV.clerkSecretKey) {
 // JSON body parser
 app.use(express.json());
 
-// Shared auth helper — verifies chat token from query or body
+// Extract chat token from query param or Authorization header
+function extractToken(req: express.Request): string | undefined {
+  const queryToken = req.query.token as string | undefined;
+  if (queryToken) return queryToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7);
+  }
+  return undefined;
+}
+
+// Shared auth helper — verifies chat token from query, header, or body
 async function verifyChatToken(token: string | undefined): Promise<{ id: number; name: string } | null> {
   if (!token) return null;
   try {
@@ -71,7 +83,7 @@ app.get("/api/health", async (_req, res) => {
 // Chat API routes (serverless-compatible, no SSE)
 app.get("/api/chat/history/:room", async (req, res) => {
   // Auth required
-  const user = await verifyChatToken(req.query.token as string);
+  const user = await verifyChatToken(extractToken(req));
   if (!user) {
     return res.status(401).json({ error: "Authentication required" });
   }
@@ -188,7 +200,7 @@ app.post("/api/chat/send", chatSendRateLimiter, async (req, res) => {
 
 app.get("/api/chat/users", async (req, res) => {
   // Auth required
-  const user = await verifyChatToken(req.query.token as string);
+  const user = await verifyChatToken(extractToken(req));
   if (!user) {
     return res.status(401).json({ error: "Authentication required" });
   }

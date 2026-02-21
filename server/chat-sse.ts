@@ -80,6 +80,18 @@ async function verifySession(token: string): Promise<{ openId: string } | null> 
   }
 }
 
+// Extract chat token from query param or Authorization header
+function extractToken(req: Request): string | undefined {
+  const queryToken = req.query.token as string | undefined;
+  if (queryToken) return queryToken;
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7);
+  }
+  return undefined;
+}
+
 // Shared helper: resolve a token to a user record
 async function resolveUser(token: string): Promise<{ id: number; name: string } | null> {
   const session = await verifySession(token);
@@ -164,7 +176,7 @@ export function setupSSEChat(app: Express) {
 
   // Get message history for a room (auth required)
   app.get("/api/chat/history/:room", async (req: Request, res: Response) => {
-    const token = req.query.token as string;
+    const token = extractToken(req);
     if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
@@ -282,7 +294,7 @@ export function setupSSEChat(app: Express) {
 
   // Get online users (auth required)
   app.get("/api/chat/online", async (req: Request, res: Response) => {
-    const token = req.query.token as string;
+    const token = extractToken(req);
     if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
@@ -297,7 +309,7 @@ export function setupSSEChat(app: Express) {
 
   // Get all users for @mentions (auth required)
   app.get("/api/chat/users", async (req: Request, res: Response) => {
-    const token = req.query.token as string;
+    const token = extractToken(req);
     if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
