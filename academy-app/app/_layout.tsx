@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/react-native';
 import { ClerkProvider, ClerkLoaded, useAuth, useUser } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot, useRouter, useSegments, usePathname } from 'expo-router';
@@ -10,10 +9,7 @@ import { trpc } from '../lib/trpc';
 import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
 import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
-import { initSentry, initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
-
-// Initialize Sentry before anything renders
-initSentry();
+import { initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -105,7 +101,7 @@ function ScreenTracker() {
   return null;
 }
 
-// Sync Clerk user identity to Sentry + PostHog
+// Sync Clerk user identity to PostHog
 function IdentitySync() {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -166,36 +162,19 @@ function RootLayout() {
   }
 
   return (
-    <Sentry.ErrorBoundary
-      fallback={({ resetError }) => (
-        <View style={configStyles.container}>
-          <Text style={configStyles.title}>Something went wrong</Text>
-          <Text style={configStyles.message}>
-            An unexpected error occurred. Please try again.
-          </Text>
-          <Text
-            style={{ color: '#CFB87C', fontSize: 16, fontWeight: '600', marginTop: 24 }}
-            onPress={resetError}
-          >
-            Try Again
-          </Text>
-        </View>
-      )}
+    <ClerkProvider
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      tokenCache={tokenCache}
     >
-      <ClerkProvider
-        publishableKey={CLERK_PUBLISHABLE_KEY}
-        tokenCache={tokenCache}
-      >
-        <ClerkLoaded>
-          <QueryClientProvider client={queryClient}>
-            <TRPCProvider>
-              <AuthGuard />
-            </TRPCProvider>
-          </QueryClientProvider>
-        </ClerkLoaded>
-      </ClerkProvider>
-    </Sentry.ErrorBoundary>
+      <ClerkLoaded>
+        <QueryClientProvider client={queryClient}>
+          <TRPCProvider>
+            <AuthGuard />
+          </TRPCProvider>
+        </QueryClientProvider>
+      </ClerkLoaded>
+    </ClerkProvider>
   );
 }
 
-export default Sentry.wrap(RootLayout);
+export default RootLayout;
