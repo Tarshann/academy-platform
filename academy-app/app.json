@@ -37,14 +37,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store",
-      [
-        "@sentry/react-native/expo",
-        {
-          "organization": "academytn",
-          "project": "academy-app"
-        }
-      ]
+      "expo-secure-store"
     ],
     "extra": {
       "router": {},
