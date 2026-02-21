@@ -110,3 +110,9 @@ export const authRateLimiter = createRateLimiter({
   max: 5, // 5 login attempts per 15 minutes
   message: "Too many authentication attempts. Please try again later.",
 });
+
+export const chatSendRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000, // 1 minute
+  max: 20, // 20 messages per minute
+  message: "You are sending messages too fast. Please slow down.",
+});

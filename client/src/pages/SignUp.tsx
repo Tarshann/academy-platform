@@ -421,16 +421,26 @@ interface DivButtonProps {
 
 function DivButton({ onClick, disabled, variant = 'default', size = 'default', className, children }: DivButtonProps) {
   const isDebugMode = typeof window !== 'undefined' && window.location.search.includes('debugValidation=1');
+  const clickedRef = useRef(false);
+
+  // Reset the guard whenever disabled changes back to false (new interaction)
+  useEffect(() => {
+    if (!disabled) clickedRef.current = false;
+  }, [disabled]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      if (!disabled) onClick();
+      if (!disabled && !clickedRef.current) {
+        clickedRef.current = true;
+        onClick();
+      }
     }
   }, [disabled, onClick]);
 
   const handleClick = useCallback(() => {
-    if (disabled) return;
+    if (disabled || clickedRef.current) return;
+    clickedRef.current = true;
 
     // In debug mode, scan for invalid elements before checkout
     if (isDebugMode && (window as any).__scanValidation) {
@@ -466,9 +476,28 @@ function DivButton({ onClick, disabled, variant = 'default', size = 'default', c
   );
 }
 
+// Persist idempotency keys in sessionStorage so they survive component
+// remounts (e.g. user hitting the back button after Stripe redirect).
+const IDEM_STORAGE_KEY = "checkout_idempotency_keys";
+
+function getStoredIdempotencyKeys(): Map<string, string> {
+  try {
+    const raw = sessionStorage.getItem(IDEM_STORAGE_KEY);
+    if (raw) return new Map(JSON.parse(raw));
+  } catch { /* ignore corrupt storage */ }
+  return new Map();
+}
+
+function storeIdempotencyKey(fingerprint: string, key: string) {
+  try {
+    const map = getStoredIdempotencyKeys();
+    map.set(fingerprint, key);
+    sessionStorage.setItem(IDEM_STORAGE_KEY, JSON.stringify([...map]));
+  } catch { /* storage full — non-critical */ }
+}
+
 export default function SignUp() {
   const { isAuthenticated } = useAuth();
-  const checkoutKeyRef = useRef<Map<string, string>>(new Map());
   const [cartItems, setCartItems] = useState<string[]>([]);
   // Stays true once redirect to Stripe begins — prevents re-clicks while
   // the browser is navigating and prevents re-checkout via back-button.
@@ -554,23 +583,23 @@ export default function SignUp() {
     }
 
     const baseFingerprint = normalized.slice().sort().join("|");
-    
+
     if (isAuthenticated) {
-      // Authenticated user - use their account email
       const authFingerprint = `auth:${baseFingerprint}`;
-      const existingKey = checkoutKeyRef.current.get(authFingerprint);
+      const stored = getStoredIdempotencyKeys();
+      const existingKey = stored.get(authFingerprint);
       const idempotencyKey = existingKey ?? crypto.randomUUID();
       if (!existingKey) {
-        checkoutKeyRef.current.set(authFingerprint, idempotencyKey);
+        storeIdempotencyKey(authFingerprint, idempotencyKey);
       }
       createCheckout.mutate({ productIds: normalized, idempotencyKey });
     } else {
-      // Guest user - Stripe will collect email
       const guestFingerprint = `guest:${baseFingerprint}`;
-      const existingKey = checkoutKeyRef.current.get(guestFingerprint);
+      const stored = getStoredIdempotencyKeys();
+      const existingKey = stored.get(guestFingerprint);
       const idempotencyKey = existingKey ?? crypto.randomUUID();
       if (!existingKey) {
-        checkoutKeyRef.current.set(guestFingerprint, idempotencyKey);
+        storeIdempotencyKey(guestFingerprint, idempotencyKey);
       }
       createGuestCheckout.mutate({ productIds: normalized, idempotencyKey });
     }

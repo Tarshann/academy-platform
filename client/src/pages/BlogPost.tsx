@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { Loader2, Calendar, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SEO } from "@/components/SEO";
+import DOMPurify from "dompurify";
 
 const categoryLabels: Record<string, string> = {
   training_tips: "Training Tips",
@@ -123,7 +124,7 @@ export default function BlogPost({
               <CardContent className="prose prose-lg max-w-none p-8">
                 <div
                   className="blog-content"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.content) }}
                 />
               </CardContent>
             </Card>
