@@ -15,6 +15,7 @@ import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToChatRoom, closeAbly } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
+import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -119,6 +120,11 @@ export default function ChatRoomScreen() {
 
       if (!response.ok) {
         throw new Error('Failed to send message');
+      }
+
+      // Track coach messages
+      if (room === 'coaches') {
+        trackEvent('coach_message_sent', { room });
       }
 
       // If not connected to Ably, manually add the message

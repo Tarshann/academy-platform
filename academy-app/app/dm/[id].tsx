@@ -13,6 +13,7 @@ import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToDm } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
+import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -112,6 +113,10 @@ export default function DmConversationScreen() {
       await sendMessage.mutateAsync({
         conversationId,
         content: text,
+      });
+      trackEvent('coach_message_sent', {
+        conversation_id: conversationId,
+        channel: 'dm',
       });
     } catch (error) {
       console.error('[DM] Send failed:', error);

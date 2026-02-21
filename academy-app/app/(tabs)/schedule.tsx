@@ -7,10 +7,11 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
+import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -18,6 +19,11 @@ export default function ScheduleScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const schedules = trpc.schedules.upcoming.useQuery();
   const utils = trpc.useUtils();
+
+  // Track session list view
+  useEffect(() => {
+    trackEvent('session_list_viewed');
+  }, []);
 
   const register = trpc.schedules.register.useMutation({
     onSuccess: () => {
@@ -37,12 +43,23 @@ export default function ScheduleScreen() {
 
   const [registeredIds, setRegisteredIds] = useState<Set<number>>(new Set());
 
-  const onRegister = (scheduleId: number) => {
+  const onRegister = (scheduleId: number, sessionTitle?: string, sessionType?: string | null) => {
+    trackEvent('registration_started', {
+      schedule_id: scheduleId,
+      session_name: sessionTitle ?? null,
+      session_type: sessionType ?? null,
+    });
+
     register.mutate(
       { scheduleId },
       {
         onSuccess: () => {
           setRegisteredIds((prev) => new Set(prev).add(scheduleId));
+          trackEvent('registration_completed', {
+            schedule_id: scheduleId,
+            session_name: sessionTitle ?? null,
+            session_type: sessionType ?? null,
+          });
         },
       }
     );
@@ -127,7 +144,7 @@ export default function ScheduleScreen() {
               ) : (
                 <TouchableOpacity
                   style={[styles.registerButton, isRegistering && styles.registerButtonDisabled]}
-                  onPress={() => onRegister(item.id)}
+                  onPress={() => onRegister(item.id, item.title, item.sessionType)}
                   disabled={isRegistering}
                 >
                   <Text style={styles.registerButtonText}>
