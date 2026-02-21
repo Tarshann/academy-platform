@@ -39,7 +39,7 @@ export async function initPostHog(): Promise<PostHog | null> {
   }
 
   posthogClient = new PostHog(POSTHOG_API_KEY, {
-    host: 'https://app.posthog.com',
+    host: 'https://us.posthog.com',
   });
 
   return posthogClient;
