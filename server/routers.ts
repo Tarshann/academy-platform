@@ -116,7 +116,7 @@ const createProgramCheckoutSession = async ({
     "/payment/success",
     "session_id={CHECKOUT_SESSION_ID}"
   );
-  const cancelUrl = buildCheckoutUrl(origin, "/signup");
+  const cancelUrl = buildCheckoutUrl(origin, "/sign-up");
 
   const sessionParams: any = {
     payment_method_types: ["card"],

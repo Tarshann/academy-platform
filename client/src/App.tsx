@@ -23,6 +23,11 @@ const ShopOrderSuccess = lazy(() => import("./pages/ShopOrderSuccess"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const PrivateSessionBooking = lazy(() => import("./pages/PrivateSessionBooking"));
+const Programs = lazy(() => import("./pages/Programs"));
+const SkillsLabPage = lazy(() => import("./pages/SkillsLabPage"));
+const SkillsLabRegisterPage = lazy(() => import("./pages/SkillsLabRegisterPage"));
+const PerformanceLabPage = lazy(() => import("./pages/PerformanceLabPage"));
+const PerformanceLabApplyPage = lazy(() => import("./pages/PerformanceLabApplyPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -95,6 +100,26 @@ function Router() {
         <Route path={"/settings"}>
           <SEO title="Settings" description="Manage your notification preferences and account settings." />
           <Settings />
+        </Route>
+        <Route path={"/programs"}>
+          <SEO title="Programs" description="Explore Academy athletic development programs." />
+          <Programs />
+        </Route>
+        <Route path={"/skills-lab/register"}>
+          <SEO title="Skills Lab Registration" description="Register for an Academy Skills Lab drop-in session." />
+          <SkillsLabRegisterPage />
+        </Route>
+        <Route path={"/skills-lab"}>
+          <SEO title="Skills Lab" description="Academy Skills Lab — community drop-in sessions for fundamentals, movement, and positive competition." />
+          <SkillsLabPage />
+        </Route>
+        <Route path={"/performance-lab/apply"}>
+          <SEO title="Apply for Performance Lab" description="Apply for the Academy Performance Lab training program." />
+          <PerformanceLabApplyPage />
+        </Route>
+        <Route path={"/performance-lab"}>
+          <SEO title="Performance Lab" description="Academy Performance Lab — structured development for committed young athletes." />
+          <PerformanceLabPage />
         </Route>
         <Route path={"/404"}>
           <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />
