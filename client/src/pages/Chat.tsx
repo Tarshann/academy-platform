@@ -82,6 +82,7 @@ export default function Chat() {
     enabled: Boolean(user),
     retry: false,
     refetchOnWindowFocus: false,
+    refetchInterval: 8 * 60 * 1000, // Refresh 2 min before 10-min TTL expiry
   });
 
   // Ably token for real-time — falls back gracefully if not configured
@@ -323,14 +324,23 @@ export default function Chat() {
         throw new Error("Failed to send message");
       }
 
+      // Read the saved message from the response and display it immediately
+      const data = await response.json();
+      if (data.message) {
+        setMessages(prev => {
+          if (data.message.id && prev.some((m: Message) => m.id === data.message.id)) {
+            return prev;
+          }
+          return [...prev, data.message as Message];
+        });
+      }
+
       setNewMessage("");
       setShowMentions(false);
       clearSelectedImage();
 
-      // If Ably isn't connected, fetch manually to show the sent message
-      if (!ablyRef.current || ablyRef.current.connection.state !== "connected") {
-        fetchMessageHistory(currentRoom);
-      }
+      // Always sync from DB after a brief delay as a safety net
+      setTimeout(() => fetchMessageHistory(currentRoom), 1500);
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
       toast.error("Failed to send message. Please try again.");
@@ -616,8 +626,10 @@ export default function Chat() {
                                   : "bg-muted"
                               }`}
                             >
-                              {!isOwnMessage && showAvatar && (
-                                <p className="text-xs font-semibold mb-1">{msg.userName}</p>
+                              {showAvatar && (
+                                <p className={`text-xs font-semibold mb-1 ${isOwnMessage ? "opacity-70" : ""}`}>
+                                  {msg.userName}
+                                </p>
                               )}
                               {msg.imageUrl && (
                                 <img
