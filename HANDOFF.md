@@ -47,6 +47,68 @@ All three apps share one backend (Express + tRPC + PostgreSQL).
 
 ---
 
+## v1.1 Milestone
+
+**Commit:** `400a322` — Bump mobile app to v1.1.0 (build 12)
+**Date:** February 2026
+**Status:** Submitted to App Store
+
+### What Changed in v1.1
+
+| Change | App | Details |
+|--------|-----|---------|
+| **Account deletion** | Mobile | Added delete account button to profile (Apple App Store requirement) |
+| **Enhanced profile screen** | Mobile | Coach contact (call/text), resource links, role badge, sign-out redesign |
+| **Performance Lab rebrand** | Marketing + Portal | Changed from monthly membership to 6-week intensive cohort model |
+| **Deploy stability fixes** | Portal | Fixed Vercel lockfile mismatch, TypeScript specifier alignment, `.npmrc` for Turbo Build Machine |
+| **Merge conflict cleanup** | Portal | Resolved duplicate email block in session registration, MemberDashboard conflicts |
+
+---
+
+## v1.2 Milestone
+
+**Commit:** `8d6c45d` — Bump mobile app to v1.2.0 (build 13, iterated to build 16)
+**Date:** February 2026
+**Status:** Submitted to App Store (build 16)
+
+### What Changed in v1.2
+
+#### Security & Payments
+| Change | App | Details |
+|--------|-----|---------|
+| **Checkout double-payment fix** | Portal | Fixed Stripe checkout glitch that could charge users twice |
+| **Checkout security hardening** | Portal | Hardened checkout, chat, and webhook security across the board |
+| **Missing portal routes** | Portal | Wired up `/skills-lab`, `/skills-lab/register`, `/performance-lab`, `/performance-lab/apply` routes — pages existed but were never added to the router, causing 404s |
+| **Marketing checkout safety net** | Marketing | Added `/checkout/success` page so users redirected from Stripe see a confirmation instead of 404 |
+
+#### Chat System
+| Change | App | Details |
+|--------|-----|---------|
+| **Chat auth header support** | Server | Accept `Authorization: Bearer` header for chat endpoints (mobile app compatibility) |
+| **Chat message persistence fix** | Mobile | Fixed messages not persisting and sender names not displaying in mobile chat |
+| **Chat optimistic display** | Portal | Messages now appear instantly after sending instead of waiting for Ably echo |
+| **Sender name always visible** | Portal | Sender name now shows on all messages including your own |
+| **Chat token auto-refresh** | Portal | Token auto-refreshes every 8 min, preventing silent 401 failures after 10-min TTL |
+| **Safety history sync** | Portal | Always fetches full history from DB 1.5s after every send as a fallback |
+
+#### Mobile App
+| Change | App | Details |
+|--------|-----|---------|
+| **PostHog analytics** | Mobile | Screen tracking, registration events, messaging metrics, user identity sync |
+| **Sentry added then removed** | Mobile | Crash reporting added but removed due to EAS build incompatibility |
+| **react-native-svg** | Mobile | Added for SVG rendering support |
+| **Sign-up error handling** | Mobile | Graceful handling when verification session expires (app backgrounded); "Account Already Exists" redirect to sign-in; resend code button; "Already verified?" sign-in link |
+
+#### Build History (v1.2)
+| Build | Change |
+|-------|--------|
+| 13 | Initial v1.2.0 production release |
+| 14 | Chat message persistence + sender name fix |
+| 15 | iOS buildNumber bump |
+| 16 | Remove Sentry plugin (EAS build blocker), add react-native-svg |
+
+---
+
 ## Architecture at a Glance
 
 ```

@@ -3,7 +3,7 @@
     "name": "The Academy",
     "slug": "academy-app",
     "scheme": "academy",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -19,7 +19,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "16",
+      "buildNumber": "17",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
