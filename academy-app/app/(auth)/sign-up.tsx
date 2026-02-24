@@ -25,6 +25,7 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
 
   const onSignUp = async () => {
     if (!isLoaded) return;
@@ -39,13 +40,49 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
     } catch (err: any) {
+      const errCode = err?.errors?.[0]?.code;
       const message =
         err?.errors?.[0]?.longMessage ||
         err?.errors?.[0]?.message ||
         'Failed to sign up. Please try again.';
-      Alert.alert('Sign Up Failed', message);
+
+      // Account already exists — direct them to sign in
+      if (errCode === 'form_identifier_exists') {
+        Alert.alert(
+          'Account Already Exists',
+          'An account with this email already exists. Please sign in instead.',
+          [
+            { text: 'Go to Sign In', onPress: () => router.replace('/(auth)/sign-in') },
+            { text: 'Cancel', style: 'cancel' },
+          ]
+        );
+      } else {
+        Alert.alert('Sign Up Failed', message);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onResendCode = async () => {
+    if (!isLoaded || resending) return;
+    setResending(true);
+
+    try {
+      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      Alert.alert('Code Sent', `A new verification code was sent to ${email}`);
+    } catch {
+      // If the sign-up attempt was lost (app restarted), direct to sign in
+      Alert.alert(
+        'Session Expired',
+        'Your sign-up session has expired. Your account may already be created — try signing in.',
+        [
+          { text: 'Go to Sign In', onPress: () => router.replace('/(auth)/sign-in') },
+          { text: 'Try Again', style: 'cancel', onPress: () => setPendingVerification(false) },
+        ]
+      );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -68,8 +105,25 @@ export default function SignUpScreen() {
       const message =
         err?.errors?.[0]?.longMessage ||
         err?.errors?.[0]?.message ||
-        'Invalid verification code.';
-      Alert.alert('Verification Failed', message);
+        '';
+
+      // Sign-up attempt was lost (app went to background/restarted)
+      const isAttemptLost =
+        message.toLowerCase().includes('sign up attempt') ||
+        message.toLowerCase().includes('sign_up_attempt') ||
+        message.toLowerCase().includes('client_state');
+
+      if (isAttemptLost) {
+        Alert.alert(
+          'Account Created',
+          'Your account was created but the verification session expired. Please sign in to continue.',
+          [
+            { text: 'Go to Sign In', onPress: () => router.replace('/(auth)/sign-in') },
+          ]
+        );
+      } else {
+        Alert.alert('Verification Failed', message || 'Invalid verification code. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -106,6 +160,23 @@ export default function SignUpScreen() {
                 {loading ? 'Verifying...' : 'Verify'}
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.resendButton}
+              onPress={onResendCode}
+              disabled={resending}
+            >
+              <Text style={styles.resendText}>
+                {resending ? 'Sending...' : "Didn't get a code? Resend"}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.linkRow}>
+              <Text style={styles.linkText}>Already verified? </Text>
+              <TouchableOpacity onPress={() => router.replace('/(auth)/sign-in')}>
+                <Text style={styles.link}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Screen>
@@ -225,10 +296,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  resendButton: {
+    alignItems: 'center',
+    marginTop: 16,
+    padding: 8,
+  },
+  resendText: {
+    color: ACADEMY_GOLD,
+    fontSize: 14,
+    fontWeight: '500',
+  },
   linkRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 16,
   },
   linkText: {
     color: '#666',
