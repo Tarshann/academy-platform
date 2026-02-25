@@ -78,6 +78,22 @@ export default function Chat() {
   const ablyRef = useRef<Ably.Realtime | null>(null);
   const channelRef = useRef<Ably.RealtimeChannel | null>(null);
 
+  // Deduplicate and sort messages chronologically
+  const dedupeAndSort = useCallback((msgs: Message[]): Message[] => {
+    const seen = new Map<number, Message>();
+    const noId: Message[] = [];
+    for (const m of msgs) {
+      if (m.id) {
+        seen.set(m.id, m);
+      } else {
+        noId.push(m);
+      }
+    }
+    return [...seen.values(), ...noId].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }, []);
+
   const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, {
     enabled: Boolean(user),
     retry: false,
@@ -133,27 +149,32 @@ export default function Chat() {
     }
   }, [chatTokenQuery.data?.token]);
 
-  // Fetch message history for a room (one-time load, not polling)
-  const fetchMessageHistory = useCallback(async (room: string) => {
+  // Fetch message history for a room — merges with existing messages to avoid losing real-time ones
+  const fetchMessageHistory = useCallback(async (room: string, replace = false) => {
     const token = chatTokenQuery.data?.token;
     if (!token) return;
     try {
       const response = await fetch(`/api/chat/history/${room}?limit=50&token=${encodeURIComponent(token)}`);
       if (response.ok) {
         const history = await response.json() as Message[];
-        setMessages(history);
+        if (replace) {
+          setMessages(dedupeAndSort(history));
+        } else {
+          // Merge with existing messages so real-time messages aren't lost
+          setMessages(prev => dedupeAndSort([...prev, ...history]));
+        }
       }
     } catch (error) {
       logger.error("[Chat] Failed to fetch message history:", error);
     }
-  }, [chatTokenQuery.data?.token]);
+  }, [chatTokenQuery.data?.token, dedupeAndSort]);
 
   // Initialize Ably and subscribe to current room
   useEffect(() => {
     if (!user || !chatTokenQuery.data?.token) return;
 
-    // Load initial history
-    fetchMessageHistory(currentRoom);
+    // Load initial history (replace mode — fresh room)
+    fetchMessageHistory(currentRoom, true);
 
     // If Ably token is available, set up real-time
     if (ablyTokenQuery.data) {
@@ -181,13 +202,7 @@ export default function Chat() {
       const channel = ably.channels.get(`chat:${currentRoom}`);
       channel.subscribe("message", (msg) => {
         const incomingMessage = msg.data as Message;
-        setMessages(prev => {
-          // Deduplicate by ID
-          if (incomingMessage.id && prev.some(m => m.id === incomingMessage.id)) {
-            return prev;
-          }
-          return [...prev, incomingMessage];
-        });
+        setMessages(prev => dedupeAndSort([...prev, incomingMessage]));
       });
       channelRef.current = channel;
 
@@ -327,19 +342,14 @@ export default function Chat() {
       // Read the saved message from the response and display it immediately
       const data = await response.json();
       if (data.message) {
-        setMessages(prev => {
-          if (data.message.id && prev.some((m: Message) => m.id === data.message.id)) {
-            return prev;
-          }
-          return [...prev, data.message as Message];
-        });
+        setMessages(prev => dedupeAndSort([...prev, data.message as Message]));
       }
 
       setNewMessage("");
       setShowMentions(false);
       clearSelectedImage();
 
-      // Always sync from DB after a brief delay as a safety net
+      // Merge from DB after a brief delay as a safety net (don't replace — keep real-time msgs)
       setTimeout(() => fetchMessageHistory(currentRoom), 1500);
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
@@ -612,7 +622,12 @@ export default function Chat() {
                     ) : (
                       messages.map((msg, index) => {
                         const isOwnMessage = msg.userId === user.id;
-                        const showAvatar = index === 0 || messages[index - 1]?.userId !== msg.userId;
+                        const prev = messages[index - 1];
+                        const sameUser = prev && prev.userId === msg.userId;
+                        // Only group consecutive messages from the same user if they're within 5 minutes
+                        const closeInTime = sameUser && prev &&
+                          Math.abs(new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()) < 5 * 60 * 1000;
+                        const showAvatar = !sameUser || !closeInTime;
 
                         return (
                           <div
@@ -628,7 +643,7 @@ export default function Chat() {
                             >
                               {showAvatar && (
                                 <p className={`text-xs font-semibold mb-1 ${isOwnMessage ? "opacity-70" : ""}`}>
-                                  {msg.userName}
+                                  {msg.userName || "Unknown"}
                                 </p>
                               )}
                               {msg.imageUrl && (
