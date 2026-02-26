@@ -21,22 +21,24 @@
 ## Session Log
 
 ### 2026-02-26 — Portal Agent
-**Started**: WEB-001 (Full UX Audit), WEB-002 (API Route Impact Assessment)
+**Started**: WEB-001, WEB-002, WEB-003-FIX, WEB-004-FIX, WEB-013-FIX
 **Completed**:
 - WEB-001: Full UX audit of all 30+ portal pages. Found 4 CRITICAL, 6 HIGH, 6 MEDIUM, 4 LOW issues.
 - WEB-002: All 24 mobile v1.3 routes verified — all exist, 12 mobile-ready, 12 need pagination.
 - Written comprehensive audit report to `ops/50_REPORTS/audit-findings.md`
 - Created 10 fix tickets in `ops/10_BACKLOG/NEXT.md` (WEB-003-FIX through WEB-013-FIX)
+- WEB-003-FIX: Added /orders route to App.tsx (was built but unreachable)
+- WEB-004-FIX: Added admin role guard to CoachDashboard (was open to any user)
+- WEB-005-FIX + WEB-006-FIX: FALSE POSITIVE — SkillsLab and PerformanceLab forms do work (REST handlers exist in server/)
+- WEB-013-FIX (partial): Added pagination to 7 priority routes: blog.list (fixed ignored params + category filter), payment.myPayments, payment.mySubscriptions, attendance.getMyAttendance, videos.list, dm.searchMessages (limit exposed, max 100)
+- All changes pass `pnpm check` (0 errors) + `pnpm build` (all 3 steps)
 **Blocked**: Nothing
 **Discovered**:
-- CRITICAL: Orders page unreachable (no route in App.tsx) — members can't see purchase history
-- CRITICAL: CoachDashboard has no role guard — any user can access it
-- CRITICAL: SkillsLab + PerformanceLab registration forms have no submit handler (dead forms)
-- HIGH: Shop, Schedule, Gallery pages all use hardcoded data instead of API
-- HIGH: 8 built content pages (Blog, Videos, Gallery, About, Contact, FAQs, Home) are unrouted
-- HIGH: 12 list API routes lack pagination — mobile blocker (ticket WEB-013-FIX)
-- HIGH: `blog.list` accepts pagination params but ignores them in DB query
-**Next**: Begin fixing CRITICAL tickets (WEB-003-FIX through WEB-006-FIX), then HIGH priority (WEB-007-FIX through WEB-013-FIX)
+- WEB-005-FIX/WEB-006-FIX were false positives — REST handlers exist at server/skills-lab-register.ts and server/performance-lab-apply.ts
+- User role enum only has "user" | "admin" (no "coach") — coaches identified by coaches table FK, not role
+- HIGH: Shop, Schedule, Gallery pages still use hardcoded data (tickets remain open)
+- HIGH: 8 content pages still unrouted (ticket WEB-010-FIX remains open)
+**Next**: WEB-007-FIX (Shop from API), WEB-008-FIX (Schedule from API), WEB-009-FIX (Gallery from API), WEB-010-FIX (route remaining pages), remaining pagination routes (gallery, coaches, locations, shop)
 
 ---
 
