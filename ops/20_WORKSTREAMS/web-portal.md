@@ -79,6 +79,24 @@ payment.submitPrivateSessionBooking
 
 ---
 
+## v1.4.0 Clips Backend — Ticket Map
+
+> Portal Agent builds ALL backend infrastructure for Clips. Starts AFTER v1.3.0 mobile ships.
+
+| Ticket | Name | Depends On | Impact | Files |
+|--------|------|-----------|--------|-------|
+| WEB-020 | DB schema + migration | — | `[INFRA]` | `drizzle/schema.ts`, migrations |
+| WEB-021 | Video tRPC router (6 core routes) | WEB-020 | `[INFRA]` | `server/routers.ts`, `server/db.ts` |
+| WEB-022 | Video storage (Forge CDN) | WEB-020 | `[INFRA]` | `server/storage.ts`, `.env.example` |
+| WEB-023 | oEmbed external links | WEB-021 | `[ENGAGEMENT]` | `server/routers.ts`, new `server/oembed.ts` |
+| WEB-024 | Chat/DM video integration | WEB-021 | `[ENGAGEMENT]` | `server/routers.ts`, `server/db.ts`, `server/chat-sse.ts` |
+| WEB-025 | Share link generation | WEB-021 | `[ENGAGEMENT]` | `server/routers.ts` |
+| WEB-026 | Universal link infrastructure | WEB-025 | `[INFRA]` | `vercel.json`, `api/`, `.well-known/` |
+
+**Execution order**: WEB-020 → WEB-021 + WEB-022 (parallel) → WEB-023 + WEB-024 + WEB-025 (parallel) → WEB-026 → deploy → 48hr stabilization → notify Mobile Agent
+
+---
+
 ## Known Debt
 
 1. `routers.ts` monolith (~2,100 lines) — split into domain modules (LATER)

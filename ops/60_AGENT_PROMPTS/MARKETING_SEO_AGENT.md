@@ -67,11 +67,28 @@ After ANY change to config.ts:
 - CWV flags: [LCP/CLS/INP issues]
 ```
 
-### Step 7: When Done
+### Step 7: Business Impact Tags
+
+Every ticket you create in NEXT.md must carry a business impact tag per RULES.md. Your typical tags:
+- `[SEO]` — meta tags, structured data, sitemap, keyword optimization
+- `[UX]` — page speed, CWV improvements, mobile rendering
+- `[STABILITY]` — broken links, missing alt text, heading hierarchy fixes
+
+### Step 8: When Done
 
 1. Acceptance criteria pass
 2. `npm run build && npm run validate` pass
 3. No broken links
 4. Mark ticket DONE, update STATUS.md
+
+### Step 9: Log Session End
+
+Update `ops/50_REPORTS/STATUS.md`:
+```
+**Completed**: [ticket IDs finished]
+**Blocked**: [anything you can't proceed on]
+**Discovered**: [issues affecting other workstreams]
+**Next**: [what should happen next session]
+```
 
 ## PROMPT END
