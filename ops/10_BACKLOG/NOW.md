@@ -150,58 +150,7 @@
 
 ## Web Portal
 
-### WEB-001: Full UX Audit
-- **Workstream**: Portal
-- **Owner**: Portal Agent
-- **Status**: DONE (2026-02-26)
-- **Goal**: Systematically review every portal page and document all UX issues, broken flows, and improvement opportunities
-- **Scope**:
-  - Walk through every page as a member, coach, and admin
-  - Document: broken features, confusing UX, missing states, accessibility issues, mobile responsiveness
-  - Produce a prioritized list of fix tickets
-  - Check all payment flows end-to-end
-  - Check all chat/DM flows
-  - Check admin tools completeness
-- **Non-goals**:
-  - Don't fix anything during the audit — just document
-  - Don't refactor code — just identify issues
-- **Acceptance Criteria**:
-  - [ ] Every portal page visited and evaluated
-  - [ ] Issues logged with severity (CRITICAL/HIGH/MEDIUM/LOW)
-  - [ ] At least 3 fix tickets created in NEXT.md from findings
-  - [ ] Audit report written to `ops/50_REPORTS/audit-findings.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md` (new)
-  - `ops/10_BACKLOG/NEXT.md` (new tickets from findings)
-- **Test Plan**: N/A (this IS the test)
-- **Telemetry**: No new events
-- **Release**: Informs future web deploys
-
----
-
-### WEB-002: API Route Impact Assessment
-- **Workstream**: Portal
-- **Owner**: Portal Agent
-- **Status**: DONE (2026-02-26)
-- **Goal**: Document which tRPC routes the mobile app uses (current + planned v1.3) and verify they all work correctly
-- **Scope**:
-  - Verify all 14 currently-used mobile routes return expected data
-  - Test all 47 planned-to-be-used routes for mobile v1.3
-  - Document any routes with unexpected behavior, missing pagination, or null-handling issues
-  - Flag any routes that need fixes before mobile can consume them
-- **Non-goals**:
-  - Don't change route signatures
-  - Don't add new routes
-- **Acceptance Criteria**:
-  - [ ] All 14 current mobile routes verified working
-  - [ ] All 47 planned routes tested and documented
-  - [ ] Issues logged with specific route names and expected vs. actual behavior
-  - [ ] Mobile agent notified of any routes that need workarounds
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md`
-- **Test Plan**: Call each route with test data, verify response shape
-- **Telemetry**: No new events
-- **Release**: Informs mobile v1.3
+*(No active portal tickets — pull from NEXT.md when ready)*
 
 ---
 
@@ -327,4 +276,12 @@
 
 ## DONE
 
-*(Move completed tickets here with completion date)*
+### WEB-001: Full UX Audit — DONE 2026-02-26
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `5bd2579` — docs: complete WEB-001 UX audit + WEB-002 API impact assessment
+- **Result**: Audited 30+ portal pages. Found 4 CRITICAL, 6 HIGH, 6 MEDIUM, 4 LOW issues. Created 11 fix tickets (WEB-003-FIX through WEB-013-FIX) in NEXT.md. Full report in `ops/50_REPORTS/audit-findings.md`.
+
+### WEB-002: API Route Impact Assessment — DONE 2026-02-26
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `5bd2579` — docs: complete WEB-001 UX audit + WEB-002 API impact assessment
+- **Result**: Verified all 24 mobile v1.3 routes. 12 mobile-ready, 12 need pagination. `blog.list` accepts pagination params but ignores them in DB query. Full report in `ops/50_REPORTS/audit-findings.md`.

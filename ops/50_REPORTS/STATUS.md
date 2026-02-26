@@ -26,7 +26,7 @@
 - WEB-001: Full UX audit of all 30+ portal pages. Found 4 CRITICAL, 6 HIGH, 6 MEDIUM, 4 LOW issues.
 - WEB-002: All 24 mobile v1.3 routes verified — all exist, 12 mobile-ready, 12 need pagination.
 - Written comprehensive audit report to `ops/50_REPORTS/audit-findings.md`
-- Created 10 fix tickets in `ops/10_BACKLOG/NEXT.md` (WEB-003-FIX through WEB-013-FIX)
+- Created 11 fix tickets in `ops/10_BACKLOG/NEXT.md` (WEB-003-FIX through WEB-013-FIX, including WEB-011-FIX and WEB-012-FIX)
 **Blocked**: Nothing
 **Discovered**:
 - CRITICAL: Orders page unreachable (no route in App.tsx) — members can't see purchase history

@@ -279,6 +279,37 @@
 - **Telemetry**: No new events
 - **Release**: Next web deploy
 
+### WEB-011-FIX: SignUp Page — Fetch Products from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: SignUp page uses hardcoded product catalog for membership selection — should fetch from API
+- **Scope**: Replace hardcoded membership/pricing data in `SignUp.tsx` with API call, add loading/error states
+- **Acceptance Criteria**:
+  - [ ] Membership options come from API, not hardcoded data
+  - [ ] Admin pricing changes reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-012-FIX: PrivateSessionBooking — Fetch Coaches from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: PrivateSessionBooking page uses hardcoded coach names/details — should fetch from `coaches.list` tRPC route
+- **Scope**: Replace hardcoded coach data with `trpc.coaches.list.useQuery()`, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Coach list comes from API, not hardcoded data
+  - [ ] Adding/removing coaches in admin reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Empty state if no coaches available
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
 ### WEB-013-FIX: Add Pagination to List API Routes (HIGH — mobile blocker)
 - **Workstream**: Portal
 - **Owner**: Unassigned
