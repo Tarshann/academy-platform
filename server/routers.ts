@@ -1105,10 +1105,12 @@ export const appRouter = router({
   }),
 
   videos: router({
-    list: publicProcedure.query(async () => {
-      const { getAllVideos } = await import("./db");
-      return await getAllVideos(true); // Only published videos for public
-    }),
+    list: publicProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        const { getAllVideos } = await import("./db");
+        return await getAllVideos(true, input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
     byId: publicProcedure
       .input(z.object({ id: z.number() }))
@@ -1239,15 +1241,19 @@ export const appRouter = router({
         return { url: session.url };
       }),
 
-    myPayments: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserPayments } = await import("./db");
-      return await getUserPayments(ctx.user.id);
-    }),
+    myPayments: protectedProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getUserPayments } = await import("./db");
+        return await getUserPayments(ctx.user.id, input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
-    mySubscriptions: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserSubscriptions } = await import("./db");
-      return await getUserSubscriptions(ctx.user.id);
-    }),
+    mySubscriptions: protectedProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getUserSubscriptions } = await import("./db");
+        return await getUserSubscriptions(ctx.user.id, input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
     getCheckoutSessionDetails: publicProcedure
       .input(z.object({ sessionId: z.string() }))
@@ -1442,10 +1448,12 @@ export const appRouter = router({
         return await getAttendanceBySchedule(input.scheduleId);
       }),
 
-    getMyAttendance: protectedProcedure.query(async ({ ctx }) => {
-      const { getAttendanceByUser } = await import("./db");
-      return await getAttendanceByUser(ctx.user.id);
-    }),
+    getMyAttendance: protectedProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const { getAttendanceByUser } = await import("./db");
+        return await getAttendanceByUser(ctx.user.id, input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
     getMyStats: protectedProcedure
       .input(
@@ -1789,10 +1797,10 @@ export const appRouter = router({
 
     // Search messages
     searchMessages: protectedProcedure
-      .input(z.object({ query: z.string().min(1) }))
+      .input(z.object({ query: z.string().min(1), limit: z.number().max(100).optional() }))
       .query(async ({ ctx, input }) => {
         const { searchDmMessages } = await import("./db");
-        return await searchDmMessages(ctx.user.id, input.query);
+        return await searchDmMessages(ctx.user.id, input.query, input.limit ?? 20);
       }),
 
     // Block a user
@@ -2039,7 +2047,7 @@ export const appRouter = router({
       )
       .query(async ({ input }) => {
         const { getAllPublishedBlogPosts } = await import("./db");
-        return await getAllPublishedBlogPosts();
+        return await getAllPublishedBlogPosts(input ? { category: input.category, limit: input.limit, offset: input.offset } : undefined);
       }),
     getBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))

@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,8 +28,28 @@ interface Booking {
 }
 
 export function CoachDashboard() {
+  const { user, loading } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedCoach, setSelectedCoach] = useState<number | undefined>(undefined);
   const [activeTab, setActiveTab] = useState<BookingStatus>("pending");
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== 'admin')) {
+      setLocation('/');
+    }
+  }, [loading, user, setLocation]);
+
+  if (!loading && (!user || user.role !== 'admin')) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      </div>
+    );
+  }
 
   const { data: bookings, isLoading, refetch } = trpc.payment.getCoachBookings.useQuery({
     coachId: selectedCoach,
