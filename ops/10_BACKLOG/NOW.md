@@ -215,32 +215,7 @@
 
 ## Research
 
-### RES-001: Competitor App Feature Analysis
-- **Workstream**: Research
-- **Owner**: Competitor Intel Agent
-- **Status**: BACKLOG
-- **Goal**: Analyze top 3 competitor apps (TeamSnap, SportsEngine, GameChanger) and produce actionable adoption recommendations
-- **Scope**:
-  - Feature-by-feature comparison vs. Academy v1.2
-  - UX pattern analysis (onboarding, dashboard, scheduling, payments, chat)
-  - Identify top 5 features to adopt with effort estimates
-  - Document monetization strategies
-- **Non-goals**:
-  - Don't analyze local competitors yet (RES-002)
-  - Don't do SEO competitive analysis (RES-003)
-- **Acceptance Criteria**:
-  - [ ] Feature comparison table complete for 3 competitors
-  - [ ] Top 5 adoption recommendations documented with effort (S/M/L)
-  - [ ] UX patterns documented with screenshots/descriptions
-  - [ ] At least 3 adoption tickets created in NEXT.md
-  - [ ] Report written to `ops/50_REPORTS/competitor-snapshots.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/competitor-snapshots.md` (new)
-  - `ops/20_WORKSTREAMS/competitor-intel.md`
-  - `ops/10_BACKLOG/NEXT.md`
-- **Test Plan**: N/A (research)
-- **Telemetry**: No new events
-- **Release**: Informs feature prioritization
+*(RES-001 completed 2026-02-26 — see DONE section)*
 
 ---
 
@@ -275,6 +250,20 @@
 ---
 
 ## DONE
+
+### RES-001: Competitor App Feature Analysis — DONE 2026-02-26
+- **Owner**: Competitor Intel Agent
+- **Output**: Full feature comparison matrix + 7 detailed findings + 5 top adoption recommendations + UX pattern analysis in `ops/50_REPORTS/competitor-snapshots.md`
+- **Acceptance Criteria Results**:
+  - [x] Feature comparison table complete for 3 competitors (16-row matrix)
+  - [x] Top 5 adoption recommendations documented with effort (S/M/L)
+  - [x] UX patterns documented (5 patterns with implementation details)
+  - [x] 7 adoption tickets created in NEXT.md (MOB-040, MOB-018, WEB-030, SEO-010, SEO-011, MKT-020, MKT-021)
+  - [x] Report written to `ops/50_REPORTS/competitor-snapshots.md`
+- **Also completed in same session**: RES-002 (local competitors) and RES-003 (SEO keywords)
+- **Tickets created**:
+  - NEXT: MOB-040 (RSVP), MOB-018 (onboarding, promoted from LATER), WEB-030 (calendar sync), SEO-010 (GBP), SEO-011 (FAQ schema), MKT-020 (blog), MKT-021 (sport pages)
+  - LATER: MOB-041 (progress stats), MOB-042 (achievements), MOB-050 (family accounts), MKT-022 (city pages), MKT-023 (testimonials), MKT-024 (video), MKT-025 (results page)
 
 ### WEB-001: Full UX Audit — DONE 2026-02-26
 - **Workstream**: Portal | **Owner**: Portal Agent
