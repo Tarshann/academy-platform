@@ -59,12 +59,40 @@
 2. **Name events consistently:** `{domain}_{action}` (e.g., `chat_image_upload_success`, `payment_checkout_started`).
 3. **Track failures too**, not just successes. Failed payments, failed registrations, failed sends — all tracked.
 
+## Business Impact Tags (Required)
+
+Every ticket in NOW.md and NEXT.md must carry a business impact tag. This prevents scope creep and keeps work tied to outcomes.
+
+**Tags:**
+- `[REVENUE]` — Directly increases revenue (payments, checkout, subscriptions)
+- `[RETENTION]` — Keeps members coming back (attendance, notifications, dashboard)
+- `[UX]` — Improves user experience (onboarding, skeletons, loading states)
+- `[STABILITY]` — Reduces crashes, bugs, regressions (error handling, crash reporting)
+- `[INFRA]` — Supports future features (schema, storage, CI, version bumps)
+- `[ENGAGEMENT]` — Drives daily usage and sharing (clips, content, social features)
+- `[DIFFERENTIATION]` — Separates us from competitors (unique features)
+- `[SEO]` — Improves search visibility
+- `[RESEARCH]` — Informs future decisions
+
+**Rule:** Nothing moves from NOW → DONE without a tag. If a ticket doesn't clearly map to one of these, question whether it belongs in the current release.
+
+## New Architecture Isolation Rule
+
+React Native New Architecture (`newArchEnabled: true`) is **an isolated infrastructure change**, not a feature.
+
+1. **Separate branch.** New Architecture work lives on its own branch. It does not ride along with feature work.
+2. **No feature bundling.** Do not enable New Architecture in the same PR/session as any MOB feature ticket.
+3. **Dedicated ticket.** MOB-029 is the only ticket that touches `newArchEnabled`. No other ticket enables it.
+4. **Rollback plan required.** Before merging, document how to revert if New Architecture causes runtime issues.
+5. **Performance comparison.** Measure cold start, navigation, and scroll performance before and after. Log results in STATUS.md.
+
 ## Release Rules
 
 1. **No release without QA checklist completion** (see `ops/40_RELEASES/CHECKLIST_QA.md`).
 2. **Bump version numbers before building.** Mobile: `app.json` version + buildNumber. Web: no versioning (auto-deploy).
 3. **Release notes are mandatory** (see `ops/40_RELEASES/RELEASE_NOTES.md`).
 4. **iOS App Store submissions go out early in the week** to avoid weekend review delays.
+5. **One App Store submission per version.** Do not plan "polish releases" (v1.3.1) as separate submissions. Polish work belongs in the Definition of Done for the current version.
 
 ---
 

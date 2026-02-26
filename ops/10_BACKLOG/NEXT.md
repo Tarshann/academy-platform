@@ -2,15 +2,17 @@
 
 > These tickets are ready to pull when NOW items complete.
 > Ordered by priority within each workstream.
+> Every ticket carries a business impact tag per RULES.md.
 
 ---
 
-## Mobile App
+## Mobile App (v1.3.0 — Phases A/B/C)
 
-### MOB-005: Subscription Management
+### MOB-005: Subscription Management `[REVENUE]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: A (Revenue Infrastructure)
 - **Goal**: Members can view active subscriptions, payment history, and manage billing from the app
 - **Scope**:
   - New "Payments" section accessible from dashboard or profile
@@ -31,10 +33,11 @@
 - **Telemetry**: `payment_history_viewed`, `subscription_manage_opened`
 - **Release**: v1.3.0
 
-### MOB-006: Merchandise Shop
+### MOB-006: Merchandise Shop `[REVENUE]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: A (Revenue Infrastructure)
 - **Goal**: Browse and purchase Academy merchandise from the app
 - **Scope**:
   - New Shop tab or section (evaluate placement)
@@ -56,10 +59,11 @@
 - **Telemetry**: `shop_product_viewed`, `shop_checkout_started`, `shop_checkout_completed`
 - **Release**: v1.3.0
 
-### MOB-007: Enhanced Dashboard
+### MOB-007: Enhanced Dashboard `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Transform dashboard from simple welcome screen into an engagement hub
 - **Scope**:
   - Attendance stats card (sessions attended, rate, streak) via `attendance.getMyStats`
@@ -79,10 +83,11 @@
 - **Telemetry**: `dashboard_quick_action_tapped` (action name), `dashboard_content_tapped`
 - **Release**: v1.3.0
 
-### MOB-008: Attendance Tracking Screen
+### MOB-008: Attendance Tracking Screen `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can view their attendance history and stats
 - **Scope**:
   - New Attendance screen (from dashboard quick action or profile)
@@ -103,10 +108,11 @@
 - **Telemetry**: `attendance_viewed`, `attendance_date_filtered`
 - **Release**: v1.3.0
 
-### MOB-009: Notification Preferences
+### MOB-009: Notification Preferences `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can control which notifications they receive and set quiet hours
 - **Scope**:
   - New settings screen accessible from Profile
@@ -127,10 +133,11 @@
 - **Telemetry**: `notification_settings_changed` (setting name, new value)
 - **Release**: v1.3.0
 
-### MOB-010: Chat Image Upload
+### MOB-010: Chat Image Upload `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: C (Experience Upgrade)
 - **Goal**: Send images in group chat and DMs
 - **Scope**:
   - Camera and photo library picker (expo-image-picker)
@@ -140,7 +147,7 @@
   - Graceful handling of oversized images
   - Retry on upload failure
 - **Non-goals**:
-  - Video upload
+  - Video upload (v1.4 Clips)
   - Multiple image selection
   - Image editing/cropping before send
 - **Acceptance Criteria**:
@@ -291,7 +298,7 @@
 
 ---
 
-### WEB-003: Testimonial Source Consolidation
+### WEB-003: Testimonial Source Consolidation `[STABILITY]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -315,7 +322,7 @@
 
 *(Tickets will be generated from MKT-001 and SEO-001 audit findings)*
 
-### SEO-002: Structured Data Expansion
+### SEO-002: Structured Data Expansion `[SEO]`
 - **Workstream**: SEO
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -343,7 +350,7 @@
 
 ## Research
 
-### RES-002: Local Competitor Analysis (Gallatin, TN)
+### RES-002: Local Competitor Analysis (Gallatin, TN) `[RESEARCH]`
 - **Workstream**: Research
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -359,7 +366,7 @@
   - [ ] 3+ local SEO tactics recommended
   - [ ] Report in `ops/50_REPORTS/competitor-snapshots.md`
 
-### RES-003: SEO Keyword Competitive Analysis
+### RES-003: SEO Keyword Competitive Analysis `[RESEARCH]`
 - **Workstream**: Research
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -372,12 +379,13 @@
 
 ---
 
-## Video & Clips Feature (Cross-Workstream — Portal builds backend, Mobile builds UI)
+## Video & Clips (v1.4.0 — Cross-Stack, Starts AFTER v1.3.0 Ships)
 
-> **Sequencing**: WEB-020 → WEB-021 + WEB-022 (parallel) → deploy → MOB-030 → MOB-031 → MOB-032 + MOB-033 (parallel)
-> Backend must deploy BEFORE mobile can start Milestone 3.
+> **PREREQUISITE**: v1.3.0 must be live in the App Store before ANY Clips work begins.
+> **Sequencing**: WEB-020 → WEB-021 + WEB-022 (parallel) → WEB-023 + WEB-024 + WEB-025 + WEB-026 → deploy + 48hr stabilization → MOB-030 → MOB-031 → MOB-032 + MOB-033 (parallel)
+> Backend must deploy and stabilize BEFORE mobile can start.
 
-### WEB-020: Video/Clips Database Schema + Migration
+### WEB-020: Video/Clips Database Schema + Migration `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -395,9 +403,9 @@
   - [ ] Existing chat/DM queries unaffected
   - [ ] `pnpm build` and `pnpm check` pass
 - **Touched Files**: `drizzle/schema.ts`, `drizzle/migrations/` (new)
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### WEB-021: Video tRPC Router
+### WEB-021: Video tRPC Router `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -406,28 +414,22 @@
 - **Scope**:
   - `video.upload` — create record, return upload key
   - `video.confirmUpload` — validate storage, set status ready
-  - `video.addExternal` — oEmbed fetch for YouTube/TikTok/Instagram
   - `video.getFeed` — cursor pagination, newest-first, include uploader + like state
   - `video.getById` — single clip details
   - `video.like` — toggle (idempotent)
   - `video.delete` — soft delete (uploader/admin)
-  - `video.share` — return deep link URLs
-  - Wire videoId into chat.send, dm.sendMessage, chat.history, dm.getMessages
   - DB functions for all video operations
 - **Non-goals**: Transcoding, streaming optimization, comments
 - **Acceptance Criteria**:
-  - [ ] All 8 video routes functional
+  - [ ] All 6 core video routes functional
   - [ ] Upload → confirm transitions status to ready
-  - [ ] External link fetches oEmbed metadata with 5s timeout
-  - [ ] oEmbed domain allowlist: youtube.com, tiktok.com, instagram.com
   - [ ] Feed paginated with like counts
-  - [ ] Chat/DM messages with videoId include video payload
   - [ ] Existing chat/DM without video unchanged
   - [ ] `pnpm build` and `pnpm check` pass
 - **Touched Files**: `server/routers.ts`, `server/db.ts`
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### WEB-022: Video Storage Upload Strategy
+### WEB-022: Video Storage Upload Strategy `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -446,13 +448,99 @@
   - [ ] New env var documented in .env.example
   - [ ] `pnpm build` passes
 - **Touched Files**: `server/storage.ts` or new file, `.env.example`
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### MOB-030: Clips Tab + Feed Screen
+### WEB-023: External Video Links + oEmbed `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Support sharing external video links (YouTube, TikTok, Instagram) with rich previews
+- **Scope**:
+  - `video.addExternal` — accept URL, fetch oEmbed metadata (title, thumbnail, provider)
+  - oEmbed domain allowlist: youtube.com, tiktok.com, instagram.com
+  - 5-second timeout on oEmbed fetch with graceful fallback (store URL without preview)
+  - Store external URL in videos table with source metadata
+- **Non-goals**: Hosting/transcoding external videos, embedding players server-side
+- **Acceptance Criteria**:
+  - [ ] YouTube links return oEmbed metadata (title, thumbnail)
+  - [ ] TikTok links return oEmbed metadata
+  - [ ] Instagram links return oEmbed metadata
+  - [ ] Non-allowlisted domains rejected with clear error
+  - [ ] oEmbed timeout falls back to URL-only record
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`, `server/db.ts` (or new `server/oembed.ts`)
+- **Release**: v1.4.0 backend phase
+
+### WEB-024: Chat/DM Video Integration `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Wire videoId into existing chat and DM message routes
+- **Scope**:
+  - Modify `chat.send` to accept optional videoId
+  - Modify `dm.sendMessage` to accept optional videoId
+  - Modify `chat.history` to include video payload when videoId present
+  - Modify `dm.getMessages` to include video payload when videoId present
+  - Text-only messages completely unaffected (videoId is nullable)
+- **Non-goals**: New chat UI (mobile-side work), video player embedding
+- **Acceptance Criteria**:
+  - [ ] chat.send accepts videoId, message stored correctly
+  - [ ] dm.sendMessage accepts videoId, message stored correctly
+  - [ ] chat.history returns video payload for video messages
+  - [ ] dm.getMessages returns video payload for video messages
+  - [ ] Existing text-only messages unchanged in response shape
+  - [ ] Ably payloads include videoId when present
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`, `server/db.ts`, `server/chat-sse.ts`
+- **Release**: v1.4.0 backend phase
+
+### WEB-025: Share Link Generation `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Generate shareable deep link URLs for clips
+- **Scope**:
+  - `video.share` route returns deep link URL (`academy://clips/{videoId}`)
+  - Also returns universal link URL (`https://app.academytn.com/clips/{videoId}`)
+  - Include basic OG meta tags for link previews (title, thumbnail, description)
+- **Non-goals**: Universal link verification (WEB-026), social card rendering
+- **Acceptance Criteria**:
+  - [ ] video.share returns both deep link and universal link URLs
+  - [ ] URLs include correct videoId
+  - [ ] OG meta endpoint serves title + thumbnail for link previews
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`
+- **Release**: v1.4.0 backend phase
+
+### WEB-026: Universal Link Infrastructure `[INFRA]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-025
+- **Goal**: Configure server + app association for universal links
+- **Scope**:
+  - Vercel rewrite: `/clips/:id` → SPA (or app redirect)
+  - Apple App Site Association (AASA) file at `/.well-known/apple-app-site-association`
+  - Android assetlinks.json at `/.well-known/assetlinks.json`
+  - Document Team ID + bundle ID requirements
+- **Non-goals**: Full universal link testing (requires App Store build)
+- **Acceptance Criteria**:
+  - [ ] AASA file served at correct path with correct bundle ID
+  - [ ] assetlinks.json served at correct path
+  - [ ] Vercel rewrite handles `/clips/:id` path
+  - [ ] Documentation added for Team ID configuration
+  - [ ] `pnpm build` passes
+- **Touched Files**: `vercel.json`, `api/` (new), `.well-known/` files
+- **Release**: v1.4.0 backend phase
+
+### MOB-030: Clips Tab + Feed Screen `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: WEB-021 deployed
+- **Depends on**: WEB-021 deployed + 48hr stabilization
 - **Goal**: Add Clips tab with scrollable video feed
 - **Scope**:
   - New "Clips" tab between Chat and Messages
@@ -472,13 +560,13 @@
   - [ ] Skeleton loading, empty state, error state with retry
   - [ ] Pull-to-refresh
 - **Telemetry**: `clips_feed_viewed`, `clip_opened`, `clip_liked`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-031: Clip Upload Flow
+### MOB-031: Clip Upload Flow `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: WEB-021, WEB-022, MOB-030
+- **Depends on**: WEB-021, WEB-022, WEB-023, MOB-030
 - **Goal**: Upload video clips or share external video links
 - **Scope**:
   - Bottom sheet: "Record Video", "Choose from Library", "Paste Link"
@@ -493,13 +581,13 @@
   - [ ] External links create feed cards
   - [ ] Failed uploads show retry
 - **Telemetry**: `clip_upload_started`, `clip_upload_completed`, `clip_upload_failed`, `clip_external_added`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-032: Video in Chat + DMs
+### MOB-032: Video in Chat + DMs `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: MOB-030, MOB-031
+- **Depends on**: WEB-024, MOB-030, MOB-031
 - **Goal**: Send/receive video clips in chat and DMs
 - **Scope**:
   - Attachment button in ChatInput with video option
@@ -514,13 +602,13 @@
   - [ ] Ably delivers video messages correctly
   - [ ] Text-only messages unaffected
 - **Telemetry**: `chat_video_sent`, `dm_video_sent`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-033: Clips Deep Links + Sharing
+### MOB-033: Clips Deep Links + Sharing `[DIFFERENTIATION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: MOB-030
+- **Depends on**: WEB-025, WEB-026, MOB-030
 - **Goal**: Share clips via deep links, handle incoming links
 - **Scope**:
   - Native share sheet via Share API
@@ -531,7 +619,7 @@
   - [ ] Deep links open correct clip
   - [ ] Universal links work OR follow-up ticket created
 - **Telemetry**: `clip_shared`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
 ---
 

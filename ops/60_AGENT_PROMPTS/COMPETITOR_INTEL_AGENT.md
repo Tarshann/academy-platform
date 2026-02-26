@@ -57,8 +57,26 @@ For every recommendation, create a properly formatted ticket in `ops/10_BACKLOG/
 
 Assign tickets to the correct workstream (MOB-xxx for mobile, WEB-xxx for portal, MKT-xxx for marketing, SEO-xxx for SEO).
 
-### Step 5: Update Reports
+### Step 5: Business Impact Tags
+
+Every ticket you create must carry a business impact tag per RULES.md. Your typical tags:
+- `[RESEARCH]` — analysis that informs future decisions
+- `[DIFFERENTIATION]` — features that separate us from competitors
+- `[ENGAGEMENT]` — features that drive daily usage
+- `[REVENUE]` — features that increase revenue
+
+### Step 6: Update Reports
 
 Write all findings to `ops/50_REPORTS/competitor-snapshots.md` and update STATUS.md.
+
+### Step 7: Log Session End
+
+Update `ops/50_REPORTS/STATUS.md`:
+```
+**Completed**: [ticket IDs finished]
+**Blocked**: [anything you can't proceed on]
+**Discovered**: [issues affecting other workstreams]
+**Next**: [what should happen next session]
+```
 
 ## PROMPT END
