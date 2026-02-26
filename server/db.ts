@@ -1472,14 +1472,21 @@ export async function canUserDm(senderId: number, recipientId: number) {
     .where(eq(userMessagingRoles.userId, recipientId))
     .limit(1);
 
+  // Derive messaging role from users.role when no userMessagingRoles entry exists
+  // users.role "admin" → messaging role "admin"; users.role "user" → "parent"
+  async function fallbackMessagingRole(userId: number): Promise<string> {
+    const [u] = await db!.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+    return u?.role === "admin" ? "admin" : "parent";
+  }
+
   // Default permissions if no role set
   const senderPerms = senderRole[0] || {
-    messagingRole: "parent",
+    messagingRole: await fallbackMessagingRole(senderId),
     canDmCoaches: true,
     canDmParents: false,
     canDmAthletes: false,
   };
-  const recipientPerms = recipientRole[0] || { messagingRole: "parent" };
+  const recipientPerms = recipientRole[0] || { messagingRole: await fallbackMessagingRole(recipientId) };
 
   // Check permissions based on roles
   if (
@@ -1716,7 +1723,7 @@ export async function getAvailableDmUsers(userId: number) {
 
       availableUsers.push({
         ...user,
-        messagingRole: role[0]?.messagingRole || "parent",
+        messagingRole: role[0]?.messagingRole || (user.role === "admin" ? "admin" : "parent"),
       });
     }
   }
