@@ -2,15 +2,17 @@
 
 > These tickets are ready to pull when NOW items complete.
 > Ordered by priority within each workstream.
+> Every ticket carries a business impact tag per RULES.md.
 
 ---
 
-## Mobile App
+## Mobile App (v1.3.0 — Phases A/B/C)
 
-### MOB-005: Subscription Management
+### MOB-005: Subscription Management `[REVENUE]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: A (Revenue Infrastructure)
 - **Goal**: Members can view active subscriptions, payment history, and manage billing from the app
 - **Scope**:
   - New "Payments" section accessible from dashboard or profile
@@ -31,10 +33,11 @@
 - **Telemetry**: `payment_history_viewed`, `subscription_manage_opened`
 - **Release**: v1.3.0
 
-### MOB-006: Merchandise Shop
+### MOB-006: Merchandise Shop `[REVENUE]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: A (Revenue Infrastructure)
 - **Goal**: Browse and purchase Academy merchandise from the app
 - **Scope**:
   - New Shop tab or section (evaluate placement)
@@ -56,10 +59,11 @@
 - **Telemetry**: `shop_product_viewed`, `shop_checkout_started`, `shop_checkout_completed`
 - **Release**: v1.3.0
 
-### MOB-007: Enhanced Dashboard
+### MOB-007: Enhanced Dashboard `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Transform dashboard from simple welcome screen into an engagement hub
 - **Scope**:
   - Attendance stats card (sessions attended, rate, streak) via `attendance.getMyStats`
@@ -79,10 +83,11 @@
 - **Telemetry**: `dashboard_quick_action_tapped` (action name), `dashboard_content_tapped`
 - **Release**: v1.3.0
 
-### MOB-008: Attendance Tracking Screen
+### MOB-008: Attendance Tracking Screen `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can view their attendance history and stats
 - **Scope**:
   - New Attendance screen (from dashboard quick action or profile)
@@ -103,10 +108,11 @@
 - **Telemetry**: `attendance_viewed`, `attendance_date_filtered`
 - **Release**: v1.3.0
 
-### MOB-009: Notification Preferences
+### MOB-009: Notification Preferences `[RETENTION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can control which notifications they receive and set quiet hours
 - **Scope**:
   - New settings screen accessible from Profile
@@ -198,10 +204,11 @@
 - **Telemetry**: `onboarding_started`, `onboarding_completed`, `onboarding_skipped` (screen number)
 - **Release**: v1.3.0
 
-### MOB-010: Chat Image Upload
+### MOB-010: Chat Image Upload `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
+- **Phase**: C (Experience Upgrade)
 - **Goal**: Send images in group chat and DMs
 - **Scope**:
   - Camera and photo library picker (expo-image-picker)
@@ -211,7 +218,7 @@
   - Graceful handling of oversized images
   - Retry on upload failure
 - **Non-goals**:
-  - Video upload
+  - Video upload (v1.4 Clips)
   - Multiple image selection
   - Image editing/cropping before send
 - **Acceptance Criteria**:
@@ -230,7 +237,7 @@
 
 ## Web Portal
 
-*(Tickets will be generated from WEB-001 audit findings)*
+*(Generated from WEB-001 UX Audit + WEB-002 API Assessment — 2026-02-26)*
 
 ### WEB-030: Calendar iCal Feed Export
 - **Workstream**: Portal
@@ -263,7 +270,168 @@
 - **Telemetry**: `calendar_feed_subscribed`
 - **Release**: Next web deploy
 
-### WEB-003: Testimonial Source Consolidation
+### WEB-003-FIX: Add /orders Route to App.tsx (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Orders page exists (`Orders.tsx`) but is unreachable — no route in App.tsx
+- **Scope**: Add `<Route path="/orders">` to App.tsx, link from Shop or Dashboard navigation
+- **Acceptance Criteria**:
+  - [ ] `/orders` route renders Orders page
+  - [ ] Navigation includes link to orders for authenticated users
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-004-FIX: Add Auth Role Guard to CoachDashboard (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Any authenticated user can currently access `/coach-dashboard` — should be restricted to coach/admin roles
+- **Scope**: Add role check (coach or admin) to CoachDashboard, redirect unauthorized users
+- **Acceptance Criteria**:
+  - [ ] Non-coach users see access denied or redirect when visiting `/coach-dashboard`
+  - [ ] Coach and admin users see dashboard normally
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-005-FIX: Wire Up SkillsLab Registration Form (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: SkillsLabRegisterPage has form UI but no submit handler — form does nothing
+- **Scope**: Connect form to `leads.create` or a new registration mutation, show success/error state
+- **Acceptance Criteria**:
+  - [ ] Form submission sends data to backend
+  - [ ] Success state shown after submission
+  - [ ] Error state shown on failure
+  - [ ] `pnpm build` passes
+- **Telemetry**: `skills_lab_registration_submitted`, `skills_lab_registration_failed`
+- **Release**: Next web deploy
+
+### WEB-006-FIX: Wire Up PerformanceLab Application Form (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: PerformanceLabApplyPage has form UI but no submit handler — form does nothing
+- **Scope**: Connect form to `leads.create` or a new application mutation, show success/error state
+- **Acceptance Criteria**:
+  - [ ] Form submission sends data to backend
+  - [ ] Success state shown after submission
+  - [ ] Error state shown on failure
+  - [ ] `pnpm build` passes
+- **Telemetry**: `performance_lab_application_submitted`, `performance_lab_application_failed`
+- **Release**: Next web deploy
+
+### WEB-007-FIX: Shop Page — Fetch Products from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Shop page uses hardcoded products — should fetch from `shop.products` tRPC route
+- **Scope**: Replace hardcoded product data with `trpc.shop.products.useQuery()`, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Products come from API, not hardcoded data
+  - [ ] Admin product changes in dashboard appear on Shop page
+  - [ ] Loading skeleton while fetching
+  - [ ] Empty state if no products
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-008-FIX: Schedule Page — Fetch from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Schedule page uses hardcoded `SCHEDULE_DATA` — should fetch from `schedules.upcoming` tRPC route
+- **Scope**: Replace hardcoded schedule with API data, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Schedule data comes from API
+  - [ ] Admin schedule changes appear on page
+  - [ ] Loading, error, and empty states present
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-009-FIX: Gallery Page — Fetch from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Gallery page uses hardcoded photos — should fetch from `gallery.list` tRPC route
+- **Scope**: Replace hardcoded gallery data with API call, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Gallery photos come from API
+  - [ ] Admin gallery uploads appear on page
+  - [ ] Loading, error, and empty states present
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-010-FIX: Route Unrouted Pages (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Blog, BlogPost, Videos, Gallery, About, Contact, FAQs, Home pages exist but have no routes in App.tsx
+- **Scope**: Add routes for all existing pages. Determine which belong in portal vs marketing site. Remove any that are duplicates of marketing pages.
+- **Acceptance Criteria**:
+  - [ ] All content pages reachable via URL
+  - [ ] Navigation links updated to include new routes
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-011-FIX: SignUp Page — Fetch Products from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: SignUp page uses hardcoded product catalog for membership selection — should fetch from API
+- **Scope**: Replace hardcoded membership/pricing data in `SignUp.tsx` with API call, add loading/error states
+- **Acceptance Criteria**:
+  - [ ] Membership options come from API, not hardcoded data
+  - [ ] Admin pricing changes reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-012-FIX: PrivateSessionBooking — Fetch Coaches from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: PrivateSessionBooking page uses hardcoded coach names/details — should fetch from `coaches.list` tRPC route
+- **Scope**: Replace hardcoded coach data with `trpc.coaches.list.useQuery()`, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Coach list comes from API, not hardcoded data
+  - [ ] Adding/removing coaches in admin reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Empty state if no coaches available
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-013-FIX: Add Pagination to List API Routes (HIGH — mobile blocker)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: 10+ list routes lack pagination. Mobile v1.3 requires paginated responses for performance.
+- **Scope**: Add `limit`/`offset` (or cursor) pagination to: `payment.myPayments`, `payment.mySubscriptions`, `attendance.getMyAttendance`, `gallery.list`, `gallery.byCategory`, `videos.list`, `videos.byCategory`, `dm.searchMessages`, `blog.list` (fix ignored params), `coaches.list`, `locations.list`, `shop.products`
+- **Non-goals**: Breaking existing web portal consumers (pagination must be optional with sensible defaults)
+- **Acceptance Criteria**:
+  - [ ] All listed routes accept optional `limit` and `offset`/`cursor` params
+  - [ ] Default limit (e.g. 50) when no params provided — backwards compatible
+  - [ ] `blog.list` actually uses its limit/offset params in the DB query
+  - [ ] `dm.searchMessages` has max result limit (100)
+  - [ ] Existing web portal calls still work without params
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Telemetry**: No new events
+- **Release**: Before mobile v1.3
+
+---
+
+### WEB-003: Testimonial Source Consolidation `[STABILITY]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -415,7 +583,7 @@
 - **Telemetry**: No new events
 - **Release**: Next marketing deploy
 
-### SEO-002: Structured Data Expansion
+### SEO-002: Structured Data Expansion `[SEO]`
 - **Workstream**: SEO
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -447,12 +615,13 @@
 
 ---
 
-## Video & Clips Feature (Cross-Workstream — Portal builds backend, Mobile builds UI)
+## Video & Clips (v1.4.0 — Cross-Stack, Starts AFTER v1.3.0 Ships)
 
-> **Sequencing**: WEB-020 → WEB-021 + WEB-022 (parallel) → deploy → MOB-030 → MOB-031 → MOB-032 + MOB-033 (parallel)
-> Backend must deploy BEFORE mobile can start Milestone 3.
+> **PREREQUISITE**: v1.3.0 must be live in the App Store before ANY Clips work begins.
+> **Sequencing**: WEB-020 → WEB-021 + WEB-022 (parallel) → WEB-023 + WEB-024 + WEB-025 + WEB-026 → deploy + 48hr stabilization → MOB-030 → MOB-031 → MOB-032 + MOB-033 (parallel)
+> Backend must deploy and stabilize BEFORE mobile can start.
 
-### WEB-020: Video/Clips Database Schema + Migration
+### WEB-020: Video/Clips Database Schema + Migration `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -470,9 +639,9 @@
   - [ ] Existing chat/DM queries unaffected
   - [ ] `pnpm build` and `pnpm check` pass
 - **Touched Files**: `drizzle/schema.ts`, `drizzle/migrations/` (new)
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### WEB-021: Video tRPC Router
+### WEB-021: Video tRPC Router `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -481,28 +650,22 @@
 - **Scope**:
   - `video.upload` — create record, return upload key
   - `video.confirmUpload` — validate storage, set status ready
-  - `video.addExternal` — oEmbed fetch for YouTube/TikTok/Instagram
   - `video.getFeed` — cursor pagination, newest-first, include uploader + like state
   - `video.getById` — single clip details
   - `video.like` — toggle (idempotent)
   - `video.delete` — soft delete (uploader/admin)
-  - `video.share` — return deep link URLs
-  - Wire videoId into chat.send, dm.sendMessage, chat.history, dm.getMessages
   - DB functions for all video operations
 - **Non-goals**: Transcoding, streaming optimization, comments
 - **Acceptance Criteria**:
-  - [ ] All 8 video routes functional
+  - [ ] All 6 core video routes functional
   - [ ] Upload → confirm transitions status to ready
-  - [ ] External link fetches oEmbed metadata with 5s timeout
-  - [ ] oEmbed domain allowlist: youtube.com, tiktok.com, instagram.com
   - [ ] Feed paginated with like counts
-  - [ ] Chat/DM messages with videoId include video payload
   - [ ] Existing chat/DM without video unchanged
   - [ ] `pnpm build` and `pnpm check` pass
 - **Touched Files**: `server/routers.ts`, `server/db.ts`
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### WEB-022: Video Storage Upload Strategy
+### WEB-022: Video Storage Upload Strategy `[INFRA]`
 - **Workstream**: Portal
 - **Owner**: Unassigned
 - **Status**: BACKLOG
@@ -521,13 +684,99 @@
   - [ ] New env var documented in .env.example
   - [ ] `pnpm build` passes
 - **Touched Files**: `server/storage.ts` or new file, `.env.example`
-- **Release**: Must deploy before mobile Milestone 3
+- **Release**: v1.4.0 backend phase
 
-### MOB-030: Clips Tab + Feed Screen
+### WEB-023: External Video Links + oEmbed `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Support sharing external video links (YouTube, TikTok, Instagram) with rich previews
+- **Scope**:
+  - `video.addExternal` — accept URL, fetch oEmbed metadata (title, thumbnail, provider)
+  - oEmbed domain allowlist: youtube.com, tiktok.com, instagram.com
+  - 5-second timeout on oEmbed fetch with graceful fallback (store URL without preview)
+  - Store external URL in videos table with source metadata
+- **Non-goals**: Hosting/transcoding external videos, embedding players server-side
+- **Acceptance Criteria**:
+  - [ ] YouTube links return oEmbed metadata (title, thumbnail)
+  - [ ] TikTok links return oEmbed metadata
+  - [ ] Instagram links return oEmbed metadata
+  - [ ] Non-allowlisted domains rejected with clear error
+  - [ ] oEmbed timeout falls back to URL-only record
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`, `server/db.ts` (or new `server/oembed.ts`)
+- **Release**: v1.4.0 backend phase
+
+### WEB-024: Chat/DM Video Integration `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Wire videoId into existing chat and DM message routes
+- **Scope**:
+  - Modify `chat.send` to accept optional videoId
+  - Modify `dm.sendMessage` to accept optional videoId
+  - Modify `chat.history` to include video payload when videoId present
+  - Modify `dm.getMessages` to include video payload when videoId present
+  - Text-only messages completely unaffected (videoId is nullable)
+- **Non-goals**: New chat UI (mobile-side work), video player embedding
+- **Acceptance Criteria**:
+  - [ ] chat.send accepts videoId, message stored correctly
+  - [ ] dm.sendMessage accepts videoId, message stored correctly
+  - [ ] chat.history returns video payload for video messages
+  - [ ] dm.getMessages returns video payload for video messages
+  - [ ] Existing text-only messages unchanged in response shape
+  - [ ] Ably payloads include videoId when present
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`, `server/db.ts`, `server/chat-sse.ts`
+- **Release**: v1.4.0 backend phase
+
+### WEB-025: Share Link Generation `[ENGAGEMENT]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-021
+- **Goal**: Generate shareable deep link URLs for clips
+- **Scope**:
+  - `video.share` route returns deep link URL (`academy://clips/{videoId}`)
+  - Also returns universal link URL (`https://app.academytn.com/clips/{videoId}`)
+  - Include basic OG meta tags for link previews (title, thumbnail, description)
+- **Non-goals**: Universal link verification (WEB-026), social card rendering
+- **Acceptance Criteria**:
+  - [ ] video.share returns both deep link and universal link URLs
+  - [ ] URLs include correct videoId
+  - [ ] OG meta endpoint serves title + thumbnail for link previews
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Touched Files**: `server/routers.ts`
+- **Release**: v1.4.0 backend phase
+
+### WEB-026: Universal Link Infrastructure `[INFRA]`
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Depends on**: WEB-025
+- **Goal**: Configure server + app association for universal links
+- **Scope**:
+  - Vercel rewrite: `/clips/:id` → SPA (or app redirect)
+  - Apple App Site Association (AASA) file at `/.well-known/apple-app-site-association`
+  - Android assetlinks.json at `/.well-known/assetlinks.json`
+  - Document Team ID + bundle ID requirements
+- **Non-goals**: Full universal link testing (requires App Store build)
+- **Acceptance Criteria**:
+  - [ ] AASA file served at correct path with correct bundle ID
+  - [ ] assetlinks.json served at correct path
+  - [ ] Vercel rewrite handles `/clips/:id` path
+  - [ ] Documentation added for Team ID configuration
+  - [ ] `pnpm build` passes
+- **Touched Files**: `vercel.json`, `api/` (new), `.well-known/` files
+- **Release**: v1.4.0 backend phase
+
+### MOB-030: Clips Tab + Feed Screen `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: WEB-021 deployed
+- **Depends on**: WEB-021 deployed + 48hr stabilization
 - **Goal**: Add Clips tab with scrollable video feed
 - **Scope**:
   - New "Clips" tab between Chat and Messages
@@ -547,13 +796,13 @@
   - [ ] Skeleton loading, empty state, error state with retry
   - [ ] Pull-to-refresh
 - **Telemetry**: `clips_feed_viewed`, `clip_opened`, `clip_liked`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-031: Clip Upload Flow
+### MOB-031: Clip Upload Flow `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: WEB-021, WEB-022, MOB-030
+- **Depends on**: WEB-021, WEB-022, WEB-023, MOB-030
 - **Goal**: Upload video clips or share external video links
 - **Scope**:
   - Bottom sheet: "Record Video", "Choose from Library", "Paste Link"
@@ -568,13 +817,13 @@
   - [ ] External links create feed cards
   - [ ] Failed uploads show retry
 - **Telemetry**: `clip_upload_started`, `clip_upload_completed`, `clip_upload_failed`, `clip_external_added`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-032: Video in Chat + DMs
+### MOB-032: Video in Chat + DMs `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: MOB-030, MOB-031
+- **Depends on**: WEB-024, MOB-030, MOB-031
 - **Goal**: Send/receive video clips in chat and DMs
 - **Scope**:
   - Attachment button in ChatInput with video option
@@ -589,13 +838,13 @@
   - [ ] Ably delivers video messages correctly
   - [ ] Text-only messages unaffected
 - **Telemetry**: `chat_video_sent`, `dm_video_sent`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
-### MOB-033: Clips Deep Links + Sharing
+### MOB-033: Clips Deep Links + Sharing `[DIFFERENTIATION]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
 - **Status**: BACKLOG
-- **Depends on**: MOB-030
+- **Depends on**: WEB-025, WEB-026, MOB-030
 - **Goal**: Share clips via deep links, handle incoming links
 - **Scope**:
   - Native share sheet via Share API
@@ -606,7 +855,7 @@
   - [ ] Deep links open correct clip
   - [ ] Universal links work OR follow-up ticket created
 - **Telemetry**: `clip_shared`
-- **Release**: v1.3.0 Milestone 3
+- **Release**: v1.4.0
 
 ---
 

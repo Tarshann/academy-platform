@@ -109,3 +109,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+.claude/worktrees/loving-mendeleev/
+.claude/worktrees/serene-ellis/
+.claude/worktrees/nice-sinoussi/
