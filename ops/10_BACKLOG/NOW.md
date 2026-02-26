@@ -153,7 +153,7 @@
 ### WEB-001: Full UX Audit
 - **Workstream**: Portal
 - **Owner**: Portal Agent
-- **Status**: BACKLOG
+- **Status**: DONE (2026-02-26)
 - **Goal**: Systematically review every portal page and document all UX issues, broken flows, and improvement opportunities
 - **Scope**:
   - Walk through every page as a member, coach, and admin
@@ -182,7 +182,7 @@
 ### WEB-002: API Route Impact Assessment
 - **Workstream**: Portal
 - **Owner**: Portal Agent
-- **Status**: BACKLOG
+- **Status**: DONE (2026-02-26)
 - **Goal**: Document which tRPC routes the mobile app uses (current + planned v1.3) and verify they all work correctly
 - **Scope**:
   - Verify all 14 currently-used mobile routes return expected data
