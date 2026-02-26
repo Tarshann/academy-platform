@@ -159,7 +159,137 @@
 
 ## Web Portal
 
-*(Tickets will be generated from WEB-001 audit findings)*
+*(Generated from WEB-001 UX Audit + WEB-002 API Assessment — 2026-02-26)*
+
+### WEB-003-FIX: Add /orders Route to App.tsx (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Orders page exists (`Orders.tsx`) but is unreachable — no route in App.tsx
+- **Scope**: Add `<Route path="/orders">` to App.tsx, link from Shop or Dashboard navigation
+- **Acceptance Criteria**:
+  - [ ] `/orders` route renders Orders page
+  - [ ] Navigation includes link to orders for authenticated users
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-004-FIX: Add Auth Role Guard to CoachDashboard (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Any authenticated user can currently access `/coach-dashboard` — should be restricted to coach/admin roles
+- **Scope**: Add role check (coach or admin) to CoachDashboard, redirect unauthorized users
+- **Acceptance Criteria**:
+  - [ ] Non-coach users see access denied or redirect when visiting `/coach-dashboard`
+  - [ ] Coach and admin users see dashboard normally
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-005-FIX: Wire Up SkillsLab Registration Form (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: SkillsLabRegisterPage has form UI but no submit handler — form does nothing
+- **Scope**: Connect form to `leads.create` or a new registration mutation, show success/error state
+- **Acceptance Criteria**:
+  - [ ] Form submission sends data to backend
+  - [ ] Success state shown after submission
+  - [ ] Error state shown on failure
+  - [ ] `pnpm build` passes
+- **Telemetry**: `skills_lab_registration_submitted`, `skills_lab_registration_failed`
+- **Release**: Next web deploy
+
+### WEB-006-FIX: Wire Up PerformanceLab Application Form (CRITICAL)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: PerformanceLabApplyPage has form UI but no submit handler — form does nothing
+- **Scope**: Connect form to `leads.create` or a new application mutation, show success/error state
+- **Acceptance Criteria**:
+  - [ ] Form submission sends data to backend
+  - [ ] Success state shown after submission
+  - [ ] Error state shown on failure
+  - [ ] `pnpm build` passes
+- **Telemetry**: `performance_lab_application_submitted`, `performance_lab_application_failed`
+- **Release**: Next web deploy
+
+### WEB-007-FIX: Shop Page — Fetch Products from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Shop page uses hardcoded products — should fetch from `shop.products` tRPC route
+- **Scope**: Replace hardcoded product data with `trpc.shop.products.useQuery()`, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Products come from API, not hardcoded data
+  - [ ] Admin product changes in dashboard appear on Shop page
+  - [ ] Loading skeleton while fetching
+  - [ ] Empty state if no products
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-008-FIX: Schedule Page — Fetch from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Schedule page uses hardcoded `SCHEDULE_DATA` — should fetch from `schedules.upcoming` tRPC route
+- **Scope**: Replace hardcoded schedule with API data, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Schedule data comes from API
+  - [ ] Admin schedule changes appear on page
+  - [ ] Loading, error, and empty states present
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-009-FIX: Gallery Page — Fetch from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Gallery page uses hardcoded photos — should fetch from `gallery.list` tRPC route
+- **Scope**: Replace hardcoded gallery data with API call, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Gallery photos come from API
+  - [ ] Admin gallery uploads appear on page
+  - [ ] Loading, error, and empty states present
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-010-FIX: Route Unrouted Pages (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: Blog, BlogPost, Videos, Gallery, About, Contact, FAQs, Home pages exist but have no routes in App.tsx
+- **Scope**: Add routes for all existing pages. Determine which belong in portal vs marketing site. Remove any that are duplicates of marketing pages.
+- **Acceptance Criteria**:
+  - [ ] All content pages reachable via URL
+  - [ ] Navigation links updated to include new routes
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-013-FIX: Add Pagination to List API Routes (HIGH — mobile blocker)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: 10+ list routes lack pagination. Mobile v1.3 requires paginated responses for performance.
+- **Scope**: Add `limit`/`offset` (or cursor) pagination to: `payment.myPayments`, `payment.mySubscriptions`, `attendance.getMyAttendance`, `gallery.list`, `gallery.byCategory`, `videos.list`, `videos.byCategory`, `dm.searchMessages`, `blog.list` (fix ignored params), `coaches.list`, `locations.list`, `shop.products`
+- **Non-goals**: Breaking existing web portal consumers (pagination must be optional with sensible defaults)
+- **Acceptance Criteria**:
+  - [ ] All listed routes accept optional `limit` and `offset`/`cursor` params
+  - [ ] Default limit (e.g. 50) when no params provided — backwards compatible
+  - [ ] `blog.list` actually uses its limit/offset params in the DB query
+  - [ ] `dm.searchMessages` has max result limit (100)
+  - [ ] Existing web portal calls still work without params
+  - [ ] `pnpm build` and `pnpm check` pass
+- **Telemetry**: No new events
+- **Release**: Before mobile v1.3
+
+---
 
 ### WEB-003: Testimonial Source Consolidation
 - **Workstream**: Portal
