@@ -14,92 +14,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const MEMBERSHIP_PRODUCTS = [
-  {
-    id: "academy-group-membership",
-    name: "Academy Group Membership",
-    description: "Unlimited group sessions + Shooting Lab",
-    price: 150,
-    intervalLabel: "/month",
-    badge: "POPULAR",
-    features: [
-      "Unlimited group workout sessions",
-      "Shooting Lab access included",
-      "Small group sizes (max 8 players)",
-      "Competitive training environment",
-    ],
-  },
-  {
-    id: "complete-player-membership",
-    name: "Complete Player Membership",
-    description: "Unlimited skills classes + open gyms",
-    price: 100,
-    intervalLabel: "/month",
-    badge: "BEST VALUE",
-    features: [
-      "Unlimited skills classes",
-      "Unlimited open gym access",
-      "For dedicated athletes",
-    ],
-  },
-];
-
-const ONE_TIME_PRODUCTS = [
-  {
-    id: "group-workout",
-    name: "Group Workout",
-    description: "Single session access to group workouts. Limited to 8 players.",
-    price: 25,
-    badge: "Group",
-    unitLabel: "/session",
-  },
-  {
-    id: "individual-training",
-    name: "Individual Training",
-    description: "One-on-one coaching tailored to each athlete's goals.",
-    price: 60,
-    badge: "1-on-1",
-    unitLabel: "/session",
-  },
-  {
-    id: "skills-class",
-    name: "Skills Class",
-    description: "Focused instruction on fundamentals, footwork, and body control.",
-    price: 15,
-    badge: "Skills",
-    unitLabel: "/class",
-  },
-  {
-    id: "on-field-workouts",
-    name: "On Field Workouts",
-    description: "Outdoor conditioning and agility training to complement basketball skills.",
-    price: 30,
-    badge: "Outdoor",
-    unitLabel: "/session",
-  },
-  {
-    id: "summer-camp",
-    name: "Summer Camp",
-    description: "Intensive summer training with full-day sessions, skill work, and competition.",
-    price: 20,
-    badge: "Camp",
-    unitLabel: "/day",
-  },
-  {
-    id: "team-academy",
-    name: "Team Academy",
-    description: "Competitive travel team registration including uniforms and coaching.",
-    price: 300,
-    badge: "Team",
-    unitLabel: "/season",
-  },
-];
-
-const INDIVIDUAL_PRODUCTS = ONE_TIME_PRODUCTS.slice(0, 3);
-const SPECIAL_PRODUCTS = ONE_TIME_PRODUCTS.slice(3);
+// Category labels for display
+const CATEGORY_BADGES: Record<string, string> = {
+  membership: "Membership",
+  individual: "1-on-1",
+  group: "Group",
+  camp: "Camp",
+  league: "Team",
+};
 
 // Enhanced debug validation detector - shows which element is failing validation
 // Only active when ?debugValidation=1 is in the URL
@@ -502,9 +426,32 @@ export default function SignUp() {
   // Stays true once redirect to Stripe begins — prevents re-clicks while
   // the browser is navigating and prevents re-checkout via back-button.
   const [redirecting, setRedirecting] = useState(false);
+
+  // Fetch product catalog from API
+  const catalogQuery = trpc.payment.catalog.useQuery();
+  const catalog = catalogQuery.data ?? [];
+
+  // Derive product categories from API data
+  const membershipProducts = useMemo(
+    () => catalog.filter((p) => p.type === "recurring"),
+    [catalog]
+  );
+  const oneTimeProducts = useMemo(
+    () => catalog.filter((p) => p.type === "one_time"),
+    [catalog]
+  );
+  const individualProducts = useMemo(
+    () => oneTimeProducts.filter((p) => p.category === "individual" || p.category === "group"),
+    [oneTimeProducts]
+  );
+  const specialProducts = useMemo(
+    () => oneTimeProducts.filter((p) => p.category === "camp" || p.category === "league"),
+    [oneTimeProducts]
+  );
+
   const productLookup = useMemo(
-    () => new Map(ONE_TIME_PRODUCTS.map((product) => [product.id, product])),
-    []
+    () => new Map(oneTimeProducts.map((product) => [product.id, product])),
+    [oneTimeProducts]
   );
 
   // Enable debug mode with ?debugValidation=1
@@ -551,11 +498,11 @@ export default function SignUp() {
     () =>
       cartItems
         .map((id) => productLookup.get(id))
-        .filter((item): item is (typeof ONE_TIME_PRODUCTS)[number] => Boolean(item)),
+        .filter(Boolean) as typeof catalog,
     [cartItems, productLookup]
   );
   const cartTotal = useMemo(
-    () => cartDetails.reduce((sum, item) => sum + item.price, 0),
+    () => cartDetails.reduce((sum, item) => sum + item.priceInCents / 100, 0),
     [cartDetails]
   );
 
@@ -665,6 +612,51 @@ export default function SignUp() {
           </section>
         )}
 
+        {/* Loading state */}
+        {catalogQuery.isLoading && (
+          <section className="py-16">
+            <div className="container max-w-5xl mx-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {[1, 2].map((i) => (
+                  <Card key={i} className="bg-card border-border animate-pulse">
+                    <CardHeader><div className="h-6 bg-muted rounded w-3/4" /><div className="h-4 bg-muted rounded w-1/2 mt-2" /><div className="h-10 bg-muted rounded w-1/3 mt-4" /></CardHeader>
+                    <CardContent><div className="space-y-3">{[1,2,3].map((j) => <div key={j} className="h-4 bg-muted rounded" />)}</div></CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Error state */}
+        {catalogQuery.isError && (
+          <section className="py-16">
+            <div className="container max-w-2xl mx-auto text-center">
+              <Card className="bg-card border-destructive">
+                <CardContent className="pt-6">
+                  <p className="text-destructive mb-4">Failed to load programs. Please try again.</p>
+                  <Button onClick={() => catalogQuery.refetch()}>Retry</Button>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
+
+        {/* Empty state */}
+        {catalogQuery.isSuccess && catalog.length === 0 && (
+          <section className="py-16">
+            <div className="container max-w-2xl mx-auto text-center">
+              <Card className="bg-card border-border">
+                <CardContent className="pt-6">
+                  <p className="text-muted-foreground">No programs are currently available. Please check back soon.</p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
+
+        {/* Product sections — only shown when catalog is loaded */}
+        {catalogQuery.isSuccess && catalog.length > 0 && (<>
         {/* Cart */}
         <section className="py-10">
           <div className="container">
@@ -689,7 +681,7 @@ export default function SignUp() {
                           className="flex items-center justify-between text-sm text-foreground"
                         >
                           <span>{item.name}</span>
-                          <span className="text-muted-foreground">{formatUsd(item.price)}</span>
+                          <span className="text-muted-foreground">{formatUsd(item.priceInCents / 100)}</span>
                         </li>
                       ))}
                     </ul>
@@ -726,38 +718,31 @@ export default function SignUp() {
         </section>
 
         {/* Memberships */}
+        {membershipProducts.length > 0 && (
         <section className="py-16">
           <div className="container">
             <h2 className="text-3xl font-bold text-center mb-4 text-foreground">Memberships</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Best value for committed players. Unlimited access to programs throughout the month.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {MEMBERSHIP_PRODUCTS.map((product) => (
+              {membershipProducts.map((product) => (
                 <Card key={product.id} className="bg-card border-2 border-primary relative">
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">{product.badge}</Badge>
+                    <Badge className="bg-primary text-primary-foreground">{CATEGORY_BADGES[product.category] ?? product.category}</Badge>
                   </div>
                   <CardHeader>
                     <CardTitle className="text-foreground text-2xl">{product.name}</CardTitle>
                     <CardDescription className="text-muted-foreground">{product.description}</CardDescription>
                     <div className="mt-4">
-                      <span className="text-4xl font-bold text-primary">{formatUsd(product.price)}</span>
-                      <span className="text-muted-foreground">{product.intervalLabel}</span>
+                      <span className="text-4xl font-bold text-primary">{formatUsd(product.priceInCents / 100)}</span>
+                      <span className="text-muted-foreground">/{product.interval ?? "month"}</span>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-3 mb-6">
-                      {product.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2">
-                          <Check className="text-primary mt-0.5 flex-shrink-0" size={20} />
-                          <span className="text-muted-foreground">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    <DivButton 
-                      className="w-full" 
+                    <DivButton
+                      className="w-full"
                       size="lg"
                       onClick={() => handleCheckout([product.id])}
                       disabled={isPending}
@@ -770,29 +755,31 @@ export default function SignUp() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Individual Sessions */}
+        {individualProducts.length > 0 && (
         <section className="py-16 bg-card">
           <div className="container">
             <h2 className="text-3xl font-bold text-center mb-4 text-foreground">Individual Sessions</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Pay-as-you-go options. Perfect for flexible schedules or trying programs before committing.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {INDIVIDUAL_PRODUCTS.map((product) => {
+              {individualProducts.map((product) => {
                 const isSelected = cartItems.includes(product.id);
                 return (
                   <Card key={product.id} className="bg-background border-border">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-foreground">{product.name}</CardTitle>
-                        <Badge variant="outline">{product.badge}</Badge>
+                        <Badge variant="outline">{CATEGORY_BADGES[product.category] ?? product.category}</Badge>
                       </div>
                       <CardDescription className="text-muted-foreground">One-time registration</CardDescription>
                       <div className="mt-4">
-                        <span className="text-3xl font-bold text-primary">{formatUsd(product.price)}</span>
-                        <span className="text-muted-foreground">{product.unitLabel}</span>
+                        <span className="text-3xl font-bold text-primary">{formatUsd(product.priceInCents / 100)}</span>
+                        <span className="text-muted-foreground">/session</span>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -814,29 +801,31 @@ export default function SignUp() {
             </div>
           </div>
         </section>
+        )}
 
         {/* Special Programs */}
+        {specialProducts.length > 0 && (
         <section className="py-16">
           <div className="container">
             <h2 className="text-3xl font-bold text-center mb-4 text-foreground">Special Programs</h2>
             <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
               Seasonal camps and competitive team opportunities.
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {SPECIAL_PRODUCTS.map((product) => {
+              {specialProducts.map((product) => {
                 const isSelected = cartItems.includes(product.id);
                 return (
                   <Card key={product.id} className="bg-card border-border">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-foreground">{product.name}</CardTitle>
-                        <Badge variant="outline">{product.badge}</Badge>
+                        <Badge variant="outline">{CATEGORY_BADGES[product.category] ?? product.category}</Badge>
                       </div>
                       <CardDescription className="text-muted-foreground">One-time registration</CardDescription>
                       <div className="mt-4">
-                        <span className="text-3xl font-bold text-primary">{formatUsd(product.price)}</span>
-                        <span className="text-muted-foreground">{product.unitLabel}</span>
+                        <span className="text-3xl font-bold text-primary">{formatUsd(product.priceInCents / 100)}</span>
+                        <span className="text-muted-foreground">/session</span>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -858,6 +847,9 @@ export default function SignUp() {
             </div>
           </div>
         </section>
+        )}
+
+        </>)}
 
         {/* CTA */}
         <section className="py-16 bg-primary/10">
