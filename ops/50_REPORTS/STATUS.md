@@ -20,6 +20,21 @@
 
 ## Session Log
 
+### 2026-02-27 — Portal Agent
+**Started**: WEB-013-FIX (remaining 5 routes), WEB-007-FIX, WEB-008-FIX, WEB-009-FIX
+**Completed**:
+- WEB-013-FIX: Added pagination (optional limit/offset) to gallery.list, gallery.byCategory, coaches.list, locations.list, shop.products — commit d9e68e2
+- WEB-007-FIX: Shop page now fetches products from `trpc.shop.products` instead of hardcoded data. Loading skeleton, error with retry, empty state — commit 054db19
+- WEB-008-FIX: Schedule page now fetches from `trpc.schedules.upcoming` for authenticated users, groups by date, has loading/error/empty states. Static availability overview kept for all visitors — commit 054db19
+- WEB-009-FIX: Gallery page now fetches from `trpc.gallery.list` instead of hardcoded photos. Client-side category filtering, loading skeleton, error/empty states. Lightbox updated for API data — commit 054db19
+**Blocked**: Nothing
+**Discovered**:
+- WARNING: The "V1.3 Phase 1 Update" commit (6b6b071) reverted pagination from 7 routes that were previously paginated (payment.myPayments, payment.mySubscriptions, attendance.getMyAttendance, videos.list, videos.byCategory, dm.searchMessages, blog.list). These 7 routes currently lack pagination. Only the 5 routes added this session have pagination.
+- Pre-existing `pnpm check` failure: `dompurify` module types missing in BlogPost.tsx. Does not affect build.
+**Next**: Re-add pagination to the 7 reverted routes (payment.myPayments, payment.mySubscriptions, attendance.getMyAttendance, videos.list, videos.byCategory, dm.searchMessages, blog.list). Then continue with WEB-010-FIX (route unrouted pages), WEB-011-FIX, WEB-012-FIX.
+
+---
+
 ### 2026-02-26 — Portal Agent
 **Started**: WEB-001 (Full UX Audit), WEB-002 (API Route Impact Assessment)
 **Completed**:
@@ -82,8 +97,9 @@
 | 2026-02-26 | Portal Agent | CRITICAL | Orders page exists but no route — unreachable | Portal | OPEN — ticket WEB-003-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | CoachDashboard has no auth role guard | Portal | OPEN — ticket WEB-004-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | SkillsLab + PerformanceLab forms have no submit handler | Portal | OPEN — tickets WEB-005-FIX, WEB-006-FIX |
-| 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | OPEN — ticket WEB-013-FIX |
-| 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | OPEN — part of WEB-013-FIX |
+| 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | PARTIAL — 5/12 done (d9e68e2), 7 reverted by 6b6b071 |
+| 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | OPEN — still unfixed after revert |
+| 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
 
 ---
 
