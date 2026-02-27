@@ -494,14 +494,22 @@ export async function toggleGalleryPhotoVisibility(
 // BLOG POST FUNCTIONS
 // ============================================================================
 
-export async function getAllPublishedBlogPosts() {
+export async function getAllPublishedBlogPosts(opts?: { category?: string; limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  const conditions = [eq(blogPosts.isPublished, true)];
+  if (opts?.category) {
+    conditions.push(eq(blogPosts.category, opts.category as any));
+  }
+  let query = db
     .select()
     .from(blogPosts)
-    .where(eq(blogPosts.isPublished, true))
-    .orderBy(desc(blogPosts.publishedAt));
+    .where(and(...conditions))
+    .orderBy(desc(blogPosts.publishedAt))
+    .$dynamic();
+  if (opts?.limit) query = query.limit(opts.limit);
+  if (opts?.offset) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAllBlogPostsAdmin() {
@@ -556,17 +564,19 @@ export async function deleteBlogPost(id: number) {
 // VIDEO FUNCTIONS
 // ============================================================================
 
-export async function getAllVideos(onlyPublished: boolean = false) {
+export async function getAllVideos(onlyPublished: boolean = false, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  if (onlyPublished) {
-    return await db
-      .select()
-      .from(videos)
-      .where(eq(videos.isPublished, true))
-      .orderBy(desc(videos.createdAt));
-  }
-  return await db.select().from(videos).orderBy(desc(videos.createdAt));
+  const conditions = onlyPublished ? [eq(videos.isPublished, true)] : [];
+  let query = db
+    .select()
+    .from(videos)
+    .$dynamic();
+  if (conditions.length > 0) query = query.where(and(...conditions));
+  query = query.orderBy(desc(videos.createdAt));
+  if (opts?.limit) query = query.limit(opts.limit);
+  if (opts?.offset) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getVideoById(id: number) {
@@ -743,24 +753,32 @@ export async function deleteCampaign(id: number) {
 // PAYMENT FUNCTIONS
 // ============================================================================
 
-export async function getUserPayments(userId: number) {
+export async function getUserPayments(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(payments)
     .where(eq(payments.userId, userId))
-    .orderBy(desc(payments.createdAt));
+    .orderBy(desc(payments.createdAt))
+    .$dynamic();
+  if (opts?.limit) query = query.limit(opts.limit);
+  if (opts?.offset) query = query.offset(opts.offset);
+  return await query;
 }
 
-export async function getUserSubscriptions(userId: number) {
+export async function getUserSubscriptions(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
-    .orderBy(desc(subscriptions.createdAt));
+    .orderBy(desc(subscriptions.createdAt))
+    .$dynamic();
+  if (opts?.limit) query = query.limit(opts.limit);
+  if (opts?.offset) query = query.offset(opts.offset);
+  return await query;
 }
 
 // ============================================================================
@@ -1074,14 +1092,18 @@ export async function getAttendanceBySchedule(scheduleId: number) {
     .orderBy(asc(attendanceRecords.userId));
 }
 
-export async function getAttendanceByUser(userId: number) {
+export async function getAttendanceByUser(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(attendanceRecords)
     .where(eq(attendanceRecords.userId, userId))
-    .orderBy(desc(attendanceRecords.markedAt));
+    .orderBy(desc(attendanceRecords.markedAt))
+    .$dynamic();
+  if (opts?.limit) query = query.limit(opts.limit);
+  if (opts?.offset) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAttendanceStats(

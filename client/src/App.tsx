@@ -20,6 +20,7 @@ const CoachDashboard = lazy(() => import("./pages/CoachDashboard").then(m => ({ 
 const Chat = lazy(() => import("./pages/Chat"));
 const Shop = lazy(() => import("./pages/Shop"));
 const ShopOrderSuccess = lazy(() => import("./pages/ShopOrderSuccess"));
+const Orders = lazy(() => import("./pages/Orders"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Schedule = lazy(() => import("./pages/Schedule"));
 const PrivateSessionBooking = lazy(() => import("./pages/PrivateSessionBooking"));
@@ -96,6 +97,10 @@ function Router() {
         <Route path={"/shop/order-success"}>
           <SEO title="Order Successful" description="Your order has been placed successfully." />
           <ShopOrderSuccess />
+        </Route>
+        <Route path={"/orders"}>
+          <SEO title="My Orders" description="View your order history." />
+          <Orders />
         </Route>
         <Route path={"/settings"}>
           <SEO title="Settings" description="Manage your notification preferences and account settings." />
