@@ -494,22 +494,14 @@ export async function toggleGalleryPhotoVisibility(
 // BLOG POST FUNCTIONS
 // ============================================================================
 
-export async function getAllPublishedBlogPosts(opts?: { category?: string; limit?: number; offset?: number }) {
+export async function getAllPublishedBlogPosts() {
   const db = await getDb();
   if (!db) return [];
-  const conditions = [eq(blogPosts.isPublished, true)];
-  if (opts?.category) {
-    conditions.push(eq(blogPosts.category, opts.category as any));
-  }
-  let query = db
+  return await db
     .select()
     .from(blogPosts)
-    .where(and(...conditions))
-    .orderBy(desc(blogPosts.publishedAt))
-    .$dynamic();
-  if (opts?.limit) query = query.limit(opts.limit);
-  if (opts?.offset) query = query.offset(opts.offset);
-  return await query;
+    .where(eq(blogPosts.isPublished, true))
+    .orderBy(desc(blogPosts.publishedAt));
 }
 
 export async function getAllBlogPostsAdmin() {
@@ -564,19 +556,17 @@ export async function deleteBlogPost(id: number) {
 // VIDEO FUNCTIONS
 // ============================================================================
 
-export async function getAllVideos(onlyPublished: boolean = false, opts?: { limit?: number; offset?: number }) {
+export async function getAllVideos(onlyPublished: boolean = false) {
   const db = await getDb();
   if (!db) return [];
-  const conditions = onlyPublished ? [eq(videos.isPublished, true)] : [];
-  let query = db
-    .select()
-    .from(videos)
-    .$dynamic();
-  if (conditions.length > 0) query = query.where(and(...conditions));
-  query = query.orderBy(desc(videos.createdAt));
-  if (opts?.limit) query = query.limit(opts.limit);
-  if (opts?.offset) query = query.offset(opts.offset);
-  return await query;
+  if (onlyPublished) {
+    return await db
+      .select()
+      .from(videos)
+      .where(eq(videos.isPublished, true))
+      .orderBy(desc(videos.createdAt));
+  }
+  return await db.select().from(videos).orderBy(desc(videos.createdAt));
 }
 
 export async function getVideoById(id: number) {
@@ -753,32 +743,24 @@ export async function deleteCampaign(id: number) {
 // PAYMENT FUNCTIONS
 // ============================================================================
 
-export async function getUserPayments(userId: number, opts?: { limit?: number; offset?: number }) {
+export async function getUserPayments(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  let query = db
+  return await db
     .select()
     .from(payments)
     .where(eq(payments.userId, userId))
-    .orderBy(desc(payments.createdAt))
-    .$dynamic();
-  if (opts?.limit) query = query.limit(opts.limit);
-  if (opts?.offset) query = query.offset(opts.offset);
-  return await query;
+    .orderBy(desc(payments.createdAt));
 }
 
-export async function getUserSubscriptions(userId: number, opts?: { limit?: number; offset?: number }) {
+export async function getUserSubscriptions(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  let query = db
+  return await db
     .select()
     .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
-    .orderBy(desc(subscriptions.createdAt))
-    .$dynamic();
-  if (opts?.limit) query = query.limit(opts.limit);
-  if (opts?.offset) query = query.offset(opts.offset);
-  return await query;
+    .orderBy(desc(subscriptions.createdAt));
 }
 
 // ============================================================================
@@ -1092,18 +1074,14 @@ export async function getAttendanceBySchedule(scheduleId: number) {
     .orderBy(asc(attendanceRecords.userId));
 }
 
-export async function getAttendanceByUser(userId: number, opts?: { limit?: number; offset?: number }) {
+export async function getAttendanceByUser(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  let query = db
+  return await db
     .select()
     .from(attendanceRecords)
     .where(eq(attendanceRecords.userId, userId))
-    .orderBy(desc(attendanceRecords.markedAt))
-    .$dynamic();
-  if (opts?.limit) query = query.limit(opts.limit);
-  if (opts?.offset) query = query.offset(opts.offset);
-  return await query;
+    .orderBy(desc(attendanceRecords.markedAt));
 }
 
 export async function getAttendanceStats(

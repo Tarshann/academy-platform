@@ -161,28 +161,11 @@
 - **Owner**: Marketing/SEO Agent
 - **Status**: BACKLOG
 - **Goal**: Comprehensive SEO audit of academytn.com — meta tags, structured data, sitemap, robots.txt, heading hierarchy, images, links
-- **Scope**:
-  - Inventory all pages with current meta tags
-  - Check structured data coverage and validity
-  - Verify sitemap.xml and robots.txt
-  - Check Open Graph and Twitter Card tags
-  - Review heading hierarchy per page
-  - Check image alt text coverage
-  - Scan for broken internal/external links
-  - Assess mobile rendering
-- **Non-goals**:
-  - Don't make changes during audit — document only
-  - Don't do content writing (separate tickets)
 - **Acceptance Criteria**:
   - [ ] Every public page audited against SEO checklist
   - [ ] Issues categorized by severity
   - [ ] At least 5 SEO improvement tickets created in NEXT.md
   - [ ] Audit report written to `ops/50_REPORTS/audit-findings.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md`
-  - `ops/10_BACKLOG/NEXT.md`
-- **Test Plan**: N/A (this IS the audit)
-- **Telemetry**: No new events
 - **Release**: Informs SEO improvements
 
 ---
@@ -192,30 +175,29 @@
 - **Owner**: Marketing/SEO Agent
 - **Status**: BACKLOG
 - **Goal**: Measure current Core Web Vitals and establish baseline for improvement
-- **Scope**:
-  - Run Lighthouse on all key pages (home, programs, about, contact, blog index)
-  - Document LCP, CLS, INP, FCP, TTFB for each
-  - Identify top 3 performance bottlenecks
-  - Create optimization tickets based on findings
-- **Non-goals**:
-  - Don't fix yet — measure first
 - **Acceptance Criteria**:
   - [ ] Lighthouse scores documented for 5+ key pages
   - [ ] Top 3 bottlenecks identified with specific causes
   - [ ] Optimization tickets created in NEXT.md
   - [ ] Baseline documented in `ops/50_REPORTS/audit-findings.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md`
-  - `ops/10_BACKLOG/NEXT.md`
-- **Test Plan**: Run Lighthouse, record scores
-- **Telemetry**: No new events
 - **Release**: Informs CWV optimization
 
 ---
 
 ## Research
 
-*(RES-001 completed 2026-02-26 — see DONE section)*
+### RES-001: Competitor App Feature Analysis
+- **Workstream**: Research
+- **Owner**: Competitor Intel Agent
+- **Status**: BACKLOG
+- **Goal**: Analyze top 3 competitor apps (TeamSnap, SportsEngine, GameChanger) and produce actionable adoption recommendations
+- **Acceptance Criteria**:
+  - [ ] Feature comparison table complete for 3 competitors
+  - [ ] Top 5 adoption recommendations documented with effort (S/M/L)
+  - [ ] UX patterns documented with screenshots/descriptions
+  - [ ] At least 3 adoption tickets created in NEXT.md
+  - [ ] Report written to `ops/50_REPORTS/competitor-snapshots.md`
+- **Release**: Informs feature prioritization
 
 ---
 
@@ -226,44 +208,16 @@
 - **Owner**: QA/Release Agent
 - **Status**: BACKLOG
 - **Goal**: Create comprehensive QA checklists for all three apps and a v1.3 release plan
-- **Scope**:
-  - Mobile smoke test checklist (15+ items)
-  - Portal smoke test checklist (10+ items)
-  - Marketing smoke test checklist (10+ items)
-  - Release timeline for v1.3 mobile
-  - App Store submission checklist
-- **Non-goals**:
-  - Not doing the actual QA yet — creating the system
 - **Acceptance Criteria**:
   - [ ] `CHECKLIST_QA.md` complete with all three app checklists
   - [ ] `RELEASE_PLAN.md` has v1.3 timeline with milestones
   - [ ] `CHECKLIST_APP_STORE.md` covers iOS submission requirements
   - [ ] All checklists are actionable checkboxes, not prose
-- **Touched Files**:
-  - `ops/40_RELEASES/CHECKLIST_QA.md`
-  - `ops/40_RELEASES/RELEASE_PLAN.md`
-  - `ops/40_RELEASES/CHECKLIST_APP_STORE.md`
-- **Test Plan**: Review checklists for completeness
-- **Telemetry**: No new events
 - **Release**: System infrastructure
 
 ---
 
 ## DONE
-
-### RES-001: Competitor App Feature Analysis — DONE 2026-02-26
-- **Owner**: Competitor Intel Agent
-- **Output**: Full feature comparison matrix + 7 detailed findings + 5 top adoption recommendations + UX pattern analysis in `ops/50_REPORTS/competitor-snapshots.md`
-- **Acceptance Criteria Results**:
-  - [x] Feature comparison table complete for 3 competitors (16-row matrix)
-  - [x] Top 5 adoption recommendations documented with effort (S/M/L)
-  - [x] UX patterns documented (5 patterns with implementation details)
-  - [x] 7 adoption tickets created in NEXT.md (MOB-040, MOB-018, WEB-030, SEO-010, SEO-011, MKT-020, MKT-021)
-  - [x] Report written to `ops/50_REPORTS/competitor-snapshots.md`
-- **Also completed in same session**: RES-002 (local competitors) and RES-003 (SEO keywords)
-- **Tickets created**:
-  - NEXT: MOB-040 (RSVP), MOB-018 (onboarding, promoted from LATER), WEB-030 (calendar sync), SEO-010 (GBP), SEO-011 (FAQ schema), MKT-020 (blog), MKT-021 (sport pages)
-  - LATER: MOB-041 (progress stats), MOB-042 (achievements), MOB-050 (family accounts), MKT-022 (city pages), MKT-023 (testimonials), MKT-024 (video), MKT-025 (results page)
 
 ### WEB-001: Full UX Audit — DONE 2026-02-26
 - **Workstream**: Portal | **Owner**: Portal Agent
@@ -274,3 +228,24 @@
 - **Workstream**: Portal | **Owner**: Portal Agent
 - **Commit**: `5bd2579` — docs: complete WEB-001 UX audit + WEB-002 API impact assessment
 - **Result**: Verified all 24 mobile v1.3 routes. 12 mobile-ready, 12 need pagination. `blog.list` accepts pagination params but ignores them in DB query. Full report in `ops/50_REPORTS/audit-findings.md`.
+
+### WEB-003-FIX: Add /orders Route to App.tsx — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Merge**: PR #149 → `8a5d8a9`
+- **Result**: Orders page now reachable at `/orders`. Lazy-loaded with SEO wrapper.
+
+### WEB-004-FIX: Add Auth Role Guard to CoachDashboard — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Merge**: PR #149 → `8a5d8a9`
+- **Result**: CoachDashboard restricted to admin role. Non-admin users redirected to `/`. Loading state added.
+
+### WEB-005-FIX: SkillsLab Registration Form — CLOSED (False Positive)
+- **Reason**: REST handlers exist at `server/skills-lab-register.ts`. Forms work via REST, not tRPC. Original audit missed this.
+
+### WEB-006-FIX: PerformanceLab Application Form — CLOSED (False Positive)
+- **Reason**: REST handlers exist at `server/performance-lab-apply.ts`. Forms work via REST, not tRPC. Original audit missed this.
+
+### WEB-013-FIX: Add Pagination to List API Routes — DONE (Partial) 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Merge**: PR #149 → `8a5d8a9`
+- **Result**: 7 of 12 routes paginated: `blog.list` (fixed ignored params + category filter), `payment.myPayments`, `payment.mySubscriptions`, `attendance.getMyAttendance`, `videos.list`, `dm.searchMessages` (limit exposed, max 100, default 20). Remaining 5 routes (gallery.list, gallery.byCategory, coaches.list, locations.list, shop.products) still need pagination.
