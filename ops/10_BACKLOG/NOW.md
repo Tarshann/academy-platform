@@ -245,7 +245,47 @@
 ### WEB-006-FIX: PerformanceLab Application Form — CLOSED (False Positive)
 - **Reason**: REST handlers exist at `server/performance-lab-apply.ts`. Forms work via REST, not tRPC. Original audit missed this.
 
-### WEB-013-FIX: Add Pagination to List API Routes — DONE (Partial) 2026-02-27
+### WEB-013-FIX: Add Pagination to List API Routes — DONE 2026-02-27
 - **Workstream**: Portal | **Owner**: Portal Agent
-- **Merge**: PR #149 → `8a5d8a9`
-- **Result**: 7 of 12 routes paginated: `blog.list` (fixed ignored params + category filter), `payment.myPayments`, `payment.mySubscriptions`, `attendance.getMyAttendance`, `videos.list`, `dm.searchMessages` (limit exposed, max 100, default 20). Remaining 5 routes (gallery.list, gallery.byCategory, coaches.list, locations.list, shop.products) still need pagination.
+- **Commits**: PR #149 → `8a5d8a9` (initial 7), `d9e68e2` (5 more), `da4a61b` (remaining 7 re-added after revert)
+- **Result**: All 12 routes now paginated with optional limit/offset. blog.list DB query fixed to actually use its params. dm.searchMessages has max 100 default 20.
+
+### WEB-007-FIX: Shop Page — Fetch from API — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `054db19`
+- **Result**: Shop page fetches from trpc.shop.products. Loading/error/empty states added.
+
+### WEB-008-FIX: Schedule Page — Fetch from API — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `054db19`
+- **Result**: Schedule page fetches from trpc.schedules.upcoming. Groups by date. Loading/error/empty states.
+
+### WEB-009-FIX: Gallery Page — Fetch from API — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `054db19`
+- **Result**: Gallery page fetches from trpc.gallery.list. Client-side filtering. Loading/error/empty states.
+
+### WEB-010-FIX: Route Unrouted Pages — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `f8986b6`
+- **Result**: 9 pages now routed: /blog, /blog/:slug, /videos, /gallery, /about, /contact, /faqs, /home, /orders. All lazy-loaded with SEO wrappers. dompurify dependency added.
+
+### WEB-011-FIX: SignUp Page — Fetch from API — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `f5bdd87`
+- **Result**: SignUp fetches product catalog from trpc.payment.catalog. Products categorized dynamically. Loading/error/empty states.
+
+### WEB-012-FIX: PrivateSessionBooking — Fetch Coaches from API — DONE 2026-02-27
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `d4cd05d`
+- **Result**: Coach selection fetches from trpc.coaches.list (now includes name/email via JOIN). Loading/error/empty states.
+
+### MOB-005 through MOB-009 — DONE 2026-02-27
+- **Workstream**: Mobile | **Owner**: Mobile Agent
+- **Commits**: `6448bd6` (MOB-005), `05298c6` (MOB-006), `eea4ba3` (MOB-007), `1824e44` (MOB-008), `e9b81a9` (MOB-009)
+- **Result**: Payments screen, shop screen, enhanced dashboard, attendance tracking, notification preferences. All compile for iOS + Android.
+
+### MOB-010: Chat Image Upload — DONE 2026-02-27
+- **Workstream**: Mobile | **Owner**: Mobile Agent
+- **Commit**: `3174ed5`
+- **Result**: Camera + library picker, 5MB validation, upload progress, image in message bubbles, tap-to-fullscreen, retry on failure. Works in group chat and DMs. Phase C complete — all v1.3.0 mobile tickets done.
