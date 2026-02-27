@@ -1,61 +1,35 @@
-import { ShoppingBag, Shirt, Package, Bell } from "lucide-react";
+import { ShoppingBag, Bell, AlertCircle, RefreshCw } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { trpc } from "@/lib/trpc";
 
-
-const upcomingProducts = [
-  {
-    id: 1,
-    name: "Academy Training Jersey",
-    description: "Official Academy performance jersey",
-    icon: Shirt,
-    category: "Apparel"
-  },
-  {
-    id: 2,
-    name: "Academy Shorts",
-    description: "Breathable athletic shorts with Academy logo",
-    icon: Shirt,
-    category: "Apparel"
-  },
-  {
-    id: 3,
-    name: "Academy Hoodie",
-    description: "Premium cotton blend hoodie",
-    icon: Shirt,
-    category: "Apparel"
-  },
-  {
-    id: 4,
-    name: "Training Basketball",
-    description: "Official Academy training ball",
-    icon: Package,
-    category: "Equipment"
-  },
-  {
-    id: 5,
-    name: "Academy Backpack",
-    description: "Spacious gym bag with shoe compartment",
-    icon: ShoppingBag,
-    category: "Accessories"
-  },
-  {
-    id: 6,
-    name: "Water Bottle",
-    description: "32oz insulated Academy water bottle",
-    icon: Package,
-    category: "Accessories"
-  },
-];
+function ProductCardSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <Skeleton className="aspect-square w-full" />
+      <CardContent className="p-6 space-y-2">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-5 w-20 mt-2" />
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Shop() {
+  const { data: products, isLoading, isError, refetch } = trpc.shop.products.useQuery();
+
+  const hasProducts = products && products.length > 0;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      
+
       <main id="main-content" className="flex-1">
         <div className="container pt-6">
           <Breadcrumbs items={[{ label: "Shop" }]} />
@@ -64,41 +38,98 @@ export default function Shop() {
         {/* Hero Section */}
         <section className="bg-gradient-to-b from-primary/10 to-background py-16">
           <div className="container text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
-              <Bell className="w-4 h-4" />
-              Coming Soon
-            </div>
+            {!hasProducts && !isLoading && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary font-medium text-sm mb-6">
+                <Bell className="w-4 h-4" />
+                Coming Soon
+              </div>
+            )}
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Academy Shop
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Official Academy apparel and training gear launching soon. Represent The Academy with premium quality merchandise.
+              {hasProducts
+                ? "Official Academy apparel and training gear. Represent The Academy with premium quality merchandise."
+                : "Official Academy apparel and training gear launching soon. Represent The Academy with premium quality merchandise."}
             </p>
           </div>
         </section>
 
-        {/* Preview Products */}
+        {/* Products Section */}
         <section className="py-12">
           <div className="container">
-            <h2 className="text-2xl font-bold text-center mb-8">
-              What's Coming
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcomingProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                  <div className="aspect-square bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
-                    <product.icon className="w-24 h-24 text-primary/30" strokeWidth={1} />
-                  </div>
-                  <CardContent className="p-6">
-                    <span className="text-xs font-medium text-primary uppercase tracking-wide">
-                      {product.category}
-                    </span>
-                    <h3 className="font-semibold text-lg mt-1 mb-2">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground">{product.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {isLoading && (
+              <>
+                <h2 className="text-2xl font-bold text-center mb-8">Shop Products</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                  <ProductCardSkeleton />
+                </div>
+              </>
+            )}
+
+            {isError && (
+              <div className="text-center py-12">
+                <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Unable to load products</h3>
+                <p className="text-muted-foreground mb-4">Something went wrong while fetching products.</p>
+                <Button variant="outline" onClick={() => refetch()}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            )}
+
+            {!isLoading && !isError && hasProducts && (
+              <>
+                <h2 className="text-2xl font-bold text-center mb-8">Shop Products</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      {product.imageUrl ? (
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="aspect-square bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
+                          <ShoppingBag className="w-24 h-24 text-primary/30" strokeWidth={1} />
+                        </div>
+                      )}
+                      <CardContent className="p-6">
+                        <span className="text-xs font-medium text-primary uppercase tracking-wide">
+                          {product.category}
+                        </span>
+                        <h3 className="font-semibold text-lg mt-1 mb-2">{product.name}</h3>
+                        {product.description && (
+                          <p className="text-sm text-muted-foreground mb-2">{product.description}</p>
+                        )}
+                        <p className="text-lg font-bold">${product.price}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {!isLoading && !isError && !hasProducts && (
+              <>
+                <h2 className="text-2xl font-bold text-center mb-8">What's Coming</h2>
+                <div className="text-center py-8">
+                  <ShoppingBag className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+                  <p className="text-muted-foreground">
+                    No products available yet. Check back soon for official Academy merchandise!
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
@@ -108,10 +139,10 @@ export default function Shop() {
             <div className="max-w-2xl mx-auto text-center">
               <ShoppingBag className="w-16 h-16 mx-auto text-primary mb-6" />
               <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Be the First to Know
+                {hasProducts ? "Member Discounts Available" : "Be the First to Know"}
               </h2>
               <p className="text-muted-foreground mb-8">
-                Register for Academy training programs to get exclusive early access and member discounts when the shop launches.
+                Register for Academy training programs to get exclusive early access and member discounts.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="https://academytn.com/programs">
