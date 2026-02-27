@@ -2,6 +2,7 @@ import { useUser, useAuth } from '@clerk/clerk-expo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
 
@@ -175,7 +176,7 @@ export default function ProfileScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>The Academy v1.1</Text>
+        <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.3.0'}</Text>
         <Text style={styles.footerText}>Gallatin, Tennessee</Text>
       </View>
     </ScrollView>

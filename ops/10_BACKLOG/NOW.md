@@ -10,7 +10,7 @@
 ### MOB-001: Version Bump + Foundation Setup
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: BACKLOG
+- **Status**: IN PROGRESS
 - **Goal**: Prepare academy-app for v1.3 development with correct versioning and dependency foundation
 - **Scope**:
   - Bump version to 1.3.0 in app.json
