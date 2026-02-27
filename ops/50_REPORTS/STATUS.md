@@ -20,7 +20,24 @@
 
 ## Session Log
 
-### 2026-02-27 — Mobile Agent
+### 2026-02-27 — Mobile Agent (Session 2)
+**Started**: MOB-005, MOB-006, MOB-007, MOB-008, MOB-009 (Phase A + B)
+**Completed**:
+- MOB-005: Payments & subscriptions screen — active subscriptions with renewal dates, payment history with amounts/status, Stripe portal link, skeleton/error/empty states — commit `6448bd6`
+- MOB-006: Merchandise shop screen — product listing from shop.products API with images (expo-image), category badges, per-product checkout via shop.createCheckout → Stripe in-app browser, low stock indicator, sold-out state — commit `05298c6`
+- MOB-007: Enhanced dashboard — attendance stats card from attendance.getMyStats, quick actions grid (Schedule, Chat, Programs, Shop), upcoming payment card from payment.mySubscriptions, announcement skeletons — commit `eea4ba3`
+- MOB-008: Attendance tracking screen — monthly calendar view with color-coded dots, stats summary, month navigation, filtered records list, status legend, date-fns for all date operations — commit `1824e44`
+- MOB-009: Notification preferences — toggle switches for push/email/DM/chat/mentions/announcements, quiet hours with time picker, optimistic updates with error revert — commit `e9b81a9`
+**Blocked**: Nothing
+**Discovered**:
+- No Stripe Billing Portal session route exists on the server. The "Manage Subscription" button currently opens the web portal. Portal Agent should add a `payment.createPortalSession` route for proper Stripe portal integration.
+- All 5 tickets verified with `npx expo export` — both iOS and Android bundles compile successfully.
+- Profile screen now has ACCOUNT section with Payments, Shop, and Notification Settings links.
+**Next**: Phase B continues with MOB-010 (chat image upload). Phase A gate checklist should be fully reviewed — MOB-001 through MOB-006 are all complete. Phase B tickets MOB-007 through MOB-009 are also complete.
+
+---
+
+### 2026-02-27 — Mobile Agent (Session 1)
 **Started**: MOB-001, MOB-002, MOB-003, MOB-004 (Phase A Revenue Infrastructure)
 **Completed**:
 - MOB-001: Version bump to 1.3.0, buildNumber 17, EAS Update channels, dynamic version in profile footer, foundation dependencies (reanimated, image-picker, bottom-sheet, haptics, date-fns, expo-image, expo-store-review), babel.config.js — commit `83a3c48`
@@ -116,6 +133,7 @@
 | 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | PARTIAL — 5/12 done (d9e68e2), 7 reverted by 6b6b071 |
 | 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | OPEN — still unfixed after revert |
 | 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
+| 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | OPEN — Portal Agent needs to add payment.createPortalSession route |
 
 ---
 

@@ -10,8 +10,8 @@
 
 ### MOB-005: Subscription Management `[REVENUE]`
 - **Workstream**: Mobile
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Mobile Agent
+- **Status**: DONE — commit `6448bd6`
 - **Phase**: A (Revenue Infrastructure)
 - **Goal**: Members can view active subscriptions, payment history, and manage billing from the app
 - **Scope**:
@@ -35,8 +35,8 @@
 
 ### MOB-006: Merchandise Shop `[REVENUE]`
 - **Workstream**: Mobile
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Mobile Agent
+- **Status**: DONE — commit `05298c6`
 - **Phase**: A (Revenue Infrastructure)
 - **Goal**: Browse and purchase Academy merchandise from the app
 - **Scope**:
@@ -61,8 +61,8 @@
 
 ### MOB-007: Enhanced Dashboard `[RETENTION]`
 - **Workstream**: Mobile
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Mobile Agent
+- **Status**: DONE — commit `eea4ba3`
 - **Phase**: B (Retention Infrastructure)
 - **Goal**: Transform dashboard from simple welcome screen into an engagement hub
 - **Scope**:
@@ -85,8 +85,8 @@
 
 ### MOB-008: Attendance Tracking Screen `[RETENTION]`
 - **Workstream**: Mobile
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Mobile Agent
+- **Status**: DONE — commit `1824e44`
 - **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can view their attendance history and stats
 - **Scope**:
@@ -110,8 +110,8 @@
 
 ### MOB-009: Notification Preferences `[RETENTION]`
 - **Workstream**: Mobile
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Mobile Agent
+- **Status**: DONE — commit `e9b81a9`
 - **Phase**: B (Retention Infrastructure)
 - **Goal**: Members can control which notifications they receive and set quiet hours
 - **Scope**:

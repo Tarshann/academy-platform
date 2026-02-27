@@ -93,6 +93,9 @@ expo-av                  — if video playback needed
 | 2026-02-27 | Coach contacts: bridge pattern mapping known coach IDs to contact info | coaches.list API returns id/userId/bio/specialties but no name/phone. Can't modify server. Bridge pattern keeps contacts working while API is extended. |
 | 2026-02-27 | Stripe checkout: expo-web-browser (not WebView or native SDK) | Ticket specifies WebView/browser approach first. expo-web-browser is already installed, handles dismissal cleanly, no native SDK complexity. |
 | 2026-02-27 | Programs: use slug as Stripe productId | Server products.ts uses string IDs matching program slugs. Checkout route expects these as productIds. |
+| 2026-02-27 | New screens as standalone routes (not tabs) | 6 tabs already fills the tab bar. Payments, Shop, Attendance, Notification Settings are standalone routes accessible from Profile ACCOUNT section and Dashboard quick actions. |
+| 2026-02-27 | Manage Subscription opens web portal (not Stripe portal) | No payment.createPortalSession route exists. Opens app.academytn.com as interim. Portal Agent should add dedicated route. |
+| 2026-02-27 | Shop checkout sends empty shippingAddress | shop.createCheckout requires shippingAddress string but mobile doesn't have a shipping form yet. Sends empty string — server handles it. |
 
 ## Files Modified Log
 
@@ -106,3 +109,9 @@ expo-av                  — if video playback needed
 | 2026-02-27 | app/(tabs)/chat.tsx | Added Parents + Announcements rooms | MOB-002 |
 | 2026-02-27 | app/chat/[room].tsx | Added room titles for new rooms | MOB-002 |
 | 2026-02-27 | app/(tabs)/programs.tsx | In-app Stripe checkout, skeleton/error/empty states | MOB-004 |
+| 2026-02-27 | app/payments.tsx | Created — subscriptions + payment history screen | MOB-005 |
+| 2026-02-27 | app/shop.tsx | Created — merchandise shop with product listing + checkout | MOB-006 |
+| 2026-02-27 | app/(tabs)/index.tsx | Enhanced dashboard: stats, quick actions, payment card | MOB-007 |
+| 2026-02-27 | app/attendance.tsx | Created — calendar view + records + stats | MOB-008 |
+| 2026-02-27 | app/notifications-settings.tsx | Created — toggle switches + quiet hours | MOB-009 |
+| 2026-02-27 | app/(tabs)/profile.tsx | Added ACCOUNT section: Payments, Shop, Notifications links | MOB-005, MOB-006, MOB-009 |
