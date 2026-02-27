@@ -224,6 +224,17 @@ export default function ProfileScreen() {
           <Text style={styles.linkText}>Payments & Subscriptions</Text>
           <Ionicons name="chevron-forward" size={14} color="#ccc" />
         </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/shop')}
+        >
+          <Ionicons name="bag-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Shop</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
       </View>
 
       {/* Links */}
