@@ -406,7 +406,7 @@ export async function markContactAsResponded(id: number) {
 // GALLERY PHOTO FUNCTIONS
 // ============================================================================
 
-export async function getAllGalleryPhotos() {
+export async function getAllGalleryPhotos(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   const photos = await db
@@ -421,21 +421,26 @@ export async function getAllGalleryPhotos() {
     );
 
   // Sort: populated images (with imageUrl) first, then by creation date (newest first)
-  return photos.sort((a: any, b: any) => {
+  const sorted = photos.sort((a: any, b: any) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
 
     if (aHasImage && !bHasImage) return -1;
     if (!aHasImage && bHasImage) return 1;
 
-    // Both have images or both don't - sort by date (newest first)
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bDate - aDate;
   });
+
+  if (opts?.limit != null || opts?.offset != null) {
+    const start = opts?.offset ?? 0;
+    return opts?.limit != null ? sorted.slice(start, start + opts.limit) : sorted.slice(start);
+  }
+  return sorted;
 }
 
-export async function getGalleryPhotosByCategory(category: string) {
+export async function getGalleryPhotosByCategory(category: string, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   const photos = await db
@@ -450,19 +455,23 @@ export async function getGalleryPhotosByCategory(category: string) {
       )
     );
 
-  // Sort: populated images (with imageUrl) first, then by creation date (newest first)
-  return photos.sort((a: any, b: any) => {
+  const sorted = photos.sort((a: any, b: any) => {
     const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
     const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
 
     if (aHasImage && !bHasImage) return -1;
     if (!aHasImage && bHasImage) return 1;
 
-    // Both have images or both don't - sort by date (newest first)
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bDate - aDate;
   });
+
+  if (opts?.limit != null || opts?.offset != null) {
+    const start = opts?.offset ?? 0;
+    return opts?.limit != null ? sorted.slice(start, start + opts.limit) : sorted.slice(start);
+  }
+  return sorted;
 }
 
 export async function createGalleryPhoto(photoData: InsertGalleryPhoto) {
@@ -629,10 +638,10 @@ export async function deleteVideo(id: number) {
 // PRODUCT FUNCTIONS
 // ============================================================================
 
-export async function getAllProducts() {
+export async function getAllProducts(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(products)
     .where(
@@ -642,7 +651,11 @@ export async function getAllProducts() {
         sql`lower(coalesce(${products.description}, '')) NOT LIKE '%test%'`
       )
     )
-    .orderBy(asc(products.name));
+    .orderBy(asc(products.name))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getProductById(id: number) {
@@ -840,14 +853,18 @@ export async function getUserOrders(userId: number) {
 // LOCATION FUNCTIONS
 // ============================================================================
 
-export async function getAllLocations() {
+export async function getAllLocations(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(locations)
     .where(eq(locations.isActive, true))
-    .orderBy(asc(locations.name));
+    .orderBy(asc(locations.name))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAllLocationsAdmin() {
@@ -893,14 +910,18 @@ export async function deleteLocation(id: number) {
 // COACH FUNCTIONS
 // ============================================================================
 
-export async function getAllCoaches() {
+export async function getAllCoaches(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(coaches)
     .where(eq(coaches.isActive, true))
-    .orderBy(asc(coaches.id));
+    .orderBy(asc(coaches.id))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAllCoachesAdmin() {

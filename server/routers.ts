@@ -52,6 +52,11 @@ const slugSchema = z
   .transform(slugify)
   .refine(value => value.length > 0, "Slug must include letters or numbers");
 
+const paginationSchema = z.object({
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).optional(),
+}).optional();
+
 const ageSchema = z.number().int().min(1).max(99);
 const maxParticipantsSchema = z.number().int().min(1).nullable();
 
@@ -798,16 +803,22 @@ export const appRouter = router({
   }),
 
   gallery: router({
-    list: publicProcedure.query(async () => {
-      const { getAllGalleryPhotos } = await import("./db");
-      return await getAllGalleryPhotos();
-    }),
+    list: publicProcedure
+      .input(paginationSchema)
+      .query(async ({ input }) => {
+        const { getAllGalleryPhotos } = await import("./db");
+        return await getAllGalleryPhotos(input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
     byCategory: publicProcedure
-      .input(z.object({ category: z.string() }))
+      .input(z.object({
+        category: z.string(),
+        limit: z.number().int().min(1).max(100).optional(),
+        offset: z.number().int().min(0).optional(),
+      }))
       .query(async ({ input }) => {
         const { getGalleryPhotosByCategory } = await import("./db");
-        return await getGalleryPhotosByCategory(input.category);
+        return await getGalleryPhotosByCategory(input.category, { limit: input.limit, offset: input.offset });
       }),
 
     admin: router({
@@ -880,10 +891,12 @@ export const appRouter = router({
 
   shop: router({
     // Public shop endpoints
-    products: publicProcedure.query(async () => {
-      const { getAllProducts } = await import("./db");
-      return await getAllProducts();
-    }),
+    products: publicProcedure
+      .input(paginationSchema)
+      .query(async ({ input }) => {
+        const { getAllProducts } = await import("./db");
+        return await getAllProducts(input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
 
     productById: publicProcedure
       .input(z.object({ id: z.number() }))
@@ -1483,10 +1496,12 @@ export const appRouter = router({
 
   // Location management
   locations: router({
-    list: publicProcedure.query(async () => {
-      const { getAllLocations } = await import("./db");
-      return await getAllLocations();
-    }),
+    list: publicProcedure
+      .input(paginationSchema)
+      .query(async ({ input }) => {
+        const { getAllLocations } = await import("./db");
+        return await getAllLocations(input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
     admin: router({
       list: adminProcedure.query(async () => {
         const { getAllLocationsAdmin } = await import("./db");
@@ -1551,10 +1566,12 @@ export const appRouter = router({
 
   // Coach management
   coaches: router({
-    list: publicProcedure.query(async () => {
-      const { getAllCoaches } = await import("./db");
-      return await getAllCoaches();
-    }),
+    list: publicProcedure
+      .input(paginationSchema)
+      .query(async ({ input }) => {
+        const { getAllCoaches } = await import("./db");
+        return await getAllCoaches(input ? { limit: input.limit, offset: input.offset } : undefined);
+      }),
     admin: router({
       list: adminProcedure.query(async () => {
         const { getAllCoachesAdmin } = await import("./db");
