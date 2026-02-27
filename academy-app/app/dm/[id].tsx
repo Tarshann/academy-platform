@@ -7,6 +7,7 @@ import {
   Platform,
   Text,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '../../lib/trpc';
@@ -14,6 +15,14 @@ import { getAblyClient, subscribeToDm } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { trackEvent } from '../../lib/analytics';
+import {
+  uploadChatImage,
+  createDmImageContent,
+  isDmImageMessage,
+  extractDmImageUrl,
+  type UploadProgress,
+  type ImageSource,
+} from '../../lib/chat-images';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -31,6 +40,8 @@ export default function DmConversationScreen() {
   const conversationId = Number(id);
 
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -46,10 +57,12 @@ export default function DmConversationScreen() {
   // Ably token for real-time
   const ablyTokenQuery = trpc.auth.ablyToken.useQuery();
 
+  // Chat token for image upload endpoint
+  const chatTokenQuery = trpc.auth.chatToken.useQuery();
+
   // Send DM mutation
   const sendMessage = trpc.dm.sendMessage.useMutation({
     onSuccess: () => {
-      // If no Ably, refetch messages manually
       if (!connected) {
         messagesQuery.refetch();
       }
@@ -87,7 +100,6 @@ export default function DmConversationScreen() {
         if (prev.some((m) => m.id === msg.id)) return prev;
         return [...prev, msg];
       });
-      // Mark as read when receiving new messages
       markAsRead.mutate({ conversationId });
     });
 
@@ -97,7 +109,6 @@ export default function DmConversationScreen() {
   }, [ablyTokenQuery.data, conversationId]);
 
   // Combine fetched messages with real-time messages
-  // Server returns messages in DESC order, so reverse to ASC (oldest first)
   const allMessages = useCallback(() => {
     const fetched = ([...(messagesQuery.data ?? [])] as DmMessage[]).reverse();
     const fetchedIds = new Set(fetched.map((m) => m.id));
@@ -124,6 +135,68 @@ export default function DmConversationScreen() {
     } finally {
       setIsSending(false);
     }
+  };
+
+  // Send image in DM: upload then send URL in content with prefix
+  const handleImageSend = async (uri: string, source: ImageSource) => {
+    if (!chatTokenQuery.data?.token || !conversationId) return;
+
+    setIsUploading(true);
+    setUploadProgress(null);
+
+    try {
+      // Upload image using the chat upload endpoint
+      const result = await uploadChatImage(
+        uri,
+        chatTokenQuery.data.token,
+        (progress) => setUploadProgress(progress)
+      );
+
+      // Send as DM with image URL in content (server DM doesn't have imageUrl field)
+      await sendMessage.mutateAsync({
+        conversationId,
+        content: createDmImageContent(result.url),
+      });
+
+      trackEvent('chat_image_upload_success', { room: 'dm', source });
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.message.includes('too large')
+          ? 'size_limit'
+          : error instanceof Error && error.message.includes('Network')
+          ? 'network'
+          : 'server_error';
+
+      trackEvent('chat_image_upload_failed', { room: 'dm', reason });
+
+      Alert.alert(
+        'Upload Failed',
+        error instanceof Error ? error.message : 'Failed to send image. Please try again.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Retry', onPress: () => handleImageSend(uri, source) },
+        ]
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+    }
+  };
+
+  /**
+   * For DM messages, detect [image] prefix and extract imageUrl for rendering.
+   */
+  const getMessageProps = (item: DmMessage) => {
+    if (isDmImageMessage(item.content)) {
+      return {
+        message: ' ',
+        imageUrl: extractDmImageUrl(item.content),
+      };
+    }
+    return {
+      message: item.content,
+      imageUrl: undefined,
+    };
   };
 
   if (messagesQuery.isLoading) {
@@ -170,20 +243,25 @@ export default function DmConversationScreen() {
           renderItem={({ item, index }) => {
             const isOwn = item.senderId === myUserId;
             const showSender = index === 0 || messages[index - 1]?.senderId !== item.senderId;
+            const { message, imageUrl } = getMessageProps(item);
             return (
               <MessageBubble
-                message={item.content}
+                message={message}
                 senderName={item.senderName}
                 timestamp={item.createdAt}
                 isOwn={isOwn}
                 showSender={showSender}
+                imageUrl={imageUrl}
               />
             );
           }}
         />
         <ChatInput
           onSend={handleSend}
+          onImageSend={handleImageSend}
           disabled={isSending}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
           placeholder="Type a message..."
         />
       </KeyboardAvoidingView>

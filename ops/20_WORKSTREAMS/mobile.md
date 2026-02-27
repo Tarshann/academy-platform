@@ -96,6 +96,7 @@ expo-av                  — if video playback needed
 | 2026-02-27 | New screens as standalone routes (not tabs) | 6 tabs already fills the tab bar. Payments, Shop, Attendance, Notification Settings are standalone routes accessible from Profile ACCOUNT section and Dashboard quick actions. |
 | 2026-02-27 | Manage Subscription opens web portal (not Stripe portal) | No payment.createPortalSession route exists. Opens app.academytn.com as interim. Portal Agent should add dedicated route. |
 | 2026-02-27 | Shop checkout sends empty shippingAddress | shop.createCheckout requires shippingAddress string but mobile doesn't have a shipping form yet. Sends empty string — server handles it. |
+| 2026-02-27 | DM images use content prefix convention | Server dm.sendMessage only accepts { conversationId, content } — no imageUrl. Images in DMs sent as `[image]<url>` content and detected client-side for rendering. Portal Agent should add native imageUrl support. |
 
 ## Files Modified Log
 
@@ -115,3 +116,9 @@ expo-av                  — if video playback needed
 | 2026-02-27 | app/attendance.tsx | Created — calendar view + records + stats | MOB-008 |
 | 2026-02-27 | app/notifications-settings.tsx | Created — toggle switches + quiet hours | MOB-009 |
 | 2026-02-27 | app/(tabs)/profile.tsx | Added ACCOUNT section: Payments, Shop, Notifications links | MOB-005, MOB-006, MOB-009 |
+| 2026-02-27 | lib/chat-images.ts | Created — image picker, upload with progress, DM image prefix utils | MOB-010 |
+| 2026-02-27 | components/ChatInput.tsx | Added image picker button, preview, upload progress bar | MOB-010 |
+| 2026-02-27 | components/MessageBubble.tsx | expo-image, skeleton loading, error state, tap-to-fullscreen | MOB-010 |
+| 2026-02-27 | components/ImageViewer.tsx | Created — fullscreen modal image viewer | MOB-010 |
+| 2026-02-27 | app/chat/[room].tsx | Added image upload + send with imageUrl for group chat | MOB-010 |
+| 2026-02-27 | app/dm/[id].tsx | Added image upload + send with [image] prefix for DMs | MOB-010 |

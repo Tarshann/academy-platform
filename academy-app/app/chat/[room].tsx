@@ -8,14 +8,20 @@ import {
   Text,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToChatRoom, closeAbly } from '../../lib/realtime';
+import { getAblyClient, subscribeToChatRoom } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { trackEvent } from '../../lib/analytics';
+import {
+  uploadChatImage,
+  type UploadProgress,
+  type ImageSource,
+} from '../../lib/chat-images';
 
 const ACADEMY_GOLD = '#CFB87C';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -45,6 +51,8 @@ export default function ChatRoomScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
@@ -104,7 +112,7 @@ export default function ChatRoomScreen() {
     }
   }, [room, ablyTokenQuery.data, loadHistory]);
 
-  // Send message via REST (server will publish to Ably)
+  // Send text message via REST (server will publish to Ably)
   const handleSend = async (text: string) => {
     if (!chatTokenQuery.data?.token || isSending) return;
 
@@ -124,12 +132,10 @@ export default function ChatRoomScreen() {
         throw new Error('Failed to send message');
       }
 
-      // Track coach messages
       if (room === 'coaches') {
         trackEvent('coach_message_sent', { room });
       }
 
-      // Always add the sent message locally for instant feedback
       const result = await response.json();
       if (result.message) {
         setMessages((prev) => {
@@ -141,6 +147,71 @@ export default function ChatRoomScreen() {
       console.error('[Chat] Send failed:', error);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  // Send image message: upload then send with imageUrl
+  const handleImageSend = async (uri: string, source: ImageSource) => {
+    if (!chatTokenQuery.data?.token) return;
+
+    setIsUploading(true);
+    setUploadProgress(null);
+
+    try {
+      // Upload image
+      const result = await uploadChatImage(
+        uri,
+        chatTokenQuery.data.token,
+        (progress) => setUploadProgress(progress)
+      );
+
+      // Send message with image URL
+      const response = await fetch(`${API_URL}/api/chat/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          token: chatTokenQuery.data.token,
+          room,
+          message: ' ', // Minimal message (required by server)
+          imageUrl: result.url,
+          imageKey: result.key,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send image message');
+      }
+
+      trackEvent('chat_image_upload_success', { room: room!, source });
+
+      const sendResult = await response.json();
+      if (sendResult.message) {
+        setMessages((prev) => {
+          if (sendResult.message.id && prev.some((m: ChatMessage) => m.id === sendResult.message.id)) return prev;
+          return [...prev, sendResult.message];
+        });
+      }
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.message.includes('too large')
+          ? 'size_limit'
+          : error instanceof Error && error.message.includes('Network')
+          ? 'network'
+          : 'server_error';
+
+      trackEvent('chat_image_upload_failed', { room: room!, reason });
+
+      Alert.alert(
+        'Upload Failed',
+        error instanceof Error ? error.message : 'Failed to send image. Please try again.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Retry', onPress: () => handleImageSend(uri, source) },
+        ]
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -217,7 +288,10 @@ export default function ChatRoomScreen() {
         />
         <ChatInput
           onSend={handleSend}
+          onImageSend={handleImageSend}
           disabled={isSending || !chatTokenQuery.data?.token}
+          isUploading={isUploading}
+          uploadProgress={uploadProgress}
           placeholder={`Message ${ROOM_TITLES[room!] || `#${room}`}...`}
         />
       </KeyboardAvoidingView>

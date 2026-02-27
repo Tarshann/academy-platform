@@ -20,6 +20,24 @@
 
 ## Session Log
 
+### 2026-02-27 — Mobile Agent (Session 3)
+**Started**: MOB-010 (Chat Image Upload — Phase C final ticket)
+**Completed**:
+- MOB-010: Chat image upload — camera and photo library picker via expo-image-picker, upload to /api/chat/upload-image with XHR progress tracking, image preview in ChatInput before send, upload progress bar overlay, image rendering in MessageBubble with expo-image (skeleton loading, error state, tap-to-fullscreen via ImageViewer modal), retry on upload failure with Alert, 5MB size validation with clear error message, works in all 4 group chat rooms (via imageUrl field in /api/chat/send) and DMs (via [image] content prefix convention since server dm.sendMessage lacks imageUrl field), haptic feedback on successful upload, telemetry events: chat_image_upload_success (room, source) and chat_image_upload_failed (reason: size_limit/network/server_error)
+**Blocked**: Nothing
+**Discovered**:
+- Server `dm.sendMessage` tRPC route only accepts `{ conversationId, content }` — no `imageUrl` field. Used `[image]<url>` content prefix convention as workaround for DM image messages. Portal Agent should add imageUrl support to the DM route for proper native image support.
+- All MOB-001 through MOB-010 verified with `npx expo export` — both iOS and Android bundles compile successfully.
+- **Phase C complete. All v1.3.0 mobile tickets (MOB-001 through MOB-010) are now complete.**
+**Next**: v1.3.0 mobile feature work is done. Before v1.4.0:
+1. Review all mobile screens for consistency (spacing, fonts, colors)
+2. Verify all analytics events fire correctly
+3. Check that all error/empty/loading states are consistent across screens
+4. Document any polish items as new tickets in NEXT.md
+5. Complete QA checklist in ops/40_RELEASES/CHECKLIST_QA.md
+
+---
+
 ### 2026-02-27 — Portal Agent (Session 2)
 **Started**: WEB-013-FIX (remaining 7 routes), Coaches API Enhancement, payment.createPortalSession, WEB-010-FIX, WEB-011-FIX, WEB-012-FIX
 **Completed**:
@@ -155,6 +173,7 @@
 | 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | FIXED — commit da4a61b |
 | 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
 | 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | FIXED — payment.createPortalSession added (da4a61b) |
+| 2026-02-27 | Mobile Agent | LOW | dm.sendMessage tRPC route lacks imageUrl field — DM images sent as [image] content prefix workaround | Portal + Mobile | OPEN — Portal Agent should add imageUrl to dm.sendMessage input schema and dmMessages table |
 
 ---
 
