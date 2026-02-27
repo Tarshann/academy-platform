@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,28 +13,15 @@ import { CheckCircle2, Calendar, Clock, User } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
-const COACHES = [
-  {
-    id: "coach-mac",
-    name: "Coach Mac",
-    title: "Head Coach",
-    specialties: "Ball Handling, Shooting, Footwork",
-    bio: "Specialized in fundamental skill development and one-on-one personalized training.",
-  },
-  {
-    id: "coach-o",
-    name: "Coach O",
-    title: "Training Coach",
-    specialties: "Conditioning, Agility, Strength",
-    bio: "Focuses on athletic development, conditioning, and competitive game preparation.",
-  },
-];
 
 export default function PrivateSessionBooking() {
-  const [location] = useLocation();
   const searchParams = new URLSearchParams(window.location.search);
   const sessionId = searchParams.get("session_id");
   const customerEmail = searchParams.get("email");
+
+  // Fetch coaches from API
+  const coachesQuery = trpc.coaches.list.useQuery();
+  const coaches = coachesQuery.data ?? [];
 
   const [selectedCoach, setSelectedCoach] = useState<string>("");
   const [formData, setFormData] = useState({
@@ -81,13 +68,13 @@ export default function PrivateSessionBooking() {
     setIsSubmitting(true);
 
     try {
-      const selectedCoachData = COACHES.find((c) => c.id === selectedCoach);
+      const selectedCoachData = coaches.find((c) => String(c.id) === selectedCoach);
 
       const bookingData = {
         customerName: formData.name,
         customerEmail: formData.email,
         customerPhone: formData.phone,
-        coachId: selectedCoach === "coach-mac" ? 1 : 2,
+        coachId: selectedCoachData?.id ?? Number(selectedCoach),
         coachName: selectedCoachData?.name || "",
         preferredDates: formData.preferredDates,
         preferredTimes: formData.preferredTimes,
@@ -229,33 +216,57 @@ export default function PrivateSessionBooking() {
               <CardTitle className="text-xl">Select Your Coach</CardTitle>
             </CardHeader>
             <CardContent>
+              {coachesQuery.isLoading && (
+                <div className="space-y-4">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="p-4 border border-border rounded-lg animate-pulse">
+                      <div className="h-5 bg-muted rounded w-1/3 mb-2" />
+                      <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                      <div className="h-4 bg-muted rounded w-1/2" />
+                    </div>
+                  ))}
+                </div>
+              )}
+              {coachesQuery.isError && (
+                <div className="text-center py-4">
+                  <p className="text-destructive mb-3">Failed to load coaches.</p>
+                  <Button variant="outline" onClick={() => coachesQuery.refetch()}>Retry</Button>
+                </div>
+              )}
+              {coachesQuery.isSuccess && coaches.length === 0 && (
+                <p className="text-muted-foreground text-center py-4">No coaches are currently available.</p>
+              )}
+              {coachesQuery.isSuccess && coaches.length > 0 && (
               <RadioGroup value={selectedCoach} onValueChange={setSelectedCoach}>
                 <div className="space-y-4">
-                  {COACHES.map((coach) => (
+                  {coaches.map((coach) => {
+                    const coachKey = String(coach.id);
+                    return (
                     <div key={coach.id} className="relative">
                       <div className="flex items-start space-x-3 p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition">
-                        <RadioGroupItem value={coach.id} id={coach.id} className="mt-1" />
+                        <RadioGroupItem value={coachKey} id={coachKey} className="mt-1" />
                         <label
-                          htmlFor={coach.id}
+                          htmlFor={coachKey}
                           className="flex-1 cursor-pointer"
                         >
                           <div className="flex items-center gap-2 mb-1">
                             <User className="h-5 w-5 text-primary" />
-                            <h3 className="font-semibold text-foreground">{coach.name}</h3>
-                            <span className="text-sm text-muted-foreground">
-                              {coach.title}
-                            </span>
+                            <h3 className="font-semibold text-foreground">{coach.name ?? "Coach"}</h3>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-2">{coach.bio}</p>
-                          <p className="text-sm font-medium text-primary">
-                            Specialties: {coach.specialties}
-                          </p>
+                          {coach.bio && <p className="text-sm text-muted-foreground mb-2">{coach.bio}</p>}
+                          {coach.specialties && (
+                            <p className="text-sm font-medium text-primary">
+                              Specialties: {coach.specialties}
+                            </p>
+                          )}
                         </label>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </RadioGroup>
+              )}
             </CardContent>
           </Card>
 
