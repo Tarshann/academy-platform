@@ -1454,7 +1454,8 @@ export async function sendDmMessage(
   conversationId: number,
   senderId: number,
   senderName: string,
-  content: string
+  content: string,
+  imageUrl?: string
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -1464,6 +1465,7 @@ export async function sendDmMessage(
     senderId,
     senderName,
     content,
+    ...(imageUrl ? { imageUrl } : {}),
   }).returning();
 
   // Update conversation lastMessageAt

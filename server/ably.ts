@@ -62,6 +62,7 @@ export async function publishDmMessage(
     senderId: number;
     senderName: string;
     content: string;
+    imageUrl?: string;
     createdAt: string;
   }
 ) {

@@ -641,6 +641,7 @@ export const dmMessages = pgTable("dmMessages", {
   senderId: integer("senderId").notNull(),
   senderName: varchar("senderName", { length: 255 }).notNull(),
   content: text("content").notNull(),
+  imageUrl: text("imageUrl"),
   isEdited: boolean("isEdited").notNull().default(false),
   isDeleted: boolean("isDeleted").notNull().default(false),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),

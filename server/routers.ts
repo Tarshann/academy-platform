@@ -1783,11 +1783,12 @@ export const appRouter = router({
         z.object({
           conversationId: z.number(),
           content: z.string().min(1).max(5000),
+          imageUrl: z.string().url().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const { sendDmMessage, getUserConversations } = await import("./db");
-        
+
         // Verify user is participant
         const conversations = await getUserConversations(ctx.user.id);
         const isParticipant = conversations.some(
@@ -1801,7 +1802,8 @@ export const appRouter = router({
           input.conversationId,
           ctx.user.id,
           ctx.user.name || "Unknown",
-          input.content
+          input.content,
+          input.imageUrl
         );
 
         // Publish to Ably for real-time delivery
@@ -1812,6 +1814,7 @@ export const appRouter = router({
           senderId: ctx.user.id,
           senderName: ctx.user.name || "Unknown",
           content: input.content,
+          imageUrl: input.imageUrl,
           createdAt: new Date().toISOString(),
         });
 

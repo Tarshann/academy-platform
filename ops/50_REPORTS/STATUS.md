@@ -20,6 +20,23 @@
 
 ## Session Log
 
+### 2026-02-27 — Portal Agent (Session 3)
+**Started**: DM imageUrl support (requested by Mobile Agent in Session 3)
+**Completed**:
+- Added `imageUrl` (text, nullable) column to `dmMessages` table in `drizzle/schema.ts`
+- Created migration `drizzle/0010_add_imageUrl_to_dmMessages.sql`
+- Updated `sendDmMessage()` in `server/db.ts` to accept optional `imageUrl` parameter
+- Updated `dm.sendMessage` tRPC route in `server/routers.ts` to accept `imageUrl: z.string().url().optional()`
+- Updated `publishDmMessage()` in `server/ably.ts` to include `imageUrl` in real-time payload
+- `getConversationMessages` returns `imageUrl` automatically (uses `.select()` which returns all columns)
+- Fully backwards compatible — `imageUrl` is nullable/optional everywhere, existing messages unaffected
+- `pnpm build` passes cleanly
+**Blocked**: Nothing
+**Discovered**: Nothing new
+**Next**: Mobile Agent should update DM chat to use native `imageUrl` field instead of `[image]<url>` content prefix convention. The field is now available in `dm.sendMessage` input, message responses, and Ably real-time payloads.
+
+---
+
 ### 2026-02-27 — Mobile Agent (Session 3)
 **Started**: MOB-010 (Chat Image Upload — Phase C final ticket)
 **Completed**:
@@ -166,14 +183,14 @@
 | 2026-02-23 | Coordinator | LOW | Coach contacts hardcoded in mobile profile.tsx | Mobile | FIXED — commit `7dbf969` (MOB-003, bridge pattern until API provides name/phone) |
 | 2026-02-23 | Coordinator | LOW | Profile version shows "v1.1" hardcoded | Mobile | FIXED — commit `83a3c48` (MOB-001, reads from Constants.expoConfig) |
 | 2026-02-27 | Mobile Agent | MEDIUM | coaches.list API lacks name/phone — query doesn't join users table, coaches table has no name/phone fields | Portal + Mobile | PARTIAL — name/email now included via JOIN (da4a61b), phone requires schema extension |
-| 2026-02-26 | Portal Agent | CRITICAL | Orders page exists but no route — unreachable | Portal | OPEN — ticket WEB-003-FIX |
-| 2026-02-26 | Portal Agent | CRITICAL | CoachDashboard has no auth role guard | Portal | OPEN — ticket WEB-004-FIX |
-| 2026-02-26 | Portal Agent | CRITICAL | SkillsLab + PerformanceLab forms have no submit handler | Portal | OPEN — tickets WEB-005-FIX, WEB-006-FIX |
+| 2026-02-26 | Portal Agent | CRITICAL | Orders page exists but no route — unreachable | Portal | FIXED — PR #149 (WEB-003-FIX) |
+| 2026-02-26 | Portal Agent | CRITICAL | CoachDashboard has no auth role guard | Portal | FIXED — PR #149 (WEB-004-FIX) |
+| 2026-02-26 | Portal Agent | CRITICAL | SkillsLab + PerformanceLab forms have no submit handler | Portal | CLOSED — false positives, REST handlers exist (WEB-005/006-FIX) |
 | 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | FIXED — 5/12 done (d9e68e2), remaining 7 done (da4a61b) |
 | 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | FIXED — commit da4a61b |
 | 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
 | 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | FIXED — payment.createPortalSession added (da4a61b) |
-| 2026-02-27 | Mobile Agent | LOW | dm.sendMessage tRPC route lacks imageUrl field — DM images sent as [image] content prefix workaround | Portal + Mobile | OPEN — Portal Agent should add imageUrl to dm.sendMessage input schema and dmMessages table |
+| 2026-02-27 | Mobile Agent | LOW | dm.sendMessage tRPC route lacks imageUrl field — DM images sent as [image] content prefix workaround | Portal + Mobile | FIXED — imageUrl added to schema, db, router, and Ably. Mobile needs to adopt native field. |
 
 ---
 
