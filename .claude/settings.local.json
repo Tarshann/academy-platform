@@ -2,7 +2,22 @@
   "permissions": {
     "allow": [
       "Bash(pnpm check:*)",
-      "Bash(npx playwright test:*)"
+      "Bash(npx playwright test:*)",
+      "Bash(npm install react-native-reanimated@~3.x expo-image-picker expo-haptics date-fns expo-image expo-store-review @gorhom/bottom-sheet)",
+      "Bash(npx expo start --no-dev --no-interactive)",
+      "Bash(npx expo export --dump-sourcemap)",
+      "Bash(pnpm build)",
+      "Bash(git add server/db.ts server/routers.ts)",
+      "Bash(git commit:*)",
+      "Bash(timeout 30 npx expo start)",
+      "Bash(git add client/src/pages/Shop.tsx client/src/pages/Schedule.tsx client/src/pages/Gallery.tsx)",
+      "Bash(git status -u)",
+      "Bash(git add academy-app/app.json academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx academy-app/eas.json academy-app/package-lock.json academy-app/package.json academy-app/babel.config.js academy-app/tsconfig.json ops/10_BACKLOG/NOW.md)",
+      "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/chat.tsx academy-app/app/chat/[room].tsx ops/10_BACKLOG/NOW.md)",
+      "Bash(git add ops/50_REPORTS/STATUS.md)",
+      "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx ops/10_BACKLOG/NOW.md)",
+      "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/programs.tsx ops/10_BACKLOG/NOW.md)",
+      "Bash(git add ops/10_BACKLOG/NOW.md ops/50_REPORTS/STATUS.md ops/20_WORKSTREAMS/mobile.md)"
     ]
   }
 }
