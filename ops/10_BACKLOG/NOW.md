@@ -111,7 +111,7 @@
 ### MOB-004: In-App Program Enrollment (Stripe Checkout)
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: BACKLOG
+- **Status**: DONE
 - **Goal**: Allow members to enroll in programs directly from the app instead of redirecting to website
 - **Scope**:
   - Replace website redirect with in-app Stripe checkout flow

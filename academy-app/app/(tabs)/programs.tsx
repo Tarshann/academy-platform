@@ -6,16 +6,16 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
-  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 import { trpc } from '../../lib/trpc';
-import { Loading } from '../../components/Loading';
 import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
-const SITE_URL = 'https://academytn.com';
+const NAVY = '#1a1a2e';
 
 function formatPrice(price: string | number): string {
   const num = typeof price === 'string' ? parseFloat(price) : price;
@@ -47,9 +47,33 @@ function getSportLabel(sport: string | null): string | null {
   return labels[sport] || sport;
 }
 
+function ProgramsSkeleton() {
+  return (
+    <View style={styles.content}>
+      {[1, 2, 3].map((i) => (
+        <View key={i} style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.skeletonBlock, { width: 100, height: 22 }]} />
+          </View>
+          <View style={[styles.skeletonBlock, { width: '70%', height: 18, marginBottom: 8 }]} />
+          <View style={[styles.skeletonBlock, { width: '100%', height: 14, marginBottom: 4 }]} />
+          <View style={[styles.skeletonBlock, { width: '80%', height: 14, marginBottom: 14 }]} />
+          <View style={[styles.skeletonBlock, { width: 120, height: 14, marginBottom: 14 }]} />
+          <View style={styles.priceRow}>
+            <View style={[styles.skeletonBlock, { width: 60, height: 24 }]} />
+            <View style={[styles.skeletonBlock, { width: 80, height: 36, borderRadius: 8 }]} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export default function ProgramsScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const programs = trpc.programs.list.useQuery();
+  const createCheckout = trpc.payment.createCheckout.useMutation();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -57,26 +81,82 @@ export default function ProgramsScreen() {
     setRefreshing(false);
   };
 
-  const onProgramTap = (name: string, category?: string) => {
-    trackEvent('session_detail_viewed', {
-      session_name: name,
-      program_type: category ?? null,
+  const onEnroll = async (programSlug: string, programName: string, price: string | number) => {
+    if (checkoutLoading) return;
+
+    trackEvent('payment_checkout_started', {
+      program_name: programName,
+      program_slug: programSlug,
+      price: typeof price === 'string' ? parseFloat(price) : price,
     });
 
-    Alert.alert(
-      name,
-      'Would you like to view this program on our website?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'View Program',
-          onPress: () => Linking.openURL(`${SITE_URL}/signup`),
-        },
-      ]
-    );
+    setCheckoutLoading(programSlug);
+    try {
+      const result = await createCheckout.mutateAsync({
+        productIds: [programSlug],
+      });
+
+      if (result.url) {
+        const browserResult = await WebBrowser.openBrowserAsync(result.url, {
+          dismissButtonStyle: 'cancel',
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        });
+
+        if (browserResult.type === 'cancel') {
+          trackEvent('payment_checkout_cancelled', {
+            program_name: programName,
+            program_slug: programSlug,
+          });
+        } else {
+          // Browser was dismissed (could be after success or other navigation)
+          trackEvent('payment_checkout_completed', {
+            program_name: programName,
+            program_slug: programSlug,
+          });
+          // Refresh programs list in case enrollment status changed
+          programs.refetch();
+        }
+      }
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Unknown error';
+      trackEvent('payment_checkout_failed', {
+        program_name: programName,
+        program_slug: programSlug,
+        error_type: errorMessage,
+      });
+      Alert.alert(
+        'Checkout Error',
+        'Unable to start checkout. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
-  if (programs.isLoading) return <Loading />;
+  if (programs.isLoading) {
+    return (
+      <FlatList
+        style={styles.list}
+        data={[]}
+        renderItem={() => null}
+        ListHeaderComponent={<ProgramsSkeleton />}
+      />
+    );
+  }
+
+  if (programs.isError) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+        <Text style={styles.errorTitle}>Could not load programs</Text>
+        <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
+        <TouchableOpacity style={styles.retryBtn} onPress={() => programs.refetch()}>
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <FlatList
@@ -88,14 +168,17 @@ export default function ProgramsScreen() {
       data={programs.data ?? []}
       keyExtractor={(item) => String(item.id)}
       ListEmptyComponent={
-        <View style={styles.emptyContainer}>
-          <Text style={styles.empty}>No programs available.</Text>
+        <View style={styles.emptyWrapper}>
+          <Ionicons name="fitness-outline" size={48} color="#ccc" />
+          <Text style={styles.emptyTitle}>No programs available</Text>
+          <Text style={styles.emptySubtitle}>Check back soon for new offerings</Text>
         </View>
       }
       renderItem={({ item }) => {
         const sport = getSportLabel(item.sport);
         const isPerformanceLab = item.slug?.includes('performance');
         const isPrivate = item.category === 'individual';
+        const isLoadingThis = checkoutLoading === item.slug;
 
         let priceDisplay = `${formatPrice(item.price)}`;
         let priceDetail = '';
@@ -107,12 +190,10 @@ export default function ProgramsScreen() {
           priceDisplay = `${formatPrice(item.price)}/mo`;
         }
 
+        const ctaLabel = isPerformanceLab ? 'Apply' : isPrivate ? 'Inquire' : 'Sign Up';
+
         return (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => onProgramTap(item.name, item.category)}
-            activeOpacity={0.7}
-          >
+          <View style={styles.card}>
             <View style={styles.cardHeader}>
               <View style={styles.categoryBadge}>
                 <Text style={styles.categoryText}>
@@ -149,14 +230,23 @@ export default function ProgramsScreen() {
                 ) : null}
                 <Text style={styles.price}>{priceDisplay}</Text>
               </View>
-              <View style={styles.ctaButton}>
-                <Text style={styles.ctaText}>
-                  {isPerformanceLab ? 'Apply' : isPrivate ? 'Inquire' : 'Sign Up'}
-                </Text>
-                <Ionicons name="arrow-forward" size={14} color="#1a1a2e" />
-              </View>
+              <TouchableOpacity
+                style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
+                onPress={() => item.slug && onEnroll(item.slug, item.name, item.price)}
+                disabled={isLoadingThis || !item.slug}
+                activeOpacity={0.7}
+              >
+                {isLoadingThis ? (
+                  <ActivityIndicator size="small" color={NAVY} />
+                ) : (
+                  <>
+                    <Text style={styles.ctaText}>{ctaLabel}</Text>
+                    <Ionicons name="arrow-forward" size={14} color={NAVY} />
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
+          </View>
         );
       }}
     />
@@ -172,14 +262,61 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  emptyContainer: {
-    padding: 40,
+  // Skeleton
+  skeletonBlock: {
+    backgroundColor: '#e8e8e8',
+    borderRadius: 6,
+  },
+  // Error state
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    padding: 32,
+    gap: 8,
   },
-  empty: {
-    color: '#999',
-    fontSize: 16,
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: NAVY,
+    marginTop: 8,
   },
+  errorSubtitle: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 8,
+  },
+  retryBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: ACADEMY_GOLD,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  retryText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: NAVY,
+  },
+  // Empty state
+  emptyWrapper: {
+    padding: 60,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: NAVY,
+    marginTop: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#888',
+  },
+  // Card
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -198,7 +335,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryBadge: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: NAVY,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -218,7 +355,7 @@ const styles = StyleSheet.create({
   programName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: NAVY,
     marginBottom: 6,
   },
   description: {
@@ -257,20 +394,26 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: NAVY,
   },
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: ACADEMY_GOLD,
     borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     gap: 6,
+    minHeight: 44,
+    minWidth: 90,
+    justifyContent: 'center',
+  },
+  ctaButtonLoading: {
+    opacity: 0.7,
   },
   ctaText: {
-    color: '#1a1a2e',
-    fontSize: 13,
+    color: NAVY,
+    fontSize: 14,
     fontWeight: '600',
   },
 });
