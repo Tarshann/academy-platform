@@ -503,14 +503,18 @@ export async function toggleGalleryPhotoVisibility(
 // BLOG POST FUNCTIONS
 // ============================================================================
 
-export async function getAllPublishedBlogPosts() {
+export async function getAllPublishedBlogPosts(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(blogPosts)
     .where(eq(blogPosts.isPublished, true))
-    .orderBy(desc(blogPosts.publishedAt));
+    .orderBy(desc(blogPosts.publishedAt))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAllBlogPostsAdmin() {
@@ -565,17 +569,24 @@ export async function deleteBlogPost(id: number) {
 // VIDEO FUNCTIONS
 // ============================================================================
 
-export async function getAllVideos(onlyPublished: boolean = false) {
+export async function getAllVideos(onlyPublished: boolean = false, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
   if (onlyPublished) {
-    return await db
+    let query = db
       .select()
       .from(videos)
       .where(eq(videos.isPublished, true))
-      .orderBy(desc(videos.createdAt));
+      .orderBy(desc(videos.createdAt))
+      .$dynamic();
+    if (opts?.limit != null) query = query.limit(opts.limit);
+    if (opts?.offset != null) query = query.offset(opts.offset);
+    return await query;
   }
-  return await db.select().from(videos).orderBy(desc(videos.createdAt));
+  let query = db.select().from(videos).orderBy(desc(videos.createdAt)).$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getVideoById(id: number) {
@@ -591,7 +602,8 @@ export async function getVideoById(id: number) {
 
 export async function getVideosByCategory(
   category: string,
-  onlyPublished: boolean = false
+  onlyPublished: boolean = false,
+  opts?: { limit?: number; offset?: number }
 ) {
   const db = await getDb();
   if (!db) return [];
@@ -599,11 +611,15 @@ export async function getVideosByCategory(
   if (onlyPublished) {
     conditions.push(eq(videos.isPublished, true));
   }
-  return await db
+  let query = db
     .select()
     .from(videos)
     .where(and(...conditions))
-    .orderBy(desc(videos.createdAt));
+    .orderBy(desc(videos.createdAt))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function incrementVideoViewCount(id: number) {
@@ -756,24 +772,32 @@ export async function deleteCampaign(id: number) {
 // PAYMENT FUNCTIONS
 // ============================================================================
 
-export async function getUserPayments(userId: number) {
+export async function getUserPayments(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(payments)
     .where(eq(payments.userId, userId))
-    .orderBy(desc(payments.createdAt));
+    .orderBy(desc(payments.createdAt))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
-export async function getUserSubscriptions(userId: number) {
+export async function getUserSubscriptions(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(subscriptions)
     .where(eq(subscriptions.userId, userId))
-    .orderBy(desc(subscriptions.createdAt));
+    .orderBy(desc(subscriptions.createdAt))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 // ============================================================================
@@ -914,8 +938,20 @@ export async function getAllCoaches(opts?: { limit?: number; offset?: number }) 
   const db = await getDb();
   if (!db) return [];
   let query = db
-    .select()
+    .select({
+      id: coaches.id,
+      userId: coaches.userId,
+      bio: coaches.bio,
+      specialties: coaches.specialties,
+      certifications: coaches.certifications,
+      isActive: coaches.isActive,
+      createdAt: coaches.createdAt,
+      updatedAt: coaches.updatedAt,
+      name: users.name,
+      email: users.email,
+    })
     .from(coaches)
+    .leftJoin(users, eq(coaches.userId, users.id))
     .where(eq(coaches.isActive, true))
     .orderBy(asc(coaches.id))
     .$dynamic();
@@ -1095,14 +1131,18 @@ export async function getAttendanceBySchedule(scheduleId: number) {
     .orderBy(asc(attendanceRecords.userId));
 }
 
-export async function getAttendanceByUser(userId: number) {
+export async function getAttendanceByUser(userId: number, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  return await db
+  let query = db
     .select()
     .from(attendanceRecords)
     .where(eq(attendanceRecords.userId, userId))
-    .orderBy(desc(attendanceRecords.markedAt));
+    .orderBy(desc(attendanceRecords.markedAt))
+    .$dynamic();
+  if (opts?.limit != null) query = query.limit(opts.limit);
+  if (opts?.offset != null) query = query.offset(opts.offset);
+  return await query;
 }
 
 export async function getAttendanceStats(
@@ -1655,7 +1695,7 @@ export async function archiveConversation(conversationId: number, userId: number
 }
 
 // Search messages
-export async function searchDmMessages(userId: number, query: string, limit = 20) {
+export async function searchDmMessages(userId: number, query: string, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
 
@@ -1668,8 +1708,10 @@ export async function searchDmMessages(userId: number, query: string, limit = 20
   const conversationIds = participations.map((p: any) => p.conversationId);
   if (conversationIds.length === 0) return [];
 
+  const effectiveLimit = Math.min(opts?.limit ?? 20, 100);
+
   // Search messages in those conversations
-  return await db
+  let dbQuery = db
     .select()
     .from(dmMessages)
     .where(
@@ -1679,7 +1721,10 @@ export async function searchDmMessages(userId: number, query: string, limit = 20
       )
     )
     .orderBy(desc(dmMessages.createdAt))
-    .limit(limit);
+    .$dynamic();
+  dbQuery = dbQuery.limit(effectiveLimit);
+  if (opts?.offset != null) dbQuery = dbQuery.offset(opts.offset);
+  return await dbQuery;
 }
 
 // Get or create user messaging role
