@@ -1,6 +1,7 @@
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
 import { useState, useCallback } from 'react';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { trpc } from '../../lib/trpc';
@@ -46,6 +47,7 @@ function CoachContactSkeleton() {
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
+  const router = useRouter();
   const me = trpc.auth.me.useQuery();
   const coaches = trpc.coaches.list.useQuery({ limit: 20, offset: 0 });
 
@@ -210,6 +212,19 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
+
+      {/* Account */}
+      <Text style={styles.sectionLabel}>ACCOUNT</Text>
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/payments')}
+        >
+          <Ionicons name="card-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Payments & Subscriptions</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
+      </View>
 
       {/* Links */}
       <Text style={styles.sectionLabel}>RESOURCES</Text>
