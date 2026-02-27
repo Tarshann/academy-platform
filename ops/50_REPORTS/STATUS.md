@@ -20,6 +20,27 @@
 
 ## Session Log
 
+### 2026-02-27 — Portal Agent (Session 2)
+**Started**: WEB-013-FIX (remaining 7 routes), Coaches API Enhancement, payment.createPortalSession, WEB-010-FIX, WEB-011-FIX, WEB-012-FIX
+**Completed**:
+- WEB-013-FIX: Re-added pagination (optional limit/offset) to payment.myPayments, payment.mySubscriptions, attendance.getMyAttendance, videos.list, videos.byCategory, dm.searchMessages. Fixed blog.list to actually pass limit/offset params to DB query (previously accepted but ignored). All 7 routes now paginated — commit `da4a61b`
+- Coaches API Enhancement: Updated getAllCoaches() in db.ts to LEFT JOIN with users table, adding name and email fields to coach list response. Backwards compatible — existing fields unchanged — commit `da4a61b`
+- payment.createPortalSession: Added protected mutation that looks up user's stripeCustomerId and creates a Stripe Billing Portal session. Returns portal URL for mobile to open in expo-web-browser — commit `da4a61b`
+- payment.catalog: Added public route exposing the Stripe product catalog from server/products.ts (used by SignUp checkout flow) — commit `da4a61b`
+- WEB-010-FIX: Added lazy-loaded routes with SEO wrappers for /blog, /blog/:slug, /videos, /gallery, /about, /contact, /faqs, /home, /orders. Installed dompurify dependency (required by BlogPost.tsx) — commit `f8986b6`
+- WEB-011-FIX: SignUp page now fetches product catalog from trpc.payment.catalog.useQuery() instead of hardcoded arrays. Products categorized dynamically (memberships, individual, special). Loading skeleton, error with retry, empty state added — commit `f5bdd87`
+- WEB-012-FIX: PrivateSessionBooking now fetches coaches from trpc.coaches.list.useQuery() instead of hardcoded array. Coach selection uses API data (name, bio, specialties from joined query). Loading skeleton, error with retry, empty state added — commit `d4cd05d`
+**Blocked**: Nothing
+**Discovered**:
+- BlogPost.tsx imports dompurify which wasn't installed. Had to add it as a dependency when routing the page. Pre-existing issue only surfaced now.
+- Users table has no phone field — coaches API can return name and email but not phone. Mobile bridge pattern for phone numbers remains necessary until schema is extended.
+**Next**:
+- WEB-003-FIX through WEB-006-FIX (CRITICAL tickets: Orders route guard, CoachDashboard role guard, SkillsLab/PerformanceLab form handlers) if not already addressed
+- Consider splitting routers.ts and db.ts monoliths (LATER priority)
+- Clips backend (WEB-020+) after v1.3.0 ships
+
+---
+
 ### 2026-02-27 — Mobile Agent (Session 2)
 **Started**: MOB-005, MOB-006, MOB-007, MOB-008, MOB-009 (Phase A + B)
 **Completed**:
@@ -126,14 +147,14 @@
 | 2026-02-23 | Coordinator | MEDIUM | Testimonials in two places (config.ts + StructuredData.tsx) can drift | Marketing + Portal | OPEN |
 | 2026-02-23 | Coordinator | LOW | Coach contacts hardcoded in mobile profile.tsx | Mobile | FIXED — commit `7dbf969` (MOB-003, bridge pattern until API provides name/phone) |
 | 2026-02-23 | Coordinator | LOW | Profile version shows "v1.1" hardcoded | Mobile | FIXED — commit `83a3c48` (MOB-001, reads from Constants.expoConfig) |
-| 2026-02-27 | Mobile Agent | MEDIUM | coaches.list API lacks name/phone — query doesn't join users table, coaches table has no name/phone fields | Portal + Mobile | OPEN — Portal Agent needs to extend coaches route |
+| 2026-02-27 | Mobile Agent | MEDIUM | coaches.list API lacks name/phone — query doesn't join users table, coaches table has no name/phone fields | Portal + Mobile | PARTIAL — name/email now included via JOIN (da4a61b), phone requires schema extension |
 | 2026-02-26 | Portal Agent | CRITICAL | Orders page exists but no route — unreachable | Portal | OPEN — ticket WEB-003-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | CoachDashboard has no auth role guard | Portal | OPEN — ticket WEB-004-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | SkillsLab + PerformanceLab forms have no submit handler | Portal | OPEN — tickets WEB-005-FIX, WEB-006-FIX |
-| 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | PARTIAL — 5/12 done (d9e68e2), 7 reverted by 6b6b071 |
-| 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | OPEN — still unfixed after revert |
+| 2026-02-26 | Portal Agent | HIGH | 12 list API routes lack pagination — blocks mobile v1.3 | Portal + Mobile | FIXED — 5/12 done (d9e68e2), remaining 7 done (da4a61b) |
+| 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | FIXED — commit da4a61b |
 | 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
-| 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | OPEN — Portal Agent needs to add payment.createPortalSession route |
+| 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | FIXED — payment.createPortalSession added (da4a61b) |
 
 ---
 
