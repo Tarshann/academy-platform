@@ -90,10 +90,19 @@ expo-av                  — if video playback needed
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| — | — | — |
+| 2026-02-27 | Coach contacts: bridge pattern mapping known coach IDs to contact info | coaches.list API returns id/userId/bio/specialties but no name/phone. Can't modify server. Bridge pattern keeps contacts working while API is extended. |
+| 2026-02-27 | Stripe checkout: expo-web-browser (not WebView or native SDK) | Ticket specifies WebView/browser approach first. expo-web-browser is already installed, handles dismissal cleanly, no native SDK complexity. |
+| 2026-02-27 | Programs: use slug as Stripe productId | Server products.ts uses string IDs matching program slugs. Checkout route expects these as productIds. |
 
 ## Files Modified Log
 
 | Date | File | Change | Ticket |
 |------|------|--------|--------|
-| — | — | — | — |
+| 2026-02-27 | app.json | Version 1.2.1 → 1.3.0 | MOB-001 |
+| 2026-02-27 | eas.json | Added channel field to build profiles | MOB-001 |
+| 2026-02-27 | package.json | Added 7 foundation dependencies | MOB-001 |
+| 2026-02-27 | babel.config.js | Created — reanimated plugin | MOB-001 |
+| 2026-02-27 | app/(tabs)/profile.tsx | Dynamic version, coach API integration | MOB-001, MOB-003 |
+| 2026-02-27 | app/(tabs)/chat.tsx | Added Parents + Announcements rooms | MOB-002 |
+| 2026-02-27 | app/chat/[room].tsx | Added room titles for new rooms | MOB-002 |
+| 2026-02-27 | app/(tabs)/programs.tsx | In-app Stripe checkout, skeleton/error/empty states | MOB-004 |

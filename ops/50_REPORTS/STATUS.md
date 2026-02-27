@@ -20,6 +20,21 @@
 
 ## Session Log
 
+### 2026-02-27 — Mobile Agent
+**Started**: MOB-001, MOB-002, MOB-003, MOB-004 (Phase A Revenue Infrastructure)
+**Completed**:
+- MOB-001: Version bump to 1.3.0, buildNumber 17, EAS Update channels, dynamic version in profile footer, foundation dependencies (reanimated, image-picker, bottom-sheet, haptics, date-fns, expo-image, expo-store-review), babel.config.js — commit `83a3c48`
+- MOB-002: Added Parents and Announcements chat rooms (4 total), announcements visually distinct with gold icon, chat_room_opened analytics event — commit `8b36026`
+- MOB-003: Coach contacts now loaded from coaches.list API with skeleton/error/empty states, bridge pattern for known contact info until API provides name/phone, coach_contact_call/text analytics events — commit `7dbf969`
+- MOB-004: In-app Stripe checkout via expo-web-browser replacing website redirect, skeleton loading for program list, error state with retry, per-button loading state during checkout creation, payment_checkout_started/completed/cancelled/failed analytics events — commit `e0e3989`
+**Blocked**: Nothing
+**Discovered**:
+- coaches.list API returns id/userId/bio/specialties but NOT name or phone. The coaches table has no name/phone fields, and the query doesn't join with users table. Portal Agent needs to add a joined query or extend the coaches table for mobile to fully eliminate hardcoded contact info. Used a bridge pattern (known coach ID → contact info mapping) as workaround.
+- All 4 tickets verified with `npx expo export` — both iOS and Android bundles compile successfully.
+**Next**: Phase A continues with MOB-005 (subscription management) and MOB-006 (merchandise shop). Phase A gate checklist should be reviewed after those complete.
+
+---
+
 ### 2026-02-27 — Portal Agent
 **Started**: WEB-013-FIX (remaining 5 routes), WEB-007-FIX, WEB-008-FIX, WEB-009-FIX
 **Completed**:
@@ -92,8 +107,9 @@
 | Date | Reported By | Severity | Issue | Affects | Status |
 |------|------------|----------|-------|---------|--------|
 | 2026-02-23 | Coordinator | MEDIUM | Testimonials in two places (config.ts + StructuredData.tsx) can drift | Marketing + Portal | OPEN |
-| 2026-02-23 | Coordinator | LOW | Coach contacts hardcoded in mobile profile.tsx | Mobile | OPEN — ticket MOB-003 |
-| 2026-02-23 | Coordinator | LOW | Profile version shows "v1.1" hardcoded | Mobile | OPEN — ticket MOB-001 |
+| 2026-02-23 | Coordinator | LOW | Coach contacts hardcoded in mobile profile.tsx | Mobile | FIXED — commit `7dbf969` (MOB-003, bridge pattern until API provides name/phone) |
+| 2026-02-23 | Coordinator | LOW | Profile version shows "v1.1" hardcoded | Mobile | FIXED — commit `83a3c48` (MOB-001, reads from Constants.expoConfig) |
+| 2026-02-27 | Mobile Agent | MEDIUM | coaches.list API lacks name/phone — query doesn't join users table, coaches table has no name/phone fields | Portal + Mobile | OPEN — Portal Agent needs to extend coaches route |
 | 2026-02-26 | Portal Agent | CRITICAL | Orders page exists but no route — unreachable | Portal | OPEN — ticket WEB-003-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | CoachDashboard has no auth role guard | Portal | OPEN — ticket WEB-004-FIX |
 | 2026-02-26 | Portal Agent | CRITICAL | SkillsLab + PerformanceLab forms have no submit handler | Portal | OPEN — tickets WEB-005-FIX, WEB-006-FIX |
