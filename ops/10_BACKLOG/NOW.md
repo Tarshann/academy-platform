@@ -203,16 +203,17 @@
 
 ## Release / QA
 
-### REL-001: QA Checklists + Release Plan
+### REL-001: QA Checklists + Release Plan — DONE 2026-02-27
 - **Workstream**: Release
-- **Owner**: QA/Release Agent
-- **Status**: BACKLOG
+- **Owner**: QA Agent
+- **Status**: DONE
 - **Goal**: Create comprehensive QA checklists for all three apps and a v1.3 release plan
 - **Acceptance Criteria**:
-  - [ ] `CHECKLIST_QA.md` complete with all three app checklists
-  - [ ] `RELEASE_PLAN.md` has v1.3 timeline with milestones
-  - [ ] `CHECKLIST_APP_STORE.md` covers iOS submission requirements
-  - [ ] All checklists are actionable checkboxes, not prose
+  - [x] `CHECKLIST_QA.md` complete with all mobile + portal checklists (200+ checkboxes)
+  - [x] `RELEASE_PLAN.md` has v1.3 timeline with milestones
+  - [x] `CHECKLIST_APP_STORE.md` covers iOS submission requirements
+  - [x] All checklists are actionable checkboxes, not prose
+  - [x] `RELEASE_NOTES.md` written with full v1.3.0 feature list
 - **Release**: System infrastructure
 
 ---
@@ -289,3 +290,7 @@
 - **Workstream**: Mobile | **Owner**: Mobile Agent
 - **Commit**: `3174ed5`
 - **Result**: Camera + library picker, 5MB validation, upload progress, image in message bubbles, tap-to-fullscreen, retry on failure. Works in group chat and DMs. Phase C complete — all v1.3.0 mobile tickets done.
+
+### REL-001: QA Checklists + Release Plan — DONE 2026-02-27
+- **Workstream**: Release | **Owner**: QA Agent
+- **Result**: Created comprehensive release gate documentation for v1.3.0. CHECKLIST_QA.md (200+ checkboxes covering all mobile screens + portal fixes), CHECKLIST_APP_STORE.md (iOS submission checklist with metadata, review notes, rollback plan), RELEASE_PLAN.md (v1.3.0 timeline, feature manifest, known issues, pre-submit checklist), RELEASE_NOTES.md (full v1.3.0 feature list). All checklists are actionable checkboxes verified against actual source code.

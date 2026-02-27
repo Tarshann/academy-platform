@@ -20,6 +20,24 @@
 
 ## Session Log
 
+### 2026-02-27 — QA Agent (Session 1)
+**Started**: REL-001 — QA Checklists + Release Plan for v1.3.0
+**Completed**:
+- REL-001: Complete release gate documentation for v1.3.0
+  - `CHECKLIST_QA.md`: Comprehensive QA checklist with 200+ actionable checkboxes covering all mobile screens (A through M: Auth, Dashboard, Programs, Chat, DMs, Profile, Payments, Shop, Attendance, Notification Settings, Schedule, Push Notifications, General Quality) and all portal v1.3.0 fixes (N: WEB-003 through WEB-013). Each screen verified against actual source code for: tRPC queries used, loading/error/empty states, analytics events, accessibility, navigation, and Stripe checkout flows.
+  - `CHECKLIST_APP_STORE.md`: iOS submission checklist for v1.3.0 (build 17, bundle ID com.academytn.app). Includes pre-build verification, EAS build steps, App Store Connect metadata (What's New text, updated description, review notes with Stripe test credentials), submission procedure, post-submission monitoring, and rollback plan.
+  - `RELEASE_PLAN.md`: Updated with v1.3.0 timeline (feature complete 2026-02-27, QA/build/submission TBD), full feature manifest (MOB-001 through MOB-010 + WEB-003 through WEB-013), known issues table, rollback plan (OTA / App Store hotfix / server rollback), and pre-submit checklist.
+  - `RELEASE_NOTES.md`: Written v1.3.0 release notes covering all new features (in-app payments, enhanced dashboard, attendance tracking, chat improvements, notification preferences, profile updates), bug fixes, known issues, and portal fixes deployed alongside.
+**Blocked**: Nothing
+**Discovered**:
+- All mobile screens have loading states, but some use `ActivityIndicator` spinner (Schedule, DM messages, chat room messages) rather than skeleton screens. The Quality Bar specifies "skeleton screen (not a spinner)" — these are minor polish items, not release blockers.
+- Videos page in portal uses client-side infinite scroll (IntersectionObserver) but does NOT pass `limit`/`offset` to the server — it fetches all videos in one call. This works but may be a performance concern if the video library grows.
+- FAQs page is entirely static (no tRPC queries, hardcoded content). Not a bug — FAQ data is not in the database.
+- Payments "Manage Subscription" button on mobile opens generic web portal URL. The `payment.createPortalSession` tRPC route was added by Portal Agent but mobile hasn't wired it yet. Documented as known issue, fixable via OTA update.
+**Next**: Human tester should run CHECKLIST_QA.md on a real iOS device with Stripe test credentials. After QA pass, proceed with EAS production build → TestFlight → App Store submission per the timeline in RELEASE_PLAN.md.
+
+---
+
 ### 2026-02-27 — Portal Agent (Session 3)
 **Started**: DM imageUrl support (requested by Mobile Agent in Session 3)
 **Completed**:
