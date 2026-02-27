@@ -5,6 +5,8 @@ import {
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
 import { Stack } from 'expo-router';
@@ -127,17 +129,20 @@ export default function PaymentsScreen() {
     setRefreshing(false);
   };
 
+  const portalSession = trpc.payment.createPortalSession.useMutation();
+
   const onManageSubscription = async () => {
     trackEvent('subscription_manage_opened');
     try {
-      // Open web portal for subscription management
-      // Note: A dedicated Stripe Billing Portal session route would be ideal
-      await WebBrowser.openBrowserAsync('https://app.academytn.com', {
-        dismissButtonStyle: 'done',
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
-      });
+      const result = await portalSession.mutateAsync();
+      if (result.url) {
+        await WebBrowser.openBrowserAsync(result.url, {
+          dismissButtonStyle: 'done',
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        });
+      }
     } catch {
-      // Browser dismissed, no action needed
+      Alert.alert('Error', 'Unable to open billing portal. Please try again.');
     }
   };
 
@@ -241,12 +246,19 @@ export default function PaymentsScreen() {
                   )}
 
                   <TouchableOpacity
-                    style={styles.manageBtn}
+                    style={[styles.manageBtn, portalSession.isPending && styles.manageBtnLoading]}
                     onPress={onManageSubscription}
                     activeOpacity={0.7}
+                    disabled={portalSession.isPending}
                   >
-                    <Text style={styles.manageBtnText}>Manage Subscription</Text>
-                    <Ionicons name="open-outline" size={14} color={NAVY} />
+                    {portalSession.isPending ? (
+                      <ActivityIndicator size="small" color={NAVY} />
+                    ) : (
+                      <>
+                        <Text style={styles.manageBtnText}>Manage Subscription</Text>
+                        <Ionicons name="open-outline" size={14} color={NAVY} />
+                      </>
+                    )}
                   </TouchableOpacity>
                 </View>
               );
@@ -408,6 +420,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 6,
     minHeight: 44,
+  },
+  manageBtnLoading: {
+    opacity: 0.7,
   },
   manageBtnText: {
     fontSize: 14,

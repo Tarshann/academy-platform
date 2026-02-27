@@ -20,6 +20,18 @@
 
 ## Session Log
 
+### 2026-02-27 — Mobile Agent (Session 4)
+**Started**: Pre-release fixes — 3 mobile-only changes to use newly available server APIs
+**Completed**:
+- Fix 1: Wired "Manage Subscription" button to `payment.createPortalSession` mutation instead of generic web portal URL. Added loading state on button while mutation is in flight.
+- Fix 2: DM image upload now uses native `imageUrl` field in `dm.sendMessage` (server added support in da4a61b). Backward compatibility maintained — old `[image]` prefix messages still render correctly.
+- Fix 3: Removed hardcoded `KNOWN_COACHES` name bridge from profile.tsx. Coach names and emails now come from API (coaches JOIN users, da4a61b). Phone-only bridge retained (`COACH_PHONES`) since users table has no phone column. Removed fallback that showed hardcoded coaches when API returned empty — now shows proper empty state.
+**Blocked**: Nothing
+**Discovered**: Nothing new — all three fixes were straightforward server-side API integrations.
+**Next**: Version bump + EAS build for v1.3.0 submission.
+
+---
+
 ### 2026-02-27 — QA Agent (Session 1)
 **Started**: REL-001 — QA Checklists + Release Plan for v1.3.0
 **Completed**:
@@ -208,7 +220,7 @@
 | 2026-02-26 | Portal Agent | HIGH | blog.list pagination params ignored in DB query | Portal + Mobile | FIXED — commit da4a61b |
 | 2026-02-27 | Portal Agent | HIGH | Shop, Schedule, Gallery pages used hardcoded data | Portal | FIXED — commit 054db19 |
 | 2026-02-27 | Mobile Agent | MEDIUM | No Stripe Billing Portal session route — mobile can't open proper Stripe portal for subscription management | Portal + Mobile | FIXED — payment.createPortalSession added (da4a61b) |
-| 2026-02-27 | Mobile Agent | LOW | dm.sendMessage tRPC route lacks imageUrl field — DM images sent as [image] content prefix workaround | Portal + Mobile | FIXED — imageUrl added to schema, db, router, and Ably. Mobile needs to adopt native field. |
+| 2026-02-27 | Mobile Agent | LOW | dm.sendMessage tRPC route lacks imageUrl field — DM images sent as [image] content prefix workaround | Portal + Mobile | FIXED — Server added imageUrl (da4a61b), mobile now uses native field with legacy [image] prefix fallback |
 
 ---
 

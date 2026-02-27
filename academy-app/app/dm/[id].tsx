@@ -17,7 +17,6 @@ import { ChatInput } from '../../components/ChatInput';
 import { trackEvent } from '../../lib/analytics';
 import {
   uploadChatImage,
-  createDmImageContent,
   isDmImageMessage,
   extractDmImageUrl,
   type UploadProgress,
@@ -32,6 +31,7 @@ interface DmMessage {
   senderId: number;
   senderName: string;
   content: string;
+  imageUrl?: string | null;
   createdAt: string;
 }
 
@@ -152,10 +152,11 @@ export default function DmConversationScreen() {
         (progress) => setUploadProgress(progress)
       );
 
-      // Send as DM with image URL in content (server DM doesn't have imageUrl field)
+      // Send as DM with native imageUrl field
       await sendMessage.mutateAsync({
         conversationId,
-        content: createDmImageContent(result.url),
+        content: ' ',
+        imageUrl: result.url,
       });
 
       trackEvent('chat_image_upload_success', { room: 'dm', source });
@@ -184,9 +185,17 @@ export default function DmConversationScreen() {
   };
 
   /**
-   * For DM messages, detect [image] prefix and extract imageUrl for rendering.
+   * Extract image URL from message — native field first, then legacy [image] prefix fallback.
    */
   const getMessageProps = (item: DmMessage) => {
+    // Native imageUrl field (new format)
+    if (item.imageUrl) {
+      return {
+        message: item.content === ' ' ? ' ' : item.content,
+        imageUrl: item.imageUrl,
+      };
+    }
+    // Legacy: [image]<url> prefix in content (backward compat for pre-update messages)
     if (isDmImageMessage(item.content)) {
       return {
         message: ' ',

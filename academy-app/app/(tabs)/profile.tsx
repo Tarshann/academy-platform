@@ -11,11 +11,11 @@ import { trackEvent } from '../../lib/analytics';
 const GOLD = '#CFB87C';
 const NAVY = '#1a1a2e';
 
-// Known coach contact info — bridge until coaches.list API returns name/phone
-// See STATUS.md cross-cutting issue: coaches table lacks name/phone fields
-const KNOWN_COACHES: Record<number, { name: string; phone: string }> = {
-  1: { name: 'Coach O', phone: '5712920633' },
-  2: { name: 'Coach Mac', phone: '3155426222' },
+// Phone-only bridge — name and email now come from API (coaches JOIN users, commit da4a61b).
+// Users table has no phone column, so phone numbers are bridged here.
+const COACH_PHONES: Record<number, string> = {
+  1: '5712920633',
+  2: '3155426222',
 };
 
 function formatPhone(phone: string): string {
@@ -120,23 +120,13 @@ export default function ProfileScreen() {
 
   if (me.isLoading) return <Loading />;
 
-  // Build coach contact list from API data with known contact info bridge
-  const coachList = (coaches.data ?? []).map((coach) => {
-    const known = KNOWN_COACHES[coach.id];
-    return {
-      id: coach.id,
-      name: known?.name ?? `Coach #${coach.id}`,
-      phone: known?.phone ?? null,
-      specialties: coach.specialties,
-    };
-  });
-
-  // If API returned empty but we have known coaches, show known coaches as fallback
-  const displayCoaches = coachList.length > 0 ? coachList : Object.entries(KNOWN_COACHES).map(([id, info]) => ({
-    id: Number(id),
-    name: info.name,
-    phone: info.phone,
-    specialties: null as string | null,
+  // Build coach contact list from API data — names from JOIN, phones from bridge
+  const coachList = (coaches.data ?? []).map((coach: any) => ({
+    id: coach.id,
+    name: coach.name ?? 'Coach',
+    phone: COACH_PHONES[coach.id] ?? null,
+    email: coach.email ?? null,
+    specialties: coach.specialties,
   }));
 
   return (
@@ -174,7 +164,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      ) : displayCoaches.length === 0 ? (
+      ) : coachList.length === 0 ? (
         <View style={styles.section}>
           <View style={styles.emptyContainer}>
             <Ionicons name="people-outline" size={24} color="#ccc" />
@@ -183,7 +173,7 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <View style={styles.section}>
-          {displayCoaches.map((coach, index) => (
+          {coachList.map((coach, index) => (
             <View key={coach.id}>
               {index > 0 && <View style={styles.divider} />}
               <TouchableOpacity
