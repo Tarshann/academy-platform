@@ -28,6 +28,15 @@ const SkillsLabPage = lazy(() => import("./pages/SkillsLabPage"));
 const SkillsLabRegisterPage = lazy(() => import("./pages/SkillsLabRegisterPage"));
 const PerformanceLabPage = lazy(() => import("./pages/PerformanceLabPage"));
 const PerformanceLabApplyPage = lazy(() => import("./pages/PerformanceLabApplyPage"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Videos = lazy(() => import("./pages/Videos"));
+const Gallery = lazy(() => import("./pages/Gallery"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const FAQs = lazy(() => import("./pages/FAQs"));
+const Home = lazy(() => import("./pages/Home"));
+const Orders = lazy(() => import("./pages/Orders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Loading fallback component
@@ -120,6 +129,46 @@ function Router() {
         <Route path={"/performance-lab"}>
           <SEO title="Performance Lab" description="Academy Performance Lab — structured development for committed young athletes." />
           <PerformanceLabPage />
+        </Route>
+        <Route path={"/blog/:slug"}>
+          {(params) => (
+            <>
+              <SEO title="Blog Post" description="Read the latest from The Academy." />
+              <BlogPost params={params as { slug: string }} />
+            </>
+          )}
+        </Route>
+        <Route path={"/blog"}>
+          <SEO title="Blog" description="News, training tips, and athlete spotlights from The Academy." />
+          <Blog />
+        </Route>
+        <Route path={"/videos"}>
+          <SEO title="Videos" description="Training videos and highlights from The Academy." />
+          <Videos />
+        </Route>
+        <Route path={"/gallery"}>
+          <SEO title="Gallery" description="Photos from The Academy training sessions and events." />
+          <Gallery />
+        </Route>
+        <Route path={"/about"}>
+          <SEO title="About" description="Learn about The Academy and our coaching team." />
+          <About />
+        </Route>
+        <Route path={"/contact"}>
+          <SEO title="Contact" description="Get in touch with The Academy." />
+          <Contact />
+        </Route>
+        <Route path={"/faqs"}>
+          <SEO title="FAQs" description="Frequently asked questions about The Academy programs." />
+          <FAQs />
+        </Route>
+        <Route path={"/home"}>
+          <SEO title="Home" description="Welcome to The Academy member portal." />
+          <Home />
+        </Route>
+        <Route path={"/orders"}>
+          <SEO title="Orders" description="View your purchase history and order details." />
+          <Orders />
         </Route>
         <Route path={"/404"}>
           <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />
