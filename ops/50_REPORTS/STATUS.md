@@ -20,18 +20,50 @@
 
 ## Session Log
 
+### 2026-02-26 — Competitor Intel Agent
+**Started**: RES-001, RES-002, RES-003 — Full competitive intelligence sweep
+**Completed**:
+- RES-001: Feature-by-feature analysis of TeamSnap, SportsEngine, GameChanger vs. Academy v1.2
+  - 16-row feature comparison matrix
+  - 7 detailed findings with implementation recommendations
+  - 5 top adoption recommendations with effort estimates
+  - 5 UX patterns worth adopting
+  - Monetization comparison table
+- RES-002: Local competitor analysis (9 competitors documented in Gallatin/Sumner County area)
+  - D1 Training Hendersonville identified as primary local threat
+  - 5 local SEO tactics recommended
+- RES-003: SEO keyword competitive analysis
+  - 20 target keywords identified and prioritized
+  - 5 quick-win keywords for fast page 1 ranking
+  - Content gap analysis (blog = critical gap, sport pages = high priority)
+  - 8 prioritized SEO recommendations
+- Created 14 new tickets across NEXT.md and LATER.md:
+  - NEXT: MOB-040, MOB-018 (promoted), WEB-030, SEO-010, SEO-011, MKT-020, MKT-021
+  - LATER: MOB-041, MOB-042, MOB-050, MKT-022, MKT-023, MKT-024, MKT-025
+- Full report written to `ops/50_REPORTS/competitor-snapshots.md`
+- Updated `ops/20_WORKSTREAMS/competitor-intel.md` with recommendations pipeline
+**Blocked**: Nothing
+**Discovered**:
+- Academy's chat/messaging is BETTER than all 3 national competitors — maintain this lead
+- Academy's attendance tracking is unique — no competitor offers this
+- Blog has 0 published content (3 "Coming Soon" placeholders) — critical SEO gap
+- Google Business Profile may not be fully activated (verification code commented out in layout.tsx)
+- D1 Training Hendersonville is the most direct local threat (national franchise, structured programs, professional facility)
+- SportsEngine has terrible app ratings (2.5-3.0) despite institutional dominance — UX is Academy's competitive moat
+**Next**:
+- Mobile Agent: Start MOB-040 (RSVP) after MOB-004 (payments) is done
+- Marketing/SEO Agent: SEO-010 (GBP activation) is highest-impact, lowest-effort action across all workstreams
+- Portal Agent: WEB-030 (calendar sync) is a quick win
+
+---
+
 ### 2026-02-26 — Portal Agent
 **Started**: WEB-001, WEB-002, WEB-003-FIX, WEB-004-FIX, WEB-013-FIX
 **Completed**:
 - WEB-001: Full UX audit of all 30+ portal pages. Found 4 CRITICAL, 6 HIGH, 6 MEDIUM, 4 LOW issues.
 - WEB-002: All 24 mobile v1.3 routes verified — all exist, 12 mobile-ready, 12 need pagination.
 - Written comprehensive audit report to `ops/50_REPORTS/audit-findings.md`
-- Created 10 fix tickets in `ops/10_BACKLOG/NEXT.md` (WEB-003-FIX through WEB-013-FIX)
-- WEB-003-FIX: Added /orders route to App.tsx (was built but unreachable)
-- WEB-004-FIX: Added admin role guard to CoachDashboard (was open to any user)
-- WEB-005-FIX + WEB-006-FIX: FALSE POSITIVE — SkillsLab and PerformanceLab forms do work (REST handlers exist in server/)
-- WEB-013-FIX (partial): Added pagination to 7 priority routes: blog.list (fixed ignored params + category filter), payment.myPayments, payment.mySubscriptions, attendance.getMyAttendance, videos.list, dm.searchMessages (limit exposed, max 100)
-- All changes pass `pnpm check` (0 errors) + `pnpm build` (all 3 steps)
+- Created 11 fix tickets in `ops/10_BACKLOG/NEXT.md` (WEB-003-FIX through WEB-013-FIX, including WEB-011-FIX and WEB-012-FIX)
 **Blocked**: Nothing
 **Discovered**:
 - WEB-005-FIX/WEB-006-FIX were false positives — REST handlers exist at server/skills-lab-register.ts and server/performance-lab-apply.ts

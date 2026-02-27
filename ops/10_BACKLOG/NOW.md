@@ -150,58 +150,7 @@
 
 ## Web Portal
 
-### WEB-001: Full UX Audit
-- **Workstream**: Portal
-- **Owner**: Portal Agent
-- **Status**: DONE (2026-02-26)
-- **Goal**: Systematically review every portal page and document all UX issues, broken flows, and improvement opportunities
-- **Scope**:
-  - Walk through every page as a member, coach, and admin
-  - Document: broken features, confusing UX, missing states, accessibility issues, mobile responsiveness
-  - Produce a prioritized list of fix tickets
-  - Check all payment flows end-to-end
-  - Check all chat/DM flows
-  - Check admin tools completeness
-- **Non-goals**:
-  - Don't fix anything during the audit — just document
-  - Don't refactor code — just identify issues
-- **Acceptance Criteria**:
-  - [ ] Every portal page visited and evaluated
-  - [ ] Issues logged with severity (CRITICAL/HIGH/MEDIUM/LOW)
-  - [ ] At least 3 fix tickets created in NEXT.md from findings
-  - [ ] Audit report written to `ops/50_REPORTS/audit-findings.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md` (new)
-  - `ops/10_BACKLOG/NEXT.md` (new tickets from findings)
-- **Test Plan**: N/A (this IS the test)
-- **Telemetry**: No new events
-- **Release**: Informs future web deploys
-
----
-
-### WEB-002: API Route Impact Assessment
-- **Workstream**: Portal
-- **Owner**: Portal Agent
-- **Status**: DONE (2026-02-26)
-- **Goal**: Document which tRPC routes the mobile app uses (current + planned v1.3) and verify they all work correctly
-- **Scope**:
-  - Verify all 14 currently-used mobile routes return expected data
-  - Test all 47 planned-to-be-used routes for mobile v1.3
-  - Document any routes with unexpected behavior, missing pagination, or null-handling issues
-  - Flag any routes that need fixes before mobile can consume them
-- **Non-goals**:
-  - Don't change route signatures
-  - Don't add new routes
-- **Acceptance Criteria**:
-  - [ ] All 14 current mobile routes verified working
-  - [ ] All 47 planned routes tested and documented
-  - [ ] Issues logged with specific route names and expected vs. actual behavior
-  - [ ] Mobile agent notified of any routes that need workarounds
-- **Touched Files**:
-  - `ops/50_REPORTS/audit-findings.md`
-- **Test Plan**: Call each route with test data, verify response shape
-- **Telemetry**: No new events
-- **Release**: Informs mobile v1.3
+*(No active portal tickets — pull from NEXT.md when ready)*
 
 ---
 
@@ -266,32 +215,7 @@
 
 ## Research
 
-### RES-001: Competitor App Feature Analysis
-- **Workstream**: Research
-- **Owner**: Competitor Intel Agent
-- **Status**: BACKLOG
-- **Goal**: Analyze top 3 competitor apps (TeamSnap, SportsEngine, GameChanger) and produce actionable adoption recommendations
-- **Scope**:
-  - Feature-by-feature comparison vs. Academy v1.2
-  - UX pattern analysis (onboarding, dashboard, scheduling, payments, chat)
-  - Identify top 5 features to adopt with effort estimates
-  - Document monetization strategies
-- **Non-goals**:
-  - Don't analyze local competitors yet (RES-002)
-  - Don't do SEO competitive analysis (RES-003)
-- **Acceptance Criteria**:
-  - [ ] Feature comparison table complete for 3 competitors
-  - [ ] Top 5 adoption recommendations documented with effort (S/M/L)
-  - [ ] UX patterns documented with screenshots/descriptions
-  - [ ] At least 3 adoption tickets created in NEXT.md
-  - [ ] Report written to `ops/50_REPORTS/competitor-snapshots.md`
-- **Touched Files**:
-  - `ops/50_REPORTS/competitor-snapshots.md` (new)
-  - `ops/20_WORKSTREAMS/competitor-intel.md`
-  - `ops/10_BACKLOG/NEXT.md`
-- **Test Plan**: N/A (research)
-- **Telemetry**: No new events
-- **Release**: Informs feature prioritization
+*(RES-001 completed 2026-02-26 — see DONE section)*
 
 ---
 
@@ -327,4 +251,26 @@
 
 ## DONE
 
-*(Move completed tickets here with completion date)*
+### RES-001: Competitor App Feature Analysis — DONE 2026-02-26
+- **Owner**: Competitor Intel Agent
+- **Output**: Full feature comparison matrix + 7 detailed findings + 5 top adoption recommendations + UX pattern analysis in `ops/50_REPORTS/competitor-snapshots.md`
+- **Acceptance Criteria Results**:
+  - [x] Feature comparison table complete for 3 competitors (16-row matrix)
+  - [x] Top 5 adoption recommendations documented with effort (S/M/L)
+  - [x] UX patterns documented (5 patterns with implementation details)
+  - [x] 7 adoption tickets created in NEXT.md (MOB-040, MOB-018, WEB-030, SEO-010, SEO-011, MKT-020, MKT-021)
+  - [x] Report written to `ops/50_REPORTS/competitor-snapshots.md`
+- **Also completed in same session**: RES-002 (local competitors) and RES-003 (SEO keywords)
+- **Tickets created**:
+  - NEXT: MOB-040 (RSVP), MOB-018 (onboarding, promoted from LATER), WEB-030 (calendar sync), SEO-010 (GBP), SEO-011 (FAQ schema), MKT-020 (blog), MKT-021 (sport pages)
+  - LATER: MOB-041 (progress stats), MOB-042 (achievements), MOB-050 (family accounts), MKT-022 (city pages), MKT-023 (testimonials), MKT-024 (video), MKT-025 (results page)
+
+### WEB-001: Full UX Audit — DONE 2026-02-26
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `5bd2579` — docs: complete WEB-001 UX audit + WEB-002 API impact assessment
+- **Result**: Audited 30+ portal pages. Found 4 CRITICAL, 6 HIGH, 6 MEDIUM, 4 LOW issues. Created 11 fix tickets (WEB-003-FIX through WEB-013-FIX) in NEXT.md. Full report in `ops/50_REPORTS/audit-findings.md`.
+
+### WEB-002: API Route Impact Assessment — DONE 2026-02-26
+- **Workstream**: Portal | **Owner**: Portal Agent
+- **Commit**: `5bd2579` — docs: complete WEB-001 UX audit + WEB-002 API impact assessment
+- **Result**: Verified all 24 mobile v1.3 routes. 12 mobile-ready, 12 need pagination. `blog.list` accepts pagination params but ignores them in DB query. Full report in `ops/50_REPORTS/audit-findings.md`.

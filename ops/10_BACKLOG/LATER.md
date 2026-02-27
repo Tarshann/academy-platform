@@ -40,10 +40,9 @@
 - **Effort**: Small
 - **Depends on**: dm.blockUser, dm.archiveConversation APIs exist
 
-### MOB-018: Onboarding Flow
-- **Goal**: 3-4 animated walkthrough screens on first launch with permission requests
-- **Effort**: Large
-- **Depends on**: Reanimated for animations
+### MOB-018: Onboarding Flow — PROMOTED TO NEXT.md (2026-02-26)
+- Moved to NEXT.md per RES-001 competitor analysis. All 3 competitors have guided onboarding.
+- See NEXT.md for full ticket.
 
 ### MOB-019: Skeleton Loading Screens
 - **Goal**: Replace all spinners with skeleton screens matching content layout
@@ -91,6 +90,24 @@
 - **Effort**: Small
 - **Depends on**: expo-haptics
 
+### MOB-041: Progress/Stats Dashboard
+- **Source**: RES-001 competitor analysis (GameChanger's stats are a key engagement driver)
+- **Goal**: Track and display athlete progress — speed improvements, attendance streaks, skill milestones
+- **Effort**: Large (new schema, new screens, data visualization)
+- **Note**: No competitor does this well for training facilities. Unique differentiation opportunity.
+
+### MOB-042: Achievement Badges / Streaks
+- **Source**: RES-001 competitor analysis (Peloton/NTC aspirational patterns)
+- **Goal**: Gamification layer — attendance streaks, milestone badges, session count achievements
+- **Effort**: Large (new schema, design system, notification integration)
+- **Note**: GameChanger relies on emotional engagement (parental pride). Gamification would add a mechanic-driven engagement layer on top of emotional hooks.
+
+### MOB-050: Family/Multi-Child Account Management
+- **Source**: RES-001 competitor analysis (TeamSnap + SportsEngine core feature)
+- **Goal**: Parents manage multiple children from one account — see all kids' schedules, payments, and communications
+- **Effort**: Large (cross-cutting: auth, scheduling, payments, chat)
+- **Note**: TeamSnap and SportsEngine both support this. Critical for families with 2+ kids in activities. Requires new `familyMembers` table and family switcher UI.
+
 ### MOB-029: Enable New Architecture
 - **Goal**: Set newArchEnabled: true and verify all modules work
 - **Effort**: Medium (risk of breaking existing modules)
@@ -122,6 +139,30 @@
 ---
 
 ## Marketing / SEO
+
+### MKT-022: Service-Area City Landing Pages
+- **Source**: RES-002 + RES-003 competitor analysis
+- **Goal**: Create landing pages for Hendersonville, Sumner County, and Goodlettsville to capture adjacent-city search traffic
+- **Effort**: Low (template-based, pull from config)
+- **Note**: D1 Training has individual location pages ranking for each city. Academy has only 1 local page.
+
+### MKT-023: Testimonial Expansion Campaign
+- **Source**: RES-002 local competitor analysis
+- **Goal**: Expand from 3 testimonials to 10+ on marketing site and generate Google Reviews
+- **Effort**: Low-Medium (content collection + site updates)
+- **Note**: D1 Training and local competitors have 50-200+ reviews. Academy needs volume.
+
+### MKT-024: Video Content on Marketing Site
+- **Source**: RES-003 SEO keyword analysis
+- **Goal**: Add training session clips, coach intro videos, and athlete highlights to marketing site
+- **Effort**: Medium (content creation + site integration)
+- **Note**: Zero video content currently on academytn.com. All local competitors feature video.
+
+### MKT-025: Results/Metrics Page
+- **Source**: RES-001 + RES-003 competitor analysis
+- **Goal**: Create a page showcasing measurable athlete improvements (speed gains, attendance streaks, testimonials with data)
+- **Effort**: Medium (data collection + page design)
+- **Note**: Academy mentions baseline testing but shows no actual results data. Local competitors publish improvement metrics.
 
 ### MKT-010: Location-Specific Landing Pages
 - **Goal**: Create pages targeting "youth training [nearby city]" for local SEO

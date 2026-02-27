@@ -109,6 +109,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
-
-# Claude Code
-.claude/
+.claude/worktrees/loving-mendeleev/
+.claude/worktrees/serene-ellis/
+.claude/worktrees/nice-sinoussi/

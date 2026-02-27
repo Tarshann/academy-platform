@@ -133,6 +133,77 @@
 - **Telemetry**: `notification_settings_changed` (setting name, new value)
 - **Release**: v1.3.0
 
+### MOB-040: Session RSVP / Availability Tracking
+- **Workstream**: Mobile
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-001 competitor analysis (TeamSnap's #1 feature)
+- **Goal**: Parents can RSVP for upcoming sessions so coaches see predicted attendance
+- **Scope**:
+  - RSVP buttons (Going / Maybe / Not Going) on session cards in schedule tab
+  - Push notification action buttons for quick RSVP without opening app
+  - RSVP summary visible on session detail (X going, Y maybe)
+  - Coach/admin view: RSVP roster per session
+  - Backend: new `sessionRsvp` table (userId, scheduleId, status enum, createdAt)
+  - New tRPC routes: `session.rsvp` (upsert), `session.getRsvps` (list per session)
+- **Non-goals**:
+  - Waitlist management
+  - RSVP-based capacity enforcement (informational only)
+- **Acceptance Criteria**:
+  - [ ] Session cards show RSVP buttons
+  - [ ] One-tap RSVP without opening session detail
+  - [ ] RSVP counts visible on session detail screen
+  - [ ] Admin can view RSVP roster per session
+  - [ ] Optimistic UI with server sync
+  - [ ] Skeleton loading, error state with retry
+- **Touched Files**:
+  - `drizzle/schema.ts` (new table)
+  - `server/routers.ts` (new routes)
+  - `server/db.ts` (new functions)
+  - `academy-app/app/(tabs)/schedule.tsx`
+- **Test Plan**:
+  - Tap Going on a session → count updates
+  - Change to Not Going → count updates
+  - Admin views session → sees RSVP list
+  - Network error → optimistic reverts
+- **Telemetry**: `session_rsvp_changed` (status, sessionId)
+- **Release**: v1.3.0
+
+### MOB-018: Guided Onboarding Flow (Promoted from LATER)
+- **Workstream**: Mobile
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-001 competitor analysis (all 3 competitors have guided onboarding)
+- **Goal**: 3-4 animated walkthrough screens on first launch to reduce time-to-first-registration below 3 minutes
+- **Scope**:
+  - Welcome screen with Academy branding
+  - "Browse Programs" screen highlighting offerings
+  - "Enable Notifications" screen with permission request
+  - "View Your Schedule" screen directing to first action
+  - Reanimated page transitions
+  - AsyncStorage flag to show only once
+  - Skip button available on all screens
+- **Non-goals**:
+  - Account creation during onboarding (Clerk handles this)
+  - Program enrollment during onboarding
+- **Acceptance Criteria**:
+  - [ ] 3-4 screens with smooth Reanimated transitions
+  - [ ] Notification permission requested during flow
+  - [ ] Onboarding shows only once (persisted flag)
+  - [ ] Skip button works on all screens
+  - [ ] Completes in < 60 seconds
+  - [ ] Navigates to schedule/dashboard after completion
+- **Touched Files**:
+  - `academy-app/app/onboarding.tsx` (new)
+  - `academy-app/app/_layout.tsx` (conditional routing)
+- **Test Plan**:
+  - Fresh install → onboarding appears
+  - Complete onboarding → dashboard loads
+  - Kill and reopen → onboarding does NOT appear again
+  - Tap Skip → goes directly to dashboard
+- **Telemetry**: `onboarding_started`, `onboarding_completed`, `onboarding_skipped` (screen number)
+- **Release**: v1.3.0
+
 ### MOB-010: Chat Image Upload `[ENGAGEMENT]`
 - **Workstream**: Mobile
 - **Owner**: Unassigned
@@ -167,6 +238,37 @@
 ## Web Portal
 
 *(Generated from WEB-001 UX Audit + WEB-002 API Assessment — 2026-02-26)*
+
+### WEB-030: Calendar iCal Feed Export
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-001 competitor analysis (TeamSnap + SportsEngine table stakes feature)
+- **Goal**: Generate iCal feed per user so registered sessions appear in Google Calendar, Apple Calendar, and Outlook
+- **Scope**:
+  - New tRPC route `schedule.icalFeed` returning `.ics` formatted data for user's registered sessions
+  - iCal events include: session title, time, location, program name
+  - Feed URL accessible via portal UI ("Subscribe to Calendar" link)
+  - Mobile: "Add to Calendar" button on session detail using `expo-calendar`
+- **Non-goals**:
+  - Two-way sync (calendar → Academy)
+  - Calendar widget in the app
+- **Acceptance Criteria**:
+  - [ ] iCal feed URL generates valid `.ics` file
+  - [ ] Events include title, time, location
+  - [ ] Google Calendar subscription works
+  - [ ] Apple Calendar subscription works
+  - [ ] Feed updates when new sessions are registered
+  - [ ] `pnpm build` passes
+- **Touched Files**:
+  - `server/routers.ts` (new route)
+  - `server/db.ts` (query for user's sessions)
+  - `client/src/pages/Schedule.tsx` (subscribe link)
+- **Test Plan**:
+  - Copy iCal URL → paste into Google Calendar → events appear
+  - Register for new session → event appears in subscribed calendar
+- **Telemetry**: `calendar_feed_subscribed`
+- **Release**: Next web deploy
 
 ### WEB-003-FIX: Add /orders Route to App.tsx (CRITICAL)
 - **Workstream**: Portal
@@ -279,6 +381,37 @@
 - **Telemetry**: No new events
 - **Release**: Next web deploy
 
+### WEB-011-FIX: SignUp Page — Fetch Products from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: SignUp page uses hardcoded product catalog for membership selection — should fetch from API
+- **Scope**: Replace hardcoded membership/pricing data in `SignUp.tsx` with API call, add loading/error states
+- **Acceptance Criteria**:
+  - [ ] Membership options come from API, not hardcoded data
+  - [ ] Admin pricing changes reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
+### WEB-012-FIX: PrivateSessionBooking — Fetch Coaches from API (HIGH)
+- **Workstream**: Portal
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Goal**: PrivateSessionBooking page uses hardcoded coach names/details — should fetch from `coaches.list` tRPC route
+- **Scope**: Replace hardcoded coach data with `trpc.coaches.list.useQuery()`, add loading/error/empty states
+- **Acceptance Criteria**:
+  - [ ] Coach list comes from API, not hardcoded data
+  - [ ] Adding/removing coaches in admin reflected without code changes
+  - [ ] Loading skeleton while fetching
+  - [ ] Empty state if no coaches available
+  - [ ] Error state with retry
+  - [ ] `pnpm build` passes
+- **Telemetry**: No new events
+- **Release**: Next web deploy
+
 ### WEB-013-FIX: Add Pagination to List API Routes (HIGH — mobile blocker)
 - **Workstream**: Portal
 - **Owner**: Unassigned
@@ -322,6 +455,134 @@
 
 *(Tickets will be generated from MKT-001 and SEO-001 audit findings)*
 
+### SEO-010: Google Business Profile Activation + Review Campaign
+- **Workstream**: SEO
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-002 local competitor analysis + RES-003 SEO keyword analysis
+- **Goal**: Claim, optimize, and activate Google Business Profile to improve local pack ranking
+- **Scope**:
+  - Claim and verify GBP for "The Academy" in Gallatin, TN
+  - Add all 3 programs as "services" in GBP
+  - Upload 10-15 training session photos
+  - Set correct business hours (Tue, Thu 6-8 PM, Sun 11 AM-12 PM)
+  - Add Google verification code to `academy-marketing/app/layout.tsx` metadata
+  - Design review generation campaign (post-cohort follow-up email/text)
+  - Weekly Google Business Posts (training tips, upcoming dates, highlights)
+- **Non-goals**:
+  - Google Ads (separate budget decision)
+  - Automated review solicitation tools
+- **Acceptance Criteria**:
+  - [ ] GBP claimed and verified
+  - [ ] All programs listed as services
+  - [ ] 10+ photos uploaded
+  - [ ] Hours accurate
+  - [ ] Verification code in layout.tsx
+  - [ ] Review campaign plan documented
+  - [ ] First Google Business Post published
+- **Touched Files**:
+  - `academy-marketing/app/layout.tsx` (Google verification meta tag)
+- **Test Plan**: Search "youth athletic training Gallatin TN" on Google → Academy appears in local pack
+- **Telemetry**: No code telemetry (external platform)
+- **Release**: Immediate (no deploy needed for GBP, deploy needed for verification code)
+
+### SEO-011: FAQPage Schema Markup
+- **Workstream**: SEO
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-003 SEO keyword analysis (quick win for rich snippets)
+- **Goal**: Add FAQPage JSON-LD structured data to FAQ page and program pages for Google rich snippets
+- **Scope**:
+  - New FAQPage schema component in `academy-marketing/lib/structured-data.tsx`
+  - Apply to main FAQ page using existing FAQ data
+  - Apply to each program page using program-specific FAQs from `config.ts`
+  - Validate with Google Rich Results Test
+- **Non-goals**:
+  - Content changes to FAQ answers
+  - Visual FAQ redesign
+- **Acceptance Criteria**:
+  - [ ] FAQ page has valid FAQPage JSON-LD
+  - [ ] Each program page has valid FAQPage JSON-LD from its FAQ data
+  - [ ] Validates in Google Rich Results Test
+  - [ ] `npm run validate` passes
+  - [ ] `npm run build` passes
+- **Touched Files**:
+  - `academy-marketing/lib/structured-data.tsx`
+  - `academy-marketing/app/faq/page.tsx`
+  - `academy-marketing/app/programs/[slug]/page.tsx`
+- **Test Plan**: Run Rich Results Test on FAQ URL → shows FAQ rich result preview
+- **Telemetry**: No new events
+- **Release**: Next marketing deploy
+
+### MKT-020: Blog Content Publishing System
+- **Workstream**: Marketing
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-003 SEO keyword analysis (critical content gap)
+- **Goal**: Create blog routing and publish first 5 blog posts targeting parent-intent keywords
+- **Scope**:
+  - Create dynamic blog route at `academy-marketing/app/blog/[slug]/page.tsx`
+  - Add blog post data to config or markdown content directory
+  - Publish 5 SEO-targeted articles:
+    1. "5 Speed Drills Your Athlete Can Do at Home"
+    2. "What Is SAQ Training and Why Every Young Athlete Needs It"
+    3. "How to Know if Your Child is Ready for Structured Training"
+    4. "How to Prepare for Middle School Basketball Tryouts in Sumner County"
+    5. "Why We Train Outside: The Academy Approach"
+  - Each post: unique meta tags, structured data (Article schema), internal links to programs
+  - Update blog index page to show real posts instead of "Coming Soon"
+- **Non-goals**:
+  - CMS integration (static content is fine for now)
+  - Comment system
+  - Author profiles
+- **Acceptance Criteria**:
+  - [ ] Blog route renders individual posts
+  - [ ] 5 posts published with SEO-optimized titles and descriptions
+  - [ ] Blog index shows real posts, not "Coming Soon"
+  - [ ] Each post has Article structured data
+  - [ ] Internal links to relevant program pages
+  - [ ] `npm run build` passes
+  - [ ] `npm run validate` passes
+- **Touched Files**:
+  - `academy-marketing/app/blog/[slug]/page.tsx` (new)
+  - `academy-marketing/app/blog/page.tsx` (update)
+  - `academy-marketing/lib/config.ts` or new content directory
+  - `academy-marketing/lib/structured-data.tsx`
+- **Telemetry**: No new events
+- **Release**: Next marketing deploy
+
+### MKT-021: Sport-Specific Landing Pages
+- **Workstream**: Marketing
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Source**: RES-003 SEO keyword analysis (high-impact, low-effort)
+- **Goal**: Create 4 sport-specific landing pages to capture sport-targeted search queries
+- **Scope**:
+  - `/basketball-training-gallatin-tn` targeting youth basketball keywords
+  - `/flag-football-training-gallatin-tn` targeting flag football keywords
+  - `/soccer-training-gallatin-tn` targeting youth soccer keywords
+  - `/speed-agility-training-gallatin-tn` targeting SAQ/speed keywords
+  - Each page pulls data from `config.ts` (programs, coaches, testimonials)
+  - Each page has unique H1, meta tags, structured data
+  - Cross-links to relevant program pages
+- **Non-goals**:
+  - New content creation (reuse config data)
+  - Design changes (use existing page patterns)
+- **Acceptance Criteria**:
+  - [ ] 4 new pages created and accessible
+  - [ ] Each page has unique title, description, H1
+  - [ ] Each page has structured data (SportsActivityLocation + FAQPage)
+  - [ ] Internal links to program signup pages
+  - [ ] `npm run build` passes
+  - [ ] `npm run validate` passes
+- **Touched Files**:
+  - `academy-marketing/app/basketball-training-gallatin-tn/page.tsx` (new)
+  - `academy-marketing/app/flag-football-training-gallatin-tn/page.tsx` (new)
+  - `academy-marketing/app/soccer-training-gallatin-tn/page.tsx` (new)
+  - `academy-marketing/app/speed-agility-training-gallatin-tn/page.tsx` (new)
+- **Telemetry**: No new events
+- **Release**: Next marketing deploy
+
 ### SEO-002: Structured Data Expansion `[SEO]`
 - **Workstream**: SEO
 - **Owner**: Unassigned
@@ -350,32 +611,7 @@
 
 ## Research
 
-### RES-002: Local Competitor Analysis (Gallatin, TN) `[RESEARCH]`
-- **Workstream**: Research
-- **Owner**: Unassigned
-- **Status**: BACKLOG
-- **Goal**: Identify local competitors and their online presence to inform local SEO strategy
-- **Scope**:
-  - Find youth sports training facilities within 25 miles of Gallatin, TN
-  - Document their websites, Google Business profiles, review counts
-  - Identify keyword opportunities they're not targeting
-  - Recommend local SEO tactics
-- **Acceptance Criteria**:
-  - [ ] 5+ local competitors documented
-  - [ ] Keyword gap analysis complete
-  - [ ] 3+ local SEO tactics recommended
-  - [ ] Report in `ops/50_REPORTS/competitor-snapshots.md`
-
-### RES-003: SEO Keyword Competitive Analysis `[RESEARCH]`
-- **Workstream**: Research
-- **Owner**: Unassigned
-- **Status**: BACKLOG
-- **Goal**: Identify keyword opportunities by analyzing what competitors rank for
-- **Acceptance Criteria**:
-  - [ ] Top 20 relevant keywords identified
-  - [ ] Current Academy ranking vs. competitors documented
-  - [ ] Content gap recommendations produced
-  - [ ] Report in `ops/50_REPORTS/competitor-snapshots.md`
+*(RES-002 and RES-003 completed 2026-02-26 — see DONE section)*
 
 ---
 
@@ -625,4 +861,14 @@
 
 ## DONE
 
-*(Move completed tickets here with completion date)*
+### RES-002: Local Competitor Analysis (Gallatin, TN) — DONE 2026-02-26
+- **Owner**: Competitor Intel Agent
+- **Output**: 9 local competitors documented in `ops/50_REPORTS/competitor-snapshots.md`
+- **Findings**: D1 Training Hendersonville is primary threat; Academy has tech platform advantage; 5 local SEO tactics recommended
+- **Tickets created**: SEO-010 (GBP activation), MKT-022 (city pages) in LATER
+
+### RES-003: SEO Keyword Competitive Analysis — DONE 2026-02-26
+- **Owner**: Competitor Intel Agent
+- **Output**: 20 target keywords + 5 quick wins + content gap analysis in `ops/50_REPORTS/competitor-snapshots.md`
+- **Findings**: Blog content is critical gap (0 published), sport-specific pages missing, FAQ schema is easy win
+- **Tickets created**: MKT-020 (blog), MKT-021 (sport pages), SEO-010 (GBP), SEO-011 (FAQ schema)

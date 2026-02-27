@@ -37,6 +37,12 @@
 4. **Backwards compatibility on API routes.** Mobile consumes server routes. Changing a route signature without a coordinated ticket breaks the app in production.
 5. **Config is the source of truth.** Marketing business data lives in `academy-marketing/lib/config.ts`. Pages are renderers. Never hardcode business data in components.
 
+## Completion & Verification Rules
+
+1. **No ticket is DONE without a commit reference.** Every ticket moved to the DONE section must include the commit SHA or PR number that delivered the work. If the work is observation-only (audits, research), include the commit that recorded the findings. No exceptions.
+2. **Git is the source of truth.** Agent session summaries are claims. The repo is evidence. If a summary says "15 tickets done" but git shows no new files, the tickets are not done.
+3. **Verify before marking DONE.** Before moving a ticket to DONE, confirm the acceptance criteria are met by checking the actual repo state — not by trusting your own session memory.
+
 ## Status Updates
 
 1. **Update `STATUS.md` at the start of every session** — log what you're working on.
