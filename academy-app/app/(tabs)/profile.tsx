@@ -5,15 +5,49 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
+import { trackEvent } from '../../lib/analytics';
 
 const GOLD = '#CFB87C';
 const NAVY = '#1a1a2e';
 
+// Known coach contact info — bridge until coaches.list API returns name/phone
+// See STATUS.md cross-cutting issue: coaches table lacks name/phone fields
+const KNOWN_COACHES: Record<number, { name: string; phone: string }> = {
+  1: { name: 'Coach O', phone: '5712920633' },
+  2: { name: 'Coach Mac', phone: '3155426222' },
+};
+
+function formatPhone(phone: string): string {
+  if (phone.length === 10) {
+    return `(${phone.slice(0, 3)}) ${phone.slice(3, 6)}-${phone.slice(6)}`;
+  }
+  return phone;
+}
+
+function CoachContactSkeleton() {
+  return (
+    <View style={styles.section}>
+      {[1, 2].map((i) => (
+        <View key={i}>
+          {i > 1 && <View style={styles.divider} />}
+          <View style={styles.contactRow}>
+            <View style={[styles.contactIcon, styles.skeletonCircle]} />
+            <View style={{ flex: 1 }}>
+              <View style={[styles.skeletonLine, { width: 100 }]} />
+              <View style={[styles.skeletonLine, { width: 130, marginTop: 6 }]} />
+            </View>
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut } = useAuth();
   const me = trpc.auth.me.useQuery();
+  const coaches = trpc.coaches.list.useQuery({ limit: 20, offset: 0 });
 
   const role = me.data?.role ?? 'user';
   const displayName = me.data?.name || user?.fullName || 'Member';
@@ -73,14 +107,35 @@ export default function ProfileScreen() {
   }, [user, signOut]);
 
   const onCall = (name: string, phone: string) => {
+    trackEvent('coach_contact_call', { coach_name: name, phone });
     Linking.openURL(`tel:${phone}`);
   };
 
   const onText = (name: string, phone: string) => {
+    trackEvent('coach_contact_text', { coach_name: name, phone });
     Linking.openURL(`sms:${phone}`);
   };
 
   if (me.isLoading) return <Loading />;
+
+  // Build coach contact list from API data with known contact info bridge
+  const coachList = (coaches.data ?? []).map((coach) => {
+    const known = KNOWN_COACHES[coach.id];
+    return {
+      id: coach.id,
+      name: known?.name ?? `Coach #${coach.id}`,
+      phone: known?.phone ?? null,
+      specialties: coach.specialties,
+    };
+  });
+
+  // If API returned empty but we have known coaches, show known coaches as fallback
+  const displayCoaches = coachList.length > 0 ? coachList : Object.entries(KNOWN_COACHES).map(([id, info]) => ({
+    id: Number(id),
+    name: info.name,
+    phone: info.phone,
+    specialties: null as string | null,
+  }));
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -102,35 +157,59 @@ export default function ProfileScreen() {
 
       {/* Contact Coaches */}
       <Text style={styles.sectionLabel}>CONTACT</Text>
-      <View style={styles.section}>
-        <TouchableOpacity style={styles.contactRow} onPress={() => onCall('Coach O', '5712920633')}>
-          <View style={styles.contactIcon}>
-            <Ionicons name="call-outline" size={18} color={GOLD} />
+      {coaches.isLoading ? (
+        <CoachContactSkeleton />
+      ) : coaches.isError ? (
+        <View style={styles.section}>
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={24} color="#e74c3c" />
+            <Text style={styles.errorText}>Could not load coaches</Text>
+            <TouchableOpacity
+              style={styles.retryBtn}
+              onPress={() => coaches.refetch()}
+            >
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.contactName}>Coach O</Text>
-            <Text style={styles.contactDetail}>(571) 292-0633</Text>
+        </View>
+      ) : displayCoaches.length === 0 ? (
+        <View style={styles.section}>
+          <View style={styles.emptyContainer}>
+            <Ionicons name="people-outline" size={24} color="#ccc" />
+            <Text style={styles.emptyText}>No coaches available</Text>
           </View>
-          <TouchableOpacity onPress={() => onText('Coach O', '5712920633')} style={styles.textBtn}>
-            <Ionicons name="chatbox-outline" size={16} color={GOLD} />
-          </TouchableOpacity>
-        </TouchableOpacity>
-
-        <View style={styles.divider} />
-
-        <TouchableOpacity style={styles.contactRow} onPress={() => onCall('Coach Mac', '3155426222')}>
-          <View style={styles.contactIcon}>
-            <Ionicons name="call-outline" size={18} color={GOLD} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.contactName}>Coach Mac</Text>
-            <Text style={styles.contactDetail}>(315) 542-6222</Text>
-          </View>
-          <TouchableOpacity onPress={() => onText('Coach Mac', '3155426222')} style={styles.textBtn}>
-            <Ionicons name="chatbox-outline" size={16} color={GOLD} />
-          </TouchableOpacity>
-        </TouchableOpacity>
-      </View>
+        </View>
+      ) : (
+        <View style={styles.section}>
+          {displayCoaches.map((coach, index) => (
+            <View key={coach.id}>
+              {index > 0 && <View style={styles.divider} />}
+              <TouchableOpacity
+                style={styles.contactRow}
+                onPress={() => coach.phone ? onCall(coach.name, coach.phone) : undefined}
+                disabled={!coach.phone}
+              >
+                <View style={styles.contactIcon}>
+                  <Ionicons name="call-outline" size={18} color={GOLD} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contactName}>{coach.name}</Text>
+                  {coach.phone ? (
+                    <Text style={styles.contactDetail}>{formatPhone(coach.phone)}</Text>
+                  ) : coach.specialties ? (
+                    <Text style={styles.contactDetail}>{coach.specialties}</Text>
+                  ) : null}
+                </View>
+                {coach.phone && (
+                  <TouchableOpacity onPress={() => onText(coach.name, coach.phone!)} style={styles.textBtn}>
+                    <Ionicons name="chatbox-outline" size={16} color={GOLD} />
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Links */}
       <Text style={styles.sectionLabel}>RESOURCES</Text>
@@ -259,6 +338,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    minHeight: 60,
   },
   contactIcon: {
     width: 36,
@@ -281,11 +361,57 @@ const styles = StyleSheet.create({
   },
   textBtn: {
     padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   divider: {
     height: 1,
     backgroundColor: '#f0f0f0',
     marginLeft: 64,
+  },
+  // Skeleton styles
+  skeletonCircle: {
+    backgroundColor: '#e8e8e8',
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#e8e8e8',
+  },
+  // Error state
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#888',
+  },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: GOLD,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  retryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: NAVY,
+  },
+  // Empty state
+  emptyContainer: {
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
   },
   linkRow: {
     flexDirection: 'row',

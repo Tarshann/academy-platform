@@ -44,7 +44,7 @@
 ### MOB-002: Enable All Chat Rooms
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: IN PROGRESS
+- **Status**: DONE
 - **Goal**: Show all 4 available chat rooms (General, Coaches, Parents, Announcements) instead of just 2
 - **Scope**:
   - Update chat.tsx to display Parents and Announcements rooms
@@ -77,7 +77,7 @@
 ### MOB-003: Coach Contact from API
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: BACKLOG
+- **Status**: DONE
 - **Goal**: Replace hardcoded coach phone numbers with data from coaches.list API
 - **Scope**:
   - Call `coaches.list` tRPC route
