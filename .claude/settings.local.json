@@ -17,7 +17,13 @@
       "Bash(git add ops/50_REPORTS/STATUS.md)",
       "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx ops/10_BACKLOG/NOW.md)",
       "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/programs.tsx ops/10_BACKLOG/NOW.md)",
-      "Bash(git add ops/10_BACKLOG/NOW.md ops/50_REPORTS/STATUS.md ops/20_WORKSTREAMS/mobile.md)"
+      "Bash(git add ops/10_BACKLOG/NOW.md ops/50_REPORTS/STATUS.md ops/20_WORKSTREAMS/mobile.md)",
+      "Bash(git add academy-app/app/payments.tsx academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx)",
+      "Bash(git add academy-app/app/shop.tsx academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx)",
+      "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/index.tsx)",
+      "Bash(git add academy-app/app/attendance.tsx)",
+      "Bash(git add academy-app/app/notifications-settings.tsx academy-app/app/\\\\\\(tabs\\\\\\)/profile.tsx)",
+      "Bash(git add ops/50_REPORTS/STATUS.md ops/20_WORKSTREAMS/mobile.md ops/10_BACKLOG/NEXT.md)"
     ]
   }
 }
