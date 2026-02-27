@@ -23,6 +23,8 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const ROOM_TITLES: Record<string, string> = {
   general: '#General',
   coaches: '#Coaches',
+  parents: '#Parents',
+  announcements: '#Announcements',
 };
 
 interface ChatMessage {

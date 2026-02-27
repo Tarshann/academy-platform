@@ -10,7 +10,7 @@
 ### MOB-001: Version Bump + Foundation Setup
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: IN PROGRESS
+- **Status**: DONE
 - **Goal**: Prepare academy-app for v1.3 development with correct versioning and dependency foundation
 - **Scope**:
   - Bump version to 1.3.0 in app.json
@@ -44,7 +44,7 @@
 ### MOB-002: Enable All Chat Rooms
 - **Workstream**: Mobile
 - **Owner**: Mobile Agent
-- **Status**: BACKLOG
+- **Status**: IN PROGRESS
 - **Goal**: Show all 4 available chat rooms (General, Coaches, Parents, Announcements) instead of just 2
 - **Scope**:
   - Update chat.tsx to display Parents and Announcements rooms
