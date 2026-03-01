@@ -57,6 +57,7 @@ export default function Chat() {
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [showMentions, setShowMentions] = useState(false);
   const [mentionFilter, setMentionFilter] = useState("");
   const [allUsers, setAllUsers] = useState<OnlineUser[]>([]);
@@ -153,6 +154,7 @@ export default function Chat() {
   const fetchMessageHistory = useCallback(async (room: string, replace = false) => {
     const token = chatTokenQuery.data?.token;
     if (!token) return;
+    if (replace) setIsLoadingHistory(true);
     try {
       const response = await fetch(`/api/chat/history/${room}?limit=50&token=${encodeURIComponent(token)}`);
       if (response.ok) {
@@ -163,15 +165,22 @@ export default function Chat() {
           // Merge with existing messages so real-time messages aren't lost
           setMessages(prev => dedupeAndSort([...prev, ...history]));
         }
+      } else {
+        logger.error(`[Chat] History fetch failed with status ${response.status}`);
       }
     } catch (error) {
       logger.error("[Chat] Failed to fetch message history:", error);
+    } finally {
+      if (replace) setIsLoadingHistory(false);
     }
   }, [chatTokenQuery.data?.token, dedupeAndSort]);
 
   // Initialize Ably and subscribe to current room
   useEffect(() => {
     if (!user || !chatTokenQuery.data?.token) return;
+
+    // Clear stale messages from previous room before loading new room
+    setMessages([]);
 
     // Load initial history (replace mode — fresh room)
     fetchMessageHistory(currentRoom, true);
@@ -397,7 +406,7 @@ export default function Chat() {
 
   const switchRoom = (roomId: string) => {
     setCurrentRoom(roomId);
-    setMessages([]); // Clear messages while loading new room
+    setIsLoadingHistory(true);
     setMobileMenuOpen(false);
     // Clear unread count for new room
     setRooms(prev => prev.map(r =>
@@ -612,7 +621,12 @@ export default function Chat() {
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
                   <div className="space-y-4">
-                    {messages.length === 0 ? (
+                    {isLoadingHistory ? (
+                      <div className="text-center text-muted-foreground py-12">
+                        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-sm">Loading messages...</p>
+                      </div>
+                    ) : messages.length === 0 ? (
                       <div className="text-center text-muted-foreground py-12">
                         <Hash className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p className="text-lg font-medium">Welcome to #{currentRoomData?.name}</p>
