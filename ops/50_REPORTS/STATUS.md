@@ -20,6 +20,18 @@
 
 ## Session Log
 
+### 2026-02-28 — Mobile Agent (Session 5)
+**Started**: Fix iOS EAS build failure — Swift strict concurrency error
+**Completed**:
+- Created `plugins/withSwiftConcurrency.js` config plugin that sets `SWIFT_STRICT_CONCURRENCY = minimal` across all Xcode build configurations. Registered in app.json plugins array.
+- Root cause: Xcode 16 / Swift 6 promotes strict concurrency warnings to errors. `expo-image`'s SDWebImage dependency has a `ContentPosition` type that isn't marked `Sendable`. Setting concurrency to `minimal` prevents this from being a build error.
+- Android build was already passing. iOS build should now succeed with this plugin.
+**Blocked**: Nothing
+**Discovered**: Nothing new — this is a known Xcode 16 compatibility issue with expo-image / SDWebImage.
+**Next**: Re-run `eas build --platform ios --profile production` to confirm iOS build succeeds. Then submit both platforms.
+
+---
+
 ### 2026-02-27 — Mobile Agent (Session 4)
 **Started**: Pre-release fixes — 3 mobile-only changes to use newly available server APIs
 **Completed**:
