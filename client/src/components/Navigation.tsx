@@ -203,7 +203,7 @@ export default function Navigation() {
                   </Link>
                 )}
                 {clerkPublishableKey && isClerkEnabled ? (
-                  <UserButton afterSignOutUrl="/" />
+                  <UserButton afterSignOutUrl="/" userProfileMode="modal" />
                 ) : (
                   <Button type="button" variant="outline" size="sm" onClick={handleLogout} formNoValidate>
                     Logout

@@ -170,6 +170,13 @@ function Router() {
           <SEO title="Orders" description="View your purchase history and order details." />
           <Orders />
         </Route>
+        {/* Catch Clerk UserProfile navigation — redirect to dashboard */}
+        <Route path={"/user-profile/:rest*"}>
+          <Redirect to="/member" />
+        </Route>
+        <Route path={"/user-profile"}>
+          <Redirect to="/member" />
+        </Route>
         <Route path={"/404"}>
           <SEO title="Page Not Found" description="The page you're looking for doesn't exist." />
           <NotFound />
