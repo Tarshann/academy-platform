@@ -34,7 +34,8 @@
       "Bash(git add drizzle/schema.ts drizzle/0010_add_imageUrl_to_dmMessages.sql server/db.ts server/routers.ts server/ably.ts ops/50_REPORTS/STATUS.md)",
       "Bash(git add \"academy-app/app/\\(tabs\\)/profile.tsx\" \"academy-app/app/dm/[id].tsx\" academy-app/app/payments.tsx ops/50_REPORTS/STATUS.md)",
       "Bash(git add academy-app/app.json)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(git add academy-app/app.json academy-app/plugins/withSwiftConcurrency.js ops/50_REPORTS/STATUS.md)"
     ]
   }
 }
