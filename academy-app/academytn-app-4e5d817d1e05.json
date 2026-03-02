@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "academytn-app",
+  "private_key_id": "4e5d817d1e05ae556e69caace331236e65ca6d1b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDR5Ge76XSd8MWS\nTNztBU6Cup6nY2FqP8Xc0t3xh6NEp/XAsV4izrtf9u00j8Gc773v7ko+PD5IhQwo\nBtRo9s6JSrILrcCaVazKbq4q5fctG2dsmcGz1REUH3cwmEsTPjV9zzAMIa5XByP0\nBCLRtyYbd78yjJDg5kmpnZDlx7gRMrxrYwzG7YCnZNHtq3JyO7YtUwELy3GLTcPe\n4kda++4U/VPbh/Fgr5/tsp432S3Rra4QUexl51OtLcXv44729VzyFs/3BLv7wDGS\n7qycVeE/Pq8SyzRCFj685aZl1S0Lk3muHk6NqTMX1yU7eEjW8DrZQKLhMCM0zP9e\nK87qHMqLAgMBAAECggEAGNzbVDKTelFhjfLQlBELW51QmtfBBoLMZNvjp4SKLgv5\nUUc8CpfThqAWOXeH7JenjQAnR5eqRxE06e7j2BUtoldjSifdsfUmdTTxflUPAlxb\nKXhN2N1ghbIz07aj5KvQo/kCzNpr2j+XHi95PRSwDRPnuvdUrWy0sBoL5nQnKn4m\n+nNAJKT0PxMkrMJ/VL/rxhe/0OqPbz+ZWFuHDbKrK9KD8OkC+VZF9tVgtBbUbJbe\nNoucB+TZkXurKob7OfEsHdT8keHGpFcmFT5kxEiqh5QgKQiQsx76FuOwrHRxuzJz\ntqR42dMKFoaBN2NjNrW7GlQCJkwU2Dr2xVcI4whfTQKBgQDr15ta3o2tQaY1lxNU\nWrQnAcFYmW4f2jDDnX/q1V1CyALhne/opl14vEfGVUZnOEA4SgI9sQvYkc1xB/Cc\nTAJXWHgsGK2BH3JrcZS79klOUj/5mbfqa/BUnm4iNmSYUGPptR3t29EumHyafKL/\nhTZRHyFcxpzfDgIfeKMePnNKdQKBgQDj1P53JFxBx2hGs8Hj02Ru7KqCMyid9KiT\nSAh7bJsB8jBG2hFTEn2/rVd9k0JHxRhPmh4y9/Iopl5qA+97iFxOvFiDjl96i3mX\nROO1eljJxKYfECdt4P84kYGYELDn7lp2QOqhTq6yHBYvbUHsWbxcAn2GsbVuL5p7\nYAIzNzsg/wKBgDofBXtMc4/qKOL2G15jiBhA13xVO42AARqEOx0NfhFSJ1ugx5oH\nPeveQrX/F/2iIDl/C7RWaHvz2rRrZ4GtPbp25A7B+ihjLpiKAkScOo6huIBzwJ52\nAWFpNe0aiIn87dKPvxN6Y7/e9n5ADw93rd4qFNe/XrOdySomWdS/QTxtAoGBANXy\ng0+Qto4S2upiDbaLIapE1s3TitXiFZfRMh3tXBbUvt8aEuDG4Y1pE1raOYi6Hl1K\nJgfI7P+dU9YMggyofb52gkxwG1sxtOoHiCo4jT5US4eqHMzDWAhgI6mQKwBxxUN9\nLJh0EfsyAudgm2J+1jI1KHmfUff5/gDTpN1BhWYzAoGAL301IcMclQ1cBEMoQ7bi\nDGAIsqngLhWHcPcutHKi08hRUhEP2Ry+x0D3kZizHsoLH7fBen6cGURU6j+Tk17Z\nSyyhZJPGFC8FAGqOczSn+Y4CmvC98OQ+UiE1QDsdyGR0CPrpgmf7x41SGn8R1vKI\nxRHuV2jR3ieX+QlOJAttZYw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "academy-play-store@academytn-app.iam.gserviceaccount.com",
+  "client_id": "108776770318039737424",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/academy-play-store%40academytn-app.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

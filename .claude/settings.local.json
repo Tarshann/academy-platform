@@ -37,7 +37,8 @@
       "WebFetch(domain:github.com)",
       "Bash(git add academy-app/app.json academy-app/plugins/withSwiftConcurrency.js ops/50_REPORTS/STATUS.md)",
       "Bash(git add academy-app/plugins/withSwiftConcurrency.js)",
-      "Bash(npx expo export --platform ios)"
+      "Bash(npx expo export --platform ios)",
+      "Bash(git add academy-app/app/\\\\\\(tabs\\\\\\)/messages.tsx academy-app/app/_layout.tsx academy-app/app/chat/[room].tsx ops/50_REPORTS/STATUS.md server/routers.ts)"
     ]
   }
 }
