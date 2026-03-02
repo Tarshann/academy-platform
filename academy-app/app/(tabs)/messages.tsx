@@ -53,6 +53,20 @@ export default function MessagesScreen() {
 
   if (conversations.isLoading) return <Loading />;
 
+  if (conversations.isError) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color="#999" />
+          <Text style={styles.errorText}>Failed to load conversations</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const convos = conversations.data ?? [];
 
   return (
@@ -251,5 +265,28 @@ const styles = StyleSheet.create({
     color: '#1a1a2e',
     fontSize: 11,
     fontWeight: '700',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#1a1a2e',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

@@ -9,6 +9,7 @@ import { trpc } from '../lib/trpc';
 import { registerForPushNotifications, addNotificationResponseListener } from '../lib/notifications';
 import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import { initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -145,7 +146,9 @@ function AuthGuard() {
       <NotificationHandler />
       <ScreenTracker />
       <IdentitySync />
-      <Slot />
+      <ErrorBoundary>
+        <Slot />
+      </ErrorBoundary>
     </>
   );
 }

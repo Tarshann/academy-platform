@@ -20,6 +20,20 @@
 
 ## Session Log
 
+### 2026-03-01 — Pre-Release Polish (Session 6)
+**Started**: 4 pre-release fixes across mobile app and portal server
+**Completed**:
+- Fix 1: Added error state to Messages screen (`academy-app/app/(tabs)/messages.tsx`) — shows error icon, message, and retry button when `conversations.isError`, matching existing app error patterns
+- Fix 2: Ably channel cleanup in chat room (`academy-app/app/chat/[room].tsx`) — cleanup now detaches the Ably channel and removes connection state listeners to prevent memory leaks
+- Fix 3: Wrapped root layout in ErrorBoundary (`academy-app/app/_layout.tsx`) — imported existing `ErrorBoundary` component and wrapped `<Slot />` so unhandled errors show recovery screen instead of crashing
+- Fix 4: Removed unused `category` param from `blog.list` input schema (`server/routers.ts`) — `getAllPublishedBlogPosts` doesn't support category filtering, so the field was a dead API contract
+- Both builds verified: `npx expo export` (iOS + Android bundles) and `pnpm build` (vite + 3 esbuild bundles) pass cleanly
+**Blocked**: Nothing
+**Discovered**: Nothing new
+**Next**: EAS production build for v1.3.0 submission
+
+---
+
 ### 2026-02-28 — Mobile Agent (Session 5)
 **Started**: Fix iOS EAS build failure — Swift strict concurrency error
 **Completed**:

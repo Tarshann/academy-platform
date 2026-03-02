@@ -108,6 +108,13 @@ export default function ChatRoomScreen() {
 
       return () => {
         unsubscribe();
+        client.connection.off();
+        try {
+          const channel = client.channels.get(`chat:${room}`);
+          channel.detach();
+        } catch (e) {
+          // Channel may already be detached
+        }
       };
     }
   }, [room, ablyTokenQuery.data, loadHistory]);

@@ -2094,7 +2094,6 @@ export const appRouter = router({
       .input(
         z
           .object({
-            category: z.string().optional(),
             limit: z.number().int().min(1).max(100).optional(),
             offset: z.number().int().min(0).optional(),
           })
