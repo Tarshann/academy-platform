@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,6 +80,38 @@ export default function ProgramsScreen() {
     setRefreshing(true);
     await programs.refetch();
     setRefreshing(false);
+  };
+
+  const onInquire = (programName: string) => {
+    trackEvent('program_inquiry_started', { program_name: programName });
+    Alert.alert(
+      `Inquire About ${programName}`,
+      'How would you like to reach us?',
+      [
+        {
+          text: 'Call Us',
+          onPress: () => {
+            trackEvent('program_inquiry_call', { program_name: programName });
+            Linking.openURL('tel:+15712920633');
+          },
+        },
+        {
+          text: 'Text Us',
+          onPress: () => {
+            trackEvent('program_inquiry_text', { program_name: programName });
+            Linking.openURL(`sms:+15712920633&body=Hi, I'm interested in ${programName}`);
+          },
+        },
+        {
+          text: 'Visit Website',
+          onPress: () => {
+            trackEvent('program_inquiry_website', { program_name: programName });
+            WebBrowser.openBrowserAsync('https://academytn.com/contact');
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
   };
 
   const onEnroll = async (programSlug: string, programName: string, price: string | number) => {
@@ -232,8 +265,14 @@ export default function ProgramsScreen() {
               </View>
               <TouchableOpacity
                 style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
-                onPress={() => item.slug && onEnroll(item.slug, item.name, item.price)}
-                disabled={isLoadingThis || !item.slug}
+                onPress={() => {
+                  if (isPrivate) {
+                    onInquire(item.name);
+                  } else if (item.slug) {
+                    onEnroll(item.slug, item.name, item.price);
+                  }
+                }}
+                disabled={isLoadingThis || (!isPrivate && !item.slug)}
                 activeOpacity={0.7}
               >
                 {isLoadingThis ? (
