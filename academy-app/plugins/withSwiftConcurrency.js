@@ -1,22 +1,28 @@
 /**
- * Expo config plugin to fix Xcode 16 / Swift 6 strict concurrency errors.
+ * Expo config plugin to fix Xcode 16+ / Swift 6 strict concurrency errors.
  *
  * The error "static property 'center' is not concurrency-safe because
  * non-'Sendable' type 'ContentPosition' may have shared mutable state"
- * comes from SDWebImage (pulled in by expo-image) which hasn't adopted
+ * comes from expo-image's ContentPosition.swift which hasn't adopted
  * Swift 6 Sendable conformance yet.
  *
  * This plugin does TWO things:
- *   1. Sets SWIFT_STRICT_CONCURRENCY = minimal on the main Xcode project
+ *   1. Sets concurrency-safe build settings on the main Xcode project
  *   2. Injects code into the Podfile's post_install hook — AFTER
  *      react_native_post_install() so our settings can't be overridden —
  *      to apply concurrency fixes on ALL CocoaPods targets.
  *
- * The Podfile injection uses THREE complementary strategies:
+ * The Podfile injection uses FOUR complementary strategies:
  *   a. SWIFT_STRICT_CONCURRENCY = minimal  (Xcode build setting)
- *   b. OTHER_SWIFT_FLAGS += -Xfrontend -strict-concurrency=minimal
+ *   b. SWIFT_VERSION = 5.0  (force Swift 5 language mode so concurrency
+ *      violations are warnings, not hard errors as in Swift 6)
+ *   c. OTHER_SWIFT_FLAGS += -Xfrontend -strict-concurrency=minimal
  *      (direct Swift compiler flag — bypasses Xcode setting precedence)
- *   c. SWIFT_TREAT_WARNINGS_AS_ERRORS = NO  (safety net)
+ *   d. SWIFT_TREAT_WARNINGS_AS_ERRORS = NO  (safety net)
+ *
+ * Additionally, eas.json should pin iOS builds to Xcode 16.4 to avoid
+ * Swift 6.2 (Xcode 26) where concurrency checks leak through even with
+ * SWIFT_STRICT_CONCURRENCY=minimal. Long-term fix: upgrade to Expo SDK 55.
  */
 const {
   withXcodeProject,
@@ -35,6 +41,13 @@ function setXcodeProjectConcurrency(config) {
       if (typeof buildConfig === "object" && buildConfig.buildSettings) {
         buildConfig.buildSettings.SWIFT_STRICT_CONCURRENCY = "minimal";
         buildConfig.buildSettings.SWIFT_TREAT_WARNINGS_AS_ERRORS = "NO";
+        // Force Swift 5 language mode — in Swift 6, concurrency violations
+        // are hard errors regardless of SWIFT_STRICT_CONCURRENCY.
+        // Only override if not already set to an older version.
+        const currentVersion = buildConfig.buildSettings.SWIFT_VERSION;
+        if (!currentVersion || parseFloat(currentVersion) >= 6.0) {
+          buildConfig.buildSettings.SWIFT_VERSION = "5.0";
+        }
       }
     }
 
@@ -64,17 +77,27 @@ function setPodsConcurrency(config) {
 
       const snippet = [
         "",
-        "    # [withSwiftConcurrency] Fix Xcode 16 / Swift 6 strict concurrency errors in Pods",
+        "    # [withSwiftConcurrency] Fix Xcode 16+ / Swift 6 strict concurrency errors in Pods",
         "    installer.pods_project.targets.each do |target|",
         "      target.build_configurations.each do |bc|",
         "        bc.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'",
         "        bc.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'",
         "        bc.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'",
+        "        # Force Swift 5 language mode — Swift 6 promotes concurrency warnings to hard errors",
+        "        sv = bc.build_settings['SWIFT_VERSION']",
+        "        if sv.nil? || sv.to_f >= 6.0",
+        "          bc.build_settings['SWIFT_VERSION'] = '5.0'",
+        "        end",
         "        current_flags = bc.build_settings['OTHER_SWIFT_FLAGS'] || '$(inherited)'",
         "        unless current_flags.include?('-strict-concurrency')",
         "          bc.build_settings['OTHER_SWIFT_FLAGS'] = \"#{current_flags} -Xfrontend -strict-concurrency=minimal\"",
         "        end",
         "      end",
+        "    end",
+        "    # Also apply to project-level build configurations",
+        "    installer.pods_project.build_configurations.each do |bc|",
+        "      bc.build_settings['SWIFT_STRICT_CONCURRENCY'] = 'minimal'",
+        "      bc.build_settings['SWIFT_TREAT_WARNINGS_AS_ERRORS'] = 'NO'",
         "    end",
       ].join("\n");
 

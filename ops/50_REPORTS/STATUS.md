@@ -28,9 +28,10 @@
 - Fix 3: Wrapped root layout in ErrorBoundary (`academy-app/app/_layout.tsx`) — imported existing `ErrorBoundary` component and wrapped `<Slot />` so unhandled errors show recovery screen instead of crashing
 - Fix 4: Removed unused `category` param from `blog.list` input schema (`server/routers.ts`) — `getAllPublishedBlogPosts` doesn't support category filtering, so the field was a dead API contract
 - Both builds verified: `npx expo export` (iOS + Android bundles) and `pnpm build` (vite + 3 esbuild bundles) pass cleanly
+- Fix 5 (iOS build): EAS changed default SDK 54 image to Xcode 26 (Swift 6.2), which promotes concurrency warnings to hard errors even with `SWIFT_STRICT_CONCURRENCY=minimal`. The `ContentPosition` type is from expo-image itself, not SDWebImage. Fixed by: (a) pinning all iOS EAS profiles to `macos-sequoia-15.5-xcode-16.4` in `eas.json`, (b) strengthening `withSwiftConcurrency` plugin to force `SWIFT_VERSION=5.0` on pod targets and project-level build configs
 **Blocked**: Nothing
-**Discovered**: Nothing new
-**Next**: EAS production build for v1.3.0 submission
+**Discovered**: EAS silently changed default build image for SDK 54 from Xcode 16 to Xcode 26. SDK 54 was NOT designed for Xcode 26; need Expo SDK 55 for that.
+**Next**: Rebuild iOS via EAS with pinned image, then submit v1.3.0
 
 ---
 
