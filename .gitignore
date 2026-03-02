@@ -14,6 +14,11 @@ build/
 .env.test.local
 .env.production.local
 
+# Service account keys / credentials
+**/service-account*.json
+**/*-4e5d817d1e05.json
+**/academytn-app-*.json
+
 # IDE and editor files
 .vscode/
 .idea/
