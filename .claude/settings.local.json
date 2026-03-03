@@ -55,7 +55,21 @@
       "Bash(npx expo install expo-font react-native-worklets)",
       "Bash(python -c \"from PIL import Image; print\\(''Pillow available''\\)\")",
       "Bash(pip install Pillow)",
-      "Bash(python -c \":*)"
+      "Bash(python -c \":*)",
+      "Bash(npx eas build:view f4f7d88c-6464-4195-b694-f34b981fb24b --json)",
+      "Bash(npx eas build:view f4f7d88c-6464-4195-b694-f34b981fb24b)",
+      "WebFetch(domain:expo.dev)",
+      "Bash(npx expo-doctor)",
+      "Bash(npx expo doctor)",
+      "Bash(npx expo prebuild --platform ios --no-install --clean)",
+      "Bash(npx eas build:view 23692a15-5a9b-4c7f-92b2-5a302a91393e --json)",
+      "Bash(npx eas build:view 23692a15-5a9b-4c7f-92b2-5a302a91393e)",
+      "Bash(npx expo prebuild --platform ios --no-install)",
+      "Bash(npm ls react-native-worklets)",
+      "Bash(npm view react-native-worklets@0.5.1 peerDependencies)",
+      "Bash(npm ls react-native-reanimated react-native-worklets)",
+      "Bash(npx expo install --check)",
+      "Bash(node -e \":*)"
     ]
   }
 }
