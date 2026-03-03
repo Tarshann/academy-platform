@@ -44,7 +44,10 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:forums.swift.org)",
       "WebFetch(domain:mjtsai.com)",
-      "Bash(git add academy-app/eas.json academy-app/plugins/withSwiftConcurrency.js ops/50_REPORTS/STATUS.md)"
+      "Bash(git add academy-app/eas.json academy-app/plugins/withSwiftConcurrency.js ops/50_REPORTS/STATUS.md)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm install)"
     ]
   }
 }
