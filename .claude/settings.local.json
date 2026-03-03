@@ -49,7 +49,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm install)",
       "Bash(npm view expo-image versions --json)",
-      "Bash(npx expo install --fix)"
+      "Bash(npx expo install --fix)",
+      "Bash(npx eas build:view 4cd97093-a439-40de-8196-0150a4a61ffb --json)",
+      "WebFetch(domain:job-logs.eascdn.net)"
     ]
   }
 }
