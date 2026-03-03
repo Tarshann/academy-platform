@@ -54,7 +54,8 @@
       "WebFetch(domain:job-logs.eascdn.net)",
       "Bash(npx expo install expo-font react-native-worklets)",
       "Bash(python -c \"from PIL import Image; print\\(''Pillow available''\\)\")",
-      "Bash(pip install Pillow)"
+      "Bash(pip install Pillow)",
+      "Bash(python -c \":*)"
     ]
   }
 }
