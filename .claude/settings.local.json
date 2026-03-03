@@ -47,7 +47,9 @@
       "Bash(git add academy-app/eas.json academy-app/plugins/withSwiftConcurrency.js ops/50_REPORTS/STATUS.md)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(npm view expo-image versions --json)",
+      "Bash(npx expo install --fix)"
     ]
   }
 }
