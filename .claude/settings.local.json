@@ -52,7 +52,9 @@
       "Bash(npx expo install --fix)",
       "Bash(npx eas build:view 4cd97093-a439-40de-8196-0150a4a61ffb --json)",
       "WebFetch(domain:job-logs.eascdn.net)",
-      "Bash(npx expo install expo-font react-native-worklets)"
+      "Bash(npx expo install expo-font react-native-worklets)",
+      "Bash(python -c \"from PIL import Image; print\\(''Pillow available''\\)\")",
+      "Bash(pip install Pillow)"
     ]
   }
 }
