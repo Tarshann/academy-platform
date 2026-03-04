@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToDm } from '../../lib/realtime';
+import { getAblyClient, subscribeToDm, publishDmReadReceipt } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { trackEvent } from '../../lib/analytics';
@@ -43,7 +43,9 @@ export default function DmConversationScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
+  const [otherReadTimestamp, setOtherReadTimestamp] = useState<number | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const ablyClientRef = useRef<any>(null);
 
   const meQuery = trpc.auth.me.useQuery();
   const myUserId = meQuery.data?.id;
@@ -75,18 +77,22 @@ export default function DmConversationScreen() {
   // Real-time messages from Ably
   const [realtimeMessages, setRealtimeMessages] = useState<DmMessage[]>([]);
 
-  // Mark conversation as read when opened
+  // Mark conversation as read when opened + publish Ably read receipt
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && myUserId) {
       markAsRead.mutate({ conversationId });
+      if (ablyClientRef.current) {
+        publishDmReadReceipt(ablyClientRef.current, conversationId, myUserId);
+      }
     }
-  }, [conversationId]);
+  }, [conversationId, myUserId]);
 
   // Set up Ably subscription
   useEffect(() => {
     if (!ablyTokenQuery.data || !conversationId) return;
 
     const client = getAblyClient(async () => ablyTokenQuery.data as any);
+    ablyClientRef.current = client;
 
     client.connection.on('connected', () => setConnected(true));
     client.connection.on('disconnected', () => setConnected(false));
@@ -95,18 +101,37 @@ export default function DmConversationScreen() {
       setConnected(true);
     }
 
-    const unsubscribe = subscribeToDm(client, conversationId, (msg: DmMessage) => {
-      setRealtimeMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, msg];
-      });
-      markAsRead.mutate({ conversationId });
-    });
+    const unsubscribe = subscribeToDm(
+      client,
+      conversationId,
+      (msg: DmMessage) => {
+        setRealtimeMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) return prev;
+          return [...prev, msg];
+        });
+        markAsRead.mutate({ conversationId });
+        // Publish read receipt so sender knows we read it
+        if (myUserId) {
+          publishDmReadReceipt(client, conversationId, myUserId);
+        }
+      },
+      (readData) => {
+        // Other user read our messages — update read timestamp
+        if (readData.readBy !== myUserId) {
+          setOtherReadTimestamp(readData.timestamp);
+        }
+      }
+    );
+
+    // Also publish read receipt now that Ably is connected
+    if (myUserId) {
+      publishDmReadReceipt(client, conversationId, myUserId);
+    }
 
     return () => {
       unsubscribe();
     };
-  }, [ablyTokenQuery.data, conversationId]);
+  }, [ablyTokenQuery.data, conversationId, myUserId]);
 
   // Combine fetched messages with real-time messages
   const allMessages = useCallback(() => {
@@ -253,15 +278,30 @@ export default function DmConversationScreen() {
             const isOwn = item.senderId === myUserId;
             const showSender = index === 0 || messages[index - 1]?.senderId !== item.senderId;
             const { message, imageUrl } = getMessageProps(item);
+
+            // Show "Read" under the last own message if the other user has read it
+            const isLastOwnMessage =
+              isOwn &&
+              (index === messages.length - 1 || messages[index + 1]?.senderId !== myUserId);
+            const showReadReceipt =
+              isLastOwnMessage &&
+              otherReadTimestamp !== null &&
+              new Date(item.createdAt).getTime() <= otherReadTimestamp;
+
             return (
-              <MessageBubble
-                message={message}
-                senderName={item.senderName}
-                timestamp={item.createdAt}
-                isOwn={isOwn}
-                showSender={showSender}
-                imageUrl={imageUrl}
-              />
+              <View>
+                <MessageBubble
+                  message={message}
+                  senderName={item.senderName}
+                  timestamp={item.createdAt}
+                  isOwn={isOwn}
+                  showSender={showSender}
+                  imageUrl={imageUrl}
+                />
+                {showReadReceipt && (
+                  <Text style={styles.readReceipt}>Read</Text>
+                )}
+              </View>
             );
           }}
         />
@@ -312,5 +352,13 @@ const styles = StyleSheet.create({
   },
   statusDotConnected: {
     backgroundColor: '#51cf66',
+  },
+  readReceipt: {
+    fontSize: 11,
+    color: '#888',
+    textAlign: 'right',
+    paddingRight: 20,
+    marginTop: -2,
+    marginBottom: 4,
   },
 });
