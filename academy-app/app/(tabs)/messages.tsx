@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
-import { Loading } from '../../components/Loading';
+import { ConversationListSkeleton } from '../../components/Skeleton';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -51,7 +51,13 @@ export default function MessagesScreen() {
     Alert.alert('New Conversation', 'Select a user to message:', buttons);
   };
 
-  if (conversations.isLoading) return <Loading />;
+  if (conversations.isLoading) {
+    return (
+      <View style={styles.container}>
+        <ConversationListSkeleton />
+      </View>
+    );
+  }
 
   if (conversations.isError) {
     const errMsg = conversations.error?.message || 'Unknown error';

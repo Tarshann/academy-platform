@@ -6,7 +6,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Text,
-  ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
@@ -22,6 +21,7 @@ import {
   type UploadProgress,
   type ImageSource,
 } from '../../lib/chat-images';
+import { MessageListSkeleton } from '../../components/Skeleton';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -213,7 +213,7 @@ export default function DmConversationScreen() {
       <>
         <Stack.Screen options={{ title: 'Conversation' }} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={ACADEMY_GOLD} />
+          <MessageListSkeleton />
         </View>
       </>
     );

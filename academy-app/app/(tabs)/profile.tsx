@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { trpc } from '../../lib/trpc';
-import { Loading } from '../../components/Loading';
+import { Skeleton, SkeletonCircle, SkeletonLine } from '../../components/Skeleton';
 import { trackEvent } from '../../lib/analytics';
 
 const GOLD = '#CFB87C';
@@ -118,7 +118,42 @@ export default function ProfileScreen() {
     Linking.openURL(`sms:${phone}`);
   };
 
-  if (me.isLoading) return <Loading />;
+  if (me.isLoading) {
+    return (
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {/* Profile header skeleton */}
+        <View style={[styles.headerCard, { alignItems: 'center' }]}>
+          <SkeletonCircle size={64} style={{ marginBottom: 12 }} />
+          <SkeletonLine width={140} height={18} style={{ marginBottom: 6 }} />
+          <SkeletonLine width={180} height={12} style={{ marginBottom: 10 }} />
+          <Skeleton width={80} height={22} borderRadius={6} />
+        </View>
+        {/* Contact skeleton */}
+        <SkeletonLine width={80} height={12} style={{ marginBottom: 8, marginLeft: 4 }} />
+        <View style={styles.section}>
+          {[1, 2].map((i) => (
+            <View key={i} style={[styles.contactRow, i > 1 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
+              <SkeletonCircle size={36} style={{ marginRight: 12 }} />
+              <View style={{ flex: 1 }}>
+                <SkeletonLine width={100} height={14} />
+                <SkeletonLine width={130} height={10} style={{ marginTop: 6 }} />
+              </View>
+            </View>
+          ))}
+        </View>
+        {/* Account links skeleton */}
+        <SkeletonLine width={80} height={12} style={{ marginBottom: 8, marginLeft: 4 }} />
+        <View style={styles.section}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} style={[styles.linkRow, i > 1 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
+              <Skeleton width={18} height={18} borderRadius={4} />
+              <SkeletonLine width={150} height={14} style={{ marginLeft: 12 }} />
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    );
+  }
 
   // Build coach contact list from API data — names from JOIN, phones from bridge
   const coachList = (coaches.data ?? []).map((coach: any) => ({
