@@ -159,7 +159,9 @@ export default function ProgramsScreen() {
       });
       Alert.alert(
         'Checkout Error',
-        'Unable to start checkout. Please try again.',
+        errorMessage.includes('not found')
+          ? `This program is not yet available for online signup. Please contact us to enroll.`
+          : 'Unable to start checkout. Please try again.',
         [{ text: 'OK' }]
       );
     } finally {

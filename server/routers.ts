@@ -91,13 +91,32 @@ const createProgramCheckoutSession = async ({
   const stripe = new Stripe(ENV.stripeSecretKey);
   const { getProduct } = await import("./products");
 
-  const products = productIds.map((productId) => {
-    const product = getProduct(productId);
-    if (!product) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Product not found" });
-    }
-    return product;
-  });
+  // Look up products from static registry first, then fall back to database programs
+  const products = await Promise.all(
+    productIds.map(async (productId) => {
+      const staticProduct = getProduct(productId);
+      if (staticProduct) return staticProduct;
+
+      // Fall back to database program lookup by slug
+      const dbProgram = await getProgramBySlug(productId);
+      if (!dbProgram) {
+        throw new TRPCError({ code: "NOT_FOUND", message: `Product "${productId}" not found` });
+      }
+
+      // Convert database program to the same shape as static products
+      const priceNum = typeof dbProgram.price === "string" ? parseFloat(dbProgram.price) : Number(dbProgram.price);
+      return {
+        id: dbProgram.slug,
+        name: dbProgram.name,
+        description: dbProgram.description,
+        priceInCents: Math.round(priceNum * 100),
+        currency: "usd" as const,
+        type: (dbProgram.category === "membership" ? "recurring" : "one_time") as "one_time" | "recurring",
+        interval: dbProgram.category === "membership" ? ("month" as const) : undefined,
+        category: dbProgram.category,
+      };
+    })
+  );
 
   const hasRecurring = products.some((product) => product.type === "recurring");
   const hasOneTime = products.some((product) => product.type === "one_time");
