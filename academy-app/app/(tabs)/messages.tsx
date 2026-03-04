@@ -1,23 +1,30 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
+  TextInput,
   StyleSheet,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { ConversationListSkeleton } from '../../components/Skeleton';
+import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
+const NAVY = '#1a1a2e';
 
 export default function MessagesScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const conversations = trpc.dm.getConversations.useQuery();
   const availableUsers = trpc.dm.getAvailableUsers.useQuery();
@@ -29,6 +36,29 @@ export default function MessagesScreen() {
       Alert.alert('Error', error.message);
     },
   });
+
+  // Search query — only fires when searchQuery is non-empty
+  const searchResults = trpc.dm.searchMessages.useQuery(
+    { query: searchQuery, limit: 20 },
+    { enabled: searchQuery.length > 0 }
+  );
+
+  const onSearchChange = useCallback((text: string) => {
+    setSearchText(text);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      const trimmed = text.trim();
+      setSearchQuery(trimmed);
+      if (trimmed.length > 0) {
+        trackEvent('dm_search_performed', { query_length: trimmed.length });
+      }
+    }, 300);
+  }, []);
+
+  const onClearSearch = () => {
+    setSearchText('');
+    setSearchQuery('');
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -50,6 +80,12 @@ export default function MessagesScreen() {
 
     Alert.alert('New Conversation', 'Select a user to message:', buttons);
   };
+
+  // Build a map of conversationId → otherUser name for search results
+  const convoNameMap = new Map<number, string>();
+  (conversations.data ?? []).forEach((c: any) => {
+    convoNameMap.set(c.id, c.otherUser?.name || 'Unknown');
+  });
 
   if (conversations.isLoading) {
     return (
@@ -76,83 +112,172 @@ export default function MessagesScreen() {
   }
 
   const convos = conversations.data ?? [];
+  const isSearching = searchQuery.length > 0;
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={convos}
-        keyExtractor={(item: any) => String(item.id)}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListHeaderComponent={
-          <TouchableOpacity style={styles.newMessageButton} onPress={onNewMessage}>
-            <Ionicons name="create-outline" size={20} color="#fff" />
-            <Text style={styles.newMessageText}>New Conversation</Text>
-          </TouchableOpacity>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubble-ellipses-outline" size={48} color="#ccc" />
-            <Text style={styles.emptyTitle}>No Conversations</Text>
-            <Text style={styles.emptySubtitle}>
-              Start a conversation with a coach or parent
-            </Text>
-          </View>
-        }
-        renderItem={({ item }: { item: any }) => {
-          // Server returns otherUser (user object) and participant (current user's record)
-          const displayName = item.otherUser?.name || 'Unknown';
-          const lastMsg = item.lastMessage;
-          const hasUnread = item.unreadCount > 0;
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={18} color="#999" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search messages..."
+            placeholderTextColor="#999"
+            value={searchText}
+            onChangeText={onSearchChange}
+            returnKeyType="search"
+            autoCorrect={false}
+          />
+          {searchText.length > 0 && (
+            <TouchableOpacity onPress={onClearSearch} style={styles.clearBtn}>
+              <Ionicons name="close-circle" size={18} color="#ccc" />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
 
-          return (
-            <TouchableOpacity
-              style={[styles.conversationCard, hasUnread && styles.unreadCard]}
-              onPress={() => router.push(`/dm/${item.id}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>
-                  {displayName.charAt(0).toUpperCase()}
-                </Text>
+      {isSearching ? (
+        /* Search Results */
+        <FlatList
+          data={searchResults.data ?? []}
+          keyExtractor={(item: any) => String(item.id)}
+          contentContainerStyle={styles.list}
+          ListHeaderComponent={
+            searchResults.isLoading ? (
+              <View style={styles.searchLoadingRow}>
+                <ActivityIndicator size="small" color={ACADEMY_GOLD} />
+                <Text style={styles.searchLoadingText}>Searching...</Text>
               </View>
-              <View style={styles.conversationInfo}>
-                <View style={styles.conversationHeader}>
-                  <Text
-                    style={[styles.participantName, hasUnread && styles.unreadName]}
-                    numberOfLines={1}
-                  >
-                    {displayName}
+            ) : (
+              <Text style={styles.searchResultCount}>
+                {(searchResults.data ?? []).length} result{(searchResults.data ?? []).length !== 1 ? 's' : ''}
+              </Text>
+            )
+          }
+          ListEmptyComponent={
+            !searchResults.isLoading ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="search-outline" size={36} color="#ccc" />
+                <Text style={styles.emptyTitle}>No results</Text>
+                <Text style={styles.emptySubtitle}>Try a different search term</Text>
+              </View>
+            ) : null
+          }
+          renderItem={({ item }: { item: any }) => {
+            const senderName = item.senderName || 'Unknown';
+            const convoName = convoNameMap.get(item.conversationId) || 'Conversation';
+            const snippet = item.content?.length > 80
+              ? item.content.substring(0, 80) + '...'
+              : item.content;
+
+            return (
+              <TouchableOpacity
+                style={styles.searchResultCard}
+                onPress={() => {
+                  trackEvent('dm_search_result_tapped', { conversation_id: item.conversationId });
+                  router.push(`/dm/${item.conversationId}`);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.searchResultIcon}>
+                  <Ionicons name="chatbubble-outline" size={16} color={ACADEMY_GOLD} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.searchResultName} numberOfLines={1}>
+                    {convoName}
                   </Text>
+                  <Text style={styles.searchResultSnippet} numberOfLines={2}>
+                    <Text style={styles.searchResultSender}>{senderName}: </Text>
+                    {snippet}
+                  </Text>
+                  <Text style={styles.searchResultDate}>
+                    {new Date(item.createdAt).toLocaleDateString([], {
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      ) : (
+        /* Conversation List */
+        <FlatList
+          data={convos}
+          keyExtractor={(item: any) => String(item.id)}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          ListHeaderComponent={
+            <TouchableOpacity style={styles.newMessageButton} onPress={onNewMessage}>
+              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Text style={styles.newMessageText}>New Conversation</Text>
+            </TouchableOpacity>
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubble-ellipses-outline" size={48} color="#ccc" />
+              <Text style={styles.emptyTitle}>No Conversations</Text>
+              <Text style={styles.emptySubtitle}>
+                Start a conversation with a coach or parent
+              </Text>
+            </View>
+          }
+          renderItem={({ item }: { item: any }) => {
+            const displayName = item.otherUser?.name || 'Unknown';
+            const lastMsg = item.lastMessage;
+            const hasUnread = item.unreadCount > 0;
+
+            return (
+              <TouchableOpacity
+                style={[styles.conversationCard, hasUnread && styles.unreadCard]}
+                onPress={() => router.push(`/dm/${item.id}`)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>
+                    {displayName.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.conversationInfo}>
+                  <View style={styles.conversationHeader}>
+                    <Text
+                      style={[styles.participantName, hasUnread && styles.unreadName]}
+                      numberOfLines={1}
+                    >
+                      {displayName}
+                    </Text>
+                    {lastMsg && (
+                      <Text style={styles.timestamp}>
+                        {new Date(lastMsg.createdAt).toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </Text>
+                    )}
+                  </View>
                   {lastMsg && (
-                    <Text style={styles.timestamp}>
-                      {new Date(lastMsg.createdAt).toLocaleDateString([], {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                    <Text
+                      style={[styles.lastMessage, hasUnread && styles.unreadMessage]}
+                      numberOfLines={1}
+                    >
+                      {lastMsg.content}
                     </Text>
                   )}
                 </View>
-                {lastMsg && (
-                  <Text
-                    style={[styles.lastMessage, hasUnread && styles.unreadMessage]}
-                    numberOfLines={1}
-                  >
-                    {lastMsg.content}
-                  </Text>
+                {hasUnread && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadCount}>{item.unreadCount}</Text>
+                  </View>
                 )}
-              </View>
-              {hasUnread && (
-                <View style={styles.unreadBadge}>
-                  <Text style={styles.unreadCount}>{item.unreadCount}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          );
-        }}
-      />
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -162,6 +287,102 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
+  // Search bar
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+    backgroundColor: '#f5f5f5',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: NAVY,
+    paddingVertical: 0,
+  },
+  clearBtn: {
+    padding: 4,
+    minWidth: 28,
+    minHeight: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Search results
+  searchLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  searchLoadingText: {
+    fontSize: 13,
+    color: '#888',
+  },
+  searchResultCount: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#999',
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+  searchResultCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  searchResultIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f0e8d5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  searchResultName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: NAVY,
+    marginBottom: 2,
+  },
+  searchResultSnippet: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
+  searchResultSender: {
+    fontWeight: '600',
+    color: NAVY,
+  },
+  searchResultDate: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 4,
+  },
+  // Conversation list
   list: {
     padding: 16,
   },
@@ -169,7 +390,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: NAVY,
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
@@ -187,7 +408,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: NAVY,
     marginTop: 16,
   },
   emptySubtitle: {
@@ -217,7 +438,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: NAVY,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -239,7 +460,7 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a2e',
+    color: NAVY,
     flex: 1,
   },
   unreadName: {
@@ -255,7 +476,7 @@ const styles = StyleSheet.create({
     color: '#888',
   },
   unreadMessage: {
-    color: '#1a1a2e',
+    color: NAVY,
     fontWeight: '500',
   },
   unreadBadge: {
@@ -268,7 +489,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   unreadCount: {
-    color: '#1a1a2e',
+    color: NAVY,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -292,7 +513,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   retryButton: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: NAVY,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
