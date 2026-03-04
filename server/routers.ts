@@ -1742,8 +1742,16 @@ export const appRouter = router({
   dm: router({
     // Get all conversations for current user
     getConversations: protectedProcedure.query(async ({ ctx }) => {
-      const { getUserConversations } = await import("./db");
-      return await getUserConversations(ctx.user.id);
+      try {
+        const { getUserConversations } = await import("./db");
+        return await getUserConversations(ctx.user.id);
+      } catch (error: any) {
+        console.error("[DM] getConversations failed:", error?.message || error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `DM error: ${error?.message || "Unknown error"}`,
+        });
+      }
     }),
 
     // Get messages for a conversation
@@ -1859,8 +1867,13 @@ export const appRouter = router({
 
     // Get users available for DM
     getAvailableUsers: protectedProcedure.query(async ({ ctx }) => {
-      const { getAvailableDmUsers } = await import("./db");
-      return await getAvailableDmUsers(ctx.user.id);
+      try {
+        const { getAvailableDmUsers } = await import("./db");
+        return await getAvailableDmUsers(ctx.user.id);
+      } catch (error: any) {
+        console.error("[DM] getAvailableUsers failed:", error?.message || error);
+        return [];
+      }
     }),
 
     // Search messages

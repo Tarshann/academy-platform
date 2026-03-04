@@ -72,6 +72,13 @@ CREATE TABLE IF NOT EXISTS "userMessagingRoles" (
   "updatedAt" timestamp DEFAULT now() NOT NULL
 );
 
+-- Ensure imageUrl column exists on dmMessages (may be missing if table pre-existed)
+DO $$ BEGIN
+  ALTER TABLE "dmMessages" ADD COLUMN "imageUrl" text;
+EXCEPTION
+  WHEN duplicate_column THEN null;
+END $$;
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS "idx_dmParticipants_conversationId" ON "dmParticipants" ("conversationId");
 CREATE INDEX IF NOT EXISTS "idx_dmParticipants_userId" ON "dmParticipants" ("userId");
