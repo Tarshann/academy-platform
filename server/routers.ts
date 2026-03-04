@@ -802,6 +802,23 @@ export const appRouter = router({
     }),
   }),
 
+  chatAdmin: router({
+    clearAll: adminProcedure
+      .input(z.object({ room: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        const { chatMessages } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { getDb } = await import("./db");
+        const db = await getDb();
+        if (input.room) {
+          await db.delete(chatMessages).where(eq(chatMessages.room, input.room));
+        } else {
+          await db.delete(chatMessages);
+        }
+        return { success: true };
+      }),
+  }),
+
   gallery: router({
     list: publicProcedure
       .input(paginationSchema)

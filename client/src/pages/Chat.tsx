@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc";
 import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
 
 interface Message {
   id?: number;
@@ -428,7 +427,6 @@ export default function Chat() {
         <main className="flex-1 flex items-center justify-center text-muted-foreground">
           Loading chat...
         </main>
-        <Footer />
       </div>
     );
   }
@@ -445,7 +443,6 @@ export default function Chat() {
             </p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -457,16 +454,15 @@ export default function Chat() {
         <main className="flex-1 flex items-center justify-center text-muted-foreground">
           Redirecting to sign in...
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Navigation />
-      <main id="main-content" className="flex-1 p-2 md:p-4">
-        <div className="container max-w-6xl mx-auto h-[calc(100vh-10rem)]">
+      <main id="main-content" className="flex-1 min-h-0 p-2 md:p-4">
+        <div className="max-w-6xl mx-auto h-full">
           {/* Announcement Banner */}
           {visibleAnnouncements && visibleAnnouncements.length > 0 && (
             <div className="mb-3 space-y-2">
@@ -582,7 +578,7 @@ export default function Chat() {
             )}
 
             {/* Main Chat Area */}
-            <Card className="flex-1 flex flex-col">
+            <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
                   {/* Mobile menu button */}
@@ -617,7 +613,7 @@ export default function Chat() {
                 </div>
               </CardHeader>
 
-              <CardContent className="flex-1 flex flex-col min-h-0">
+              <CardContent className="flex-1 flex flex-col min-h-0 relative">
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
                   <div className="space-y-4">
@@ -758,7 +754,6 @@ export default function Chat() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

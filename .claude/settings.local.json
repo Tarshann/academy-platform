@@ -71,7 +71,8 @@
       "Bash(npx expo install --check)",
       "Bash(node -e \":*)",
       "Bash(npm view expo-image@3 versions --json)",
-      "Bash(npm view expo-image@3.0.11 peerDependencies dependencies)"
+      "Bash(npm view expo-image@3.0.11 peerDependencies dependencies)",
+      "Bash(npx tsx scripts/clear-chat.ts)"
     ]
   }
 }

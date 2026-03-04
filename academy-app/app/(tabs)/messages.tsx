@@ -54,11 +54,13 @@ export default function MessagesScreen() {
   if (conversations.isLoading) return <Loading />;
 
   if (conversations.isError) {
+    const errMsg = conversations.error?.message || 'Unknown error';
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#999" />
           <Text style={styles.errorText}>Failed to load conversations</Text>
+          <Text style={styles.errorDetail}>{errMsg}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
@@ -94,10 +96,8 @@ export default function MessagesScreen() {
           </View>
         }
         renderItem={({ item }: { item: any }) => {
-          const otherParticipant = item.participants?.find(
-            (p: any) => p.userId !== item.currentUserId
-          );
-          const displayName = otherParticipant?.userName || 'Unknown';
+          // Server returns otherUser (user object) and participant (current user's record)
+          const displayName = item.otherUser?.name || 'Unknown';
           const lastMsg = item.lastMessage;
           const hasUnread = item.unreadCount > 0;
 
@@ -276,7 +276,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     marginTop: 12,
+    marginBottom: 4,
+  },
+  errorDetail: {
+    fontSize: 12,
+    color: '#999',
     marginBottom: 16,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
   retryButton: {
     backgroundColor: '#1a1a2e',
