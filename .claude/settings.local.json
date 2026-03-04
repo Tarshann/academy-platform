@@ -69,7 +69,9 @@
       "Bash(npm view react-native-worklets@0.5.1 peerDependencies)",
       "Bash(npm ls react-native-reanimated react-native-worklets)",
       "Bash(npx expo install --check)",
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(npm view expo-image@3 versions --json)",
+      "Bash(npm view expo-image@3.0.11 peerDependencies dependencies)"
     ]
   }
 }
