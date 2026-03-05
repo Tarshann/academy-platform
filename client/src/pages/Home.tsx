@@ -101,7 +101,7 @@ export default function Home() {
       href: "/performance-lab",
     },
     {
-      title: "Academy Skills Lab",
+      title: "Skills Lab",
       label: "Drop-In",
       description: "Community drop-in sessions for fundamentals, movement, and positive competition. All skill levels welcome.",
       bestFor: "All ages",

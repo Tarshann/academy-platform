@@ -78,10 +78,10 @@ export default function Programs() {
                 </CardContent>
               </Card>
 
-              {/* Academy Skills Lab */}
+              {/* Skills Lab */}
               <Card id="program-skills-lab" className="bg-card border-border scroll-mt-24">
                 <CardHeader>
-                  <CardTitle className="text-foreground">Academy Skills Lab</CardTitle>
+                  <CardTitle className="text-foreground">Skills Lab</CardTitle>
                   <CardDescription className="text-muted-foreground">Community drop-in for fundamentals, movement, and fun</CardDescription>
                 </CardHeader>
                 <CardContent>
