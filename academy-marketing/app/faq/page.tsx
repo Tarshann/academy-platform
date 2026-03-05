@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
 import { FAQ, CONTACT, CONTACTS } from "@/lib/config";
+import { FAQPageJsonLd, BreadcrumbJsonLd } from "@/lib/structured-data";
 import FAQAccordion from "./FAQAccordion";
 
 export const metadata = generatePageMetadata({
@@ -14,6 +15,14 @@ export const metadata = generatePageMetadata({
 export default function FAQPage() {
   return (
     <>
+      <FAQPageJsonLd items={FAQ} />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "FAQ", href: "/faq" },
+        ]}
+      />
+
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
         <div className="container text-center">

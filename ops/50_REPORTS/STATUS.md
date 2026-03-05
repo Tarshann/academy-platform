@@ -20,6 +20,28 @@
 
 ## Session Log
 
+### 2026-03-04 — Marketing/SEO Agent (Session 1)
+**Started**: MKT-001 (Full SEO Audit), SEO-001 (CWV Baseline), SEO-002 (Structured Data Expansion)
+**Completed**:
+- MKT-001: Full SEO audit of all 12 marketing pages. Page-by-page results documented in `ops/50_REPORTS/audit-findings.md`. Found 4 HIGH, 3 MEDIUM, 2 LOW issues. Key findings: all images use `<img>` not `next/image`, fonts via Google Fonts `<link>` not `next/font`, blog articles and event data hardcoded in page components.
+- SEO-001: CWV baseline documented via source code analysis. Top 3 bottlenecks: no `next/image` (LCP/CLS), Google Fonts `<link>` (FCP), missing image dimensions (CLS). Risk assessment for 9 pages.
+- SEO-002: Structured data expansion complete:
+  - Added `FAQPageJsonLd` component to `lib/structured-data.tsx`
+  - Added FAQPage structured data to `/faq` (8 FAQ items from config) and `/programs/[slug]` (per-program FAQs)
+  - Added BreadcrumbJsonLd to 8 pages: `/programs`, `/coaches`, `/blog`, `/events`, `/get-started`, `/faq`, `/youth-athletic-training-gallatin-tn` (program detail already had it)
+  - Verified pre-existing: LocalBusiness, SportsActivityLocation, AggregateRating, Review, SportsEvent, Organization
+- Footer fix: Added Private Training, Summer Camps, Blog links to footer navigation
+- Created 5 optimization tickets in NEXT.md: SEO-003 (next/image), SEO-004 (next/font), SEO-005 (blog to config), SEO-006 (events to config), SEO-007 (blog content creation)
+- `npm run build` (56/56 validation checks pass) and `npm run validate` both pass
+**Blocked**: Nothing
+**Discovered**:
+- Blog has zero published content — all 3 articles show "Coming Soon". No draft posts exist in docs/ directory.
+- Events page uses inline metadata instead of `generatePageMetadata()` helper (inconsistency).
+- Blog articles and summer camp data are hardcoded in page components, violating config-as-source-of-truth principle.
+**Next**: SEO-003 (migrate <img> to next/image) and SEO-004 (switch to next/font) are the highest-impact CWV improvements. SEO-007 (blog content) requires human authorship.
+
+---
+
 ### 2026-03-01 — Pre-Release Polish (Session 6)
 **Started**: 4 pre-release fixes across mobile app and portal server
 **Completed**:

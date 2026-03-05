@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Calendar, MapPin, Clock, Users, Trophy, ArrowRight, Phone, ChevronRight } from 'lucide-react';
 import { CONTACTS } from "@/lib/config";
+import { BreadcrumbJsonLd } from "@/lib/structured-data";
 
 export const metadata: Metadata = {
   title: 'Summer Camps 2026 — Basketball & Speed/Agility | The Academy',
@@ -156,6 +157,14 @@ export default function EventsPage() {
 
   return (
     <>
+      {/* Breadcrumb JSON-LD */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Events", href: "/events" },
+        ]}
+      />
+
       {/* Event JSON-LD */}
       {events.map((event, i) => (
         <script

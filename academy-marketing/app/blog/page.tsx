@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
+import { BreadcrumbJsonLd } from "@/lib/structured-data";
 
 export const metadata = generatePageMetadata({
   title: "Blog — Training Tips & Insights",
@@ -42,6 +43,13 @@ const ARTICLES = [
 export default function BlogPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Blog", href: "/blog" },
+        ]}
+      />
+
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
         <div className="container text-center">

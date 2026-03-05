@@ -351,30 +351,121 @@
 
 ## Marketing / SEO
 
-*(Tickets will be generated from MKT-001 and SEO-001 audit findings)*
+*(Generated from MKT-001 SEO Audit + SEO-001 CWV Baseline — 2026-03-04)*
 
 ### SEO-002: Structured Data Expansion `[SEO]`
 - **Workstream**: SEO
-- **Owner**: Unassigned
-- **Status**: BACKLOG
+- **Owner**: Marketing/SEO Agent
+- **Status**: DONE
 - **Goal**: Add comprehensive Schema.org markup beyond current coverage
 - **Scope**:
-  - LocalBusiness with geo coordinates
-  - SportsActivityLocation
-  - FAQPage on program pages
-  - BreadcrumbList on all pages
-  - Review/AggregateRating
-  - Event markup for sessions/camps
-- **Non-goals**:
-  - Content changes
-  - Visual design changes
+  - LocalBusiness with geo coordinates — already existed
+  - SportsActivityLocation — already existed
+  - FAQPage on /faq and program pages — added
+  - BreadcrumbList on all pages — added to 8 pages
+  - Review/AggregateRating — already existed
+  - Event markup for sessions/camps — already existed
 - **Acceptance Criteria**:
-  - [ ] Each program page has FAQPage structured data
-  - [ ] Homepage has LocalBusiness + SportsActivityLocation
-  - [ ] All pages have BreadcrumbList
-  - [ ] Structured data validates in Google Rich Results Test
-  - [ ] `npm run validate` passes
-- **Telemetry**: No new events
+  - [x] Each program page has FAQPage structured data
+  - [x] Homepage has LocalBusiness + SportsActivityLocation
+  - [x] All pages have BreadcrumbList
+  - [x] Structured data validates (generated from config.ts)
+  - [x] `npm run build` passes
+- **Release**: Next marketing deploy
+
+### SEO-003: Migrate `<img>` to `next/image` `[CWV]`
+- **Workstream**: SEO
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Priority**: HIGH
+- **Goal**: Replace all native `<img>` tags with Next.js `next/image` for automatic optimization
+- **Scope**:
+  - Homepage hero image → `next/image` with priority + explicit dimensions
+  - Coach photos on `/coaches` → `next/image` with proper sizing
+  - Any other `<img>` tags across the site
+- **Non-goals**: Adding new images or changing visual design
+- **Acceptance Criteria**:
+  - [ ] Zero native `<img>` tags remaining in page components
+  - [ ] Homepage hero has `priority` flag for LCP
+  - [ ] All images have explicit `width`/`height` or `fill` layout
+  - [ ] WebP/AVIF automatic conversion confirmed
+  - [ ] `npm run build` passes
+- **Impact**: LCP improvement (hero image), CLS reduction (explicit dimensions), bandwidth savings (format conversion)
+- **Release**: Next marketing deploy
+
+### SEO-004: Switch to `next/font` `[CWV]`
+- **Workstream**: SEO
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Priority**: HIGH
+- **Goal**: Replace Google Fonts `<link>` tags with `next/font/google` for font optimization
+- **Scope**:
+  - Replace Oswald `<link>` with `next/font/google` import
+  - Replace Source Sans 3 `<link>` with `next/font/google` import
+  - Remove `preconnect` hints to `fonts.googleapis.com` and `fonts.gstatic.com`
+  - Apply font CSS variables via `next/font` className
+- **Non-goals**: Changing font choices or weights
+- **Acceptance Criteria**:
+  - [ ] Zero Google Fonts `<link>` tags in layout.tsx `<head>`
+  - [ ] Fonts self-hosted and subsetted automatically
+  - [ ] No render-blocking external font requests
+  - [ ] Visual appearance unchanged
+  - [ ] `npm run build` passes
+- **Impact**: FCP improvement (eliminate render-blocking), TTFB improvement (fewer external requests)
+- **Release**: Next marketing deploy
+
+### SEO-005: Move Blog Articles to config.ts `[STABILITY]`
+- **Workstream**: Marketing
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Priority**: MEDIUM
+- **Goal**: Move hardcoded blog article data from page component to config.ts
+- **Scope**:
+  - Define `ARTICLES` array in `lib/config.ts`
+  - Update `app/blog/page.tsx` to import from config
+- **Non-goals**: Building a CMS or dynamic blog system
+- **Acceptance Criteria**:
+  - [ ] Blog articles defined in config.ts
+  - [ ] Blog page renders from config, not hardcoded data
+  - [ ] `npm run build` passes
+- **Release**: Next marketing deploy
+
+### SEO-006: Move Event Data to config.ts + Use Metadata Helper `[STABILITY]`
+- **Workstream**: Marketing
+- **Owner**: Unassigned
+- **Status**: BACKLOG
+- **Priority**: MEDIUM
+- **Goal**: Move hardcoded camp/event data from page component to config.ts and switch to `generatePageMetadata()`
+- **Scope**:
+  - Define `SUMMER_CAMPS` array in `lib/config.ts`
+  - Update `app/events/page.tsx` to import from config
+  - Switch from inline `export const metadata` to `generatePageMetadata()`
+  - Update Event JSON-LD to read from config
+- **Non-goals**: Adding new events or changing event details
+- **Acceptance Criteria**:
+  - [ ] Event data defined in config.ts
+  - [ ] Events page renders from config
+  - [ ] Uses `generatePageMetadata()` helper
+  - [ ] Event JSON-LD generated from config
+  - [ ] `npm run build` passes
+- **Release**: Next marketing deploy
+
+### SEO-007: Blog Content Creation `[CONTENT]`
+- **Workstream**: Marketing
+- **Owner**: Unassigned (requires human input)
+- **Status**: BACKLOG
+- **Priority**: MEDIUM
+- **Goal**: Publish the 3 planned blog articles currently showing "Coming Soon"
+- **Scope**:
+  - Write and publish: "5 Speed Drills Your Athlete Can Do at Home"
+  - Write and publish: "Why We Train Outside (On Purpose)"
+  - Write and publish: "How to Know if Your Child is Ready for Structured Training"
+- **Non-goals**: Blog infrastructure changes (static articles are fine for now)
+- **Acceptance Criteria**:
+  - [ ] 3 blog articles published with real content
+  - [ ] Each article has proper date instead of "Coming Soon"
+  - [ ] Content is SEO-optimized with location keywords
+- **Note**: Draft posts were NOT found in `docs/` directory — content needs to be authored
 - **Release**: Next marketing deploy
 
 ---

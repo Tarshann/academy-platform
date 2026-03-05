@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
 import { PROGRAMS, CONTACT, CONTACTS } from "@/lib/config";
-import { ServiceJsonLd, BreadcrumbJsonLd } from "@/lib/structured-data";
+import { ServiceJsonLd, BreadcrumbJsonLd, FAQPageJsonLd } from "@/lib/structured-data";
 import ProgramFAQ from "./ProgramFAQ";
 import CheckoutButton from "@/components/ui/CheckoutButton";
 
@@ -47,6 +47,7 @@ export default async function ProgramDetailPage({
           { name: program.shortName, href: `/programs/${program.slug}` },
         ]}
       />
+      {program.faq.length > 0 && <FAQPageJsonLd items={program.faq} />}
 
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">

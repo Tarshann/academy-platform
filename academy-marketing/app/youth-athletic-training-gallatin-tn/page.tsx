@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle, MapPin } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
+import { BreadcrumbJsonLd } from "@/lib/structured-data";
 import {
   SITE,
   PROGRAMS,
@@ -23,6 +24,13 @@ export const metadata = generatePageMetadata({
 export default function LocalSEOPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Youth Athletic Training Gallatin TN", href: "/youth-athletic-training-gallatin-tn" },
+        ]}
+      />
+
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
         <div className="container">

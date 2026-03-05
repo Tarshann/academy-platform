@@ -70,8 +70,11 @@ export default function Footer() {
               <Link href="/programs" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">All Programs</Link>
               <Link href="/programs/performance-lab" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Performance Lab</Link>
               <Link href="/programs/skills-lab" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Skills Lab</Link>
+              <Link href="/programs/private-training" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Private Training</Link>
               <Link href="/coaches" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Coaches</Link>
+              <Link href="/events" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Summer Camps</Link>
               <Link href="/faq" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">FAQs</Link>
+              <Link href="/blog" className="text-white/60 hover:text-[var(--color-brand-gold)] transition-colors text-sm">Blog</Link>
             </div>
           </div>
 

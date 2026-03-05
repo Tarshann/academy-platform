@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
+import { BreadcrumbJsonLd } from "@/lib/structured-data";
 import { COACHES, FOUNDERS, CONTACT, CONTACTS } from "@/lib/config";
 
 export const metadata = generatePageMetadata({
@@ -13,6 +14,13 @@ export const metadata = generatePageMetadata({
 export default function CoachesPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Coaches", href: "/coaches" },
+        ]}
+      />
+
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
         <div className="container text-center">

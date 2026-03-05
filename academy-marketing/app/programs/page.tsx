@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Zap, Users, Target } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
+import { BreadcrumbJsonLd } from "@/lib/structured-data";
 import { PROGRAMS } from "@/lib/config";
 
 export const metadata = generatePageMetadata({
@@ -15,6 +16,13 @@ const ICONS = [Zap, Users, Target];
 export default function ProgramsPage() {
   return (
     <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Programs", href: "/programs" },
+        ]}
+      />
+
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
         <div className="container text-center">
