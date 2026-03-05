@@ -24,6 +24,7 @@ const NAVY = '#1a1a2e';
 interface ChatInputProps {
   onSend: (message: string) => void;
   onImageSend?: (uri: string, source: ImageSource) => void;
+  onTyping?: () => void;
   disabled?: boolean;
   placeholder?: string;
   uploadProgress?: UploadProgress | null;
@@ -33,6 +34,7 @@ interface ChatInputProps {
 export function ChatInput({
   onSend,
   onImageSend,
+  onTyping,
   disabled,
   placeholder,
   uploadProgress,
@@ -131,7 +133,10 @@ export function ChatInput({
           <TextInput
             style={styles.input}
             value={text}
-            onChangeText={setText}
+            onChangeText={(val) => {
+              setText(val);
+              if (val.length > 0) onTyping?.();
+            }}
             placeholder={placeholder || 'Type a message...'}
             placeholderTextColor="#999"
             multiline

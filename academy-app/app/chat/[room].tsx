@@ -13,9 +13,10 @@ import {
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToChatRoom } from '../../lib/realtime';
+import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
+import { TypingIndicator } from '../../components/TypingIndicator';
 import { trackEvent } from '../../lib/analytics';
 import {
   uploadChatImage,
@@ -54,7 +55,10 @@ export default function ChatRoomScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<{ userId: number; name: string }[]>([]);
   const flatListRef = useRef<FlatList>(null);
+  const typingRef = useRef<{ enter: (data: any) => void; leave: () => void; unsubscribe: () => void } | null>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Get chat token for sending messages via REST
   const chatTokenQuery = trpc.auth.chatToken.useQuery();
@@ -106,8 +110,17 @@ export default function ChatRoomScreen() {
         });
       });
 
+      // Subscribe to typing presence
+      const typing = subscribeToTyping(
+        client,
+        `chat:${room}`,
+        (members) => setTypingUsers(members)
+      );
+      typingRef.current = typing;
+
       return () => {
         unsubscribe();
+        typing.unsubscribe();
         client.connection.off();
         try {
           const channel = client.channels.get(`chat:${room}`);
@@ -293,9 +306,18 @@ export default function ChatRoomScreen() {
             );
           }}
         />
+        <TypingIndicator typingUsers={typingUsers} myUserId={myUserId} />
         <ChatInput
           onSend={handleSend}
           onImageSend={handleImageSend}
+          onTyping={() => {
+            if (!typingRef.current || !myUserId || !meQuery.data?.name) return;
+            typingRef.current.enter({ userId: myUserId, name: meQuery.data.name });
+            if (typingTimer.current) clearTimeout(typingTimer.current);
+            typingTimer.current = setTimeout(() => {
+              typingRef.current?.leave();
+            }, 3000);
+          }}
           disabled={isSending || !chatTokenQuery.data?.token}
           isUploading={isUploading}
           uploadProgress={uploadProgress}

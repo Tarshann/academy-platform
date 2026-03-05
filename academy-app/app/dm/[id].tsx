@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToDm, publishDmReadReceipt } from '../../lib/realtime';
+import { getAblyClient, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
+import { TypingIndicator } from '../../components/TypingIndicator';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { trackEvent } from '../../lib/analytics';
@@ -44,8 +45,11 @@ export default function DmConversationScreen() {
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
   const [otherReadTimestamp, setOtherReadTimestamp] = useState<number | null>(null);
+  const [typingUsers, setTypingUsers] = useState<{ userId: number; name: string }[]>([]);
   const flatListRef = useRef<FlatList>(null);
   const ablyClientRef = useRef<any>(null);
+  const typingRef = useRef<{ enter: (data: any) => void; leave: () => void; unsubscribe: () => void } | null>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const meQuery = trpc.auth.me.useQuery();
   const myUserId = meQuery.data?.id;
@@ -128,8 +132,17 @@ export default function DmConversationScreen() {
       publishDmReadReceipt(client, conversationId, myUserId);
     }
 
+    // Subscribe to typing presence
+    const typing = subscribeToTyping(
+      client,
+      `dm:${conversationId}`,
+      (members) => setTypingUsers(members)
+    );
+    typingRef.current = typing;
+
     return () => {
       unsubscribe();
+      typing.unsubscribe();
     };
   }, [ablyTokenQuery.data, conversationId, myUserId]);
 
@@ -305,9 +318,18 @@ export default function DmConversationScreen() {
             );
           }}
         />
+        <TypingIndicator typingUsers={typingUsers} myUserId={myUserId} />
         <ChatInput
           onSend={handleSend}
           onImageSend={handleImageSend}
+          onTyping={() => {
+            if (!typingRef.current || !myUserId || !meQuery.data?.name) return;
+            typingRef.current.enter({ userId: myUserId, name: meQuery.data.name });
+            if (typingTimer.current) clearTimeout(typingTimer.current);
+            typingTimer.current = setTimeout(() => {
+              typingRef.current?.leave();
+            }, 3000);
+          }}
           disabled={isSending}
           isUploading={isUploading}
           uploadProgress={uploadProgress}
