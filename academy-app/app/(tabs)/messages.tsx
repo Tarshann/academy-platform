@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { trpc } from '../../lib/trpc';
 import { ConversationListSkeleton } from '../../components/Skeleton';
 import { trackEvent } from '../../lib/analytics';
@@ -36,6 +37,69 @@ export default function MessagesScreen() {
       Alert.alert('Error', error.message);
     },
   });
+
+  const blockUser = trpc.dm.blockUser.useMutation({
+    onSuccess: () => {
+      conversations.refetch();
+    },
+    onError: (error) => {
+      Alert.alert('Error', error.message || 'Could not block user.');
+    },
+  });
+
+  const archiveConversation = trpc.dm.archiveConversation.useMutation({
+    onSuccess: () => {
+      conversations.refetch();
+    },
+    onError: (error) => {
+      Alert.alert('Error', error.message || 'Could not archive conversation.');
+    },
+  });
+
+  const onLongPressConversation = (item: any) => {
+    const displayName = item.otherUser?.name || 'Unknown';
+    const otherUserId = item.otherUser?.id;
+
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    const buttons: any[] = [
+      {
+        text: 'Archive',
+        onPress: () => {
+          trackEvent('dm_conversation_archived', { conversation_id: item.id });
+          archiveConversation.mutate({ conversationId: item.id });
+        },
+      },
+    ];
+
+    if (otherUserId) {
+      buttons.push({
+        text: 'Block User',
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(
+            'Block User',
+            `Are you sure you want to block ${displayName}? You will no longer receive messages from them.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Block',
+                style: 'destructive',
+                onPress: () => {
+                  trackEvent('dm_user_blocked', { blocked_user_id: otherUserId });
+                  blockUser.mutate({ userId: otherUserId });
+                },
+              },
+            ]
+          );
+        },
+      });
+    }
+
+    buttons.push({ text: 'Cancel', style: 'cancel' });
+
+    Alert.alert(displayName, 'Choose an action', buttons);
+  };
 
   // Search query — only fires when searchQuery is non-empty
   const searchResults = trpc.dm.searchMessages.useQuery(
@@ -235,6 +299,8 @@ export default function MessagesScreen() {
               <TouchableOpacity
                 style={[styles.conversationCard, hasUnread && styles.unreadCard]}
                 onPress={() => router.push(`/dm/${item.id}`)}
+                onLongPress={() => onLongPressConversation(item)}
+                delayLongPress={500}
                 activeOpacity={0.7}
               >
                 <View style={styles.avatar}>
