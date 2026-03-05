@@ -20,6 +20,22 @@
 
 ## Session Log
 
+### 2026-03-05 — Mobile Agent (Session 7)
+**Started**: v1.3.1 Polish & Engagement Pack — MOB-019, MOB-015, MOB-016, MOB-013, MOB-027, MOB-017
+**Completed**:
+- MOB-019: Skeleton loading screens — created reusable `Skeleton` component with Reanimated opacity shimmer. Added `ConversationListSkeleton`, `MessageListSkeleton`, `ChatRoomListSkeleton` layouts. Replaced spinners in Messages, DM, and Profile screens.
+- MOB-015: DM read receipts — extended `subscribeToDm` with 'read' event handler, added `publishDmReadReceipt()` for Ably transport, shows "Read" text under last own message when other user opens conversation.
+- MOB-016: DM search — added search bar to Messages screen with 300ms debounced query calling `dm.searchMessages`, results show sender/snippet/conversation/date, tap navigates to conversation.
+- MOB-013: Typing indicators — created `TypingIndicator` component, added `subscribeToTyping()` using Ably presence enter/leave, added `onTyping` callback to `ChatInput`, wired into both DM and chat room screens with 3-second auto-clear.
+- MOB-027: App store rating prompt — created `lib/rating-prompt.ts` using expo-store-review with SecureStore counters. Triggers after 5th message sent or 3rd session registration. 30-day cooldown between prompts.
+- MOB-017: Block/archive in DMs — long-press on conversation card shows Archive and Block User actions with haptic feedback. Block has confirmation dialog. Wired to `dm.blockUser` and `dm.archiveConversation` mutations.
+- All 6 tickets verified: `npx expo export` compiles cleanly for both iOS and Android.
+**Blocked**: Nothing
+**Discovered**: Nothing new — all tickets used existing server APIs with no backend changes needed.
+**Next**: Version bump to v1.3.1 + EAS build when ready. Consider MOB-020 (Content Hub) or MOB-018 (Onboarding) for next session.
+
+---
+
 ### 2026-03-04 — Marketing/SEO Agent (Session 1)
 **Started**: MKT-001 (Full SEO Audit), SEO-001 (CWV Baseline), SEO-002 (Structured Data Expansion)
 **Completed**:
