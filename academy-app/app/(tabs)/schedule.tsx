@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
 import { trackEvent } from '../../lib/analytics';
+import { trackSessionRegistration } from '../../lib/rating-prompt';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -60,6 +61,7 @@ export default function ScheduleScreen() {
             session_name: sessionTitle ?? null,
             session_type: sessionType ?? null,
           });
+          trackSessionRegistration();
         },
       }
     );

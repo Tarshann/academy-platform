@@ -23,6 +23,7 @@ import {
   type ImageSource,
 } from '../../lib/chat-images';
 import { MessageListSkeleton } from '../../components/Skeleton';
+import { trackMessageSent } from '../../lib/rating-prompt';
 
 const ACADEMY_GOLD = '#CFB87C';
 
@@ -168,6 +169,7 @@ export default function DmConversationScreen() {
         conversation_id: conversationId,
         channel: 'dm',
       });
+      trackMessageSent();
     } catch (error) {
       console.error('[DM] Send failed:', error);
     } finally {

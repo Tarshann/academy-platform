@@ -23,6 +23,7 @@ import {
   type UploadProgress,
   type ImageSource,
 } from '../../lib/chat-images';
+import { trackMessageSent } from '../../lib/rating-prompt';
 
 const ACADEMY_GOLD = '#CFB87C';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -155,6 +156,7 @@ export default function ChatRoomScreen() {
       if (room === 'coaches') {
         trackEvent('coach_message_sent', { room });
       }
+      trackMessageSent();
 
       const result = await response.json();
       if (result.message) {
