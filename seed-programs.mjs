@@ -13,6 +13,17 @@ const db = drizzle(client);
 
 const programData = [
   {
+    name: "Academy Skills Lab",
+    slug: "skills-lab-dropin",
+    description: "Drop-in session for fundamentals, movement warmups, skill stations, and competitive games. All ages welcome. No commitment required.",
+    price: "10.00",
+    category: "group",
+    ageMin: 5,
+    ageMax: 18,
+    maxParticipants: null,
+    isActive: true
+  },
+  {
     name: "Group Workout",
     slug: "group-workout",
     description: "Group workouts designed to bring together a collective of players, fostering friendly competition and skill development. Limited to 8 players for maximum attention.",
