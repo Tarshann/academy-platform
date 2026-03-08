@@ -52,7 +52,7 @@ export const ACADEMY_PRODUCTS: Record<string, StripeProduct> = {
   // Individual Sessions (One-time)
   'skills-lab-dropin': {
     id: 'skills-lab-dropin',
-    name: 'Academy Skills Lab — Drop-In',
+    name: 'Skills Lab — Drop-In',
     description: 'Single drop-in session for fundamentals, movement, and competitive games. All ages welcome.',
     priceInCents: 1000, // $10.00
     currency: 'usd',

@@ -39,7 +39,7 @@ export default function SkillsLabPage() {
             lineHeight: 1,
             margin: "0 0 20px",
           }}>
-            Academy Skills Lab
+            Skills Lab
           </h1>
           <p style={{
             fontSize: 18,
@@ -80,7 +80,7 @@ export default function SkillsLabPage() {
           What Is the Skills Lab?
         </h2>
         <p style={{ fontSize: 17, lineHeight: 1.7, textAlign: "center", color: "#444", maxWidth: 650, margin: "0 auto 16px" }}>
-          The Academy Skills Lab is a community drop-in session focused on fundamentals,
+          Skills Lab is a community drop-in session focused on fundamentals,
           movement, and positive competition. It is open to all ages and designed to be
           a fun, active environment where young athletes can move, compete, and build
           confidence.

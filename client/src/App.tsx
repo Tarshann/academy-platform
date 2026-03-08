@@ -115,11 +115,11 @@ function Router() {
           <Programs />
         </Route>
         <Route path={"/skills-lab/register"}>
-          <SEO title="Skills Lab Registration" description="Register for an Academy Skills Lab drop-in session." />
+          <SEO title="Skills Lab Registration" description="Register for a Skills Lab drop-in session." />
           <SkillsLabRegisterPage />
         </Route>
         <Route path={"/skills-lab"}>
-          <SEO title="Skills Lab" description="Academy Skills Lab — community drop-in sessions for fundamentals, movement, and positive competition." />
+          <SEO title="Skills Lab" description="Skills Lab — community drop-in sessions for fundamentals, movement, and positive competition." />
           <SkillsLabPage />
         </Route>
         <Route path={"/performance-lab/apply"}>
