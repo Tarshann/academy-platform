@@ -164,12 +164,20 @@ export default function MessagesScreen() {
     const errMsg = err?.message || 'Unknown error';
     const errCode = (err as any)?.data?.code || (err as any)?.shape?.data?.code || '';
     const errDetail = errCode ? `${errCode}: ${errMsg}` : errMsg;
+    // Show full error JSON for debugging
+    const debugInfo = JSON.stringify({
+      message: err?.message,
+      code: errCode,
+      data: (err as any)?.data,
+      cause: (err as any)?.cause?.message,
+    }, null, 2);
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#999" />
           <Text style={styles.errorText}>Failed to load conversations</Text>
           <Text style={styles.errorDetail}>{errDetail}</Text>
+          <Text style={[styles.errorDetail, { fontSize: 10, color: '#aaa', marginTop: 8 }]} selectable>{debugInfo}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
