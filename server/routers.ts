@@ -1746,10 +1746,11 @@ export const appRouter = router({
         const { getUserConversations } = await import("./db");
         return await getUserConversations(ctx.user.id);
       } catch (error: any) {
-        console.error("[DM] getConversations failed:", error?.message || error);
+        const msg = error?.message || String(error) || "Unknown error";
+        console.error("[DM] getConversations failed for user", ctx.user.id, ":", msg, error?.stack);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `DM error: ${error?.message || "Unknown error"}`,
+          message: msg,
         });
       }
     }),

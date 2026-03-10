@@ -160,13 +160,16 @@ export default function MessagesScreen() {
   }
 
   if (conversations.isError) {
-    const errMsg = conversations.error?.message || 'Unknown error';
+    const err = conversations.error;
+    const errMsg = err?.message || 'Unknown error';
+    const errCode = (err as any)?.data?.code || (err as any)?.shape?.data?.code || '';
+    const errDetail = errCode ? `${errCode}: ${errMsg}` : errMsg;
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#999" />
           <Text style={styles.errorText}>Failed to load conversations</Text>
-          <Text style={styles.errorDetail}>{errMsg}</Text>
+          <Text style={styles.errorDetail}>{errDetail}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
@@ -572,8 +575,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   errorDetail: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 13,
+    color: '#666',
     marginBottom: 16,
     textAlign: 'center',
     paddingHorizontal: 24,
