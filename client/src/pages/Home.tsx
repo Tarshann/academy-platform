@@ -101,6 +101,19 @@ export default function Home() {
       href: "/performance-lab",
     },
     {
+      title: "Academy Skills Lab",
+      label: "Drop-In",
+      description: "Community drop-in sessions for fundamentals, movement, and positive competition. All skill levels welcome.",
+      bestFor: "All ages",
+      schedule: "Tue & Thu 6:00\u20136:50 PM",
+      icon: Users,
+      price: "$10",
+      unit: "per session",
+      featured: false,
+      cta: "Learn More",
+      href: "/skills-lab",
+    },
+    {
       title: "Private Training",
       label: "1-on-1 Coaching",
       description: "One-on-one sessions with Coach Mac or Coach O. Personalized plans for sport-specific goals and athletic development.",
@@ -308,7 +321,7 @@ export default function Home() {
               whileInView="visible"
               viewport={{ once: true, margin: "-100px" }}
               variants={staggerContainer}
-              className="grid gap-6 max-w-4xl mx-auto md:grid-cols-2"
+              className="grid gap-6 max-w-5xl mx-auto md:grid-cols-3"
             >
               {programs.map((program, index) => (
                 <motion.div key={index} variants={fadeInUp}>

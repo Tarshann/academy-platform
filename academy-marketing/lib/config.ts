@@ -109,7 +109,7 @@ export const PROGRAMS = [
   },
   {
     slug: "skills-lab",
-    name: "Skills Lab",
+    name: "Academy Skills Lab",
     label: "Drop-In",
     shortName: "Skills Lab",
     price: "$10",

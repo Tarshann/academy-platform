@@ -1759,16 +1759,22 @@ export const appRouter = router({
 
   // Direct Messaging routes
   dm: router({
+    // Diagnostic ping — no DB, no auth beyond protectedProcedure
+    ping: protectedProcedure.query(async ({ ctx }) => {
+      return { ok: true, userId: ctx.user.id, ts: Date.now() };
+    }),
+
     // Get all conversations for current user
     getConversations: protectedProcedure.query(async ({ ctx }) => {
       try {
         const { getUserConversations } = await import("./db");
         return await getUserConversations(ctx.user.id);
       } catch (error: any) {
-        console.error("[DM] getConversations failed:", error?.message || error);
+        const msg = error?.message || String(error) || "Unknown error";
+        console.error("[DM] getConversations failed for user", ctx.user.id, ":", msg, error?.stack);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `DM error: ${error?.message || "Unknown error"}`,
+          message: msg,
         });
       }
     }),
