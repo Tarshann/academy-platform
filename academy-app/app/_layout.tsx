@@ -1,6 +1,6 @@
 import { ClerkProvider, ClerkLoaded, useAuth, useUser } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { Slot, useRouter, useSegments, usePathname } from 'expo-router';
+import { Slot, Stack, useRouter, useSegments, usePathname } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { tokenCache } from '../lib/clerk';
@@ -147,7 +147,12 @@ function AuthGuard() {
       <ScreenTracker />
       <IdentitySync />
       <ErrorBoundary>
-        <Slot />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="dm" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="chat" options={{ headerShown: false, presentation: 'card' }} />
+        </Stack>
       </ErrorBoundary>
     </>
   );
