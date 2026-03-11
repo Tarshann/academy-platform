@@ -160,24 +160,13 @@ export default function MessagesScreen() {
   }
 
   if (conversations.isError) {
-    const err = conversations.error;
-    const errMsg = err?.message || 'Unknown error';
-    const errCode = (err as any)?.data?.code || (err as any)?.shape?.data?.code || '';
-    const errDetail = errCode ? `${errCode}: ${errMsg}` : errMsg;
-    // Show full error JSON for debugging
-    const debugInfo = JSON.stringify({
-      message: err?.message,
-      code: errCode,
-      data: (err as any)?.data,
-      cause: (err as any)?.cause?.message,
-    }, null, 2);
+    const errMsg = conversations.error?.message || 'Unknown error';
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#999" />
           <Text style={styles.errorText}>Failed to load conversations</Text>
-          <Text style={styles.errorDetail}>{errDetail}</Text>
-          <Text style={[styles.errorDetail, { fontSize: 10, color: '#aaa', marginTop: 8 }]} selectable>{debugInfo}</Text>
+          <Text style={styles.errorDetail}>{errMsg}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
@@ -583,8 +572,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   errorDetail: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 12,
+    color: '#999',
     marginBottom: 16,
     textAlign: 'center',
     paddingHorizontal: 24,

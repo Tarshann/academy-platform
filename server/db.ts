@@ -2,7 +2,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { ENV } from "./_core/env";
 import { logger } from "./_core/logger";
-import { eq, and, or, desc, asc, inArray, gte, lte, sql } from "drizzle-orm";
+import { eq, and, or, ne, gt, desc, asc, inArray, gte, lte, sql, count } from "drizzle-orm";
 import {
   users,
   programs,
@@ -1371,7 +1371,7 @@ export async function getUserConversations(userId: number) {
         .where(
           and(
             eq(dmParticipants.conversationId, p.conversationId),
-            sql`${dmParticipants.userId} != ${userId}`
+            ne(dmParticipants.userId, userId)
           )
         )
         .limit(1);
@@ -1384,19 +1384,18 @@ export async function getUserConversations(userId: number) {
         .orderBy(desc(dmMessages.createdAt))
         .limit(1);
 
-      // Get unread count
-      const unreadMessages = await db
-        .select()
+      // Get unread count using Drizzle operators (not raw sql) for proper Date serialization
+      const unreadConditions = [
+        eq(dmMessages.conversationId, p.conversationId),
+        ne(dmMessages.senderId, userId),
+      ];
+      if (p.lastReadAt) {
+        unreadConditions.push(gt(dmMessages.createdAt, p.lastReadAt));
+      }
+      const [unreadResult] = await db
+        .select({ value: count() })
         .from(dmMessages)
-        .where(
-          and(
-            eq(dmMessages.conversationId, p.conversationId),
-            sql`${dmMessages.senderId} != ${userId}`,
-            p.lastReadAt
-              ? sql`${dmMessages.createdAt} > ${p.lastReadAt}`
-              : sql`1=1`
-          )
-        );
+        .where(and(...unreadConditions));
 
       let otherUser = null;
       if (otherParticipant.length > 0) {
@@ -1412,7 +1411,7 @@ export async function getUserConversations(userId: number) {
         participant: p,
         otherUser: otherUser?.[0] || null,
         lastMessage: lastMessage[0] || null,
-        unreadCount: unreadMessages.length,
+        unreadCount: Number(unreadResult?.value ?? 0),
       });
     }
   }
@@ -1963,7 +1962,7 @@ export async function getUsersToNotifyForDm(conversationId: number, senderId: nu
     .where(
       and(
         eq(dmParticipants.conversationId, conversationId),
-        sql`${dmParticipants.userId} != ${senderId}`,
+        ne(dmParticipants.userId, senderId),
         eq(dmParticipants.isMuted, false)
       )
     );
