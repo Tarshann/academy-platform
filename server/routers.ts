@@ -7,6 +7,7 @@ import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { governedProcedure } from "./_core/governed-procedure";
+import { governanceRouter } from "./governance-router";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -192,6 +193,7 @@ const createProgramCheckoutSession = async ({
 
 export const appRouter = router({
   system: systemRouter,
+  governance: governanceRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -584,12 +586,12 @@ export const appRouter = router({
           await publishAnnouncement(input.id);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.announcement.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteAnnouncement } = await import("./db");
           await deleteAnnouncement(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
     }),
 
@@ -651,12 +653,12 @@ export const appRouter = router({
           await updateSchedule(id, updates);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.schedule.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteSchedule } = await import("./db");
           await deleteSchedule(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
     }),
 
@@ -743,9 +745,9 @@ export const appRouter = router({
           return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
 
-      updateRole: adminProcedure
+      updateRole: governedProcedure("academy.member.update-role")
         .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { getDb } = await import("./db");
           const { users } = await import("../drizzle/schema");
           const { eq } = await import("drizzle-orm");
@@ -758,7 +760,7 @@ export const appRouter = router({
             .set({ role: input.role, updatedAt: new Date() })
             .where(eq(users.id, input.userId));
 
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
 
       create: adminProcedure
@@ -823,9 +825,9 @@ export const appRouter = router({
   }),
 
   chatAdmin: router({
-    clearAll: adminProcedure
+    clearAll: governedProcedure("academy.chat.clear-all")
       .input(z.object({ room: z.string().optional() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { chatMessages } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
         const { getDb } = await import("./db");
@@ -835,7 +837,7 @@ export const appRouter = router({
         } else {
           await db.delete(chatMessages);
         }
-        return { success: true };
+        return { success: true, executionId: (ctx as any).strix?.executionId };
       }),
   }),
 
@@ -908,12 +910,12 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.gallery.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteGalleryPhoto } = await import("./db");
           await deleteGalleryPhoto(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
 
       toggleVisibility: adminProcedure
@@ -1143,12 +1145,12 @@ export const appRouter = router({
             return { success: true };
           }),
 
-        delete: adminProcedure
+        delete: governedProcedure("academy.campaign.delete")
           .input(z.object({ id: z.number() }))
-          .mutation(async ({ input }) => {
+          .mutation(async ({ input, ctx }) => {
             const { deleteCampaign } = await import("./db");
             await deleteCampaign(input.id);
-            return { success: true };
+            return { success: true, executionId: (ctx as any).strix?.executionId };
           }),
       }),
     }),
@@ -1235,12 +1237,12 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.video.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteVideo } = await import("./db");
           await deleteVideo(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
     }),
   }),
@@ -1630,12 +1632,12 @@ export const appRouter = router({
           });
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.location.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteLocation } = await import("./db");
           await deleteLocation(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
     }),
   }),
@@ -1683,12 +1685,12 @@ export const appRouter = router({
           await updateCoach(id, updates);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.coach.delete")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { deleteCoach } = await import("./db");
           await deleteCoach(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
       assignments: router({
         list: adminProcedure
@@ -1723,12 +1725,12 @@ export const appRouter = router({
             const id = await createCoachAssignment(input);
             return { success: true, id };
           }),
-        delete: adminProcedure
+        delete: governedProcedure("academy.coach-assignment.delete")
           .input(z.object({ id: z.number() }))
-          .mutation(async ({ input }) => {
+          .mutation(async ({ input, ctx }) => {
             const { deleteCoachAssignment } = await import("./db");
             await deleteCoachAssignment(input.id);
-            return { success: true };
+            return { success: true, executionId: (ctx as any).strix?.executionId };
           }),
       }),
     }),
@@ -2229,12 +2231,12 @@ export const appRouter = router({
         await publishBlogPost(input.id);
         return { success: true };
       }),
-    delete: adminProcedure
+    delete: governedProcedure("academy.blog.delete")
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { deleteBlogPost } = await import("./db");
         await deleteBlogPost(input.id);
-        return { success: true };
+        return { success: true, executionId: (ctx as any).strix?.executionId };
       }),
   }),
 });
