@@ -6,7 +6,6 @@ import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { governedProcedure } from "./_core/governed-procedure";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -545,12 +544,12 @@ export const appRouter = router({
           await updateProgram(id, normalizedUpdates);
           return { success: true };
         }),
-      delete: governedProcedure("academy.program.delete")
+      delete: adminProcedure
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input, ctx }) => {
+        .mutation(async ({ input }) => {
           const { deleteProgram } = await import("./db");
           await deleteProgram(input.id);
-          return { success: true, executionId: (ctx as any).strix?.executionId };
+          return { success: true };
         }),
     }),
 
@@ -725,9 +724,9 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      removeProgram: governedProcedure("academy.member.remove-program")
+      removeProgram: adminProcedure
         .input(z.object({ enrollmentId: z.number() }))
-        .mutation(async ({ input, ctx }) => {
+        .mutation(async ({ input }) => {
           const { getDb } = await import("./db");
           const { userPrograms } = await import("../drizzle/schema");
           const { eq } = await import("drizzle-orm");
@@ -740,7 +739,7 @@ export const appRouter = router({
             .set({ status: "cancelled", cancelledAt: new Date() })
             .where(eq(userPrograms.id, input.enrollmentId));
 
-          return { success: true, executionId: (ctx as any).strix?.executionId };
+          return { success: true };
         }),
 
       updateRole: adminProcedure
@@ -1093,12 +1092,12 @@ export const appRouter = router({
             return { success: true };
           }),
 
-        delete: governedProcedure("academy.product.delete")
+        delete: adminProcedure
           .input(z.object({ id: z.number() }))
-          .mutation(async ({ input, ctx }) => {
+          .mutation(async ({ input }) => {
             const { deleteProduct } = await import("./db");
             await deleteProduct(input.id);
-            return { success: true, executionId: (ctx as any).strix?.executionId };
+            return { success: true };
           }),
       }),
 
