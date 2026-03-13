@@ -131,15 +131,6 @@ export const ACADEMY_CAPABILITIES: LocalCapabilityDef[] = [
     approvalsRequired: 0,
     irreversible: true,
   },
-
-  // ─── Blog Management ──────────────────────────────────────────
-  {
-    capabilityId: "academy.blog.delete",
-    riskLevel: "medium",
-    allowedEnvironments: ["development", "staging", "production"],
-    approvalsRequired: 0,
-    irreversible: true,
-  },
 ];
 
 /**
