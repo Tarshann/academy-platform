@@ -205,7 +205,7 @@ These can drift. Update both when testimonials change.
 
 ### Stack
 
-- **Framework**: React Native 0.81 + Expo 54 (New Architecture enabled)
+- **Framework**: React Native 0.81 + Expo 54 (New Architecture disabled)
 - **Routing**: Expo Router (file-based)
 - **Auth**: `@clerk/clerk-expo`
 - **API**: tRPC client connecting to the portal backend
