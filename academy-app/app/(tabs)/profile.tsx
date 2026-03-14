@@ -1,11 +1,12 @@
 import { useUser, useAuth } from '@clerk/clerk-expo';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, Modal, TextInput, ActivityIndicator, Platform } from 'react-native';
 import { Image } from 'expo-image';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import * as Haptics from 'expo-haptics';
 import { trpc } from '../../lib/trpc';
 import { Skeleton, SkeletonCircle, SkeletonLine } from '../../components/Skeleton';
@@ -13,7 +14,6 @@ import { trackEvent } from '../../lib/analytics';
 
 const GOLD = '#CFB87C';
 const NAVY = '#1a1a2e';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 
 // Phone-only bridge — name and email now come from API (coaches JOIN users, commit da4a61b).
 // Users table has no phone column, so phone numbers are bridged here.
@@ -63,10 +63,17 @@ function EditNameModal({
 }) {
   const [name, setName] = useState(currentName);
 
+  // Reset name when modal opens
+  useEffect(() => {
+    if (visible) {
+      setName(currentName);
+    }
+  }, [visible, currentName]);
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+        <TouchableOpacity style={styles.modalContent} activeOpacity={1} onPress={() => {}}>
           <Text style={styles.modalTitle}>Edit Name</Text>
           <TextInput
             style={styles.modalInput}
@@ -94,49 +101,52 @@ function EditNameModal({
               )}
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+        </TouchableOpacity>
+      </TouchableOpacity>
     </Modal>
   );
 }
 
 export default function ProfileScreen() {
   const { user } = useUser();
-  const { signOut, getToken } = useAuth();
+  const { signOut } = useAuth();
   const router = useRouter();
   const me = trpc.auth.me.useQuery();
   const coaches = trpc.coaches.list.useQuery({ limit: 20, offset: 0 });
-  const utils = trpc.useUtils();
-
-  const updateProfile = trpc.auth.updateProfile.useMutation({
-    onSuccess: () => {
-      utils.auth.me.invalidate();
-    },
-  });
 
   const role = me.data?.role ?? 'user';
-  const displayName = me.data?.name || user?.fullName || 'Member';
+  const displayName = user?.fullName || me.data?.name || 'Member';
   const email = user?.primaryEmailAddress?.emailAddress || me.data?.email || '';
-  const profilePictureUrl = (me.data as any)?.profilePictureUrl || user?.imageUrl || null;
+  const profilePictureUrl = user?.imageUrl || null;
 
   const [nameModalVisible, setNameModalVisible] = useState(false);
+  const [savingName, setSavingName] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
 
   const onEditName = () => setNameModalVisible(true);
 
-  const onSaveName = async (name: string) => {
+  const onSaveName = async (newName: string) => {
+    if (!user) return;
+    setSavingName(true);
     try {
-      await updateProfile.mutateAsync({ name });
+      // Split into first/last name for Clerk
+      const parts = newName.trim().split(/\s+/);
+      const firstName = parts[0] || '';
+      const lastName = parts.slice(1).join(' ') || '';
+
+      await user.update({ firstName, lastName });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       trackEvent('profile_name_updated');
       setNameModalVisible(false);
-    } catch {
+    } catch (error) {
       Alert.alert('Error', 'Failed to update name. Please try again.');
+    } finally {
+      setSavingName(false);
     }
   };
 
   const onChangeProfilePicture = () => {
-    Alert.alert('Change Profile Picture', 'Choose a source', [
+    const options: { text: string; onPress?: () => void; style?: 'cancel' | 'destructive' }[] = [
       {
         text: 'Camera',
         onPress: () => pickAndUploadImage('camera'),
@@ -145,11 +155,39 @@ export default function ProfileScreen() {
         text: 'Photo Library',
         onPress: () => pickAndUploadImage('library'),
       },
-      { text: 'Cancel', style: 'cancel' },
-    ]);
+    ];
+
+    // Allow removing picture if one is set
+    if (profilePictureUrl && !profilePictureUrl.includes('gravatar')) {
+      options.push({
+        text: 'Remove Photo',
+        style: 'destructive',
+        onPress: removeProfilePicture,
+      });
+    }
+
+    options.push({ text: 'Cancel', style: 'cancel' });
+
+    Alert.alert('Change Profile Picture', 'Choose a source', options);
+  };
+
+  const removeProfilePicture = async () => {
+    if (!user) return;
+    setUploadingPicture(true);
+    try {
+      await user.setProfileImage({ file: null });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      trackEvent('profile_picture_removed');
+    } catch {
+      Alert.alert('Error', 'Failed to remove profile picture.');
+    } finally {
+      setUploadingPicture(false);
+    }
   };
 
   const pickAndUploadImage = async (source: 'camera' | 'library') => {
+    if (!user) return;
+
     if (source === 'camera') {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
       if (status !== 'granted') {
@@ -185,34 +223,19 @@ export default function ProfileScreen() {
 
     setUploadingPicture(true);
     try {
-      const token = await getToken();
-      if (!token) throw new Error('Not authenticated');
-
-      const formData = new FormData();
-      const uriParts = asset.uri.split('/');
-      const fileName = uriParts[uriParts.length - 1] || 'photo.jpg';
-      const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
-      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-
-      formData.append('file', {
-        uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
-        name: fileName,
-        type: mimeType,
-      } as any);
-
-      const response = await fetch(`${API_URL}/api/profile/upload-picture`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
+      // Read file as base64 and pass to Clerk as a data URI
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.Base64,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
-      const { url } = await response.json();
+      const ext = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+      const dataUri = `data:${mimeType};base64,${base64}`;
 
-      await updateProfile.mutateAsync({ profilePictureUrl: url });
+      await user.setProfileImage({ file: dataUri });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       trackEvent('profile_picture_updated');
-    } catch {
+    } catch (error) {
       Alert.alert('Error', 'Failed to update profile picture. Please try again.');
     } finally {
       setUploadingPicture(false);
@@ -332,7 +355,7 @@ export default function ProfileScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       {/* Profile header */}
       <View style={styles.headerCard}>
-        <TouchableOpacity onPress={onChangeProfilePicture} style={styles.avatarWrapper}>
+        <TouchableOpacity onPress={onChangeProfilePicture} style={styles.avatarWrapper} disabled={uploadingPicture}>
           {profilePictureUrl ? (
             <Image
               source={{ uri: profilePictureUrl }}
@@ -512,7 +535,7 @@ export default function ProfileScreen() {
         currentName={displayName}
         onClose={() => setNameModalVisible(false)}
         onSave={onSaveName}
-        saving={updateProfile.isPending}
+        saving={savingName}
       />
     </ScrollView>
   );
