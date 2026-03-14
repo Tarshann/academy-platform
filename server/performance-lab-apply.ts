@@ -16,6 +16,19 @@ interface PerformanceLabApplication {
   submittedAt: string;
 }
 
+/** Escape HTML special characters to prevent injection in email templates */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_FIELD_LENGTH = 1000;
+
 export async function handlePerformanceLabApply(req: Request, res: Response) {
   try {
     const body = req.body as PerformanceLabApplication;
@@ -29,6 +42,34 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
     ) {
       return res.status(400).json({ error: "All required fields must be filled out." });
     }
+
+    // Validate email format
+    if (!EMAIL_RE.test(body.parentEmail)) {
+      return res.status(400).json({ error: "Please provide a valid email address." });
+    }
+
+    // Enforce field length limits
+    const allFields = [body.parentName, body.parentPhone, body.parentEmail, body.athleteName, body.athleteAge,
+      body.currentSports, body.trainingGoals, body.preferredDays, body.injuries, body.hearAbout];
+    if (allFields.some(f => typeof f === "string" && f.length > MAX_FIELD_LENGTH)) {
+      return res.status(400).json({ error: "One or more fields exceed the maximum allowed length." });
+    }
+
+    // Sanitize all user input for HTML email rendering
+    const esc = (v: string | undefined) => escapeHtml(v || "");
+    const safe = {
+      parentName: esc(body.parentName),
+      parentPhone: esc(body.parentPhone),
+      parentEmail: esc(body.parentEmail),
+      athleteName: esc(body.athleteName),
+      athleteAge: esc(body.athleteAge),
+      currentSports: esc(body.currentSports),
+      trainingGoals: esc(body.trainingGoals),
+      preferredDays: esc(body.preferredDays),
+      injuries: esc(body.injuries),
+      hearAbout: body.hearAbout,
+      submittedAt: esc(body.submittedAt || new Date().toISOString()),
+    };
 
     // Send confirmation email to parent
     await sendEmail({
@@ -59,14 +100,14 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
               <h1>Application Received</h1>
             </div>
             <div class="content">
-              <p>Hi ${body.parentName},</p>
-              <p>Thank you for applying to the Academy Performance Lab for <strong>${body.athleteName}</strong>.</p>
+              <p>Hi ${safe.parentName},</p>
+              <p>Thank you for applying to the Academy Performance Lab for <strong>${safe.athleteName}</strong>.</p>
               <p>Coach Mac will review your application and reach out within 48 hours to discuss next steps and schedule your athlete's first session.</p>
 
               <div class="details">
-                <div class="details-row"><span class="label">Athlete:</span> ${body.athleteName} (age ${body.athleteAge})</div>
-                ${body.currentSports ? `<div class="details-row"><span class="label">Sports:</span> ${body.currentSports}</div>` : ""}
-                ${body.preferredDays ? `<div class="details-row"><span class="label">Preferred Days:</span> ${body.preferredDays}</div>` : ""}
+                <div class="details-row"><span class="label">Athlete:</span> ${safe.athleteName} (age ${safe.athleteAge})</div>
+                ${safe.currentSports ? `<div class="details-row"><span class="label">Sports:</span> ${safe.currentSports}</div>` : ""}
+                ${safe.preferredDays ? `<div class="details-row"><span class="label">Preferred Days:</span> ${safe.preferredDays}</div>` : ""}
               </div>
 
               <p><strong>What happens next:</strong></p>
@@ -78,7 +119,7 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
 
               <p>No payment is required until your application is accepted and a start date is confirmed.</p>
 
-              <p>We look forward to working with ${body.athleteName}!</p>
+              <p>We look forward to working with ${safe.athleteName}!</p>
               <p><strong>— The Academy Team</strong></p>
             </div>
             <div class="footer">
@@ -103,29 +144,29 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
 
     await sendEmail({
       to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
-      subject: `New Performance Lab Application: ${body.athleteName}`,
+      subject: `New Performance Lab Application: ${safe.athleteName}`,
       html: `
         <h2>New Performance Lab Application</h2>
         <hr>
         <h3>Parent / Guardian</h3>
-        <p><strong>Name:</strong> ${body.parentName}</p>
-        <p><strong>Phone:</strong> ${body.parentPhone}</p>
-        <p><strong>Email:</strong> ${body.parentEmail}</p>
+        <p><strong>Name:</strong> ${safe.parentName}</p>
+        <p><strong>Phone:</strong> ${safe.parentPhone}</p>
+        <p><strong>Email:</strong> ${safe.parentEmail}</p>
         <hr>
         <h3>Athlete</h3>
-        <p><strong>Name:</strong> ${body.athleteName}</p>
-        <p><strong>Age:</strong> ${body.athleteAge}</p>
-        <p><strong>Current Sports:</strong> ${body.currentSports || "—"}</p>
-        <p><strong>Training Goals:</strong> ${body.trainingGoals || "—"}</p>
-        <p><strong>Preferred Days:</strong> ${body.preferredDays || "—"}</p>
-        <p><strong>Injuries / Limitations:</strong> ${body.injuries || "None noted"}</p>
-        <p><strong>How They Heard About Us:</strong> ${hearAboutLabels[body.hearAbout] || body.hearAbout || "—"}</p>
+        <p><strong>Name:</strong> ${safe.athleteName}</p>
+        <p><strong>Age:</strong> ${safe.athleteAge}</p>
+        <p><strong>Current Sports:</strong> ${safe.currentSports || "—"}</p>
+        <p><strong>Training Goals:</strong> ${safe.trainingGoals || "—"}</p>
+        <p><strong>Preferred Days:</strong> ${safe.preferredDays || "—"}</p>
+        <p><strong>Injuries / Limitations:</strong> ${safe.injuries || "None noted"}</p>
+        <p><strong>How They Heard About Us:</strong> ${hearAboutLabels[safe.hearAbout] || escapeHtml(safe.hearAbout || "") || "—"}</p>
         <hr>
-        <p><strong>Submitted:</strong> ${body.submittedAt}</p>
+        <p><strong>Submitted:</strong> ${safe.submittedAt}</p>
       `,
     });
 
-    logger.info(`[Performance Lab] Application: ${body.athleteName} (age ${body.athleteAge})`);
+    logger.info(`[Performance Lab] Application: ${safe.athleteName} (age ${safe.athleteAge})`);
     return res.status(200).json({ success: true });
   } catch (error) {
     logger.error("[Performance Lab] Application error:", error);

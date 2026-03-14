@@ -6,7 +6,7 @@ import { appRouter } from "./routers";
 import { createContext } from "./_core/context";
 import { ENV } from "./_core/env";
 import { getHealthStatus } from "./_core/health";
-import { apiRateLimiter, chatSendRateLimiter } from "./_core/rateLimiter";
+import { apiRateLimiter, chatSendRateLimiter, contactFormRateLimiter } from "./_core/rateLimiter";
 
 const ALLOWED_ROOMS = new Set(["general", "announcements", "parents", "coaches"]);
 const MAX_MESSAGE_LENGTH = 5000;
@@ -60,14 +60,14 @@ async function verifyChatToken(token: string | undefined): Promise<{ id: number;
   }
 }
 
-// Skills Lab registration
-app.post("/api/skills-lab-register", async (req, res) => {
+// Skills Lab registration (rate-limited)
+app.post("/api/skills-lab-register", contactFormRateLimiter, async (req, res) => {
   const { handleSkillsLabRegister } = await import("./skills-lab-register");
   return handleSkillsLabRegister(req, res);
 });
 
-// Performance Lab application
-app.post("/api/performance-lab-apply", async (req, res) => {
+// Performance Lab application (rate-limited)
+app.post("/api/performance-lab-apply", contactFormRateLimiter, async (req, res) => {
   const { handlePerformanceLabApply } = await import(
     "./performance-lab-apply"
   );
@@ -94,7 +94,7 @@ app.get("/api/chat/history/:room", async (req, res) => {
   }
 
   try {
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 200);
     const { getDb } = await import("./db");
     const { chatMessages } = await import("../drizzle/schema");
     const { eq, desc } = await import("drizzle-orm");
