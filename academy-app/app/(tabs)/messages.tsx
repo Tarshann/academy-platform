@@ -27,7 +27,10 @@ export default function MessagesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const conversations = trpc.dm.getConversations.useQuery();
+  const conversations = trpc.dm.getConversations.useQuery(undefined, {
+    // Poll every 10 seconds so new messages/conversations appear without manual refresh
+    refetchInterval: 10_000,
+  });
   const availableUsers = trpc.dm.getAvailableUsers.useQuery();
   const startConversation = trpc.dm.startConversation.useMutation({
     onSuccess: (data: any) => {
@@ -148,7 +151,7 @@ export default function MessagesScreen() {
   // Build a map of conversationId → otherUser name for search results
   const convoNameMap = new Map<number, string>();
   (conversations.data ?? []).forEach((c: any) => {
-    convoNameMap.set(c.id, c.otherUser?.name || 'Unknown');
+    convoNameMap.set(c.id, c.otherUser?.name || c.otherUser?.email || 'Unknown');
   });
 
   if (conversations.isLoading) {
@@ -291,7 +294,7 @@ export default function MessagesScreen() {
             </View>
           }
           renderItem={({ item }: { item: any }) => {
-            const displayName = item.otherUser?.name || 'Unknown';
+            const displayName = item.otherUser?.name || item.otherUser?.email || 'Unknown';
             const lastMsg = item.lastMessage;
             const hasUnread = item.unreadCount > 0;
 

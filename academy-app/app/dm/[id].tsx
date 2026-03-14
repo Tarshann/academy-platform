@@ -58,7 +58,11 @@ export default function DmConversationScreen() {
   // Fetch DM messages
   const messagesQuery = trpc.dm.getMessages.useQuery(
     { conversationId, limit: 50 },
-    { enabled: !!conversationId }
+    {
+      enabled: !!conversationId,
+      // Override global 5-min staleTime so messages are always fresh on mount
+      staleTime: 0,
+    }
   );
 
   // Ably token for real-time
@@ -70,9 +74,10 @@ export default function DmConversationScreen() {
   // Send DM mutation
   const sendMessage = trpc.dm.sendMessage.useMutation({
     onSuccess: () => {
-      if (!connected) {
-        messagesQuery.refetch();
-      }
+      // Always refetch from DB so the cache is up-to-date.
+      // Without this, navigating away and back shows stale cached data
+      // because realtimeMessages state is cleared on unmount.
+      messagesQuery.refetch();
     },
   });
 

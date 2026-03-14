@@ -149,13 +149,13 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
     // Get or create user in database
     let user = await db.getUserByOpenId(clerkUserId);
 
-    // If user doesn't exist, sync from Clerk
-    if (!user) {
+    // If user doesn't exist or has no name, sync from Clerk
+    if (!user || !user.name) {
       try {
         user = await syncClerkUserToDatabase(clerkUserId);
       } catch (error) {
         logger.error("[Clerk] Failed to sync user:", error);
-        return null;
+        if (!user) return null;
       }
     }
 
