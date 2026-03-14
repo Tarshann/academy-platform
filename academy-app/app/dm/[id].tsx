@@ -52,6 +52,7 @@ export default function DmConversationScreen() {
   const typingRef = useRef<{ enter: (data: any) => void; leave: () => void; unsubscribe: () => void } | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const utils = trpc.useUtils();
   const meQuery = trpc.auth.me.useQuery();
   const myUserId = meQuery.data?.id;
 
@@ -73,11 +74,12 @@ export default function DmConversationScreen() {
 
   // Send DM mutation
   const sendMessage = trpc.dm.sendMessage.useMutation({
-    onSuccess: () => {
-      // Always refetch from DB so the cache is up-to-date.
-      // Without this, navigating away and back shows stale cached data
-      // because realtimeMessages state is cleared on unmount.
-      messagesQuery.refetch();
+    onSuccess: (newMessage) => {
+      // Invalidate the query cache so messages persist across navigation.
+      // refetch() alone can be cancelled if the user navigates away before
+      // it completes, leaving stale cache data on the next mount.
+      utils.dm.getMessages.invalidate({ conversationId });
+      utils.dm.getConversations.invalidate();
     },
   });
 
@@ -119,6 +121,8 @@ export default function DmConversationScreen() {
           if (prev.some((m) => m.id === msg.id)) return prev;
           return [...prev, msg];
         });
+        // Invalidate cache so message persists across navigation
+        utils.dm.getMessages.invalidate({ conversationId });
         markAsRead.mutate({ conversationId });
         // Publish read receipt so sender knows we read it
         if (myUserId) {
