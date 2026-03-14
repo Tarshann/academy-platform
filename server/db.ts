@@ -1287,6 +1287,28 @@ import {
   type InsertNotificationLog,
 } from "../drizzle/schema";
 
+// Lightweight check: is userId a participant in conversationId?
+export async function isConversationParticipant(
+  conversationId: number,
+  userId: number
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const result = await db
+    .select({ id: dmParticipants.id })
+    .from(dmParticipants)
+    .where(
+      and(
+        eq(dmParticipants.conversationId, conversationId),
+        eq(dmParticipants.userId, userId)
+      )
+    )
+    .limit(1);
+
+  return result.length > 0;
+}
+
 // Get or create a conversation between two users
 export async function getOrCreateConversation(userId1: number, userId2: number) {
   const db = await getDb();
