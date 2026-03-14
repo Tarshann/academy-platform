@@ -36,9 +36,19 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
+          href: null,
           title: 'Messages',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="mail-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="media"
+        options={{
+          title: 'Media',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="play-circle-outline" size={size} color={color} />
           ),
         }}
       />
