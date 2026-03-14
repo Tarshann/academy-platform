@@ -1,6 +1,6 @@
-import { useSignIn } from '@clerk/clerk-expo';
+import { useSignIn, useAuth } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,14 +18,22 @@ const ACADEMY_GOLD = '#CFB87C';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
+
+  // If already signed in, redirect to tabs immediately
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace('/(tabs)');
+    }
+  }, [isSignedIn, router]);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const onSignIn = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded || isSignedIn) return;
     setLoading(true);
 
     try {
