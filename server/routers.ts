@@ -2236,6 +2236,102 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  feed: router({
+    list: publicProcedure
+      .input(
+        z.object({
+          limit: z.number().int().min(1).max(50).optional(),
+          offset: z.number().int().min(0).optional(),
+          category: z.enum(["all", "training", "highlights"]).optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const limit = input?.limit ?? 20;
+        const offset = input?.offset ?? 0;
+        const category = input?.category ?? "all";
+
+        const { getAllVideos, getVideosByCategory } = await import("./db");
+        const { getDb } = await import("./db");
+        const { galleryPhotos } = await import("../drizzle/schema");
+        const { desc, eq } = await import("drizzle-orm");
+
+        // Fetch published videos
+        const videosData = category === "all"
+          ? await getAllVideos(true)
+          : await getVideosByCategory(category, true);
+
+        // Fetch visible gallery photos
+        const db = await getDb();
+        let photosData: Array<{
+          id: number;
+          title: string;
+          description: string | null;
+          imageUrl: string;
+          imageKey: string | null;
+          category: string;
+          createdAt: Date;
+        }> = [];
+        if (db) {
+          const conditions = [eq(galleryPhotos.isVisible, true)];
+          if (category !== "all") {
+            conditions.push(eq(galleryPhotos.category, category as "training" | "highlights"));
+          }
+          const { and } = await import("drizzle-orm");
+          photosData = await db
+            .select({
+              id: galleryPhotos.id,
+              title: galleryPhotos.title,
+              description: galleryPhotos.description,
+              imageUrl: galleryPhotos.imageUrl,
+              imageKey: galleryPhotos.imageKey,
+              category: galleryPhotos.category,
+              createdAt: galleryPhotos.createdAt,
+            })
+            .from(galleryPhotos)
+            .where(and(...conditions))
+            .orderBy(desc(galleryPhotos.createdAt));
+        }
+
+        // Normalize into a unified feed
+        const feedItems = [
+          ...videosData.map((v: any) => ({
+            id: `video-${v.id}`,
+            type: "video" as const,
+            title: v.title,
+            description: v.description ?? null,
+            mediaUrl: v.url,
+            thumbnail: v.thumbnail ?? null,
+            platform: v.platform ?? null,
+            category: v.category,
+            viewCount: v.viewCount ?? 0,
+            createdAt: v.createdAt,
+          })),
+          ...photosData.map((p) => ({
+            id: `photo-${p.id}`,
+            type: "photo" as const,
+            title: p.title,
+            description: p.description ?? null,
+            mediaUrl: p.imageUrl,
+            thumbnail: null,
+            platform: null,
+            category: p.category,
+            viewCount: 0,
+            createdAt: p.createdAt,
+          })),
+        ];
+
+        // Sort by date descending
+        feedItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        // Paginate
+        return {
+          items: feedItems.slice(offset, offset + limit),
+          total: feedItems.length,
+          hasMore: offset + limit < feedItems.length,
+        };
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

@@ -104,6 +104,15 @@ export default function DashboardScreen() {
       },
     },
     {
+      key: 'media',
+      icon: 'play-circle-outline' as const,
+      label: 'Media',
+      onPress: () => {
+        trackEvent('dashboard_quick_action_tapped', { action: 'media' });
+        router.push('/(tabs)/media');
+      },
+    },
+    {
       key: 'shop',
       icon: 'bag-outline' as const,
       label: 'Shop',
