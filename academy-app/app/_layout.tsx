@@ -1,7 +1,7 @@
 import { ClerkProvider, ClerkLoaded, useAuth, useUser } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot, Stack, useRouter, useSegments, usePathname } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
@@ -125,7 +125,7 @@ function AuthGuard() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [isNavigating, setIsNavigating] = useState(false);
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -133,17 +133,15 @@ function AuthGuard() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isSignedIn && !inAuthGroup) {
-      setIsNavigating(true);
+      hasNavigated.current = true;
       router.replace('/(auth)/sign-in');
     } else if (isSignedIn && inAuthGroup) {
-      setIsNavigating(true);
+      hasNavigated.current = true;
       router.replace('/(tabs)');
-    } else {
-      setIsNavigating(false);
     }
   }, [isLoaded, isSignedIn, segments, router]);
 
-  if (!isLoaded || isNavigating) return <Loading />;
+  if (!isLoaded) return <Loading />;
 
   return (
     <>
