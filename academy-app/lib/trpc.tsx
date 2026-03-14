@@ -11,6 +11,16 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 
 if (!API_URL) {
   console.error('[tRPC] EXPO_PUBLIC_API_URL is not set — API calls will fail');
+  // In dev, surface this prominently so it's not silently ignored
+  if (__DEV__) {
+    setTimeout(() => {
+      const { Alert } = require('react-native');
+      Alert.alert(
+        'Configuration Error',
+        'EXPO_PUBLIC_API_URL is not set. All API calls will fail. Please check your environment configuration.',
+      );
+    }, 1000);
+  }
 }
 
 export const queryClient = new QueryClient({

@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
+import { getAblyClient, closeAbly, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { TypingIndicator } from '../../components/TypingIndicator';
@@ -129,6 +129,7 @@ export default function ChatRoomScreen() {
         } catch (e) {
           // Channel may already be detached
         }
+        closeAbly();
       };
     }
   }, [room, ablyTokenQuery.data, loadHistory]);

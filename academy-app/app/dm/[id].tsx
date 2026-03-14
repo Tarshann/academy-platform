@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
+import { getAblyClient, closeAbly, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
 import { TypingIndicator } from '../../components/TypingIndicator';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
@@ -144,6 +144,8 @@ export default function DmConversationScreen() {
     return () => {
       unsubscribe();
       typing.unsubscribe();
+      client.connection.off();
+      closeAbly();
     };
   }, [ablyTokenQuery.data, conversationId, myUserId]);
 

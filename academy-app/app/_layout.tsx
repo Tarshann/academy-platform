@@ -125,6 +125,7 @@ function AuthGuard() {
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -132,13 +133,17 @@ function AuthGuard() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isSignedIn && !inAuthGroup) {
+      setIsNavigating(true);
       router.replace('/(auth)/sign-in');
     } else if (isSignedIn && inAuthGroup) {
+      setIsNavigating(true);
       router.replace('/(tabs)');
+    } else {
+      setIsNavigating(false);
     }
   }, [isLoaded, isSignedIn, segments, router]);
 
-  if (!isLoaded) return <Loading />;
+  if (!isLoaded || isNavigating) return <Loading />;
 
   return (
     <>
