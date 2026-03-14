@@ -722,7 +722,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - DM `getAvailableUsers` now throws `TRPCError` instead of swallowing errors
 
 **Mobile fixes applied:**
-- Ably connection memory leak fixed (`closeAbly()` called on unmount)
+- Ably lifecycle fixed: DM screens no longer destroy the global Ably singleton on unmount (was breaking chat tab + other DMs)
 - Auth guard race condition fixed (login screen shake — commit `a2a2285`)
 - Backend-only devDependencies removed from `academy-app/package.json`
 - `package.json` version synced to 1.4.0 (matches `app.json`)
@@ -735,6 +735,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 **Recent feature additions (post-audit):**
 - **Profile editing** — Mobile uses Clerk SDK directly (`user.update()` for name, `user.setProfileImage()` for picture via base64). Backend `auth.updateProfile` tRPC route and `profilePictureUrl` schema column also exist for web portal use. New dependency: `expo-file-system`.
 - **DM reliability** — Fixed messages disappearing on re-entry by switching from `refetch()` to `utils.dm.getMessages.invalidate()` (persists across component unmounts). Conversation list polls every 10 seconds. Clerk auto-syncs missing user names to fix 'Unknown' display.
+- **DM performance** (commit `c30a4ff`) — Replaced `getUserConversations()` (N+1 queries) with lightweight `isConversationParticipant()` (single query) for auth checks in `getMessages` and `sendMessage`. Ably `publishDmMessage` now fire-and-forget (DB write returns immediately, real-time delivery non-blocking). Mobile no longer destroys global Ably singleton on DM screen unmount. User-facing Alert on send failure.
 
 ---
 
