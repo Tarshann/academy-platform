@@ -308,6 +308,7 @@ The `server/` directory follows a flat structure (no domain modules yet):
 | `ably.ts` | Ably real-time channel management (mobile real-time) |
 | `products.ts` | Product catalog and pricing logic |
 | `storage.ts` | File upload/storage via S3/Forge CDN |
+| `stripe-webhook.ts` | Stripe event processing: checkout, subscription, invoice, refund, payment failure |
 | `chat-sse.ts` | SSE real-time chat: room management, broadcast, active connection tracking |
 | `chat.ts` | Socket.IO chat (optional, for persistent-connection environments) |
 
@@ -333,8 +334,8 @@ appRouter
 └── pushNotifications.* # Push notification settings
 ```
 
-Procedures use three auth levels:
-- `publicProcedure` — No auth required
+Procedures use three auth levels (all defined in `server/_core/trpc.ts`):
+- `publicProcedure` — No auth required (public mutations have in-memory rate limiting)
 - `protectedProcedure` — Requires authenticated user
 - `adminProcedure` — Requires admin role (checked via `CLERK_ADMIN_EMAIL` or `OWNER_OPEN_ID`)
 
@@ -603,6 +604,7 @@ See `.env.example` for the full list. Key groups:
 - **Real-time**: Ably API keys (optional, for mobile real-time)
 - **Push**: VAPID keys (for Web Push notifications)
 - **AI**: LLM API keys (for AI-powered features)
+- **Admin**: `ADMIN_NOTIFY_EMAILS` (comma-separated admin notification recipients)
 
 - **Analytics**: `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` (Umami)
 - **Socket.IO**: `ENABLE_SOCKET_IO` (toggle, disabled by default)
@@ -698,15 +700,35 @@ npx expo start        # Dev server with Expo Go
 
 ---
 
-## Platform Audit & Known Issues
+## Platform Audit & Fixes Applied
 
-A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. Key high-priority findings:
+A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high-priority and 11 medium-priority issues have been fixed (commit `3b42b3e`):
 
-1. **Auth gaps** — `updateBookingStatus` should be admin-only (currently `protectedProcedure`); `getCoachBookings` missing authorization check
-2. **Rate limiting gaps** — Public mutations (`leads.submit`, `submitPrivateSessionBooking`) lack rate limiting
-3. **Mobile Ably memory leak** — Ably connection never calls `client.close()` on unmount
-4. **Mobile dependency mismatch** — `package.json` version says 1.0.0 but `app.json` says 1.4.0; server-only packages in devDependencies
-5. **Pricing discrepancy** — Performance Lab listed as "per month" in some places vs "per 6-week cohort" in config
+**Security fixes applied:**
+- HTML injection in lead email templates — escaped
+- `updateBookingStatus` restricted to `adminProcedure`; `getCoachBookings` scoped to own user
+- Rate limiting on `leads.submit` and `submitPrivateSessionBooking` (in-memory, 5 per 15min window)
+- `.max()` length limits on all lead/contact string inputs
+- LIKE wildcard escaping in DM search queries
+- `innerHTML` replaced with `textContent` in SignUp.tsx debug overlay
+
+**Architecture fixes applied:**
+- Duplicate `adminProcedure` removed from `routers.ts` — now imported from `_core/trpc.ts`
+- `console.error` replaced with `logger.error` throughout `routers.ts`
+- `logout` changed from `publicProcedure` to `protectedProcedure`
+- Hardcoded admin emails moved to `ADMIN_NOTIFY_EMAILS` env var
+- DM `getAvailableUsers` now throws `TRPCError` instead of swallowing errors
+
+**Mobile fixes applied:**
+- Ably connection memory leak fixed (`closeAbly()` called on unmount)
+- Auth guard race condition fixed (login screen shake — commit `a2a2285`)
+- Backend-only devDependencies removed from `academy-app/package.json`
+- `package.json` version synced to 1.4.0 (matches `app.json`)
+- Missing `EXPO_PUBLIC_API_URL` surfaced as Alert in dev mode
+
+**Stripe webhook expanded:**
+- `charge.refunded` handler added (logs refund, can trigger notifications)
+- `invoice.payment_failed` handler added (logs failure for follow-up)
 
 ---
 
