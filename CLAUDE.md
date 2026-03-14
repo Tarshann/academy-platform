@@ -101,7 +101,7 @@ academy-platform/
 │   ├── env.ts               #   Environment variable loading with fallbacks
 │   ├── context.ts           #   tRPC context (req, res, user) + auth resolution
 │   ├── trpc.ts              #   tRPC initialization + procedure definitions
-│   ├── clerk.ts             #   Clerk JWT, user sync, admin role detection
+│   ├── clerk.ts             #   Clerk JWT, user sync (auto-fills missing name from Clerk), admin role detection
 │   ├── clerk-oauth.ts       #   Clerk OAuth flow helpers
 │   ├── oauth.ts             #   OAuth fallback (non-Clerk auth)
 │   ├── checkout.ts          #   Stripe checkout session creation
@@ -317,7 +317,7 @@ The `server/` directory follows a flat structure (no domain modules yet):
 ```
 appRouter
 ├── system.*          # Health, version
-├── auth.*            # Login, logout, session
+├── auth.*            # Login, logout, session, updateProfile (name/picture), updateProfile
 ├── programs.*        # Program listings, details
 ├── announcements.*   # Facility announcements
 ├── schedules.*       # Session schedules
@@ -424,8 +424,10 @@ The root layout (`app/_layout.tsx`) sets up:
 - In-app program enrollment (Stripe checkout via expo-web-browser)
 - Attendance tracking with stats
 - All 4 chat rooms (General, Coaches, Parents, Announcements) + DMs
+- DM conversations with 10-second polling and cache invalidation for reliability
 - Chat image upload (camera + library, 5MB limit)
 - Merchandise shop
+- Profile editing: name (via Clerk `user.update()`) and picture (via Clerk `user.setProfileImage()` with base64 from expo-file-system) — no backend deployment required
 - Coach contact cards (API-driven, not hardcoded)
 - Push notification preferences
 - Payment history
@@ -729,6 +731,10 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 **Stripe webhook expanded:**
 - `charge.refunded` handler added (logs refund, can trigger notifications)
 - `invoice.payment_failed` handler added (logs failure for follow-up)
+
+**Recent feature additions (post-audit):**
+- **Profile editing** — Mobile uses Clerk SDK directly (`user.update()` for name, `user.setProfileImage()` for picture via base64). Backend `auth.updateProfile` tRPC route and `profilePictureUrl` schema column also exist for web portal use. New dependency: `expo-file-system`.
+- **DM reliability** — Fixed messages disappearing on re-entry by switching from `refetch()` to `utils.dm.getMessages.invalidate()` (persists across component unmounts). Conversation list polls every 10 seconds. Clerk auto-syncs missing user names to fix 'Unknown' display.
 
 ---
 
