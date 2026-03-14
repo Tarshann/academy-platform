@@ -60,7 +60,7 @@ export default function MessagesScreen() {
   });
 
   const onLongPressConversation = (item: any) => {
-    const displayName = item.otherUser?.name || 'Unknown';
+    const displayName = item.otherUser?.name || item.otherUser?.email || 'Unknown';
     const otherUserId = item.otherUser?.id;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

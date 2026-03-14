@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, closeAbly, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
+import { getAblyClient, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
 import { TypingIndicator } from '../../components/TypingIndicator';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
@@ -55,6 +55,12 @@ export default function DmConversationScreen() {
   const utils = trpc.useUtils();
   const meQuery = trpc.auth.me.useQuery();
   const myUserId = meQuery.data?.id;
+
+  // Get the other user's name for the header
+  const conversationsQuery = trpc.dm.getConversations.useQuery();
+  const otherUserName = conversationsQuery.data?.find(
+    (c: any) => c.id === conversationId
+  )?.otherUser?.name;
 
   // Fetch DM messages
   const messagesQuery = trpc.dm.getMessages.useQuery(
@@ -153,8 +159,9 @@ export default function DmConversationScreen() {
     return () => {
       unsubscribe();
       typing.unsubscribe();
-      client.connection.off();
-      closeAbly();
+      // Don't call closeAbly() — it destroys the global singleton which
+      // breaks Ably for other screens (chat tab, other DM conversations).
+      // Just unsubscribe from this conversation's channel.
     };
   }, [ablyTokenQuery.data, conversationId, myUserId]);
 
@@ -183,6 +190,10 @@ export default function DmConversationScreen() {
       trackMessageSent();
     } catch (error) {
       console.error('[DM] Send failed:', error);
+      Alert.alert(
+        'Message Not Sent',
+        'Your message could not be sent. Please check your connection and try again.',
+      );
     } finally {
       setIsSending(false);
     }
@@ -274,7 +285,7 @@ export default function DmConversationScreen() {
     <>
       <Stack.Screen
         options={{
-          title: 'Conversation',
+          title: otherUserName || 'Conversation',
           headerStyle: { backgroundColor: '#1a1a2e' },
           headerTintColor: '#fff',
           headerRight: () => (

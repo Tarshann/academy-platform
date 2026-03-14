@@ -1813,13 +1813,10 @@ export const appRouter = router({
         })
       )
       .query(async ({ ctx, input }) => {
-        const { getConversationMessages, getUserConversations } = await import("./db");
-        // Verify user is participant
-        const conversations = await getUserConversations(ctx.user.id);
-        const isParticipant = conversations.some(
-          (c: any) => c.id === input.conversationId
-        );
-        if (!isParticipant) {
+        const { getConversationMessages, isConversationParticipant } = await import("./db");
+        // Verify user is participant (single lightweight query)
+        const allowed = await isConversationParticipant(input.conversationId, ctx.user.id);
+        if (!allowed) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Not a participant" });
         }
         return await getConversationMessages(
@@ -1861,43 +1858,42 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const { sendDmMessage, getUserConversations } = await import("./db");
+        const { sendDmMessage, isConversationParticipant } = await import("./db");
 
-        // Verify user is participant
-        const conversations = await getUserConversations(ctx.user.id);
-        const isParticipant = conversations.some(
-          (c: any) => c.id === input.conversationId
-        );
-        if (!isParticipant) {
+        // Verify user is participant (single lightweight query)
+        const allowed = await isConversationParticipant(input.conversationId, ctx.user.id);
+        if (!allowed) {
           throw new TRPCError({ code: "FORBIDDEN", message: "Not a participant" });
         }
 
+        const senderName = ctx.user.name || "Unknown";
         const message = await sendDmMessage(
           input.conversationId,
           ctx.user.id,
-          ctx.user.name || "Unknown",
+          senderName,
           input.content,
           input.imageUrl
         );
 
-        // Publish to Ably for real-time delivery
-        const { publishDmMessage } = await import("./ably");
-        await publishDmMessage(input.conversationId, {
-          id: (message as any).id,
-          conversationId: input.conversationId,
-          senderId: ctx.user.id,
-          senderName: ctx.user.name || "Unknown",
-          content: input.content,
-          imageUrl: input.imageUrl,
-          createdAt: new Date().toISOString(),
-        });
+        // Publish to Ably for real-time delivery (fire-and-forget, don't block response)
+        import("./ably").then(({ publishDmMessage }) =>
+          publishDmMessage(input.conversationId, {
+            id: (message as any).id,
+            conversationId: input.conversationId,
+            senderId: ctx.user.id,
+            senderName,
+            content: input.content,
+            imageUrl: input.imageUrl,
+            createdAt: new Date().toISOString(),
+          })
+        ).catch(() => {});
 
         // Send push notifications to DM recipient (fire-and-forget)
         import("./push").then(({ notifyDmMessage }) =>
           notifyDmMessage(
             input.conversationId,
             ctx.user.id,
-            ctx.user.name || "Unknown",
+            senderName,
             input.content
           )
         ).catch(() => {});
