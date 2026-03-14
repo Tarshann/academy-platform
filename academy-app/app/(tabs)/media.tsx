@@ -7,7 +7,7 @@ import {
   RefreshControl,
   Linking,
   ActivityIndicator,
-  Dimensions,
+  Alert,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Image } from 'expo-image';
@@ -17,9 +17,6 @@ import { trackEvent } from '../../lib/analytics';
 
 const ACADEMY_GOLD = '#CFB87C';
 const NAVY = '#1a1a2e';
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_PADDING = 16;
-const IMAGE_WIDTH = SCREEN_WIDTH - CARD_PADDING * 2;
 
 type FeedItem = {
   id: string;
@@ -93,26 +90,65 @@ function FeedCardSkeleton() {
   );
 }
 
-function FeedCard({ item }: { item: FeedItem }) {
-  const trackViewMutation = trpc.videos.trackView.useMutation();
+function MediaImage({
+  item,
+  imageSource,
+  isVideo,
+}: {
+  item: FeedItem;
+  imageSource: { uri: string } | null;
+  isVideo: boolean;
+}) {
+  return (
+    <View style={styles.mediaContainer}>
+      {imageSource ? (
+        <Image
+          source={imageSource}
+          style={styles.mediaImage}
+          contentFit="cover"
+          transition={200}
+        />
+      ) : (
+        <View style={[styles.mediaImage, styles.placeholderImage]}>
+          <Ionicons
+            name={getPlatformIcon(item.platform)}
+            size={48}
+            color={ACADEMY_GOLD}
+          />
+        </View>
+      )}
 
-  const handlePress = useCallback(() => {
-    trackEvent('media_feed_item_tapped', {
-      type: item.type,
-      id: item.id,
-      platform: item.platform,
-    });
+      {/* Video overlay */}
+      {isVideo && (
+        <View style={styles.videoOverlay}>
+          <View style={styles.playButton}>
+            <Ionicons name="play" size={24} color="#fff" />
+          </View>
+        </View>
+      )}
 
-    if (item.type === 'video' && item.mediaUrl) {
-      // Track view and open in browser/native app
-      const numericId = parseInt(item.id.replace('video-', ''), 10);
-      if (!isNaN(numericId)) {
-        trackViewMutation.mutate({ id: numericId });
-      }
-      Linking.openURL(item.mediaUrl);
-    }
-  }, [item]);
+      {/* Type badge */}
+      <View style={[styles.typeBadge, isVideo ? styles.videoBadge : styles.photoBadge]}>
+        <Ionicons
+          name={isVideo ? getPlatformIcon(item.platform) : 'image-outline'}
+          size={12}
+          color="#fff"
+        />
+        <Text style={styles.typeBadgeText}>
+          {isVideo ? getPlatformLabel(item.platform) : 'Photo'}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
+function FeedCard({
+  item,
+  onVideoPress,
+}: {
+  item: FeedItem;
+  onVideoPress: (item: FeedItem) => void;
+}) {
   const isVideo = item.type === 'video';
   const imageSource = isVideo
     ? item.thumbnail
@@ -121,52 +157,14 @@ function FeedCard({ item }: { item: FeedItem }) {
     : { uri: item.mediaUrl };
 
   return (
-    <TouchableOpacity
-      style={styles.card}
-      activeOpacity={isVideo ? 0.7 : 0.9}
-      onPress={isVideo ? handlePress : undefined}
-      disabled={!isVideo}
-    >
-      {/* Media */}
-      <View style={styles.mediaContainer}>
-        {imageSource ? (
-          <Image
-            source={imageSource}
-            style={styles.mediaImage}
-            contentFit="cover"
-            transition={200}
-          />
-        ) : (
-          <View style={[styles.mediaImage, styles.placeholderImage]}>
-            <Ionicons
-              name={getPlatformIcon(item.platform)}
-              size={48}
-              color={ACADEMY_GOLD}
-            />
-          </View>
-        )}
-
-        {/* Video overlay */}
-        {isVideo && (
-          <View style={styles.videoOverlay}>
-            <View style={styles.playButton}>
-              <Ionicons name="play" size={24} color="#fff" />
-            </View>
-          </View>
-        )}
-
-        {/* Type badge */}
-        <View style={[styles.typeBadge, isVideo ? styles.videoBadge : styles.photoBadge]}>
-          <Ionicons
-            name={isVideo ? getPlatformIcon(item.platform) : 'image-outline'}
-            size={12}
-            color="#fff"
-          />
-          <Text style={styles.typeBadgeText}>
-            {isVideo ? getPlatformLabel(item.platform) : 'Photo'}
-          </Text>
-        </View>
-      </View>
+    <View style={styles.card}>
+      {isVideo ? (
+        <TouchableOpacity activeOpacity={0.7} onPress={() => onVideoPress(item)}>
+          <MediaImage item={item} imageSource={imageSource} isVideo={isVideo} />
+        </TouchableOpacity>
+      ) : (
+        <MediaImage item={item} imageSource={imageSource} isVideo={isVideo} />
+      )}
 
       {/* Info */}
       <View style={styles.cardInfo}>
@@ -193,7 +191,7 @@ function FeedCard({ item }: { item: FeedItem }) {
           <Text style={styles.dateText}>{formatDate(item.createdAt)}</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -207,6 +205,25 @@ export default function MediaFeedScreen() {
     category,
   });
 
+  const trackViewMutation = trpc.videos.trackView.useMutation();
+
+  const handleVideoPress = useCallback(
+    (item: FeedItem) => {
+      trackEvent('media_feed_item_tapped', {
+        type: item.type,
+        id: item.id,
+        platform: item.platform,
+      });
+
+      const numericId = parseInt(item.id.replace('video-', ''), 10);
+      if (!isNaN(numericId)) {
+        trackViewMutation.mutate({ id: numericId });
+      }
+      Linking.openURL(item.mediaUrl);
+    },
+    [trackViewMutation]
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     await feed.refetch();
@@ -214,8 +231,10 @@ export default function MediaFeedScreen() {
   };
 
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => <FeedCard item={item} />,
-    []
+    ({ item }: { item: FeedItem }) => (
+      <FeedCard item={item} onVideoPress={handleVideoPress} />
+    ),
+    [handleVideoPress]
   );
 
   return (
@@ -265,8 +284,22 @@ export default function MediaFeedScreen() {
               </View>
             )}
 
+            {/* Error */}
+            {feed.isError && (
+              <View style={styles.emptyState}>
+                <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+                <Text style={styles.emptyTitle}>Failed to load media</Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() => feed.refetch()}
+                >
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Empty */}
-            {!feed.isLoading && (feed.data?.items?.length ?? 0) === 0 && (
+            {!feed.isLoading && !feed.isError && (feed.data?.items?.length ?? 0) === 0 && (
               <View style={styles.emptyState}>
                 <Ionicons name="film-outline" size={48} color="#ccc" />
                 <Text style={styles.emptyTitle}>No media yet</Text>
@@ -297,7 +330,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   listContent: {
-    padding: CARD_PADDING,
+    padding: 16,
     paddingBottom: 32,
   },
   // Skeleton
@@ -444,7 +477,7 @@ const styles = StyleSheet.create({
     color: '#999',
     marginLeft: 'auto',
   },
-  // Empty
+  // Empty / Error
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
@@ -459,5 +492,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#999',
     textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: NAVY,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: ACADEMY_GOLD,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

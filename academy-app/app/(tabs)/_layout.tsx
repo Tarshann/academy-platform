@@ -36,6 +36,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
+          href: null,
           title: 'Messages',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="mail-outline" size={size} color={color} />
@@ -63,7 +64,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="programs"
         options={{
-          href: null,
           title: 'Programs',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />

@@ -2251,10 +2251,9 @@ export const appRouter = router({
         const offset = input?.offset ?? 0;
         const category = input?.category ?? "all";
 
-        const { getAllVideos, getVideosByCategory } = await import("./db");
-        const { getDb } = await import("./db");
+        const { getAllVideos, getVideosByCategory, getDb } = await import("./db");
         const { galleryPhotos } = await import("../drizzle/schema");
-        const { desc, eq } = await import("drizzle-orm");
+        const { desc, eq, and } = await import("drizzle-orm");
 
         // Fetch published videos
         const videosData = category === "all"
@@ -2277,7 +2276,6 @@ export const appRouter = router({
           if (category !== "all") {
             conditions.push(eq(galleryPhotos.category, category as "training" | "highlights"));
           }
-          const { and } = await import("drizzle-orm");
           photosData = await db
             .select({
               id: galleryPhotos.id,
@@ -2294,8 +2292,9 @@ export const appRouter = router({
         }
 
         // Normalize into a unified feed
+        type VideoRecord = typeof videosData[number];
         const feedItems = [
-          ...videosData.map((v: any) => ({
+          ...videosData.map((v: VideoRecord) => ({
             id: `video-${v.id}`,
             type: "video" as const,
             title: v.title,
@@ -2313,8 +2312,8 @@ export const appRouter = router({
             title: p.title,
             description: p.description ?? null,
             mediaUrl: p.imageUrl,
-            thumbnail: null,
-            platform: null,
+            thumbnail: null as string | null,
+            platform: null as string | null,
             category: p.category,
             viewCount: 0,
             createdAt: p.createdAt,

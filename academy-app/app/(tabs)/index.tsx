@@ -95,15 +95,6 @@ export default function DashboardScreen() {
       },
     },
     {
-      key: 'programs',
-      icon: 'grid-outline' as const,
-      label: 'Programs',
-      onPress: () => {
-        trackEvent('dashboard_quick_action_tapped', { action: 'programs' });
-        router.push('/(tabs)/programs');
-      },
-    },
-    {
       key: 'media',
       icon: 'play-circle-outline' as const,
       label: 'Media',
