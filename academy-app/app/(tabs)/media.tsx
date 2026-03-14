@@ -7,7 +7,6 @@ import {
   RefreshControl,
   Linking,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Image } from 'expo-image';
