@@ -12,6 +12,19 @@ interface SkillsLabRegistration {
   submittedAt: string;
 }
 
+/** Escape HTML special characters to prevent injection in email templates */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_FIELD_LENGTH = 500;
+
 export async function handleSkillsLabRegister(req: Request, res: Response) {
   try {
     const body = req.body as SkillsLabRegistration;
@@ -26,6 +39,28 @@ export async function handleSkillsLabRegister(req: Request, res: Response) {
     ) {
       return res.status(400).json({ error: "All required fields must be filled out." });
     }
+
+    // Validate email format
+    if (!EMAIL_RE.test(body.parentEmail)) {
+      return res.status(400).json({ error: "Please provide a valid email address." });
+    }
+
+    // Enforce field length limits
+    const fields = [body.parentName, body.parentPhone, body.parentEmail, body.athleteName, body.athleteAge, body.selectedSessions];
+    if (fields.some(f => typeof f !== "string" || f.length > MAX_FIELD_LENGTH)) {
+      return res.status(400).json({ error: "One or more fields exceed the maximum allowed length." });
+    }
+
+    // Sanitize all user input for HTML email rendering
+    const safe = {
+      parentName: escapeHtml(body.parentName),
+      parentPhone: escapeHtml(body.parentPhone),
+      parentEmail: escapeHtml(body.parentEmail),
+      athleteName: escapeHtml(body.athleteName),
+      athleteAge: escapeHtml(body.athleteAge),
+      selectedSessions: escapeHtml(body.selectedSessions),
+      submittedAt: escapeHtml(body.submittedAt || new Date().toISOString()),
+    };
 
     // Send confirmation email to parent
     await sendEmail({
@@ -56,12 +91,12 @@ export async function handleSkillsLabRegister(req: Request, res: Response) {
               <h1>Registration Confirmed</h1>
             </div>
             <div class="content">
-              <p>Hi ${body.parentName},</p>
-              <p><strong>${body.athleteName}</strong> is registered for Skills Lab. Just show up at the Academy Performance Center at your selected session time.</p>
+              <p>Hi ${safe.parentName},</p>
+              <p><strong>${safe.athleteName}</strong> is registered for Skills Lab. Just show up at the Academy Performance Center at your selected session time.</p>
 
               <div class="details">
-                <div class="details-row"><span class="label">Athlete:</span> ${body.athleteName} (age ${body.athleteAge})</div>
-                <div class="details-row"><span class="label">Sessions:</span> ${body.selectedSessions}</div>
+                <div class="details-row"><span class="label">Athlete:</span> ${safe.athleteName} (age ${safe.athleteAge})</div>
+                <div class="details-row"><span class="label">Sessions:</span> ${safe.selectedSessions}</div>
                 <div class="details-row"><span class="label">Cost:</span> $10 per session (pay at the door)</div>
               </div>
 
@@ -88,19 +123,19 @@ export async function handleSkillsLabRegister(req: Request, res: Response) {
     // Send notification to coach/admin
     await sendEmail({
       to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
-      subject: `New Skills Lab Registration: ${body.athleteName}`,
+      subject: `New Skills Lab Registration: ${safe.athleteName}`,
       html: `
         <h2>New Skills Lab Registration</h2>
-        <p><strong>Parent:</strong> ${body.parentName}</p>
-        <p><strong>Phone:</strong> ${body.parentPhone}</p>
-        <p><strong>Email:</strong> ${body.parentEmail}</p>
-        <p><strong>Athlete:</strong> ${body.athleteName} (age ${body.athleteAge})</p>
-        <p><strong>Sessions:</strong> ${body.selectedSessions}</p>
-        <p><strong>Submitted:</strong> ${body.submittedAt}</p>
+        <p><strong>Parent:</strong> ${safe.parentName}</p>
+        <p><strong>Phone:</strong> ${safe.parentPhone}</p>
+        <p><strong>Email:</strong> ${safe.parentEmail}</p>
+        <p><strong>Athlete:</strong> ${safe.athleteName} (age ${safe.athleteAge})</p>
+        <p><strong>Sessions:</strong> ${safe.selectedSessions}</p>
+        <p><strong>Submitted:</strong> ${safe.submittedAt}</p>
       `,
     });
 
-    logger.info(`[Skills Lab] Registration: ${body.athleteName} — ${body.selectedSessions}`);
+    logger.info(`[Skills Lab] Registration: ${safe.athleteName} — ${safe.selectedSessions}`);
     return res.status(200).json({ success: true });
   } catch (error) {
     logger.error("[Skills Lab] Registration error:", error);

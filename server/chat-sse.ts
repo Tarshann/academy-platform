@@ -191,7 +191,7 @@ export function setupSSEChat(app: Express) {
       return res.status(400).json({ error: "Invalid room" });
     }
 
-    const limit = parseInt(req.query.limit as string) || 50;
+    const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 200);
 
     try {
       const db = await getDb();

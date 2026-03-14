@@ -70,14 +70,15 @@ async function startServer() {
   // Body parser for JSON requests
   app.use(express.json());
 
-  // Skills Lab registration endpoint
-  app.post("/api/skills-lab-register", async (req, res) => {
+  // Skills Lab registration endpoint (rate-limited)
+  const { contactFormRateLimiter } = await import("./rateLimiter");
+  app.post("/api/skills-lab-register", contactFormRateLimiter, async (req, res) => {
     const { handleSkillsLabRegister } = await import("../skills-lab-register");
     return handleSkillsLabRegister(req, res);
   });
 
-  // Performance Lab application endpoint
-  app.post("/api/performance-lab-apply", async (req, res) => {
+  // Performance Lab application endpoint (rate-limited)
+  app.post("/api/performance-lab-apply", contactFormRateLimiter, async (req, res) => {
     const { handlePerformanceLabApply } = await import("../performance-lab-apply");
     return handlePerformanceLabApply(req, res);
   });
