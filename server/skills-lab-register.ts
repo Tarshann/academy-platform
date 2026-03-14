@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { sendEmail } from "./email";
 import { logger } from "./_core/logger";
+import { ENV } from "./_core/env";
 
 interface SkillsLabRegistration {
   parentName: string;
@@ -122,7 +123,7 @@ export async function handleSkillsLabRegister(req: Request, res: Response) {
 
     // Send notification to coach/admin
     await sendEmail({
-      to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
+      to: ENV.adminNotifyEmails.split(",").map((e: string) => e.trim()),
       subject: `New Skills Lab Registration: ${safe.athleteName}`,
       html: `
         <h2>New Skills Lab Registration</h2>

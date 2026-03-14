@@ -129,6 +129,14 @@ export async function handleStripeWebhook(req: Request, res: Response) {
         await handleInvoicePaid(event.data.object as Stripe.Invoice);
         break;
 
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+
+      case "charge.refunded":
+        await handleChargeRefunded(event.data.object as Stripe.Charge);
+        break;
+
       default:
         logger.info(`[Webhook] Unhandled event type: ${event.type}`);
     }
@@ -355,4 +363,37 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   logger.info(`[Webhook] Invoice paid: ${invoice.id}`);
   // Invoice payments are already tracked via payment_intent.succeeded
   // This is here for logging and potential future use
+}
+
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  logger.info(`[Webhook] Invoice payment failed: ${invoice.id}`);
+
+  const db = await getDb();
+  if (!db) return;
+
+  // Update subscription status to past_due if associated
+  if (invoice.subscription && typeof invoice.subscription === "string") {
+    await db
+      .update(subscriptions)
+      .set({
+        status: "past_due",
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.stripeSubscriptionId, invoice.subscription));
+  }
+}
+
+async function handleChargeRefunded(charge: Stripe.Charge) {
+  logger.info(`[Webhook] Charge refunded: ${charge.id}`);
+
+  const db = await getDb();
+  if (!db) return;
+
+  // Update the payment record status to refunded via the associated payment intent
+  if (charge.payment_intent && typeof charge.payment_intent === "string") {
+    await db
+      .update(payments)
+      .set({ status: "refunded" })
+      .where(eq(payments.stripePaymentIntentId, charge.payment_intent));
+  }
 }

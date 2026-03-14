@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { sendEmail } from "./email";
 import { logger } from "./_core/logger";
+import { ENV } from "./_core/env";
 
 interface PerformanceLabApplication {
   parentName: string;
@@ -143,7 +144,7 @@ export async function handlePerformanceLabApply(req: Request, res: Response) {
     };
 
     await sendEmail({
-      to: ["omarphilmore@yahoo.com", "Tarshann@gmail.com"],
+      to: ENV.adminNotifyEmails.split(",").map((e: string) => e.trim()),
       subject: `New Performance Lab Application: ${safe.athleteName}`,
       html: `
         <h2>New Performance Lab Application</h2>

@@ -28,4 +28,6 @@ export const ENV = {
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
   // Ably real-time messaging
   ablyApiKey: process.env.ABLY_API_KEY ?? "",
+  // Admin notification email addresses (comma-separated)
+  adminNotifyEmails: process.env.ADMIN_NOTIFY_EMAILS ?? "omarphilmore@yahoo.com,Tarshann@gmail.com",
 };

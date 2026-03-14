@@ -5,7 +5,7 @@ import { ENV } from "./_core/env";
 import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -17,6 +17,22 @@ import {
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
+import { logger } from "./_core/logger";
+
+// Simple in-memory rate limiter for tRPC public mutations
+const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
+function checkPublicMutationRate(key: string, maxPerWindow = 5, windowMs = 15 * 60 * 1000) {
+  const now = Date.now();
+  const entry = publicMutationRateStore[key];
+  if (!entry || entry.resetTime < now) {
+    publicMutationRateStore[key] = { count: 1, resetTime: now + windowMs };
+    return;
+  }
+  if (entry.count >= maxPerWindow) {
+    throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Too many requests. Please try again later." });
+  }
+  entry.count++;
+}
 
 const CHAT_TOKEN_TTL_MS = 1000 * 60 * 10;
 
@@ -60,16 +76,6 @@ const paginationSchema = z.object({
 const ageSchema = z.number().int().min(1).max(99);
 const maxParticipantsSchema = z.number().int().min(1).nullable();
 
-
-const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Admin access required",
-    });
-  }
-  return next({ ctx });
-});
 
 const createProgramCheckoutSession = async ({
   productIds,
@@ -221,7 +227,7 @@ export const appRouter = router({
       }
       return tokenRequest;
     }),
-    logout: publicProcedure.mutation(({ ctx }) => {
+    logout: protectedProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return {
@@ -315,17 +321,20 @@ export const appRouter = router({
     submit: publicProcedure
       .input(
         z.object({
-          name: z.string().optional(),
-          email: z.string().email(),
-          phone: z.string().optional(),
-          source: z.string().default("quiz"),
-          athleteAge: z.string().optional(),
-          sport: z.string().optional(),
-          goal: z.string().optional(),
-          recommendedProgram: z.string().optional(),
+          name: z.string().max(200).optional(),
+          email: z.string().email().max(320),
+          phone: z.string().max(30).optional(),
+          source: z.string().max(100).default("quiz"),
+          athleteAge: z.string().max(20).optional(),
+          sport: z.string().max(100).optional(),
+          goal: z.string().max(200).optional(),
+          recommendedProgram: z.string().max(200).optional(),
         })
       )
       .mutation(async ({ input }) => {
+        // Rate limit lead submissions by email
+        checkPublicMutationRate(`lead:${input.email}`);
+
         const { getDb } = await import("./db");
         const { leads } = await import("../drizzle/schema");
         const { eq } = await import("drizzle-orm");
@@ -410,11 +419,11 @@ export const appRouter = router({
     submit: publicProcedure
       .input(
         z.object({
-          name: z.string().min(1),
-          email: z.string().email(),
-          phone: z.string().optional(),
-          subject: z.string().min(1),
-          message: z.string().min(10),
+          name: z.string().min(1).max(200),
+          email: z.string().email().max(320),
+          phone: z.string().max(30).optional(),
+          subject: z.string().min(1).max(300),
+          message: z.string().min(10).max(5000),
           type: z.enum(["general", "volunteer"]).default("general"),
         })
       )
@@ -1390,13 +1399,18 @@ export const appRouter = router({
         })
       )
       .query(async ({ input, ctx }) => {
+        // Only admins can view all bookings; coaches can only view their own
+        if (input.coachId && input.coachId !== ctx.user.id && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You can only view your own bookings" });
+        }
+
         const { getDb } = await import("./db");
         const { privateSessionBookings } = await import("../drizzle/schema");
         const { eq, and } = await import("drizzle-orm");
-        
+
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-        
+
         const conditions = [];
         if (input.coachId) {
           conditions.push(eq(privateSessionBookings.coachId, input.coachId));
@@ -1414,7 +1428,7 @@ export const appRouter = router({
         return bookings;
       }),
 
-    updateBookingStatus: protectedProcedure
+    updateBookingStatus: adminProcedure
       .input(
         z.object({
           bookingId: z.number(),
@@ -1457,13 +1471,16 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        // Rate limit booking submissions by email
+        checkPublicMutationRate(`booking:${input.customerEmail}`);
+
         try {
           const { getDb } = await import("./db");
           const { privateSessionBookings } = await import("../drizzle/schema");
-          
+
           const db = await getDb();
           if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-          
+
           // Insert booking request into database
           const [inserted] = await db
             .insert(privateSessionBookings)
@@ -1493,7 +1510,7 @@ export const appRouter = router({
             bookingId,
           };
         } catch (error) {
-          console.error("Booking submission error:", error);
+          logger.error("Booking submission error:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to submit booking request",
@@ -1766,7 +1783,7 @@ export const appRouter = router({
         return await getUserConversations(ctx.user.id);
       } catch (error: any) {
         const msg = error?.message || String(error) || "Unknown error";
-        console.error("[DM] getConversations failed for user", ctx.user.id, ":", msg, error?.stack);
+        logger.error("[DM] getConversations failed for user", ctx.user.id, ":", msg, error?.stack);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: msg,
@@ -1891,8 +1908,11 @@ export const appRouter = router({
         const { getAvailableDmUsers } = await import("./db");
         return await getAvailableDmUsers(ctx.user.id);
       } catch (error: any) {
-        console.error("[DM] getAvailableUsers failed:", error?.message || error);
-        return [];
+        logger.error("[DM] getAvailableUsers failed:", error?.message || error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: error?.message || "Failed to fetch available users",
+        });
       }
     }),
 

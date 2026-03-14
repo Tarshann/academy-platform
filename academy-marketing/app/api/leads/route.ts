@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
+/** Escape HTML entities to prevent injection in email templates */
+function escapeHtml(str: string | undefined | null): string {
+  if (!str) return "—";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 /**
  * POST /api/leads
  *
@@ -46,17 +57,17 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           from: "The Academy <notifications@academytn.com>",
           to: notifyEmail,
-          subject: `New Lead: ${name || "Unknown"} — ${recommendedProgram || source || "Website"}`,
+          subject: `New Lead: ${escapeHtml(name) === "—" ? "Unknown" : escapeHtml(name)} — ${escapeHtml(recommendedProgram) === "—" ? escapeHtml(source) || "Website" : escapeHtml(recommendedProgram)}`,
           html: `
             <h2>New Lead from academytn.com</h2>
             <table style="border-collapse:collapse;width:100%;max-width:500px;">
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Name</td><td style="padding:8px;border-bottom:1px solid #eee;">${name || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;"><a href="mailto:${email}">${email}</a></td></tr>
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${phone ? `<a href="tel:${phone}">${phone}</a>` : "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Athlete Age</td><td style="padding:8px;border-bottom:1px solid #eee;">${athleteAge || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Sport</td><td style="padding:8px;border-bottom:1px solid #eee;">${sport || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Goal</td><td style="padding:8px;border-bottom:1px solid #eee;">${goal || "—"}</td></tr>
-              <tr><td style="padding:8px;font-weight:bold;">Recommended</td><td style="padding:8px;">${recommendedProgram || "—"}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Name</td><td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(name)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Email</td><td style="padding:8px;border-bottom:1px solid #eee;"><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Phone</td><td style="padding:8px;border-bottom:1px solid #eee;">${phone ? `<a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a>` : "—"}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Athlete Age</td><td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(athleteAge)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Sport</td><td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(sport)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;border-bottom:1px solid #eee;">Goal</td><td style="padding:8px;border-bottom:1px solid #eee;">${escapeHtml(goal)}</td></tr>
+              <tr><td style="padding:8px;font-weight:bold;">Recommended</td><td style="padding:8px;">${escapeHtml(recommendedProgram)}</td></tr>
             </table>
           `,
         }),

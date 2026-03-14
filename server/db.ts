@@ -1718,7 +1718,7 @@ export async function searchDmMessages(userId: number, query: string, opts?: { l
     .where(
       and(
         inArray(dmMessages.conversationId, conversationIds),
-        sql`${dmMessages.content} LIKE ${`%${query}%`}`
+        sql`${dmMessages.content} LIKE ${`%${query.replace(/[%_\\]/g, "\\$&")}%`}`
       )
     )
     .orderBy(desc(dmMessages.createdAt))

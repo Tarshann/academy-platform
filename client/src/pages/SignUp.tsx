@@ -52,7 +52,11 @@ function useValidationDebugger() {
       z-index: 99999;
       border-radius: 8px;
     `;
-    debugOverlay.innerHTML = '<div style="color:#ff0;margin-bottom:5px;">VALIDATION DEBUG MODE ACTIVE</div>';
+    const header = document.createElement('div');
+    header.style.color = '#ff0';
+    header.style.marginBottom = '5px';
+    header.textContent = 'VALIDATION DEBUG MODE ACTIVE';
+    debugOverlay.appendChild(header);
     document.body.appendChild(debugOverlay);
 
     const logToOverlay = (msg: string, color = '#0f0') => {

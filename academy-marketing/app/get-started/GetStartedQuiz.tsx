@@ -37,7 +37,7 @@ const RECOMMENDATIONS: Record<string, Recommendation> = {
     program: "Performance Lab",
     slug: "performance-lab",
     price: "$245",
-    unit: "per month",
+    unit: "per 6-week cohort",
     description:
       "Our flagship program for committed athletes. Three sessions per week with baseline testing, 90-day progress cycles, and individualized coaching to build speed, agility, and strength.",
     cta: "Apply for Performance Lab",
