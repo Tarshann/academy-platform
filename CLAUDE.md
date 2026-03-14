@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.3 (mobile-first feature expansion: in-app payments, attendance tracking, chat enhancements, push notifications).
+**Current release**: v1.4 (mobile app v1.4.0, build 21). Previous v1.3 delivered: in-app payments, attendance tracking, chat enhancements, push notifications.
 
 ---
 
@@ -141,7 +141,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   └── schema.ts            #   Full PostgreSQL schema (30+ tables, enums, relations)
+│   ├── schema.ts            #   Full PostgreSQL schema (30+ tables, enums, relations)
+│   └── 0001-0012_*.sql      #   Sequential migrations (latest: Skills Lab dedup)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -287,10 +288,11 @@ npm test              # Playwright E2E tests (tests/e2e/)
 2. **Clerk primary auth + OAuth fallback** — Auth gracefully degrades if Clerk keys are not configured. Both client and server handle this.
 3. **Isolated Stripe webhook** — Separate esbuild bundle (`dist/serverless-stripe.js`), separate Vercel function. Cannot be affected by main API failures.
 4. **SSE-first real-time** — Primary system is SSE (`chat-sse.ts`). Socket.IO kept as opt-in for persistent-connection environments.
-5. **REST endpoints coexist with tRPC** — `performance-lab-apply.ts` and `skills-lab-register.ts` are Express REST handlers (not tRPC). Registered directly on the Express app before the tRPC middleware.
+5. **REST endpoints coexist with tRPC** — `performance-lab-apply.ts` and `skills-lab-register.ts` are Express REST handlers (not tRPC). Registered directly on the Express app before the tRPC middleware. Both have input validation (HTML escaping, length limits, email format) and rate limiting.
 6. **Stripe webhook registered before body parsing** — The webhook route is mounted BEFORE `express.json()` middleware so it receives the raw body for Stripe signature verification.
 7. **PWA support** — Client registers a service worker; the portal can be installed as a Progressive Web App.
 8. **Web Push notifications** — VAPID keys configured for browser push notifications (`server/push.ts`).
+9. **Input sanitization** — REST endpoints sanitize user inputs to prevent HTML injection in email templates. Chat history limits are capped (1-200) to prevent abuse.
 
 ### Server Module Breakdown
 
@@ -411,7 +413,11 @@ The root layout (`app/_layout.tsx`) sets up:
 5. **PostHog analytics** — telemetry for all user actions
 6. **IdentitySync** — syncs Clerk user identity to PostHog
 
-### Key Features (v1.3)
+### Current Version
+
+- **Version**: 1.4.0 / **Build**: 21 (iOS + Android synchronized)
+
+### Key Features
 
 - Dashboard with quick stats and upcoming sessions
 - In-app program enrollment (Stripe checkout via expo-web-browser)
@@ -566,8 +572,12 @@ The `ops/` directory is a structured project management system for multi-agent c
 - **Platform**: Vercel
 - **Config**: Root `vercel.json` with custom rewrites
   - `/api/trpc/*` → serverless tRPC handler
+  - `/api/chat/*` → serverless chat handler
   - `/api/stripe/*` → isolated Stripe webhook
   - `/*` → `index.html` (SPA fallback)
+- **Security headers**: HSTS (2yr), CSP, X-Frame-Options, X-Content-Type-Options
+- **CORS**: Restricted to `https://app.academytn.com` (GET, POST, OPTIONS only)
+- **Caching**: `/assets/*` immutable with 1yr max-age
 - **Health check**: `GET /api/health`
 - **Trigger**: Auto-deploy on push
 
@@ -594,7 +604,15 @@ See `.env.example` for the full list. Key groups:
 - **Push**: VAPID keys (for Web Push notifications)
 - **AI**: LLM API keys (for AI-powered features)
 
-The marketing site has NO server-side env vars (it's a static/SSR content site with no backend).
+- **Analytics**: `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` (Umami)
+- **Socket.IO**: `ENABLE_SOCKET_IO` (toggle, disabled by default)
+- **Server**: `SITE_URL` (server-side URL fallback)
+- **Testing**: `E2E_BASE_URL` (defaults to `http://localhost:5173`)
+
+The marketing site now has its own `academy-marketing/.env.example` with:
+- `PLATFORM_API_URL` (portal backend proxy)
+- `RESEND_API_KEY`, `LEAD_NOTIFY_EMAIL` (lead notifications)
+- `NEXT_PUBLIC_GA_ID`, `NEXT_PUBLIC_META_PIXEL_ID` (analytics)
 
 The mobile app uses Expo config + push notification credentials (managed via EAS).
 
@@ -677,6 +695,18 @@ npx expo start        # Dev server with Expo Go
 8. Every screen needs three states: loading, error, empty.
 9. Telemetry on every user-facing feature (PostHog for mobile, Umami for web).
 10. No drive-by refactors — every change traces to a ticket.
+
+---
+
+## Platform Audit & Known Issues
+
+A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. Key high-priority findings:
+
+1. **Auth gaps** — `updateBookingStatus` should be admin-only (currently `protectedProcedure`); `getCoachBookings` missing authorization check
+2. **Rate limiting gaps** — Public mutations (`leads.submit`, `submitPrivateSessionBooking`) lack rate limiting
+3. **Mobile Ably memory leak** — Ably connection never calls `client.close()` on unmount
+4. **Mobile dependency mismatch** — `package.json` version says 1.0.0 but `app.json` says 1.4.0; server-only packages in devDependencies
+5. **Pricing discrepancy** — Performance Lab listed as "per month" in some places vs "per 6-week cohort" in config
 
 ---
 
