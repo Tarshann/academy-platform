@@ -101,7 +101,7 @@ academy-platform/
 │   ├── env.ts               #   Environment variable loading with fallbacks
 │   ├── context.ts           #   tRPC context (req, res, user) + auth resolution
 │   ├── trpc.ts              #   tRPC initialization + procedure definitions
-│   ├── clerk.ts             #   Clerk JWT, user sync, admin role detection
+│   ├── clerk.ts             #   Clerk JWT, user sync (auto-fills missing name), admin role detection
 │   ├── clerk-oauth.ts       #   Clerk OAuth flow helpers
 │   ├── oauth.ts             #   OAuth fallback (non-Clerk auth)
 │   ├── checkout.ts          #   Stripe checkout session creation
@@ -293,6 +293,7 @@ npm test              # Playwright E2E tests (tests/e2e/)
 7. **PWA support** — Client registers a service worker; the portal can be installed as a Progressive Web App.
 8. **Web Push notifications** — VAPID keys configured for browser push notifications (`server/push.ts`).
 9. **Input sanitization** — REST endpoints sanitize user inputs to prevent HTML injection in email templates. Chat history limits are capped (1-200) to prevent abuse.
+10. **Profile picture uploads** — Dedicated REST endpoint (`/api/profile/upload-picture`) registered on both dev server and serverless. Accepts multipart image uploads, stores via S3/Forge, updates `profilePictureUrl` on user record.
 
 ### Server Module Breakdown
 
@@ -317,7 +318,7 @@ The `server/` directory follows a flat structure (no domain modules yet):
 ```
 appRouter
 ├── system.*          # Health, version
-├── auth.*            # Login, logout, session
+├── auth.*            # Login, logout, session, updateProfile
 ├── programs.*        # Program listings, details
 ├── announcements.*   # Facility announcements
 ├── schedules.*       # Session schedules
@@ -424,8 +425,10 @@ The root layout (`app/_layout.tsx`) sets up:
 - In-app program enrollment (Stripe checkout via expo-web-browser)
 - Attendance tracking with stats
 - All 4 chat rooms (General, Coaches, Parents, Announcements) + DMs
+- DM conversations with 10-second polling for new messages
 - Chat image upload (camera + library, 5MB limit)
 - Merchandise shop
+- Profile editing: name and picture (camera/library with 1:1 crop, haptic feedback)
 - Coach contact cards (API-driven, not hardcoded)
 - Push notification preferences
 - Payment history
@@ -675,7 +678,7 @@ npx expo start        # Dev server with Expo Go
 
 8. **Mobile build numbers.** Always increment `version` and `buildNumber` in `academy-app/app.json` before submitting to App Store / Google Play. Icons won't update without a full EAS rebuild.
 
-9. **REST endpoints exist alongside tRPC.** `performance-lab-apply.ts` and `skills-lab-register.ts` are REST handlers, NOT tRPC routes. Don't look for them in `routers.ts`.
+9. **REST endpoints exist alongside tRPC.** `performance-lab-apply.ts`, `skills-lab-register.ts`, and `/api/profile/upload-picture` are REST handlers, NOT tRPC routes. Don't look for them in `routers.ts`.
 
 10. **API route changes affect mobile.** The mobile app consumes the same tRPC backend. Changing a route signature without coordination breaks the mobile app in production.
 
@@ -729,6 +732,10 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 **Stripe webhook expanded:**
 - `charge.refunded` handler added (logs refund, can trigger notifications)
 - `invoice.payment_failed` handler added (logs failure for follow-up)
+
+**Recent feature additions (post-audit):**
+- **Profile editing** (commit `08a01b5`): `profilePictureUrl` column added to `users` table; `auth.updateProfile` tRPC mutation; `/api/profile/upload-picture` REST endpoint; mobile profile screen with avatar camera/library picker and name edit modal
+- **DM reliability fixes** (commit `8ed5f97`): Messages no longer disappear on re-entry (staleTime: 0 + forced refetch); 'Unknown' user fixed (Clerk re-syncs missing names); conversation list polls every 10 seconds
 
 ---
 
