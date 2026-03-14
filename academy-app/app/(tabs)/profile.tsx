@@ -1,15 +1,19 @@
 import { useUser, useAuth } from '@clerk/clerk-expo';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, Modal, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
 import { trpc } from '../../lib/trpc';
 import { Skeleton, SkeletonCircle, SkeletonLine } from '../../components/Skeleton';
 import { trackEvent } from '../../lib/analytics';
 
 const GOLD = '#CFB87C';
 const NAVY = '#1a1a2e';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 
 // Phone-only bridge — name and email now come from API (coaches JOIN users, commit da4a61b).
 // Users table has no phone column, so phone numbers are bridged here.
@@ -44,16 +48,176 @@ function CoachContactSkeleton() {
   );
 }
 
+function EditNameModal({
+  visible,
+  currentName,
+  onClose,
+  onSave,
+  saving,
+}: {
+  visible: boolean;
+  currentName: string;
+  onClose: () => void;
+  onSave: (name: string) => void;
+  saving: boolean;
+}) {
+  const [name, setName] = useState(currentName);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Edit Name</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={name}
+            onChangeText={setName}
+            placeholder="Your name"
+            autoFocus
+            maxLength={100}
+            returnKeyType="done"
+            onSubmitEditing={() => name.trim() && onSave(name.trim())}
+          />
+          <View style={styles.modalActions}>
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={onClose} disabled={saving}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalSaveBtn, (!name.trim() || saving) && { opacity: 0.5 }]}
+              onPress={() => onSave(name.trim())}
+              disabled={!name.trim() || saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color={NAVY} />
+              ) : (
+                <Text style={styles.modalSaveText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function ProfileScreen() {
   const { user } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const router = useRouter();
   const me = trpc.auth.me.useQuery();
   const coaches = trpc.coaches.list.useQuery({ limit: 20, offset: 0 });
+  const utils = trpc.useUtils();
+
+  const updateProfile = trpc.auth.updateProfile.useMutation({
+    onSuccess: () => {
+      utils.auth.me.invalidate();
+    },
+  });
 
   const role = me.data?.role ?? 'user';
   const displayName = me.data?.name || user?.fullName || 'Member';
   const email = user?.primaryEmailAddress?.emailAddress || me.data?.email || '';
+  const profilePictureUrl = (me.data as any)?.profilePictureUrl || user?.imageUrl || null;
+
+  const [nameModalVisible, setNameModalVisible] = useState(false);
+  const [uploadingPicture, setUploadingPicture] = useState(false);
+
+  const onEditName = () => setNameModalVisible(true);
+
+  const onSaveName = async (name: string) => {
+    try {
+      await updateProfile.mutateAsync({ name });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      trackEvent('profile_name_updated');
+      setNameModalVisible(false);
+    } catch {
+      Alert.alert('Error', 'Failed to update name. Please try again.');
+    }
+  };
+
+  const onChangeProfilePicture = () => {
+    Alert.alert('Change Profile Picture', 'Choose a source', [
+      {
+        text: 'Camera',
+        onPress: () => pickAndUploadImage('camera'),
+      },
+      {
+        text: 'Photo Library',
+        onPress: () => pickAndUploadImage('library'),
+      },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const pickAndUploadImage = async (source: 'camera' | 'library') => {
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Camera access is needed to take a profile photo.');
+        return;
+      }
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Photo library access is needed to choose a profile photo.');
+        return;
+      }
+    }
+
+    const launchFn = source === 'camera'
+      ? ImagePicker.launchCameraAsync
+      : ImagePicker.launchImageLibraryAsync;
+
+    const result = await launchFn({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const asset = result.assets[0];
+    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+      Alert.alert('Image Too Large', 'Please choose an image under 5MB.');
+      return;
+    }
+
+    setUploadingPicture(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const formData = new FormData();
+      const uriParts = asset.uri.split('/');
+      const fileName = uriParts[uriParts.length - 1] || 'photo.jpg';
+      const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+      const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+
+      formData.append('file', {
+        uri: Platform.OS === 'ios' ? asset.uri.replace('file://', '') : asset.uri,
+        name: fileName,
+        type: mimeType,
+      } as any);
+
+      const response = await fetch(`${API_URL}/api/profile/upload-picture`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      const { url } = await response.json();
+
+      await updateProfile.mutateAsync({ profilePictureUrl: url });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      trackEvent('profile_picture_updated');
+    } catch {
+      Alert.alert('Error', 'Failed to update profile picture. Please try again.');
+    } finally {
+      setUploadingPicture(false);
+    }
+  };
 
   const onSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -123,7 +287,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         {/* Profile header skeleton */}
         <View style={[styles.headerCard, { alignItems: 'center' }]}>
-          <SkeletonCircle size={64} style={{ marginBottom: 12 }} />
+          <SkeletonCircle size={80} style={{ marginBottom: 12 }} />
           <SkeletonLine width={140} height={18} style={{ marginBottom: 6 }} />
           <SkeletonLine width={180} height={12} style={{ marginBottom: 10 }} />
           <Skeleton width={80} height={22} borderRadius={6} />
@@ -168,12 +332,34 @@ export default function ProfileScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       {/* Profile header */}
       <View style={styles.headerCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {displayName.charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <Text style={styles.name}>{displayName}</Text>
+        <TouchableOpacity onPress={onChangeProfilePicture} style={styles.avatarWrapper}>
+          {profilePictureUrl ? (
+            <Image
+              source={{ uri: profilePictureUrl }}
+              style={styles.avatarImage}
+              contentFit="cover"
+              transition={200}
+            />
+          ) : (
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {displayName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
+          <View style={styles.avatarEditBadge}>
+            {uploadingPicture ? (
+              <ActivityIndicator size={12} color="#fff" />
+            ) : (
+              <Ionicons name="camera" size={12} color="#fff" />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={onEditName} style={styles.nameRow}>
+          <Text style={styles.name}>{displayName}</Text>
+          <Ionicons name="pencil" size={14} color="rgba(255,255,255,0.6)" style={{ marginLeft: 6 }} />
+        </TouchableOpacity>
         <Text style={styles.email}>{email}</Text>
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>
@@ -320,6 +506,14 @@ export default function ProfileScreen() {
         <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.3.0'}</Text>
         <Text style={styles.footerText}>Gallatin, Tennessee</Text>
       </View>
+
+      <EditNameModal
+        visible={nameModalVisible}
+        currentName={displayName}
+        onClose={() => setNameModalVisible(false)}
+        onSave={onSaveName}
+        saving={updateProfile.isPending}
+      />
     </ScrollView>
   );
 }
@@ -340,25 +534,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 12,
+  },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: GOLD,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+  },
+  avatarImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
   avatarText: {
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: '700',
     color: NAVY,
+  },
+  avatarEditBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: GOLD,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: NAVY,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
   },
   name: {
     fontSize: 20,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 4,
   },
   email: {
     fontSize: 14,
@@ -525,5 +744,67 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     color: '#bbb',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 340,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: NAVY,
+    marginBottom: 16,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    padding: 14,
+    fontSize: 16,
+    color: NAVY,
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#666',
+  },
+  modalSaveBtn: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: GOLD,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  modalSaveText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: NAVY,
   },
 });

@@ -14,6 +14,7 @@ import {
   createContactSubmission,
   getContactSubmissions,
   getUpcomingSchedules,
+  updateUserProfile,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
@@ -234,6 +235,17 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    updateProfile: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1).max(100).optional(),
+          profilePictureUrl: z.string().url().max(2048).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const updated = await updateUserProfile(ctx.user.id, input);
+        return updated;
+      }),
   }),
 
   programs: router({

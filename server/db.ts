@@ -99,6 +99,7 @@ export async function upsertUser(
     if (userData.lastSignedIn !== undefined)
       updates.lastSignedIn = userData.lastSignedIn;
     if (userData.role !== undefined) updates.role = userData.role;
+    if (userData.profilePictureUrl !== undefined) updates.profilePictureUrl = userData.profilePictureUrl;
 
     await db
       .update(users)
@@ -131,6 +132,23 @@ export async function upsertUser(
       .limit(1);
     return inserted[0];
   }
+}
+
+export async function updateUserProfile(
+  userId: number,
+  updates: { name?: string; profilePictureUrl?: string }
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const setFields: Record<string, unknown> = { updatedAt: new Date() };
+  if (updates.name !== undefined) setFields.name = updates.name;
+  if (updates.profilePictureUrl !== undefined) setFields.profilePictureUrl = updates.profilePictureUrl;
+
+  await db.update(users).set(setFields).where(eq(users.id, userId));
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result[0];
 }
 
 export async function getUserByOpenId(openId: string) {

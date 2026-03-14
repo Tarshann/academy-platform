@@ -145,6 +145,7 @@ export const users = pgTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  profilePictureUrl: text("profilePictureUrl"),
   role: userRoleEnum("role").default("user").notNull(),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: 'date' }).defaultNow().notNull(),

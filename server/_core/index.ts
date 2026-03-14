@@ -83,6 +83,47 @@ async function startServer() {
     return handlePerformanceLabApply(req, res);
   });
 
+  // Profile picture upload endpoint
+  const multer = (await import("multer")).default;
+  const profileUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype.startsWith("image/")) {
+        cb(null, true);
+      } else {
+        cb(new Error("Only image files are allowed"));
+      }
+    },
+  }).single("file");
+
+  app.post("/api/profile/upload-picture", (req, res) => {
+    profileUpload(req, res, async (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed";
+        return res.status(400).json({ error: msg });
+      }
+      const file = (req as any).file;
+      if (!file) return res.status(400).json({ error: "No file provided" });
+
+      // Authenticate via Authorization header (Clerk JWT)
+      try {
+        const { authenticateClerkRequest } = await import("./clerk");
+        const user = await authenticateClerkRequest(req);
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+        const { storagePut } = await import("../storage");
+        const ext = file.originalname.split(".").pop() || "jpg";
+        const key = `profile-pictures/${user.id}-${Date.now()}.${ext}`;
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        res.json({ url, key });
+      } catch (error) {
+        logger.error("[Profile] Picture upload failed:", error);
+        res.status(500).json({ error: "Upload failed" });
+      }
+    });
+  });
+
   // Setup SSE-based chat (works on all hosting platforms)
   const { setupSSEChat } = await import("../chat-sse");
   setupSSEChat(app);
