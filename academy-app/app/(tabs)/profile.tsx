@@ -447,6 +447,52 @@ export default function ProfileScreen() {
         </View>
       )}
 
+      {/* Features */}
+      <Text style={styles.sectionLabel}>FEATURES</Text>
+      <View style={styles.section}>
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/metrics' as any)}
+        >
+          <Ionicons name="analytics-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Athlete Metrics</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/showcase' as any)}
+        >
+          <Ionicons name="star-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Athlete Showcase</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/gallery' as any)}
+        >
+          <Ionicons name="images-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Social Gallery</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/drops' as any)}
+        >
+          <Ionicons name="megaphone-outline" size={18} color="#666" />
+          <Text style={styles.linkText}>Drops & Alerts</Text>
+          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+        </TouchableOpacity>
+      </View>
+
       {/* Account */}
       <Text style={styles.sectionLabel}>ACCOUNT</Text>
       <View style={styles.section}>

@@ -13,8 +13,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import {
   pickImage,
+  pickVideo,
   validateImageSize,
+  validateVideoSize,
+  detectMediaType,
   type ImageSource,
+  type MediaType,
   type UploadProgress,
 } from '../lib/chat-images';
 
@@ -24,6 +28,7 @@ const NAVY = '#1a1a2e';
 interface ChatInputProps {
   onSend: (message: string) => void;
   onImageSend?: (uri: string, source: ImageSource) => void;
+  onVideoSend?: (uri: string, source: ImageSource) => void;
   onTyping?: () => void;
   disabled?: boolean;
   placeholder?: string;
@@ -34,6 +39,7 @@ interface ChatInputProps {
 export function ChatInput({
   onSend,
   onImageSend,
+  onVideoSend,
   onTyping,
   disabled,
   placeholder,
@@ -43,8 +49,14 @@ export function ChatInput({
   const [text, setText] = useState('');
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [previewSource, setPreviewSource] = useState<ImageSource>('library');
+  const [previewMediaType, setPreviewMediaType] = useState<MediaType>('image');
 
   const handleSend = () => {
+    if (previewUri && previewMediaType === 'video' && onVideoSend) {
+      onVideoSend(previewUri, previewSource);
+      setPreviewUri(null);
+      return;
+    }
     if (previewUri && onImageSend) {
       onImageSend(previewUri, previewSource);
       setPreviewUri(null);
@@ -72,18 +84,41 @@ export function ChatInput({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setPreviewUri(asset.uri);
       setPreviewSource(source);
+      setPreviewMediaType('image');
+    },
+    []
+  );
+
+  const handlePickVideo = useCallback(
+    async (source: ImageSource) => {
+      const asset = await pickVideo(source);
+      if (!asset) return;
+
+      const sizeError = validateVideoSize(asset.fileSize);
+      if (sizeError) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        Alert.alert('Video Too Large', sizeError);
+        return;
+      }
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setPreviewUri(asset.uri);
+      setPreviewSource(source);
+      setPreviewMediaType('video');
     },
     []
   );
 
   const showImageOptions = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Alert.alert('Send Image', 'Choose a source', [
-      { text: 'Camera', onPress: () => handlePickImage('camera') },
+    Alert.alert('Send Media', 'Choose what to send', [
+      { text: 'Take Photo', onPress: () => handlePickImage('camera') },
       { text: 'Photo Library', onPress: () => handlePickImage('library') },
+      { text: 'Record Video', onPress: () => handlePickVideo('camera') },
+      { text: 'Video Library', onPress: () => handlePickVideo('library') },
       { text: 'Cancel', style: 'cancel' },
     ]);
-  }, [handlePickImage]);
+  }, [handlePickImage, handlePickVideo]);
 
   const clearPreview = () => {
     setPreviewUri(null);
@@ -149,7 +184,9 @@ export function ChatInput({
 
         {previewUri && !isUploading && (
           <View style={styles.captionArea}>
-            <Text style={styles.captionHint}>Tap send to share this image</Text>
+            <Text style={styles.captionHint}>
+              Tap send to share this {previewMediaType === 'video' ? 'video' : 'image'}
+            </Text>
           </View>
         )}
 

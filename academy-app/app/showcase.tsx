@@ -1,0 +1,303 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+} from 'react-native';
+import { useState } from 'react';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { trpc } from '../lib/trpc';
+import { trackEvent } from '../lib/analytics';
+
+const ACADEMY_GOLD = '#CFB87C';
+const NAVY = '#1a1a2e';
+
+function ShowcaseSkeleton() {
+  return (
+    <View style={styles.card}>
+      <View style={[styles.skeletonBlock, { width: '100%', height: 200 }]} />
+      <View style={{ padding: 16, gap: 10 }}>
+        <View style={[styles.skeletonBlock, { width: '60%', height: 20 }]} />
+        <View style={[styles.skeletonBlock, { width: '100%', height: 14 }]} />
+        <View style={[styles.skeletonBlock, { width: '80%', height: 14 }]} />
+      </View>
+    </View>
+  );
+}
+
+function SportBadge({ sport }: { sport: string | null }) {
+  if (!sport) return null;
+  const label = sport.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  return (
+    <View style={styles.sportBadge}>
+      <Ionicons name="trophy-outline" size={12} color={ACADEMY_GOLD} />
+      <Text style={styles.sportBadgeText}>{label}</Text>
+    </View>
+  );
+}
+
+export default function ShowcaseScreen() {
+  const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const showcases = trpc.showcases.active.useQuery();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await showcases.refetch();
+    setRefreshing(false);
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Athlete Showcase</Text>
+        <View style={{ width: 40 }} />
+      </View>
+
+      <FlatList
+        data={showcases.data ?? []}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListHeaderComponent={
+          <View>
+            {/* Hero Section */}
+            <View style={styles.heroSection}>
+              <Ionicons name="star" size={28} color={ACADEMY_GOLD} />
+              <Text style={styles.heroTitle}>ATHLETE OF THE WEEK</Text>
+              <Text style={styles.heroSubtitle}>
+                Celebrating outstanding Academy athletes
+              </Text>
+            </View>
+
+            {showcases.isLoading && (
+              <View style={{ gap: 16 }}>
+                <ShowcaseSkeleton />
+                <ShowcaseSkeleton />
+              </View>
+            )}
+
+            {!showcases.isLoading && (showcases.data?.length ?? 0) === 0 && (
+              <View style={styles.emptyState}>
+                <Ionicons name="people-outline" size={48} color="#ccc" />
+                <Text style={styles.emptyTitle}>No showcases yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Check back to see featured Academy athletes!
+                </Text>
+              </View>
+            )}
+          </View>
+        }
+        renderItem={({ item, index }) => {
+          let achievements: string[] = [];
+          try {
+            achievements = item.achievements ? JSON.parse(item.achievements) : [];
+          } catch {}
+
+          let stats: Record<string, string> = {};
+          try {
+            stats = item.stats ? JSON.parse(item.stats) : {};
+          } catch {}
+
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              activeOpacity={0.9}
+              onPress={() => trackEvent('showcase_tapped', { id: item.id })}
+            >
+              {/* Spotlight Number */}
+              {index === 0 && (
+                <View style={styles.spotlightBanner}>
+                  <Ionicons name="star" size={14} color="#fff" />
+                  <Text style={styles.spotlightText}>CURRENT SPOTLIGHT</Text>
+                </View>
+              )}
+
+              {/* Image */}
+              {item.imageUrl ? (
+                <Image
+                  source={{ uri: item.imageUrl }}
+                  style={styles.cardImage}
+                  contentFit="cover"
+                  transition={200}
+                />
+              ) : (
+                <View style={[styles.cardImage, styles.placeholderImage]}>
+                  <Ionicons name="person-outline" size={48} color={ACADEMY_GOLD} />
+                </View>
+              )}
+
+              {/* Content */}
+              <View style={styles.cardContent}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  <SportBadge sport={item.sport} />
+                </View>
+
+                <Text style={styles.cardDescription}>{item.description}</Text>
+
+                {/* Stats Grid */}
+                {Object.keys(stats).length > 0 && (
+                  <View style={styles.statsGrid}>
+                    {Object.entries(stats).map(([key, value]) => (
+                      <View key={key} style={styles.statBox}>
+                        <Text style={styles.statValue}>{value}</Text>
+                        <Text style={styles.statLabel}>{key}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Achievements */}
+                {achievements.length > 0 && (
+                  <View style={styles.achievementsList}>
+                    <Text style={styles.achievementsHeader}>ACHIEVEMENTS</Text>
+                    {achievements.map((achievement, i) => (
+                      <View key={i} style={styles.achievementRow}>
+                        <Ionicons name="medal-outline" size={14} color={ACADEMY_GOLD} />
+                        <Text style={styles.achievementText}>{achievement}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Featured Date */}
+                <Text style={styles.featuredDate}>
+                  Featured {new Date(item.featuredFrom).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: NAVY,
+    paddingTop: 60,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+  },
+  backBtn: { width: 40, height: 40, justifyContent: 'center' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  listContent: { paddingBottom: 32 },
+  heroSection: {
+    alignItems: 'center',
+    backgroundColor: NAVY,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: ACADEMY_GOLD,
+    letterSpacing: 2,
+    marginTop: 8,
+  },
+  heroSubtitle: { fontSize: 14, color: '#aaa', marginTop: 4 },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 20,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  spotlightBanner: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: ACADEMY_GOLD,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  spotlightText: { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 1 },
+  cardImage: { width: '100%', height: 240 },
+  placeholderImage: {
+    backgroundColor: '#2a2a4e',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContent: { padding: 18 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  cardTitle: { fontSize: 20, fontWeight: '700', color: NAVY, flex: 1 },
+  sportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#f0e8d5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  sportBadgeText: { fontSize: 11, fontWeight: '600', color: NAVY },
+  cardDescription: { fontSize: 14, color: '#555', lineHeight: 20, marginBottom: 14 },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 14,
+  },
+  statBox: {
+    backgroundColor: '#f8f6f1',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  statValue: { fontSize: 18, fontWeight: '700', color: NAVY },
+  statLabel: { fontSize: 10, fontWeight: '600', color: '#888', textTransform: 'uppercase', marginTop: 2 },
+  achievementsList: { marginBottom: 14 },
+  achievementsHeader: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#999',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  achievementRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  achievementText: { fontSize: 13, color: '#444' },
+  featuredDate: { fontSize: 12, color: '#aaa', fontStyle: 'italic' },
+  skeletonBlock: { backgroundColor: '#e8e8e8', borderRadius: 6 },
+  emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: NAVY },
+  emptySubtitle: { fontSize: 14, color: '#999', textAlign: 'center' },
+});

@@ -42,6 +42,20 @@ import {
   type InsertNotificationPreference,
   type InsertAttendanceRecord,
   type InsertUserRelation,
+  athleteMetrics,
+  athleteShowcases,
+  merchDrops,
+  userPoints,
+  gameEntries,
+  triviaQuestions,
+  socialPosts,
+  type InsertAthleteMetric,
+  type InsertAthleteShowcase,
+  type InsertMerchDrop,
+  type InsertUserPoint,
+  type InsertGameEntry,
+  type InsertTriviaQuestion,
+  type InsertSocialPost,
 } from "../drizzle/schema";
 
 // ============================================================================
@@ -2038,4 +2052,475 @@ export async function getUsersByMessagingRole(role: string) {
   if (userIds.length === 0) return [];
 
   return await db.select().from(users).where(inArray(users.id, userIds));
+}
+
+// ============================================================================
+// ATHLETE METRICS
+// ============================================================================
+
+export async function getAthleteMetrics(athleteId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(athleteMetrics)
+    .where(eq(athleteMetrics.athleteId, athleteId))
+    .orderBy(desc(athleteMetrics.sessionDate));
+}
+
+export async function getAthleteMetricsByName(athleteId: number, metricName: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(athleteMetrics)
+    .where(
+      and(
+        eq(athleteMetrics.athleteId, athleteId),
+        eq(athleteMetrics.metricName, metricName)
+      )
+    )
+    .orderBy(asc(athleteMetrics.sessionDate));
+}
+
+export async function getAllMetricsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(athleteMetrics)
+    .orderBy(desc(athleteMetrics.createdAt));
+}
+
+export async function createAthleteMetric(data: InsertAthleteMetric) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [metric] = await db.insert(athleteMetrics).values(data).returning();
+  return metric;
+}
+
+export async function deleteAthleteMetric(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(athleteMetrics).where(eq(athleteMetrics.id, id));
+}
+
+// ============================================================================
+// ATHLETE SHOWCASES
+// ============================================================================
+
+export async function getActiveShowcases() {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  return await db
+    .select()
+    .from(athleteShowcases)
+    .where(
+      and(
+        eq(athleteShowcases.isActive, true),
+        lte(athleteShowcases.featuredFrom, now),
+        // Exclude expired showcases — null featuredUntil means no expiry
+        or(
+          sql`${athleteShowcases.featuredUntil} IS NULL`,
+          gte(athleteShowcases.featuredUntil, now)
+        )
+      )
+    )
+    .orderBy(desc(athleteShowcases.featuredFrom));
+}
+
+export async function getAllShowcasesAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(athleteShowcases)
+    .orderBy(desc(athleteShowcases.createdAt));
+}
+
+export async function createShowcase(data: InsertAthleteShowcase) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [showcase] = await db.insert(athleteShowcases).values(data).returning();
+  return showcase;
+}
+
+export async function updateShowcase(id: number, data: Partial<InsertAthleteShowcase>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [showcase] = await db
+    .update(athleteShowcases)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(athleteShowcases.id, id))
+    .returning();
+  return showcase;
+}
+
+export async function deleteShowcase(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(athleteShowcases).where(eq(athleteShowcases.id, id));
+}
+
+// ============================================================================
+// MERCH DROPS
+// ============================================================================
+
+export async function getUpcomingDrops() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(merchDrops)
+    .where(eq(merchDrops.isSent, false))
+    .orderBy(asc(merchDrops.scheduledAt));
+}
+
+export async function getAllDropsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(merchDrops)
+    .orderBy(desc(merchDrops.createdAt));
+}
+
+export async function createMerchDrop(data: InsertMerchDrop) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [drop] = await db.insert(merchDrops).values(data).returning();
+  return drop;
+}
+
+export async function markDropSent(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [drop] = await db
+    .update(merchDrops)
+    .set({ isSent: true, sentAt: new Date() })
+    .where(eq(merchDrops.id, id))
+    .returning();
+  return drop;
+}
+
+export async function deleteMerchDrop(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(merchDrops).where(eq(merchDrops.id, id));
+}
+
+// ============================================================================
+// GAMES & REWARDS
+// ============================================================================
+
+export async function getUserPoints(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [points] = await db
+    .select()
+    .from(userPoints)
+    .where(eq(userPoints.userId, userId));
+  return points ?? null;
+}
+
+export async function getOrCreateUserPoints(userId: number) {
+  const existing = await getUserPoints(userId);
+  if (existing) return existing;
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [points] = await db
+    .insert(userPoints)
+    .values({ userId, totalPoints: 0, lifetimePoints: 0 })
+    .onConflictDoNothing({ target: userPoints.userId })
+    .returning();
+  // If conflict occurred, the row already exists — fetch it
+  if (!points) {
+    const [existing] = await db
+      .select()
+      .from(userPoints)
+      .where(eq(userPoints.userId, userId));
+    return existing;
+  }
+  return points;
+}
+
+export async function addUserPoints(userId: number, amount: number) {
+  // Ensure the row exists first
+  await getOrCreateUserPoints(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Atomic increment — safe under concurrency
+  const [updated] = await db
+    .update(userPoints)
+    .set({
+      totalPoints: sql`${userPoints.totalPoints} + ${amount}`,
+      lifetimePoints: sql`${userPoints.lifetimePoints} + ${amount}`,
+      updatedAt: new Date(),
+    })
+    .where(eq(userPoints.userId, userId))
+    .returning();
+  return updated;
+}
+
+export async function updateUserStreak(userId: number, streak: number) {
+  await getOrCreateUserPoints(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Atomic: set currentStreak and update longestStreak only if new streak is larger
+  const [updated] = await db
+    .update(userPoints)
+    .set({
+      currentStreak: streak,
+      longestStreak: sql`GREATEST(${userPoints.longestStreak}, ${streak})`,
+      lastPlayedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(userPoints.userId, userId))
+    .returning();
+  return updated;
+}
+
+/**
+ * Update a user's play streak. Call after a successful game play.
+ * If they played yesterday -> increment. Already played today -> no-op. Otherwise -> reset to 1.
+ */
+export async function refreshUserStreak(userId: number) {
+  const points = await getOrCreateUserPoints(userId);
+  const db = await getDb();
+  if (!db) return;
+
+  const lastPlayed = points.lastPlayedAt;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86_400_000);
+
+  let newStreak: number;
+  if (lastPlayed && lastPlayed >= todayStart) {
+    // Already played today — keep current streak
+    return;
+  } else if (lastPlayed && lastPlayed >= yesterdayStart) {
+    // Played yesterday — increment streak
+    newStreak = points.currentStreak + 1;
+  } else {
+    // Streak broken — reset to 1
+    newStreak = 1;
+  }
+
+  await db
+    .update(userPoints)
+    .set({
+      currentStreak: newStreak,
+      longestStreak: sql`GREATEST(${userPoints.longestStreak}, ${newStreak})`,
+      lastPlayedAt: now,
+      updatedAt: now,
+    })
+    .where(eq(userPoints.userId, userId));
+}
+
+export async function createGameEntry(data: InsertGameEntry) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [entry] = await db.insert(gameEntries).values(data).returning();
+  return entry;
+}
+
+export async function getUserGameHistory(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(gameEntries)
+    .where(eq(gameEntries.userId, userId))
+    .orderBy(desc(gameEntries.playedAt))
+    .limit(limit);
+}
+
+export async function getUserDailyPlays(userId: number, gameType: string) {
+  const db = await getDb();
+  if (!db) return 0;
+  // Use database CURRENT_DATE for consistent day boundary (UTC)
+  const [result] = await db
+    .select({ count: count() })
+    .from(gameEntries)
+    .where(
+      and(
+        eq(gameEntries.userId, userId),
+        eq(gameEntries.gameType, gameType as any),
+        gte(gameEntries.playedAt, sql`CURRENT_DATE`)
+      )
+    );
+  return result?.count ?? 0;
+}
+
+/**
+ * Atomically check daily play limit and create a game entry in one transaction.
+ * Returns the created entry, or null if the daily limit has been reached.
+ */
+export async function createGameEntryWithLimit(
+  data: InsertGameEntry,
+  maxPlays: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Use a raw SQL transaction to atomically check + insert
+  const result = await db.execute(sql`
+    WITH play_count AS (
+      SELECT COUNT(*) as cnt
+      FROM "gameEntries"
+      WHERE "userId" = ${data.userId}
+        AND "gameType" = ${data.gameType}
+        AND "playedAt" >= CURRENT_DATE
+    )
+    INSERT INTO "gameEntries" ("userId", "gameType", "rewardType", "rewardValue", "pointsEarned", "metadata", "playedAt")
+    SELECT ${data.userId}, ${data.gameType}, ${data.rewardType ?? "none"}, ${data.rewardValue ?? null}, ${data.pointsEarned ?? 0}, ${data.metadata ?? null}, NOW()
+    FROM play_count
+    WHERE play_count.cnt < ${maxPlays}
+    RETURNING *
+  `);
+
+  if (!result.rows || result.rows.length === 0) return null;
+  return result.rows[0] as unknown as GameEntryRow;
+}
+
+// Minimal type for the raw SQL return
+type GameEntryRow = {
+  id: number;
+  userId: number;
+  gameType: string;
+  rewardType: string;
+  rewardValue: string | null;
+  pointsEarned: number;
+  metadata: string | null;
+  playedAt: Date;
+};
+
+export async function getPointsLeaderboard(limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select({
+      userId: userPoints.userId,
+      displayName: sql<string>`COALESCE(${users.name}, 'Player #' || ${userPoints.userId})`,
+      totalPoints: userPoints.totalPoints,
+      lifetimePoints: userPoints.lifetimePoints,
+      currentStreak: userPoints.currentStreak,
+      longestStreak: userPoints.longestStreak,
+    })
+    .from(userPoints)
+    .leftJoin(users, eq(userPoints.userId, users.id))
+    .orderBy(desc(userPoints.lifetimePoints))
+    .limit(limit);
+}
+
+// Trivia
+export async function getRandomTriviaQuestions(count = 5, category?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(triviaQuestions.isActive, true)];
+  if (category) {
+    conditions.push(eq(triviaQuestions.category, category));
+  }
+  return await db
+    .select()
+    .from(triviaQuestions)
+    .where(and(...conditions))
+    .orderBy(sql`RANDOM()`)
+    .limit(count);
+}
+
+export async function getTriviaByIds(ids: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+  if (ids.length === 0) return [];
+  return await db
+    .select()
+    .from(triviaQuestions)
+    .where(inArray(triviaQuestions.id, ids));
+}
+
+export async function getAllTriviaAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(triviaQuestions)
+    .orderBy(desc(triviaQuestions.createdAt));
+}
+
+export async function createTriviaQuestion(data: InsertTriviaQuestion) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [question] = await db.insert(triviaQuestions).values(data).returning();
+  return question;
+}
+
+export async function updateTriviaQuestion(id: number, data: Partial<InsertTriviaQuestion>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [question] = await db
+    .update(triviaQuestions)
+    .set(data)
+    .where(eq(triviaQuestions.id, id))
+    .returning();
+  return question;
+}
+
+export async function deleteTriviaQuestion(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(triviaQuestions).where(eq(triviaQuestions.id, id));
+}
+
+// ============================================================================
+// SOCIAL POSTS
+// ============================================================================
+
+export async function getVisibleSocialPosts() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(socialPosts)
+    .where(eq(socialPosts.isVisible, true))
+    .orderBy(desc(socialPosts.createdAt));
+}
+
+export async function getAllSocialPostsAdmin() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(socialPosts)
+    .orderBy(desc(socialPosts.createdAt));
+}
+
+export async function createSocialPost(data: InsertSocialPost) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [post] = await db.insert(socialPosts).values(data).returning();
+  return post;
+}
+
+export async function deleteSocialPost(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(socialPosts).where(eq(socialPosts.id, id));
+}
+
+export async function toggleSocialPostVisibility(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [post] = await db
+    .select()
+    .from(socialPosts)
+    .where(eq(socialPosts.id, id));
+  if (!post) return null;
+  const [updated] = await db
+    .update(socialPosts)
+    .set({ isVisible: !post.isVisible })
+    .where(eq(socialPosts.id, id))
+    .returning();
+  return updated;
 }

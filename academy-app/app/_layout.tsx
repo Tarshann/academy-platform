@@ -155,6 +155,10 @@ function AuthGuard() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="dm" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="chat" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="gallery" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="showcase" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="metrics" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="drops" options={{ headerShown: false, presentation: 'card' }} />
         </Stack>
       </ErrorBoundary>
     </>
