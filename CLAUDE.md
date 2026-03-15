@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.4 (mobile app v1.4.0, build 21). Previous v1.3 delivered: in-app payments, attendance tracking, chat enhancements, push notifications.
+**Current release**: v1.5 (mobile app v1.5.0, build 22). Previous v1.4 delivered: in-app payments, attendance tracking, chat enhancements, push notifications, DM performance fixes.
 
 ---
 
@@ -331,6 +331,7 @@ appRouter
 ├── attendance.*      # Attendance tracking
 ├── payment.*         # Stripe checkout, payment history
 ├── dm.*              # Direct messages
+├── feed.*            # Unified media feed (videos + gallery, paginated)
 └── pushNotifications.* # Push notification settings
 ```
 
@@ -416,11 +417,12 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.4.0 / **Build**: 21 (iOS + Android synchronized)
+- **Version**: 1.5.0 / **Build**: 22 (iOS + Android synchronized)
 
 ### Key Features
 
-- Dashboard with quick stats and upcoming sessions
+- Dashboard with quick stats, upcoming sessions, and Media quick action
+- Unified Media Feed tab (videos + gallery photos, category filtering, pagination)
 - In-app program enrollment (Stripe checkout via expo-web-browser)
 - Attendance tracking with stats
 - All 4 chat rooms (General, Coaches, Parents, Announcements) + DMs
@@ -736,6 +738,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Profile editing** — Mobile uses Clerk SDK directly (`user.update()` for name, `user.setProfileImage()` for picture via base64). Backend `auth.updateProfile` tRPC route and `profilePictureUrl` schema column also exist for web portal use. New dependency: `expo-file-system`.
 - **DM reliability** — Fixed messages disappearing on re-entry by switching from `refetch()` to `utils.dm.getMessages.invalidate()` (persists across component unmounts). Conversation list polls every 10 seconds. Clerk auto-syncs missing user names to fix 'Unknown' display.
 - **DM performance** (commit `c30a4ff`) — Replaced `getUserConversations()` (N+1 queries) with lightweight `isConversationParticipant()` (single query) for auth checks in `getMessages` and `sendMessage`. Ably `publishDmMessage` now fire-and-forget (DB write returns immediately, real-time delivery non-blocking). Mobile no longer destroys global Ably singleton on DM screen unmount. User-facing Alert on send failure.
+- **Media Feed** (v1.5.0) — New `feed.list` tRPC endpoint merges published videos + visible gallery photos into a single date-sorted, paginated feed with category filtering (all/training/highlights). New Media tab in mobile bottom navigation with card-based scrollable feed, platform badges, video play overlay, category filter chips, skeleton loading, error state with retry, and empty states. Media quick action added to dashboard.
 
 ---
 
