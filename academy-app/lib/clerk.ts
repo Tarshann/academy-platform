@@ -12,8 +12,8 @@ export const tokenCache: TokenCache = {
   async saveToken(key: string, value: string): Promise<void> {
     try {
       await SecureStore.setItemAsync(key, value);
-    } catch {
-      // silently fail
+    } catch (error) {
+      console.warn('[Clerk] Failed to save token to SecureStore:', error);
     }
   },
 };

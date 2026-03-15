@@ -1927,7 +1927,7 @@ export const appRouter = router({
     // Search messages
     searchMessages: protectedProcedure
       .input(z.object({
-        query: z.string().min(1),
+        query: z.string().min(1).max(500),
         limit: z.number().int().min(1).max(100).optional(),
         offset: z.number().int().min(0).optional(),
       }))
@@ -1938,7 +1938,7 @@ export const appRouter = router({
 
     // Block a user
     blockUser: protectedProcedure
-      .input(z.object({ userId: z.number(), reason: z.string().optional() }))
+      .input(z.object({ userId: z.number(), reason: z.string().max(1000).optional() }))
       .mutation(async ({ ctx, input }) => {
         const { blockUser } = await import("./db");
         await blockUser(ctx.user.id, input.userId, input.reason);

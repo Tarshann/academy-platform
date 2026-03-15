@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from "express";
+import { logger } from "./logger";
 
 /**
  * Clerk OAuth callback handler
@@ -23,7 +24,7 @@ export async function handleClerkCallback(req: Request, res: Response) {
 
     res.redirect(302, "/");
   } catch (error) {
-    console.error("[Clerk] Callback failed:", error);
+    logger.error("[Clerk] Callback failed:", error);
     res.status(500).json({ error: "Authentication failed" });
   }
 }

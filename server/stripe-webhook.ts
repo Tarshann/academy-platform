@@ -38,7 +38,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   } catch (err) {
     logger.error("[Webhook] Signature verification failed:", err);
     return res.status(400).json({
-      error: `Webhook Error: ${err instanceof Error ? err.message : "Unknown error"}`
+      error: "Webhook signature verification failed"
     });
   }
 
@@ -74,7 +74,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   if (existingEvent[0]?.status === "processing") {
     logger.warn(`[Webhook] Event already processing: ${event.id}`);
-    return res.json({ received: true, processing: true });
+    return res.status(202).json({ received: true, processing: true });
   }
 
   if (existingEvent.length === 0) {

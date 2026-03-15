@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { HttpError, ErrorCode } from "../../shared/_core/errors";
+import { logger } from "./logger";
 
 /**
  * Transform domain errors to tRPC errors
@@ -27,7 +28,7 @@ export function transformError(error: unknown): TRPCError {
   }
 
   // Log unexpected errors
-  console.error("[ErrorHandler] Unexpected error:", error);
+  logger.error("[ErrorHandler] Unexpected error:", error);
 
   return new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
@@ -45,7 +46,7 @@ export function errorHandler() {
       const transformed = transformError(error);
       
       // Log error with context
-      console.error(`[tRPC Error] ${path}:`, {
+      logger.error(`[tRPC Error] ${path}:`, {
         code: transformed.code,
         message: transformed.message,
         cause: transformed.cause,

@@ -48,7 +48,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     logger.info(`[Email] Sent to ${options.to}: ${options.subject}`);
     return true;
   } catch (error) {
-    console.error('[Email] Failed to send:', error);
+    logger.error('[Email] Failed to send:', error);
     return false;
   }
 }

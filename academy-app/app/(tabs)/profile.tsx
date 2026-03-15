@@ -526,7 +526,7 @@ export default function ProfileScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.3.0'}</Text>
+        <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.5.0'}</Text>
         <Text style={styles.footerText}>Gallatin, Tennessee</Text>
       </View>
 

@@ -44,10 +44,14 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "academy-auth-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    try {
+      localStorage.setItem(
+        "academy-auth-user-info",
+        JSON.stringify(meQuery.data)
+      );
+    } catch {
+      // localStorage may be unavailable in private/incognito mode
+    }
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,

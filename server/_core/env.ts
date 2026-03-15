@@ -29,5 +29,5 @@ export const ENV = {
   // Ably real-time messaging
   ablyApiKey: process.env.ABLY_API_KEY ?? "",
   // Admin notification email addresses (comma-separated)
-  adminNotifyEmails: process.env.ADMIN_NOTIFY_EMAILS ?? "omarphilmore@yahoo.com,Tarshann@gmail.com",
+  adminNotifyEmails: process.env.ADMIN_NOTIFY_EMAILS ?? "",
 };
