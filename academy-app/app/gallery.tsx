@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Linking,
+  Alert,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Image } from 'expo-image';
@@ -70,7 +71,7 @@ export default function GalleryScreen() {
 
   const handlePostPress = useCallback((post: any) => {
     trackEvent('gallery_post_tapped', { platform: post.platform, id: post.id });
-    Linking.openURL(post.postUrl);
+    Linking.openURL(post.postUrl).catch(() => Alert.alert('Error', 'Could not open this link'));
   }, []);
 
   return (

@@ -40,9 +40,10 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
 
   const spinMutation = trpc.games.spinWheel.useMutation();
   const playsQuery = trpc.games.dailyPlaysRemaining.useQuery({ gameType: 'spin_wheel' });
+  const noSpinsLeft = playsQuery.data ? playsQuery.data.remaining <= 0 : false;
 
   const handleSpin = async () => {
-    if (isSpinning) return;
+    if (isSpinning || noSpinsLeft) return;
     if (playsQuery.data && playsQuery.data.remaining <= 0) {
       Alert.alert('No Spins Left', 'Come back tomorrow for more spins!');
       return;
@@ -149,12 +150,12 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
 
       {/* Spin Button */}
       <TouchableOpacity
-        style={[styles.spinButton, isSpinning && { opacity: 0.5 }]}
+        style={[styles.spinButton, (isSpinning || noSpinsLeft) && { opacity: 0.5 }]}
         onPress={handleSpin}
-        disabled={isSpinning}
+        disabled={isSpinning || noSpinsLeft}
       >
         <Text style={styles.spinButtonText}>
-          {isSpinning ? 'Spinning...' : 'SPIN'}
+          {isSpinning ? 'Spinning...' : noSpinsLeft ? 'NO SPINS LEFT' : 'SPIN'}
         </Text>
       </TouchableOpacity>
     </View>
@@ -879,9 +880,11 @@ const styles = StyleSheet.create({
   spinButton: {
     backgroundColor: ACADEMY_GOLD,
     borderRadius: 30,
+    minHeight: 56,
     paddingVertical: 16,
     paddingHorizontal: 60,
     alignSelf: 'center',
+    justifyContent: 'center',
     marginTop: 30,
   },
   spinButtonText: { fontSize: 20, fontWeight: '800', color: '#fff', letterSpacing: 2 },

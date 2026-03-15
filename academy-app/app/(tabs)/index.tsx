@@ -57,6 +57,9 @@ export default function DashboardScreen() {
   const stats = trpc.attendance.getMyStats.useQuery({});
   const subscriptions = trpc.payment.mySubscriptions.useQuery();
 
+  const showcases = trpc.showcases.active.useQuery();
+  const currentShowcase = showcases.data?.[0];
+
   const onRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
@@ -75,9 +78,6 @@ export default function DashboardScreen() {
 
   // Find active subscription with nearest renewal
   const activeSub = (subscriptions.data ?? []).find((s) => s.status === 'active');
-
-  const showcases = trpc.showcases.active.useQuery();
-  const currentShowcase = showcases.data?.[0];
 
   const quickActions = [
     {

@@ -2172,42 +2172,30 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const { getDb } = await import("./db");
         const { pushSubscriptions } = await import("../drizzle/schema");
-        const { eq, and } = await import("drizzle-orm");
+        const { sql } = await import("drizzle-orm");
 
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Upsert by (userId, deviceId): one row per device
-        const existing = await db
-          .select()
-          .from(pushSubscriptions)
-          .where(
-            and(
-              eq(pushSubscriptions.userId, ctx.user.id),
-              eq(pushSubscriptions.deviceId, input.deviceId)
-            )
-          )
-          .limit(1);
-
-        if (existing.length > 0) {
-          await db
-            .update(pushSubscriptions)
-            .set({
-              expoPushToken: input.expoPushToken,
-              platform: input.platform,
-              isActive: true,
-              updatedAt: new Date(),
-            })
-            .where(eq(pushSubscriptions.id, existing[0].id));
-        } else {
-          await db.insert(pushSubscriptions).values({
+        // Atomic upsert by (userId, deviceId) using unique index
+        await db
+          .insert(pushSubscriptions)
+          .values({
             userId: ctx.user.id,
             deviceId: input.deviceId,
             platform: input.platform,
             expoPushToken: input.expoPushToken,
             isActive: true,
+          })
+          .onConflictDoUpdate({
+            target: [pushSubscriptions.userId, pushSubscriptions.deviceId],
+            set: {
+              expoPushToken: sql`excluded."expoPushToken"`,
+              platform: sql`excluded."platform"`,
+              isActive: sql`true`,
+              updatedAt: sql`now()`,
+            },
           });
-        }
 
         // Enable push in notification settings
         const { updateNotificationSettings } = await import("./db");
@@ -2882,9 +2870,9 @@ export const appRouter = router({
           z.object({
             platform: z.enum(["instagram", "tiktok", "twitter", "facebook", "youtube"]),
             postUrl: z.string().url(),
-            embedHtml: z.string().optional(),
-            thumbnailUrl: z.string().optional(),
-            caption: z.string().optional(),
+            embedHtml: z.string().max(10000).optional(),
+            thumbnailUrl: z.string().max(500).optional(),
+            caption: z.string().max(2000).optional(),
             postedAt: z.string().optional().transform((s) => s ? new Date(s) : undefined),
           })
         )
