@@ -579,12 +579,12 @@ export const appRouter = router({
           });
           return { success: true };
         }),
-      publish: adminProcedure
+      publish: governedProcedure("academy.announcement.publish")
         .input(z.object({ id: z.number() }))
-        .mutation(async ({ input }) => {
+        .mutation(async ({ input, ctx }) => {
           const { publishAnnouncement } = await import("./db");
           await publishAnnouncement(input.id);
-          return { success: true };
+          return { success: true, executionId: (ctx as any).strix?.executionId };
         }),
       delete: governedProcedure("academy.announcement.delete")
         .input(z.object({ id: z.number() }))
@@ -1736,7 +1736,7 @@ export const appRouter = router({
     }),
   }),
 
-  // Notification preferences
+  // Notification preferences and bulk send
   notifications: router({
     getPreferences: protectedProcedure.query(async ({ ctx }) => {
       const { getUserNotificationPreferences } = await import("./db");
@@ -1757,6 +1757,32 @@ export const appRouter = router({
         const { createOrUpdateNotificationPreferences } = await import("./db");
         await createOrUpdateNotificationPreferences(ctx.user.id, input);
         return { success: true };
+      }),
+
+    // ─── Governed Bulk Notification Send ──────────────────────────
+    // This route is governed by Strix because push notifications
+    // are irreversible — once sent, they cannot be unsent.
+    sendBulk: governedProcedure("academy.notification.send.bulk")
+      .input(
+        z.object({
+          title: z.string().min(1).max(200),
+          body: z.string().min(1).max(1000),
+          userIds: z.array(z.number()).min(1),
+          data: z.record(z.unknown()).optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const { sendPushToUsers } = await import("./push");
+        await sendPushToUsers(input.userIds, {
+          title: input.title,
+          body: input.body,
+          data: input.data,
+        });
+        return {
+          success: true,
+          recipientCount: input.userIds.length,
+          executionId: (ctx as any).strix?.executionId,
+        };
       }),
   }),
 
@@ -2224,12 +2250,12 @@ export const appRouter = router({
         await updateBlogPost(id, updates);
         return { success: true };
       }),
-    publish: adminProcedure
+    publish: governedProcedure("academy.blog.publish")
       .input(z.object({ id: z.number() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         const { publishBlogPost } = await import("./db");
         await publishBlogPost(input.id);
-        return { success: true };
+        return { success: true, executionId: (ctx as any).strix?.executionId };
       }),
     delete: governedProcedure("academy.blog.delete")
       .input(z.object({ id: z.number() }))

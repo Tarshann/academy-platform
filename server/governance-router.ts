@@ -5,6 +5,8 @@
  * 1. Request governance decision tokens before destructive actions
  * 2. Simulate governance decisions (preview what will happen)
  * 3. List governed capabilities
+ * 4. View the evidence trail (audit log of all governance decisions)
+ * 5. View governance statistics (dashboard summary)
  *
  * These endpoints are called by the admin dashboard BEFORE
  * the actual destructive mutation is invoked.
@@ -28,6 +30,7 @@ import {
   getAllCapabilityIds,
   ACADEMY_CAPABILITIES,
 } from "./_core/strix-capabilities";
+import { strix } from "./_core/strix";
 
 export const governanceRouter = router({
   /**
@@ -96,5 +99,77 @@ export const governanceRouter = router({
       })),
       total: ACADEMY_CAPABILITIES.length,
     };
+  }),
+
+  /**
+   * Get the evidence trail — recent governance decisions.
+   * Returns the most recent evidence records from the Strix evidence sink.
+   * Used by the GovernanceEvidencePane to show audit history.
+   */
+  evidenceTrail: adminProcedure
+    .input(
+      z.object({
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+        capabilityFilter: z.string().optional(),
+        statusFilter: z.enum(["approved", "denied", "all"]).default("all"),
+      }).optional()
+    )
+    .query(async ({ input }) => {
+      const opts = input ?? { limit: 50, offset: 0, statusFilter: "all" as const };
+
+      try {
+        const trail = await strix.getEvidenceTrail({
+          limit: opts.limit,
+          offset: opts.offset,
+          capabilityFilter: opts.capabilityFilter,
+          statusFilter: opts.statusFilter === "all" ? undefined : opts.statusFilter,
+        });
+
+        return {
+          records: trail.records,
+          total: trail.total,
+          hasMore: trail.hasMore,
+        };
+      } catch {
+        // If evidence store is not yet initialized, return empty
+        return {
+          records: [],
+          total: 0,
+          hasMore: false,
+        };
+      }
+    }),
+
+  /**
+   * Get governance statistics for the dashboard summary.
+   * Aggregates evidence data into counts by status, risk level, and time period.
+   */
+  stats: adminProcedure.query(async () => {
+    try {
+      const stats = await strix.getGovernanceStats();
+      return {
+        totalDecisions: stats.totalDecisions,
+        approved: stats.approved,
+        denied: stats.denied,
+        pendingApproval: stats.pendingApproval,
+        byRiskLevel: stats.byRiskLevel,
+        byCapability: stats.byCapability,
+        last24Hours: stats.last24Hours,
+        last7Days: stats.last7Days,
+      };
+    } catch {
+      // If stats are not yet available, return zeros
+      return {
+        totalDecisions: 0,
+        approved: 0,
+        denied: 0,
+        pendingApproval: 0,
+        byRiskLevel: { low: 0, medium: 0, high: 0, critical: 0 },
+        byCapability: {},
+        last24Hours: 0,
+        last7Days: 0,
+      };
+    }
   }),
 });

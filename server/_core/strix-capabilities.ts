@@ -140,6 +140,31 @@ export const ACADEMY_CAPABILITIES: LocalCapabilityDef[] = [
     approvalsRequired: 0,
     irreversible: true,
   },
+
+  // ─── Content Publishing (Irreversible Visibility) ─────────────
+  {
+    capabilityId: "academy.announcement.publish",
+    riskLevel: "high",
+    allowedEnvironments: ["development", "staging", "production"],
+    approvalsRequired: 0,
+    irreversible: true, // Once published, users see it immediately
+  },
+  {
+    capabilityId: "academy.blog.publish",
+    riskLevel: "high",
+    allowedEnvironments: ["development", "staging", "production"],
+    approvalsRequired: 0,
+    irreversible: true, // Once published, indexed by search engines
+  },
+
+  // ─── Bulk Notifications (Communication Risk) ──────────────────
+  {
+    capabilityId: "academy.notification.send.bulk",
+    riskLevel: "critical",
+    allowedEnvironments: ["development", "staging", "production"],
+    approvalsRequired: 1,
+    irreversible: true, // Push notifications cannot be unsent
+  },
 ];
 
 /**
