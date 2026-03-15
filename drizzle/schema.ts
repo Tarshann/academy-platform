@@ -820,3 +820,203 @@ export const nurtureEmailLog = pgTable("nurtureEmailLog", {
 
 export type NurtureEmailLog = typeof nurtureEmailLog.$inferSelect;
 export type InsertNurtureEmailLog = typeof nurtureEmailLog.$inferInsert;
+
+// ============================================================================
+// ATHLETE METRICS TABLES
+// ============================================================================
+
+export const metricCategoryEnum = pgEnum("metric_category", [
+  "speed",
+  "power",
+  "agility",
+  "endurance",
+  "strength",
+  "flexibility",
+]);
+
+/**
+ * Athlete performance metrics.
+ * Tracks measurements like vertical jump, 40-yard dash, shuttle run, etc.
+ */
+export const athleteMetrics = pgTable("athleteMetrics", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athleteId").notNull(),
+  recordedBy: integer("recordedBy").notNull(), // coach/admin who recorded
+  metricName: varchar("metricName", { length: 100 }).notNull(), // e.g., "Vertical Jump", "40-Yard Dash"
+  category: metricCategoryEnum("category").notNull(),
+  value: decimal("value", { precision: 10, scale: 2 }).notNull(), // raw numeric value
+  unit: varchar("unit", { length: 20 }).notNull(), // "inches", "seconds", "mph", "reps"
+  notes: text("notes"),
+  sessionDate: timestamp("sessionDate", { mode: 'date' }).notNull(),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type AthleteMetric = typeof athleteMetrics.$inferSelect;
+export type InsertAthleteMetric = typeof athleteMetrics.$inferInsert;
+
+// ============================================================================
+// ATHLETE SHOWCASE TABLE
+// ============================================================================
+
+/**
+ * Athlete Showcase — weekly/featured athlete highlights.
+ * Displayed on the announcements section or a dedicated showcase page.
+ */
+export const athleteShowcases = pgTable("athleteShowcases", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athleteId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  imageKey: varchar("imageKey", { length: 500 }),
+  sport: programSportEnum("sport"),
+  achievements: text("achievements"), // JSON array of achievement strings
+  stats: text("stats"), // JSON object of key stats to highlight
+  isActive: boolean("isActive").notNull().default(true),
+  featuredFrom: timestamp("featuredFrom", { mode: 'date' }).notNull(),
+  featuredUntil: timestamp("featuredUntil", { mode: 'date' }),
+  createdBy: integer("createdBy").notNull(),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type AthleteShowcase = typeof athleteShowcases.$inferSelect;
+export type InsertAthleteShowcase = typeof athleteShowcases.$inferInsert;
+
+// ============================================================================
+// MERCH DROP NOTIFICATIONS TABLE
+// ============================================================================
+
+export const dropTypeEnum = pgEnum("drop_type", [
+  "product",
+  "program",
+  "content",
+  "event",
+]);
+
+/**
+ * Merchandise/content drops — scheduled announcements for new items.
+ * Triggers push notifications to members.
+ */
+export const merchDrops = pgTable("merchDrops", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  dropType: dropTypeEnum("dropType").notNull(),
+  referenceId: integer("referenceId"), // product/program/video ID
+  imageUrl: varchar("imageUrl", { length: 500 }),
+  scheduledAt: timestamp("scheduledAt", { mode: 'date' }).notNull(),
+  isSent: boolean("isSent").notNull().default(false),
+  sentAt: timestamp("sentAt", { mode: 'date' }),
+  createdBy: integer("createdBy").notNull(),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type MerchDrop = typeof merchDrops.$inferSelect;
+export type InsertMerchDrop = typeof merchDrops.$inferInsert;
+
+// ============================================================================
+// GAMES & REWARDS TABLES
+// ============================================================================
+
+export const gameTypeEnum = pgEnum("game_type", [
+  "spin_wheel",
+  "trivia",
+  "scratch_card",
+]);
+
+export const rewardTypeEnum = pgEnum("reward_type", [
+  "points",
+  "discount",
+  "merch",
+  "badge",
+  "none",
+]);
+
+/**
+ * User points balance for the rewards/games system.
+ */
+export const userPoints = pgTable("userPoints", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull().unique(),
+  totalPoints: integer("totalPoints").notNull().default(0),
+  lifetimePoints: integer("lifetimePoints").notNull().default(0),
+  currentStreak: integer("currentStreak").notNull().default(0),
+  longestStreak: integer("longestStreak").notNull().default(0),
+  lastPlayedAt: timestamp("lastPlayedAt", { mode: 'date' }),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type UserPoint = typeof userPoints.$inferSelect;
+export type InsertUserPoint = typeof userPoints.$inferInsert;
+
+/**
+ * Individual game plays — tracks each game session and outcome.
+ */
+export const gameEntries = pgTable("gameEntries", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  gameType: gameTypeEnum("gameType").notNull(),
+  rewardType: rewardTypeEnum("rewardType").notNull().default("none"),
+  rewardValue: varchar("rewardValue", { length: 255 }), // e.g., "50" points, "10%" discount, "Academy T-Shirt"
+  pointsEarned: integer("pointsEarned").notNull().default(0),
+  metadata: text("metadata"), // JSON — game-specific data (trivia answers, wheel result, etc.)
+  playedAt: timestamp("playedAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type GameEntry = typeof gameEntries.$inferSelect;
+export type InsertGameEntry = typeof gameEntries.$inferInsert;
+
+/**
+ * Trivia question bank — admin-managed questions for the trivia game.
+ */
+export const triviaQuestions = pgTable("triviaQuestions", {
+  id: serial("id").primaryKey(),
+  question: text("question").notNull(),
+  optionA: varchar("optionA", { length: 255 }).notNull(),
+  optionB: varchar("optionB", { length: 255 }).notNull(),
+  optionC: varchar("optionC", { length: 255 }).notNull(),
+  optionD: varchar("optionD", { length: 255 }).notNull(),
+  correctOption: varchar("correctOption", { length: 1 }).notNull(), // "a", "b", "c", "d"
+  category: varchar("category", { length: 100 }), // "basketball", "football", "academy", "general"
+  difficulty: varchar("difficulty", { length: 20 }).notNull().default("medium"), // "easy", "medium", "hard"
+  pointValue: integer("pointValue").notNull().default(10),
+  isActive: boolean("isActive").notNull().default(true),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type TriviaQuestion = typeof triviaQuestions.$inferSelect;
+export type InsertTriviaQuestion = typeof triviaQuestions.$inferInsert;
+
+// ============================================================================
+// SOCIAL MEDIA POSTS TABLE
+// ============================================================================
+
+export const socialPlatformEnum = pgEnum("social_platform", [
+  "instagram",
+  "tiktok",
+  "twitter",
+  "facebook",
+  "youtube",
+]);
+
+/**
+ * Social media post embeds — references to external social media posts.
+ * Used for the social gallery feature in the mobile app.
+ */
+export const socialPosts = pgTable("socialPosts", {
+  id: serial("id").primaryKey(),
+  platform: socialPlatformEnum("socialPlatform").notNull(),
+  postUrl: varchar("postUrl", { length: 500 }).notNull(),
+  embedHtml: text("embedHtml"),
+  thumbnailUrl: varchar("thumbnailUrl", { length: 500 }),
+  caption: text("caption"),
+  postedAt: timestamp("postedAt", { mode: 'date' }),
+  isVisible: boolean("isVisible").notNull().default(true),
+  addedBy: integer("addedBy").notNull(),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type SocialPost = typeof socialPosts.$inferSelect;
+export type InsertSocialPost = typeof socialPosts.$inferInsert;

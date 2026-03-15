@@ -53,6 +53,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="games"
+        options={{
+          title: 'Games',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="game-controller-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="schedule"
         options={{
           title: 'Schedule',
@@ -64,6 +73,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="programs"
         options={{
+          href: null,
           title: 'Programs',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />

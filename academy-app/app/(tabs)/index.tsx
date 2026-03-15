@@ -65,6 +65,7 @@ export default function DashboardScreen() {
       schedules.refetch(),
       stats.refetch(),
       subscriptions.refetch(),
+      showcases.refetch(),
     ]);
     setRefreshing(false);
   };
@@ -74,6 +75,9 @@ export default function DashboardScreen() {
 
   // Find active subscription with nearest renewal
   const activeSub = (subscriptions.data ?? []).find((s) => s.status === 'active');
+
+  const showcases = trpc.showcases.active.useQuery();
+  const currentShowcase = showcases.data?.[0];
 
   const quickActions = [
     {
@@ -95,12 +99,12 @@ export default function DashboardScreen() {
       },
     },
     {
-      key: 'media',
-      icon: 'play-circle-outline' as const,
-      label: 'Media',
+      key: 'games',
+      icon: 'game-controller-outline' as const,
+      label: 'Games',
       onPress: () => {
-        trackEvent('dashboard_quick_action_tapped', { action: 'media' });
-        router.push('/(tabs)/media');
+        trackEvent('dashboard_quick_action_tapped', { action: 'games' });
+        router.push('/(tabs)/games');
       },
     },
     {
@@ -112,6 +116,13 @@ export default function DashboardScreen() {
         router.push('/shop');
       },
     },
+  ];
+
+  const featureLinks = [
+    { key: 'gallery', icon: 'images-outline' as const, label: 'Social Gallery', route: '/gallery' },
+    { key: 'drops', icon: 'megaphone-outline' as const, label: 'Drops', route: '/drops' },
+    { key: 'metrics', icon: 'analytics-outline' as const, label: 'Metrics', route: '/metrics' },
+    { key: 'media', icon: 'play-circle-outline' as const, label: 'Media', route: '/(tabs)/media' },
   ];
 
   return (
@@ -224,6 +235,46 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          {/* Feature Links Row */}
+          <View style={styles.featureLinksRow}>
+            {featureLinks.map((link) => (
+              <TouchableOpacity
+                key={link.key}
+                style={styles.featureLinkBtn}
+                onPress={() => {
+                  trackEvent('dashboard_feature_tapped', { feature: link.key });
+                  router.push(link.route as any);
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={link.icon} size={18} color={ACADEMY_GOLD} />
+                <Text style={styles.featureLinkLabel}>{link.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Athlete Showcase */}
+          {currentShowcase && (
+            <TouchableOpacity
+              style={styles.showcaseCard}
+              activeOpacity={0.8}
+              onPress={() => {
+                trackEvent('dashboard_showcase_tapped');
+                router.push('/showcase');
+              }}
+            >
+              <View style={styles.showcaseHeader}>
+                <Ionicons name="star" size={16} color={ACADEMY_GOLD} />
+                <Text style={styles.showcaseLabel}>ATHLETE SPOTLIGHT</Text>
+                <Ionicons name="chevron-forward" size={14} color="#aaa" />
+              </View>
+              <Text style={styles.showcaseName}>{currentShowcase.title}</Text>
+              <Text style={styles.showcaseDesc} numberOfLines={2}>
+                {currentShowcase.description}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           {/* Upcoming Payment */}
           {activeSub && activeSub.currentPeriodEnd && (
@@ -474,6 +525,65 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: NAVY,
+  },
+  // Feature Links
+  featureLinksRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  featureLinkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  featureLinkLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: NAVY,
+  },
+  // Showcase
+  showcaseCard: {
+    backgroundColor: NAVY,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 16,
+    borderLeftWidth: 3,
+    borderLeftColor: ACADEMY_GOLD,
+  },
+  showcaseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  showcaseLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: ACADEMY_GOLD,
+    letterSpacing: 1.5,
+    flex: 1,
+  },
+  showcaseName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  showcaseDesc: {
+    fontSize: 13,
+    color: '#aaa',
+    lineHeight: 18,
   },
   // Announcements
   sectionTitle: {
