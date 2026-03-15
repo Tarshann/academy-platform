@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.5 (mobile app v1.5.0, build 22). Previous v1.4 delivered: in-app payments, attendance tracking, chat enhancements, push notifications, DM performance fixes.
+**Current release**: v1.6 (mobile app v1.6.1, build 25). Previous v1.5 delivered: unified media feed, DM performance, New Architecture. v1.6 adds: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat.
 
 ---
 
@@ -125,7 +125,7 @@ academy-platform/
 ├── academy-app/             # Mobile app (Expo + React Native)
 │   ├── app/                 #   Expo Router file-based routes
 │   │   ├── _layout.tsx      #   Root layout: Clerk + AuthGuard + PushRegistration + PostHog
-│   │   ├── (tabs)/          #   Tab-based navigation (dashboard, chat, programs, profile)
+│   │   ├── (tabs)/          #   Tab-based navigation (dashboard, chat, media, games, programs, profile)
 │   │   └── (auth)/          #   Auth screens (sign-in, sign-up)
 │   ├── components/          #   React Native UI components
 │   ├── lib/                 #   tRPC client, Clerk auth, utilities
@@ -141,8 +141,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (30+ tables, enums, relations)
-│   └── 0001-0012_*.sql      #   Sequential migrations (latest: Skills Lab dedup)
+│   ├── schema.ts            #   Full PostgreSQL schema (37+ tables, enums, relations)
+│   └── 0001-0013_*.sql      #   Sequential migrations (latest: games/metrics/showcases/drops/social)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -332,6 +332,11 @@ appRouter
 ├── payment.*         # Stripe checkout, payment history
 ├── dm.*              # Direct messages
 ├── feed.*            # Unified media feed (videos + gallery, paginated)
+├── metrics.*         # Athlete performance metrics (admin-recorded)
+├── showcases.*       # Weekly athlete spotlight
+├── merchDrops.*      # Scheduled merch/content drop alerts
+├── games.*           # Engagement games (spin wheel, trivia, scratch & win)
+├── socialPosts.*     # Social media post aggregation
 └── pushNotifications.* # Push notification settings
 ```
 
@@ -358,9 +363,9 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~2,200 | All tRPC routes (programs, shop, admin, chat, etc.) |
-| `server/db.ts` | ~1,900 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~800 | Full database schema (30+ tables) |
+| `server/routers.ts` | ~2,900 | All tRPC routes (programs, shop, admin, chat, metrics, games, etc.) |
+| `server/db.ts` | ~2,500 | Drizzle connection + all DB query functions |
+| `drizzle/schema.ts` | ~1,000 | Full database schema (37+ tables) |
 | `server/chat-sse.ts` | ~365 | SSE real-time chat system |
 | `server/_core/index.ts` | ~130 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
@@ -417,7 +422,7 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.5.0 / **Build**: 22 (iOS + Android synchronized)
+- **Version**: 1.6.1 / **Build**: 25 (iOS + Android synchronized)
 
 ### Key Features
 
@@ -427,12 +432,17 @@ The root layout (`app/_layout.tsx`) sets up:
 - Attendance tracking with stats
 - All 4 chat rooms (General, Coaches, Parents, Announcements) + DMs
 - DM conversations with 10-second polling and cache invalidation for reliability
-- Chat image upload (camera + library, 5MB limit)
+- Chat image and video upload (camera + library, 5MB images / 50MB video 60s max)
 - Merchandise shop
 - Profile editing: name (via Clerk `user.update()`) and picture (via Clerk `user.setProfileImage()` with base64 from expo-file-system) — no backend deployment required
 - Coach contact cards (API-driven, not hardcoded)
 - Push notification preferences
 - Payment history
+- Athlete Metrics — admin-recorded performance data (vertical jump, speed, agility, 12 presets + custom), trend visualization
+- Athlete Showcase — weekly spotlight with achievements, stats, sport badges
+- Games Hub tab — Spin the Wheel, Academy Trivia, Scratch & Win (daily limits, points, streaks, leaderboard)
+- Social Gallery — aggregated social media posts (Instagram, TikTok, Twitter, Facebook, YouTube)
+- Merch Drops — scheduled drop alerts with countdown timers
 
 ### Local Development
 
@@ -740,13 +750,22 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **DM performance** (commit `c30a4ff`) — Replaced `getUserConversations()` (N+1 queries) with lightweight `isConversationParticipant()` (single query) for auth checks in `getMessages` and `sendMessage`. Ably `publishDmMessage` now fire-and-forget (DB write returns immediately, real-time delivery non-blocking). Mobile no longer destroys global Ably singleton on DM screen unmount. User-facing Alert on send failure.
 - **Media Feed** (v1.5.0) — New `feed.list` tRPC endpoint merges published videos + visible gallery photos into a single date-sorted, paginated feed with category filtering (all/training/highlights). New Media tab in mobile bottom navigation with card-based scrollable feed, platform badges, video play overlay, category filter chips, skeleton loading, error state with retry, and empty states. Media quick action added to dashboard.
 - **New Architecture enabled** — `newArchEnabled: true` in `app.json` + `expo-build-properties` plugin to propagate `RCT_NEW_ARCH_ENABLED=1` during EAS pod install. Reanimated pinned to `3.19.5` (bundles its own worklets runtime — no separate `react-native-worklets` dependency needed). `expo-file-system` pinned to `~19.x` with `expo-file-system/legacy` import path for SDK 54 compatibility.
+- **v1.6 features** (6 new features, 7 new DB tables, 40+ tRPC routes, migration 0013):
+  - **Athlete Metrics** — Admin records vertical jump, speed, agility (12 presets + custom). Trend visualization with mini bar charts. Auth-scoped: only athlete or admin can read.
+  - **Athlete Showcase** — Weekly spotlight on dashboard. Full showcase page with hero section, achievements, sport badges.
+  - **Games Hub** (new tab) — Spin the Wheel (3/day), Academy Trivia (5 rounds/day), Scratch & Win (3/day). Atomic game entry limits, points system with atomic SQL increments, streaks, leaderboard with user JOINs. Trivia answer deduplication prevents point farming.
+  - **Social Gallery** — Browse social media posts from 5 platforms, filterable, 2-column grid.
+  - **Merch Drops** — Scheduled drop alerts with countdown timers, admin creation, send-now capability.
+  - **Video in Chat/DMs** — Video recording + library selection (60s max, 50MB limit), upload with progress tracking.
+- **Security hardening** (commit `f8ef06c`) — Removed unused mysql2/AWS SDK dependencies, added `.max()` limits on DM search/block reason, stopped leaking internal errors in Stripe webhook responses, removed hardcoded admin email fallbacks, replaced `console.error` with `logger.error` across server modules, added try-catch around localStorage for private browsing compatibility.
+- **TestFlight fixes** (v1.6.1) — Added Stack screens for Shop/Payments with back button navigation, fixed chat room history to use chat token (not Clerk JWT), disabled Vercel body parser in API entry points for multer multipart compatibility, added `/api/chat/upload-image` endpoint to serverless.ts (was only in dev server).
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
 - **CI/CD enforcement** — Quality gates exist but are manually run; no GitHub Actions blocking merges
-- **Router/DB monolith split** — `server/routers.ts` (~2,200 lines) and `server/db.ts` (~1,900 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~2,900 lines) and `server/db.ts` (~2,500 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability** — No Sentry/error reporting or request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
