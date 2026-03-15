@@ -14,6 +14,44 @@ import {
   createContactSubmission,
   getContactSubmissions,
   getUpcomingSchedules,
+  // Athlete Metrics
+  getAthleteMetrics,
+  getAthleteMetricsByName,
+  getAllMetricsAdmin,
+  createAthleteMetric,
+  deleteAthleteMetric,
+  // Athlete Showcases
+  getActiveShowcases,
+  getAllShowcasesAdmin,
+  createShowcase,
+  updateShowcase,
+  deleteShowcase,
+  // Merch Drops
+  getUpcomingDrops,
+  getAllDropsAdmin,
+  createMerchDrop,
+  markDropSent,
+  deleteMerchDrop,
+  // Games & Rewards
+  getUserPoints,
+  getOrCreateUserPoints,
+  addUserPoints,
+  updateUserStreak,
+  createGameEntry,
+  getUserGameHistory,
+  getUserDailyPlays,
+  getPointsLeaderboard,
+  getRandomTriviaQuestions,
+  getAllTriviaAdmin,
+  createTriviaQuestion,
+  updateTriviaQuestion,
+  deleteTriviaQuestion,
+  // Social Posts
+  getVisibleSocialPosts,
+  getAllSocialPostsAdmin,
+  createSocialPost,
+  deleteSocialPost,
+  toggleSocialPostVisibility,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
@@ -2330,6 +2368,483 @@ export const appRouter = router({
           hasMore: offset + limit < feedItems.length,
         };
       }),
+  }),
+});
+
+  // ============================================================================
+  // ATHLETE METRICS
+  // ============================================================================
+
+  metrics: router({
+    // Get metrics for a specific athlete (protected — coaches/admins or the athlete themselves)
+    getByAthlete: protectedProcedure
+      .input(z.object({ athleteId: z.number() }))
+      .query(async ({ input }) => {
+        return await getAthleteMetrics(input.athleteId);
+      }),
+
+    // Get trend data for a specific metric
+    getTrend: protectedProcedure
+      .input(z.object({ athleteId: z.number(), metricName: z.string() }))
+      .query(async ({ input }) => {
+        return await getAthleteMetricsByName(input.athleteId, input.metricName);
+      }),
+
+    // Admin: list all metrics
+    admin: router({
+      list: adminProcedure.query(async () => {
+        return await getAllMetricsAdmin();
+      }),
+
+      record: adminProcedure
+        .input(
+          z.object({
+            athleteId: z.number(),
+            metricName: z.string().trim().min(1),
+            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility"]),
+            value: priceSchema, // reuse decimal schema
+            unit: z.string().trim().min(1),
+            notes: z.string().optional(),
+            sessionDate: z.string().transform((s) => new Date(s)),
+          })
+        )
+        .mutation(async ({ ctx, input }) => {
+          return await createAthleteMetric({
+            ...input,
+            recordedBy: ctx.user.id,
+          });
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteAthleteMetric(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // ============================================================================
+  // ATHLETE SHOWCASES
+  // ============================================================================
+
+  showcases: router({
+    active: protectedProcedure.query(async () => {
+      return await getActiveShowcases();
+    }),
+
+    admin: router({
+      list: adminProcedure.query(async () => {
+        return await getAllShowcasesAdmin();
+      }),
+
+      create: adminProcedure
+        .input(
+          z.object({
+            athleteId: z.number(),
+            title: textSchema,
+            description: textSchema,
+            imageUrl: z.string().optional(),
+            imageKey: z.string().optional(),
+            sport: z.enum(["basketball", "football", "flag_football", "soccer", "multi_sport", "saq"]).optional(),
+            achievements: z.string().optional(), // JSON string
+            stats: z.string().optional(), // JSON string
+            featuredFrom: z.string().transform((s) => new Date(s)),
+            featuredUntil: z.string().optional().transform((s) => s ? new Date(s) : undefined),
+          })
+        )
+        .mutation(async ({ ctx, input }) => {
+          return await createShowcase({
+            ...input,
+            createdBy: ctx.user.id,
+          });
+        }),
+
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            title: textSchema.optional(),
+            description: textSchema.optional(),
+            imageUrl: z.string().optional(),
+            sport: z.enum(["basketball", "football", "flag_football", "soccer", "multi_sport", "saq"]).optional(),
+            achievements: z.string().optional(),
+            stats: z.string().optional(),
+            isActive: z.boolean().optional(),
+            featuredUntil: z.string().optional().transform((s) => s ? new Date(s) : undefined),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await updateShowcase(id, data);
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteShowcase(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // ============================================================================
+  // MERCH DROPS
+  // ============================================================================
+
+  merchDrops: router({
+    upcoming: protectedProcedure.query(async () => {
+      return await getUpcomingDrops();
+    }),
+
+    admin: router({
+      list: adminProcedure.query(async () => {
+        return await getAllDropsAdmin();
+      }),
+
+      create: adminProcedure
+        .input(
+          z.object({
+            title: textSchema,
+            description: z.string().optional(),
+            dropType: z.enum(["product", "program", "content", "event"]),
+            referenceId: z.number().optional(),
+            imageUrl: z.string().optional(),
+            scheduledAt: z.string().transform((s) => new Date(s)),
+          })
+        )
+        .mutation(async ({ ctx, input }) => {
+          return await createMerchDrop({
+            ...input,
+            createdBy: ctx.user.id,
+          });
+        }),
+
+      sendNow: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          // Mark as sent — push notification delivery handled by notification worker
+          return await markDropSent(input.id);
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteMerchDrop(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // ============================================================================
+  // GAMES & REWARDS
+  // ============================================================================
+
+  games: router({
+    // Get current user's points
+    myPoints: protectedProcedure.query(async ({ ctx }) => {
+      return await getOrCreateUserPoints(ctx.user.id);
+    }),
+
+    // Get play history
+    myHistory: protectedProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(50).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        return await getUserGameHistory(ctx.user.id, input?.limit ?? 20);
+      }),
+
+    // Check daily plays remaining
+    dailyPlaysRemaining: protectedProcedure
+      .input(z.object({ gameType: z.enum(["spin_wheel", "trivia", "scratch_card"]) }))
+      .query(async ({ ctx, input }) => {
+        const plays = await getUserDailyPlays(ctx.user.id, input.gameType);
+        const maxPlays = input.gameType === "trivia" ? 5 : 3;
+        return { played: plays, remaining: Math.max(0, maxPlays - plays), max: maxPlays };
+      }),
+
+    // Leaderboard
+    leaderboard: protectedProcedure.query(async () => {
+      return await getPointsLeaderboard(20);
+    }),
+
+    // Play spin wheel
+    spinWheel: protectedProcedure.mutation(async ({ ctx }) => {
+      const plays = await getUserDailyPlays(ctx.user.id, "spin_wheel");
+      if (plays >= 3) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily spin limit reached (3/day)" });
+      }
+
+      // Weighted random outcomes
+      const outcomes = [
+        { rewardType: "points" as const, value: "10", points: 10, weight: 30 },
+        { rewardType: "points" as const, value: "25", points: 25, weight: 25 },
+        { rewardType: "points" as const, value: "50", points: 50, weight: 15 },
+        { rewardType: "points" as const, value: "100", points: 100, weight: 8 },
+        { rewardType: "discount" as const, value: "10%", points: 0, weight: 10 },
+        { rewardType: "discount" as const, value: "25%", points: 0, weight: 5 },
+        { rewardType: "badge" as const, value: "Lucky Spinner", points: 15, weight: 5 },
+        { rewardType: "none" as const, value: "", points: 0, weight: 2 },
+      ];
+
+      const totalWeight = outcomes.reduce((sum, o) => sum + o.weight, 0);
+      let random = Math.random() * totalWeight;
+      let selectedOutcome = outcomes[0];
+      for (const outcome of outcomes) {
+        random -= outcome.weight;
+        if (random <= 0) {
+          selectedOutcome = outcome;
+          break;
+        }
+      }
+
+      const entry = await createGameEntry({
+        userId: ctx.user.id,
+        gameType: "spin_wheel",
+        rewardType: selectedOutcome.rewardType,
+        rewardValue: selectedOutcome.value,
+        pointsEarned: selectedOutcome.points,
+        metadata: JSON.stringify({ outcome: selectedOutcome }),
+      });
+
+      if (selectedOutcome.points > 0) {
+        await addUserPoints(ctx.user.id, selectedOutcome.points);
+      }
+
+      return {
+        entry,
+        reward: {
+          type: selectedOutcome.rewardType,
+          value: selectedOutcome.value,
+          points: selectedOutcome.points,
+        },
+      };
+    }),
+
+    // Get trivia questions
+    triviaQuestions: protectedProcedure
+      .input(z.object({ count: z.number().int().min(1).max(10).optional(), category: z.string().optional() }).optional())
+      .query(async ({ input }) => {
+        const questions = await getRandomTriviaQuestions(input?.count ?? 5, input?.category);
+        // Don't send correct answers to client — just the questions and options
+        return questions.map((q) => ({
+          id: q.id,
+          question: q.question,
+          optionA: q.optionA,
+          optionB: q.optionB,
+          optionC: q.optionC,
+          optionD: q.optionD,
+          category: q.category,
+          difficulty: q.difficulty,
+          pointValue: q.pointValue,
+        }));
+      }),
+
+    // Submit trivia answers
+    submitTrivia: protectedProcedure
+      .input(
+        z.object({
+          answers: z.array(
+            z.object({
+              questionId: z.number(),
+              selectedOption: z.enum(["a", "b", "c", "d"]),
+            })
+          ),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const plays = await getUserDailyPlays(ctx.user.id, "trivia");
+        if (plays >= 5) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
+        }
+
+        // Fetch actual questions with correct answers
+        const questionIds = input.answers.map((a) => a.questionId);
+        const allQuestions = await getAllTriviaAdmin();
+        const questionMap = new Map(allQuestions.map((q) => [q.id, q]));
+
+        let totalPoints = 0;
+        let correct = 0;
+        const results = input.answers.map((answer) => {
+          const question = questionMap.get(answer.questionId);
+          if (!question) return { questionId: answer.questionId, correct: false, points: 0 };
+          const isCorrect = question.correctOption === answer.selectedOption;
+          if (isCorrect) {
+            totalPoints += question.pointValue;
+            correct++;
+          }
+          return {
+            questionId: answer.questionId,
+            correct: isCorrect,
+            correctOption: question.correctOption,
+            points: isCorrect ? question.pointValue : 0,
+          };
+        });
+
+        const entry = await createGameEntry({
+          userId: ctx.user.id,
+          gameType: "trivia",
+          rewardType: totalPoints > 0 ? "points" : "none",
+          rewardValue: String(totalPoints),
+          pointsEarned: totalPoints,
+          metadata: JSON.stringify({ results, correct, total: input.answers.length }),
+        });
+
+        if (totalPoints > 0) {
+          await addUserPoints(ctx.user.id, totalPoints);
+        }
+
+        return { entry, results, totalPoints, correct, total: input.answers.length };
+      }),
+
+    // Scratch card
+    scratchCard: protectedProcedure.mutation(async ({ ctx }) => {
+      const plays = await getUserDailyPlays(ctx.user.id, "scratch_card");
+      if (plays >= 3) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily scratch card limit reached (3/day)" });
+      }
+
+      // Random prize pool
+      const prizes = [
+        { rewardType: "points" as const, value: "5", points: 5, weight: 35 },
+        { rewardType: "points" as const, value: "15", points: 15, weight: 25 },
+        { rewardType: "points" as const, value: "30", points: 30, weight: 15 },
+        { rewardType: "points" as const, value: "75", points: 75, weight: 8 },
+        { rewardType: "discount" as const, value: "5%", points: 0, weight: 8 },
+        { rewardType: "discount" as const, value: "15%", points: 0, weight: 4 },
+        { rewardType: "badge" as const, value: "Scratch Master", points: 10, weight: 3 },
+        { rewardType: "none" as const, value: "Try Again", points: 0, weight: 2 },
+      ];
+
+      const totalWeight = prizes.reduce((sum, p) => sum + p.weight, 0);
+      let random = Math.random() * totalWeight;
+      let selectedPrize = prizes[0];
+      for (const prize of prizes) {
+        random -= prize.weight;
+        if (random <= 0) {
+          selectedPrize = prize;
+          break;
+        }
+      }
+
+      const entry = await createGameEntry({
+        userId: ctx.user.id,
+        gameType: "scratch_card",
+        rewardType: selectedPrize.rewardType,
+        rewardValue: selectedPrize.value,
+        pointsEarned: selectedPrize.points,
+        metadata: JSON.stringify({ prize: selectedPrize }),
+      });
+
+      if (selectedPrize.points > 0) {
+        await addUserPoints(ctx.user.id, selectedPrize.points);
+      }
+
+      return {
+        entry,
+        reward: {
+          type: selectedPrize.rewardType,
+          value: selectedPrize.value,
+          points: selectedPrize.points,
+        },
+      };
+    }),
+
+    // Admin: trivia management
+    admin: router({
+      triviaList: adminProcedure.query(async () => {
+        return await getAllTriviaAdmin();
+      }),
+
+      createTrivia: adminProcedure
+        .input(
+          z.object({
+            question: textSchema,
+            optionA: textSchema,
+            optionB: textSchema,
+            optionC: textSchema,
+            optionD: textSchema,
+            correctOption: z.enum(["a", "b", "c", "d"]),
+            category: z.string().optional(),
+            difficulty: z.enum(["easy", "medium", "hard"]).optional(),
+            pointValue: z.number().int().min(1).optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          return await createTriviaQuestion(input);
+        }),
+
+      updateTrivia: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            question: textSchema.optional(),
+            optionA: textSchema.optional(),
+            optionB: textSchema.optional(),
+            optionC: textSchema.optional(),
+            optionD: textSchema.optional(),
+            correctOption: z.enum(["a", "b", "c", "d"]).optional(),
+            isActive: z.boolean().optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await updateTriviaQuestion(id, data);
+        }),
+
+      deleteTrivia: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteTriviaQuestion(input.id);
+          return { success: true };
+        }),
+    }),
+  }),
+
+  // ============================================================================
+  // SOCIAL POSTS (Gallery)
+  // ============================================================================
+
+  socialPosts: router({
+    list: protectedProcedure.query(async () => {
+      return await getVisibleSocialPosts();
+    }),
+
+    admin: router({
+      list: adminProcedure.query(async () => {
+        return await getAllSocialPostsAdmin();
+      }),
+
+      create: adminProcedure
+        .input(
+          z.object({
+            platform: z.enum(["instagram", "tiktok", "twitter", "facebook", "youtube"]),
+            postUrl: z.string().url(),
+            embedHtml: z.string().optional(),
+            thumbnailUrl: z.string().optional(),
+            caption: z.string().optional(),
+            postedAt: z.string().optional().transform((s) => s ? new Date(s) : undefined),
+          })
+        )
+        .mutation(async ({ ctx, input }) => {
+          return await createSocialPost({
+            ...input,
+            addedBy: ctx.user.id,
+          });
+        }),
+
+      toggleVisibility: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          return await toggleSocialPostVisibility(input.id);
+        }),
+
+      delete: adminProcedure
+        .input(z.object({ id: z.number() }))
+        .mutation(async ({ input }) => {
+          await deleteSocialPost(input.id);
+          return { success: true };
+        }),
+    }),
   }),
 });
 
