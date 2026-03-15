@@ -390,7 +390,7 @@ These can drift. Update both when testimonials change.
 
 ### Stack
 
-- **Framework**: React Native 0.81 + Expo 54 (New Architecture disabled)
+- **Framework**: React Native 0.81 + Expo 54 (New Architecture enabled)
 - **Routing**: Expo Router (file-based, stack navigation)
 - **Auth**: `@clerk/clerk-expo` with token cache
 - **API**: tRPC client connecting to the portal backend
@@ -735,10 +735,11 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - `invoice.payment_failed` handler added (logs failure for follow-up)
 
 **Recent feature additions (post-audit):**
-- **Profile editing** — Mobile uses Clerk SDK directly (`user.update()` for name, `user.setProfileImage()` for picture via base64). Backend `auth.updateProfile` tRPC route and `profilePictureUrl` schema column also exist for web portal use. New dependency: `expo-file-system`.
+- **Profile editing** — Mobile uses Clerk SDK directly (`user.update()` for name, `user.setProfileImage()` for picture via base64). Backend `auth.updateProfile` tRPC route and `profilePictureUrl` schema column also exist for web portal use. Dependency: `expo-file-system@~19.x` (imported from `expo-file-system/legacy` for SDK 54 compatibility).
 - **DM reliability** — Fixed messages disappearing on re-entry by switching from `refetch()` to `utils.dm.getMessages.invalidate()` (persists across component unmounts). Conversation list polls every 10 seconds. Clerk auto-syncs missing user names to fix 'Unknown' display.
 - **DM performance** (commit `c30a4ff`) — Replaced `getUserConversations()` (N+1 queries) with lightweight `isConversationParticipant()` (single query) for auth checks in `getMessages` and `sendMessage`. Ably `publishDmMessage` now fire-and-forget (DB write returns immediately, real-time delivery non-blocking). Mobile no longer destroys global Ably singleton on DM screen unmount. User-facing Alert on send failure.
 - **Media Feed** (v1.5.0) — New `feed.list` tRPC endpoint merges published videos + visible gallery photos into a single date-sorted, paginated feed with category filtering (all/training/highlights). New Media tab in mobile bottom navigation with card-based scrollable feed, platform badges, video play overlay, category filter chips, skeleton loading, error state with retry, and empty states. Media quick action added to dashboard.
+- **New Architecture enabled** — `newArchEnabled: true` in `app.json` + `expo-build-properties` plugin to propagate `RCT_NEW_ARCH_ENABLED=1` during EAS pod install. Reanimated pinned to `3.19.5` (bundles its own worklets runtime — no separate `react-native-worklets` dependency needed). `expo-file-system` pinned to `~19.x` with `expo-file-system/legacy` import path for SDK 54 compatibility.
 
 ---
 
