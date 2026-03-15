@@ -11,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
@@ -49,7 +48,6 @@ interface ChatMessage {
 export default function ChatRoomScreen() {
   const { room } = useLocalSearchParams<{ room: string }>();
   const router = useRouter();
-  const { getToken, userId: clerkUserId } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -70,12 +68,13 @@ export default function ChatRoomScreen() {
 
   const myUserId = meQuery.data?.id;
 
-  // Load message history
-  const loadHistory = useCallback(async () => {
+  // Load message history using the chat token (same token type the server expects)
+  const loadHistory = useCallback(async (token?: string) => {
+    const chatToken = token || chatTokenQuery.data?.token;
+    if (!chatToken) return;
     try {
-      const token = await getToken();
       const response = await fetch(`${API_URL}/api/chat/history/${room}?limit=50`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: { Authorization: `Bearer ${chatToken}` },
       });
       if (response.ok) {
         const history = await response.json();
@@ -86,11 +85,13 @@ export default function ChatRoomScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [room, getToken]);
+  }, [room, chatTokenQuery.data?.token]);
 
   // Initialize: load history + connect Ably
   useEffect(() => {
-    loadHistory();
+    if (chatTokenQuery.data?.token) {
+      loadHistory(chatTokenQuery.data.token);
+    }
 
     if (ablyTokenQuery.data) {
       const client = getAblyClient(async () => ablyTokenQuery.data as any);
@@ -127,7 +128,7 @@ export default function ChatRoomScreen() {
         // Just unsubscribe from this room's channel.
       };
     }
-  }, [room, ablyTokenQuery.data, loadHistory]);
+  }, [room, ablyTokenQuery.data, chatTokenQuery.data?.token, loadHistory]);
 
   // Send text message via REST (server will publish to Ably)
   const handleSend = async (text: string) => {
