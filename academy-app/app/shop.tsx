@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useState, useEffect, useRef } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
@@ -58,6 +58,7 @@ function ShopSkeleton() {
 }
 
 export default function ShopScreen() {
+  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<number | null>(null);
   const tracked = useRef(false);
@@ -135,9 +136,14 @@ export default function ShopScreen() {
         <Stack.Screen
           options={{
             title: 'Shop',
+            headerShown: true,
             headerStyle: { backgroundColor: NAVY },
             headerTintColor: '#fff',
-            headerBackTitle: 'Back',
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+                <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              </TouchableOpacity>
+            ),
           }}
         />
         <View style={styles.list}>
@@ -153,9 +159,14 @@ export default function ShopScreen() {
         <Stack.Screen
           options={{
             title: 'Shop',
+            headerShown: true,
             headerStyle: { backgroundColor: NAVY },
             headerTintColor: '#fff',
-            headerBackTitle: 'Back',
+            headerLeft: () => (
+              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+                <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              </TouchableOpacity>
+            ),
           }}
         />
         <View style={styles.errorContainer}>

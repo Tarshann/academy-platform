@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../../lib/trpc';
-import { getAblyClient, closeAbly, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
+import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
 import { ChatInput } from '../../components/ChatInput';
 import { TypingIndicator } from '../../components/TypingIndicator';
@@ -122,14 +122,9 @@ export default function ChatRoomScreen() {
       return () => {
         unsubscribe();
         typing.unsubscribe();
-        client.connection.off();
-        try {
-          const channel = client.channels.get(`chat:${room}`);
-          channel.detach();
-        } catch (e) {
-          // Channel may already be detached
-        }
-        closeAbly();
+        // Don't call closeAbly() — it destroys the global singleton which
+        // breaks Ably for other screens (chat tab, DM conversations).
+        // Just unsubscribe from this room's channel.
       };
     }
   }, [room, ablyTokenQuery.data, loadHistory]);

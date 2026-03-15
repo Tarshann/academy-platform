@@ -225,6 +225,49 @@ app.get("/api/chat/users", async (req, res) => {
   }
 });
 
+// Chat image upload
+app.post("/api/chat/upload-image", async (req, res) => {
+  try {
+    const multer = (await import("multer")).default;
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (file.mimetype.startsWith("image/")) cb(null, true);
+        else cb(new Error("Only image files are allowed"));
+      },
+    }).single("file");
+
+    upload(req, res, async (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error ? err.message : "Upload failed";
+        return res.status(400).json({ error: msg });
+      }
+      const file = (req as any).file;
+      const token = req.body.token;
+      if (!file) return res.status(400).json({ error: "No file provided" });
+      if (!token) return res.status(401).json({ error: "No token provided" });
+
+      const user = await verifyChatToken(token);
+      if (!user) return res.status(401).json({ error: "Invalid token" });
+
+      try {
+        const { storagePut } = await import("./storage");
+        const ext = file.originalname.split(".").pop() || "jpg";
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const key = `chat-images/${user.id}-${timestamp}-${randomSuffix}.${ext}`;
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        res.json({ url, key });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to upload image" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to upload image" });
+  }
+});
+
 // Profile picture upload
 app.post("/api/profile/upload-picture", async (req, res) => {
   try {
