@@ -8,7 +8,7 @@ import {
   Text,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToDm, publishDmReadReceipt, subscribeToTyping } from '../../lib/realtime';
 import { TypingIndicator } from '../../components/TypingIndicator';
@@ -39,6 +39,7 @@ interface DmMessage {
 
 export default function DmConversationScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const conversationId = Number(id);
 
   const [isSending, setIsSending] = useState(false);
@@ -273,7 +274,16 @@ export default function DmConversationScreen() {
   if (messagesQuery.isLoading) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Conversation' }} />
+        <Stack.Screen options={{
+          title: 'Conversation',
+          headerStyle: { backgroundColor: '#1a1a2e' },
+          headerTintColor: '#fff',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          ),
+        }} />
         <View style={styles.loadingContainer}>
           <MessageListSkeleton />
         </View>
@@ -288,6 +298,11 @@ export default function DmConversationScreen() {
           title: otherUserName || 'Conversation',
           headerStyle: { backgroundColor: '#1a1a2e' },
           headerTintColor: '#fff',
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+            </TouchableOpacity>
+          ),
           headerRight: () => (
             <View style={[styles.statusDot, connected && styles.statusDotConnected]} />
           ),
