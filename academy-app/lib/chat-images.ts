@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
+
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -134,9 +134,9 @@ export async function uploadChatImage(
   const fileExtension = fileName.split('.').pop()?.toLowerCase() || 'jpg';
   const mimeType = `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`;
 
-  // Append file to form data
+  // Append file to form data (keep full file:// URI for RN 0.81+)
   formData.append('file', {
-    uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+    uri,
     name: fileName,
     type: mimeType,
   } as any);
@@ -207,7 +207,7 @@ export async function uploadChatVideo(
   const mimeType = `video/${fileExtension === 'mov' ? 'quicktime' : fileExtension}`;
 
   formData.append('file', {
-    uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+    uri,
     name: fileName,
     type: mimeType,
   } as any);

@@ -159,6 +159,8 @@ function AuthGuard() {
           <Stack.Screen name="showcase" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="metrics" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="drops" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: '#1a1a2e' }, headerTintColor: '#fff' }} />
+          <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: '#1a1a2e' }, headerTintColor: '#fff' }} />
         </Stack>
       </ErrorBoundary>
     </>
