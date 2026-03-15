@@ -2119,7 +2119,12 @@ export async function getActiveShowcases() {
     .where(
       and(
         eq(athleteShowcases.isActive, true),
-        lte(athleteShowcases.featuredFrom, now)
+        lte(athleteShowcases.featuredFrom, now),
+        // Exclude expired showcases — null featuredUntil means no expiry
+        or(
+          sql`${athleteShowcases.featuredUntil} IS NULL`,
+          gte(athleteShowcases.featuredUntil, now)
+        )
       )
     )
     .orderBy(desc(athleteShowcases.featuredFrom));
@@ -2227,19 +2232,30 @@ export async function getOrCreateUserPoints(userId: number) {
   const [points] = await db
     .insert(userPoints)
     .values({ userId, totalPoints: 0, lifetimePoints: 0 })
+    .onConflictDoNothing({ target: userPoints.userId })
     .returning();
+  // If conflict occurred, the row already exists — fetch it
+  if (!points) {
+    const [existing] = await db
+      .select()
+      .from(userPoints)
+      .where(eq(userPoints.userId, userId));
+    return existing;
+  }
   return points;
 }
 
 export async function addUserPoints(userId: number, amount: number) {
-  const current = await getOrCreateUserPoints(userId);
+  // Ensure the row exists first
+  await getOrCreateUserPoints(userId);
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Atomic increment — safe under concurrency
   const [updated] = await db
     .update(userPoints)
     .set({
-      totalPoints: current.totalPoints + amount,
-      lifetimePoints: current.lifetimePoints + amount,
+      totalPoints: sql`${userPoints.totalPoints} + ${amount}`,
+      lifetimePoints: sql`${userPoints.lifetimePoints} + ${amount}`,
       updatedAt: new Date(),
     })
     .where(eq(userPoints.userId, userId))
@@ -2248,20 +2264,58 @@ export async function addUserPoints(userId: number, amount: number) {
 }
 
 export async function updateUserStreak(userId: number, streak: number) {
-  const current = await getOrCreateUserPoints(userId);
+  await getOrCreateUserPoints(userId);
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  // Atomic: set currentStreak and update longestStreak only if new streak is larger
   const [updated] = await db
     .update(userPoints)
     .set({
       currentStreak: streak,
-      longestStreak: Math.max(current.longestStreak, streak),
+      longestStreak: sql`GREATEST(${userPoints.longestStreak}, ${streak})`,
       lastPlayedAt: new Date(),
       updatedAt: new Date(),
     })
     .where(eq(userPoints.userId, userId))
     .returning();
   return updated;
+}
+
+/**
+ * Update a user's play streak. Call after a successful game play.
+ * If they played yesterday -> increment. Already played today -> no-op. Otherwise -> reset to 1.
+ */
+export async function refreshUserStreak(userId: number) {
+  const points = await getOrCreateUserPoints(userId);
+  const db = await getDb();
+  if (!db) return;
+
+  const lastPlayed = points.lastPlayedAt;
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterdayStart = new Date(todayStart.getTime() - 86_400_000);
+
+  let newStreak: number;
+  if (lastPlayed && lastPlayed >= todayStart) {
+    // Already played today — keep current streak
+    return;
+  } else if (lastPlayed && lastPlayed >= yesterdayStart) {
+    // Played yesterday — increment streak
+    newStreak = points.currentStreak + 1;
+  } else {
+    // Streak broken — reset to 1
+    newStreak = 1;
+  }
+
+  await db
+    .update(userPoints)
+    .set({
+      currentStreak: newStreak,
+      longestStreak: sql`GREATEST(${userPoints.longestStreak}, ${newStreak})`,
+      lastPlayedAt: now,
+      updatedAt: now,
+    })
+    .where(eq(userPoints.userId, userId));
 }
 
 export async function createGameEntry(data: InsertGameEntry) {
@@ -2285,8 +2339,7 @@ export async function getUserGameHistory(userId: number, limit = 20) {
 export async function getUserDailyPlays(userId: number, gameType: string) {
   const db = await getDb();
   if (!db) return 0;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Use database CURRENT_DATE for consistent day boundary (UTC)
   const [result] = await db
     .select({ count: count() })
     .from(gameEntries)
@@ -2294,11 +2347,54 @@ export async function getUserDailyPlays(userId: number, gameType: string) {
       and(
         eq(gameEntries.userId, userId),
         eq(gameEntries.gameType, gameType as any),
-        gte(gameEntries.playedAt, today)
+        gte(gameEntries.playedAt, sql`CURRENT_DATE`)
       )
     );
   return result?.count ?? 0;
 }
+
+/**
+ * Atomically check daily play limit and create a game entry in one transaction.
+ * Returns the created entry, or null if the daily limit has been reached.
+ */
+export async function createGameEntryWithLimit(
+  data: InsertGameEntry,
+  maxPlays: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Use a raw SQL transaction to atomically check + insert
+  const result = await db.execute(sql`
+    WITH play_count AS (
+      SELECT COUNT(*) as cnt
+      FROM "gameEntries"
+      WHERE "userId" = ${data.userId}
+        AND "gameType" = ${data.gameType}
+        AND "playedAt" >= CURRENT_DATE
+    )
+    INSERT INTO "gameEntries" ("userId", "gameType", "rewardType", "rewardValue", "pointsEarned", "metadata", "playedAt")
+    SELECT ${data.userId}, ${data.gameType}, ${data.rewardType ?? "none"}, ${data.rewardValue ?? null}, ${data.pointsEarned ?? 0}, ${data.metadata ?? null}, NOW()
+    FROM play_count
+    WHERE play_count.cnt < ${maxPlays}
+    RETURNING *
+  `);
+
+  if (!result.rows || result.rows.length === 0) return null;
+  return result.rows[0] as unknown as GameEntryRow;
+}
+
+// Minimal type for the raw SQL return
+type GameEntryRow = {
+  id: number;
+  userId: number;
+  gameType: string;
+  rewardType: string;
+  rewardValue: string | null;
+  pointsEarned: number;
+  metadata: string | null;
+  playedAt: Date;
+};
 
 export async function getPointsLeaderboard(limit = 20) {
   const db = await getDb();
@@ -2306,12 +2402,14 @@ export async function getPointsLeaderboard(limit = 20) {
   return await db
     .select({
       userId: userPoints.userId,
+      displayName: sql<string>`COALESCE(${users.name}, 'Player #' || ${userPoints.userId})`,
       totalPoints: userPoints.totalPoints,
       lifetimePoints: userPoints.lifetimePoints,
       currentStreak: userPoints.currentStreak,
       longestStreak: userPoints.longestStreak,
     })
     .from(userPoints)
+    .leftJoin(users, eq(userPoints.userId, users.id))
     .orderBy(desc(userPoints.lifetimePoints))
     .limit(limit);
 }
@@ -2330,6 +2428,16 @@ export async function getRandomTriviaQuestions(count = 5, category?: string) {
     .where(and(...conditions))
     .orderBy(sql`RANDOM()`)
     .limit(count);
+}
+
+export async function getTriviaByIds(ids: number[]) {
+  const db = await getDb();
+  if (!db) return [];
+  if (ids.length === 0) return [];
+  return await db
+    .select()
+    .from(triviaQuestions)
+    .where(inArray(triviaQuestions.id, ids));
 }
 
 export async function getAllTriviaAdmin() {

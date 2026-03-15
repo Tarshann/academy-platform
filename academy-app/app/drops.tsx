@@ -9,7 +9,7 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -30,7 +30,13 @@ const DROP_TYPE_CONFIG: Record<DropType, { label: string; icon: keyof typeof Ion
 
 function CountdownTimer({ scheduledAt }: { scheduledAt: string }) {
   const target = new Date(scheduledAt).getTime();
-  const now = Date.now();
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 60_000); // update every minute
+    return () => clearInterval(interval);
+  }, []);
+
   const diff = target - now;
 
   if (diff <= 0) return <Text style={styles.dropLive}>LIVE NOW</Text>;

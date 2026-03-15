@@ -38,11 +38,14 @@ import {
   getOrCreateUserPoints,
   addUserPoints,
   updateUserStreak,
+  refreshUserStreak,
   createGameEntry,
+  createGameEntryWithLimit,
   getUserGameHistory,
   getUserDailyPlays,
   getPointsLeaderboard,
   getRandomTriviaQuestions,
+  getTriviaByIds,
   getAllTriviaAdmin,
   createTriviaQuestion,
   updateTriviaQuestion,
@@ -97,6 +100,16 @@ const normalizePriceInput = (value: unknown) => {
 const priceSchema = z.preprocess(
   normalizePriceInput,
   z.string().regex(/^\d+(\.\d{1,2})?$/, "Price must be a valid amount")
+);
+
+// Metric values allow up to 4 decimal places (e.g., "4.3210" for a 40-yard dash)
+const metricValueSchema = z.preprocess(
+  (value: unknown) => {
+    if (typeof value === "number" && Number.isFinite(value)) return String(value);
+    if (typeof value === "string") return value.trim();
+    return value;
+  },
+  z.string().regex(/^\d+(\.\d{1,4})?$/, "Must be a valid numeric measurement")
 );
 
 const textSchema = z.string().trim().min(1);
@@ -2441,7 +2454,7 @@ export const appRouter = router({
             athleteId: z.number(),
             metricName: z.string().trim().min(1),
             category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility"]),
-            value: priceSchema, // reuse decimal schema
+            value: metricValueSchema,
             unit: z.string().trim().min(1),
             notes: z.string().optional(),
             sessionDate: z.string().transform((s) => new Date(s)),
@@ -2608,11 +2621,6 @@ export const appRouter = router({
 
     // Play spin wheel
     spinWheel: protectedProcedure.mutation(async ({ ctx }) => {
-      const plays = await getUserDailyPlays(ctx.user.id, "spin_wheel");
-      if (plays >= 3) {
-        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily spin limit reached (3/day)" });
-      }
-
       // Weighted random outcomes
       const outcomes = [
         { rewardType: "points" as const, value: "10", points: 10, weight: 30 },
@@ -2636,18 +2644,24 @@ export const appRouter = router({
         }
       }
 
-      const entry = await createGameEntry({
+      // Atomic check+insert — returns null if daily limit (3) reached
+      const entry = await createGameEntryWithLimit({
         userId: ctx.user.id,
         gameType: "spin_wheel",
         rewardType: selectedOutcome.rewardType,
         rewardValue: selectedOutcome.value,
         pointsEarned: selectedOutcome.points,
         metadata: JSON.stringify({ outcome: selectedOutcome }),
-      });
+      }, 3);
+
+      if (!entry) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily spin limit reached (3/day)" });
+      }
 
       if (selectedOutcome.points > 0) {
         await addUserPoints(ctx.user.id, selectedOutcome.points);
       }
+      await refreshUserStreak(ctx.user.id);
 
       return {
         entry,
@@ -2691,11 +2705,6 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const plays = await getUserDailyPlays(ctx.user.id, "trivia");
-        if (plays >= 5) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
-        }
-
         // Deduplicate answers by questionId — only keep the first answer per question
         const seen = new Set<number>();
         const dedupedAnswers = input.answers.filter((a) => {
@@ -2704,10 +2713,10 @@ export const appRouter = router({
           return true;
         });
 
-        // Fetch actual questions with correct answers
+        // Fetch only the submitted questions (not the entire bank)
         const questionIds = dedupedAnswers.map((a) => a.questionId);
-        const allQuestions = await getAllTriviaAdmin();
-        const questionMap = new Map(allQuestions.map((q) => [q.id, q]));
+        const questions = await getTriviaByIds(questionIds);
+        const questionMap = new Map(questions.map((q) => [q.id, q]));
 
         let totalPoints = 0;
         let correct = 0;
@@ -2727,29 +2736,30 @@ export const appRouter = router({
           };
         });
 
-        const entry = await createGameEntry({
+        // Atomic check+insert — returns null if daily limit (5) reached
+        const entry = await createGameEntryWithLimit({
           userId: ctx.user.id,
           gameType: "trivia",
           rewardType: totalPoints > 0 ? "points" : "none",
           rewardValue: String(totalPoints),
           pointsEarned: totalPoints,
           metadata: JSON.stringify({ results, correct, total: dedupedAnswers.length }),
-        });
+        }, 5);
+
+        if (!entry) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
+        }
 
         if (totalPoints > 0) {
           await addUserPoints(ctx.user.id, totalPoints);
         }
+        await refreshUserStreak(ctx.user.id);
 
         return { entry, results, totalPoints, correct, total: dedupedAnswers.length };
       }),
 
     // Scratch card
     scratchCard: protectedProcedure.mutation(async ({ ctx }) => {
-      const plays = await getUserDailyPlays(ctx.user.id, "scratch_card");
-      if (plays >= 3) {
-        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily scratch card limit reached (3/day)" });
-      }
-
       // Random prize pool
       const prizes = [
         { rewardType: "points" as const, value: "5", points: 5, weight: 35 },
@@ -2773,18 +2783,24 @@ export const appRouter = router({
         }
       }
 
-      const entry = await createGameEntry({
+      // Atomic check+insert — returns null if daily limit (3) reached
+      const entry = await createGameEntryWithLimit({
         userId: ctx.user.id,
         gameType: "scratch_card",
         rewardType: selectedPrize.rewardType,
         rewardValue: selectedPrize.value,
         pointsEarned: selectedPrize.points,
         metadata: JSON.stringify({ prize: selectedPrize }),
-      });
+      }, 3);
+
+      if (!entry) {
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily scratch card limit reached (3/day)" });
+      }
 
       if (selectedPrize.points > 0) {
         await addUserPoints(ctx.user.id, selectedPrize.points);
       }
+      await refreshUserStreak(ctx.user.id);
 
       return {
         entry,

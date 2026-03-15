@@ -64,6 +64,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="schedule"
         options={{
+          href: null,
           title: 'Schedule',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
@@ -73,7 +74,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="programs"
         options={{
-          href: null,
           title: 'Programs',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />

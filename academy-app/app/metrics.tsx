@@ -318,17 +318,23 @@ export default function MetricsScreen() {
 
   const metrics = isAdmin ? allMetrics : myMetrics;
 
-  // Group metrics by athlete for admin view
+  // Group metrics by metric name, filtered by search query
   const groupedMetrics = useMemo(() => {
     if (!metrics.data) return new Map<string, any[]>();
+    const query = searchQuery.toLowerCase().trim();
     const grouped = new Map<string, any[]>();
     for (const m of metrics.data) {
+      // Filter by search query when present
+      if (query && !m.metricName.toLowerCase().includes(query) &&
+          !m.category.toLowerCase().includes(query)) {
+        continue;
+      }
       const key = m.metricName;
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(m);
     }
     return grouped;
-  }, [metrics.data]);
+  }, [metrics.data, searchQuery]);
 
   const onRefresh = async () => {
     setRefreshing(true);
