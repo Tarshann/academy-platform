@@ -4,12 +4,18 @@
  * Displays the list of governed capabilities and recent governance
  * events. This is the "investor demo" component — it shows that
  * every destructive action is tracked and auditable.
+ *
+ * NOTE: This is the legacy panel. The GovernanceEvidencePane is the
+ * production-hardened replacement with filters, pagination, copy buttons,
+ * and recent blocked attempts. This panel is kept for backward compatibility
+ * and will be replaced when the admin dashboard is updated.
  */
 
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Shield, ShieldCheck, ShieldAlert, Lock } from "lucide-react";
 
 const riskColors: Record<string, string> = {
@@ -96,48 +102,72 @@ export function GovernanceAuditPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Capability</TableHead>
-                <TableHead>Risk Level</TableHead>
-                <TableHead>Irreversible</TableHead>
-                <TableHead>Approvals</TableHead>
-                <TableHead>Environments</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {capabilityList.map((cap: any) => (
-                <TableRow key={cap.capabilityId}>
-                  <TableCell className="font-mono text-sm">
-                    {cap.capabilityId}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={riskColors[cap.riskLevel] || ""}>
-                      {cap.riskLevel}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {cap.irreversible ? (
-                      <Badge variant="destructive">Yes</Badge>
-                    ) : (
-                      <Badge variant="outline">No</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{cap.approvalsRequired}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1 flex-wrap">
-                      {cap.allowedEnvironments.map((env: string) => (
-                        <Badge key={env} variant="outline" className="text-xs">
-                          {env}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Capability</TableHead>
+                  <TableHead>Risk Level</TableHead>
+                  <TableHead>Irreversible</TableHead>
+                  <TableHead>Approvals</TableHead>
+                  <TableHead>Environments</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {capabilityList.map((cap: any) => (
+                  <TableRow key={cap.capabilityId}>
+                    <TableCell className="font-mono text-sm">
+                      {cap.capabilityId}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={riskColors[cap.riskLevel] || ""}>
+                        {cap.riskLevel}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cap.irreversible ? (
+                        <Badge variant="destructive">Yes</Badge>
+                      ) : (
+                        <Badge variant="outline">No</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {cap.approvalsRequired > 0 ? (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge className="bg-amber-100 text-amber-800">
+                              {cap.approvalsRequired} required
+                            </Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {cap.approvalsRequired} human approval{cap.approvalsRequired > 1 ? "s" : ""} required before execution
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Badge variant="outline">0 required</Badge>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Policy auto-approve: token issued automatically for authorized actors
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {cap.allowedEnvironments.map((env: string) => (
+                          <Badge key={env} variant="outline" className="text-xs">
+                            {env}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
         </CardContent>
       </Card>
     </div>
