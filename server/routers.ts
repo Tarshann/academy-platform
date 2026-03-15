@@ -2397,24 +2397,35 @@ export const appRouter = router({
         };
       }),
   }),
-});
 
   // ============================================================================
   // ATHLETE METRICS
   // ============================================================================
 
   metrics: router({
-    // Get metrics for a specific athlete (protected — coaches/admins or the athlete themselves)
+    // Get metrics for a specific athlete — only the athlete themselves or admins
     getByAthlete: protectedProcedure
       .input(z.object({ athleteId: z.number() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.id !== input.athleteId && ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only view your own metrics",
+          });
+        }
         return await getAthleteMetrics(input.athleteId);
       }),
 
-    // Get trend data for a specific metric
+    // Get trend data for a specific metric — only the athlete themselves or admins
     getTrend: protectedProcedure
       .input(z.object({ athleteId: z.number(), metricName: z.string() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.id !== input.athleteId && ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only view your own metrics",
+          });
+        }
         return await getAthleteMetricsByName(input.athleteId, input.metricName);
       }),
 
@@ -2685,14 +2696,22 @@ export const appRouter = router({
           throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
         }
 
+        // Deduplicate answers by questionId — only keep the first answer per question
+        const seen = new Set<number>();
+        const dedupedAnswers = input.answers.filter((a) => {
+          if (seen.has(a.questionId)) return false;
+          seen.add(a.questionId);
+          return true;
+        });
+
         // Fetch actual questions with correct answers
-        const questionIds = input.answers.map((a) => a.questionId);
+        const questionIds = dedupedAnswers.map((a) => a.questionId);
         const allQuestions = await getAllTriviaAdmin();
         const questionMap = new Map(allQuestions.map((q) => [q.id, q]));
 
         let totalPoints = 0;
         let correct = 0;
-        const results = input.answers.map((answer) => {
+        const results = dedupedAnswers.map((answer) => {
           const question = questionMap.get(answer.questionId);
           if (!question) return { questionId: answer.questionId, correct: false, points: 0 };
           const isCorrect = question.correctOption === answer.selectedOption;
@@ -2714,14 +2733,14 @@ export const appRouter = router({
           rewardType: totalPoints > 0 ? "points" : "none",
           rewardValue: String(totalPoints),
           pointsEarned: totalPoints,
-          metadata: JSON.stringify({ results, correct, total: input.answers.length }),
+          metadata: JSON.stringify({ results, correct, total: dedupedAnswers.length }),
         });
 
         if (totalPoints > 0) {
           await addUserPoints(ctx.user.id, totalPoints);
         }
 
-        return { entry, results, totalPoints, correct, total: input.answers.length };
+        return { entry, results, totalPoints, correct, total: dedupedAnswers.length };
       }),
 
     // Scratch card

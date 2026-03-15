@@ -84,6 +84,7 @@ export function ChatInput({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setPreviewUri(asset.uri);
       setPreviewSource(source);
+      setPreviewMediaType('image');
     },
     []
   );
