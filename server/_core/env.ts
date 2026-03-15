@@ -30,4 +30,9 @@ export const ENV = {
   ablyApiKey: process.env.ABLY_API_KEY ?? "",
   // Admin notification email addresses (comma-separated)
   adminNotifyEmails: process.env.ADMIN_NOTIFY_EMAILS ?? "",
+  // Strix Governance (feature-flagged — set STRIX_GOVERNANCE_ENABLED=true to activate)
+  strixGovernanceEnabled: process.env.STRIX_GOVERNANCE_ENABLED === "true",
+  strixSigningKey: process.env.STRIX_SIGNING_KEY ?? "",
+  strixPublicKey: process.env.STRIX_PUBLIC_KEY ?? "",
+  strixEvidencePath: process.env.STRIX_EVIDENCE_PATH ?? "./evidence/audit.jsonl",
 };

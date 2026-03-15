@@ -6,6 +6,8 @@ import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { governedProcedure } from "./_core/governed-procedure";
+import { governanceRouter } from "./governance-router";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -249,6 +251,7 @@ const createProgramCheckoutSession = async ({
 
 export const appRouter = router({
   system: systemRouter,
+  governance: governanceRouter,
 
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -616,7 +619,7 @@ export const appRouter = router({
           await updateProgram(id, normalizedUpdates);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.program.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteProgram } = await import("./db");
@@ -648,14 +651,14 @@ export const appRouter = router({
           });
           return { success: true };
         }),
-      publish: adminProcedure
+      publish: governedProcedure("academy.announcement.publish")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { publishAnnouncement } = await import("./db");
           await publishAnnouncement(input.id);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.announcement.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteAnnouncement } = await import("./db");
@@ -722,7 +725,7 @@ export const appRouter = router({
           await updateSchedule(id, updates);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.schedule.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteSchedule } = await import("./db");
@@ -796,7 +799,7 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      removeProgram: adminProcedure
+      removeProgram: governedProcedure("academy.member.remove-program")
         .input(z.object({ enrollmentId: z.number() }))
         .mutation(async ({ input }) => {
           const { getDb } = await import("./db");
@@ -814,7 +817,7 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      updateRole: adminProcedure
+      updateRole: governedProcedure("academy.member.update-role")
         .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
         .mutation(async ({ input }) => {
           const { getDb } = await import("./db");
@@ -894,7 +897,7 @@ export const appRouter = router({
   }),
 
   chatAdmin: router({
-    clearAll: adminProcedure
+    clearAll: governedProcedure("academy.chat.clear-all")
       .input(z.object({ room: z.string().optional() }))
       .mutation(async ({ input }) => {
         const { chatMessages } = await import("../drizzle/schema");
@@ -979,7 +982,7 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.gallery.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteGalleryPhoto } = await import("./db");
@@ -1164,7 +1167,7 @@ export const appRouter = router({
             return { success: true };
           }),
 
-        delete: adminProcedure
+        delete: governedProcedure("academy.product.delete")
           .input(z.object({ id: z.number() }))
           .mutation(async ({ input }) => {
             const { deleteProduct } = await import("./db");
@@ -1214,7 +1217,7 @@ export const appRouter = router({
             return { success: true };
           }),
 
-        delete: adminProcedure
+        delete: governedProcedure("academy.campaign.delete")
           .input(z.object({ id: z.number() }))
           .mutation(async ({ input }) => {
             const { deleteCampaign } = await import("./db");
@@ -1306,7 +1309,7 @@ export const appRouter = router({
           return { success: true };
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.video.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteVideo } = await import("./db");
@@ -1709,7 +1712,7 @@ export const appRouter = router({
           });
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.location.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteLocation } = await import("./db");
@@ -1762,7 +1765,7 @@ export const appRouter = router({
           await updateCoach(id, updates);
           return { success: true };
         }),
-      delete: adminProcedure
+      delete: governedProcedure("academy.coach.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           const { deleteCoach } = await import("./db");
@@ -1802,7 +1805,7 @@ export const appRouter = router({
             const id = await createCoachAssignment(input);
             return { success: true, id };
           }),
-        delete: adminProcedure
+        delete: governedProcedure("academy.coach-assignment.delete")
           .input(z.object({ id: z.number() }))
           .mutation(async ({ input }) => {
             const { deleteCoachAssignment } = await import("./db");
@@ -2053,7 +2056,7 @@ export const appRouter = router({
   // Admin DM management
   dmAdmin: router({
     // Set user's messaging role
-    setUserRole: adminProcedure
+    setUserRole: governedProcedure("academy.dm.set-user-role")
       .input(
         z.object({
           userId: z.number(),
@@ -2300,14 +2303,14 @@ export const appRouter = router({
         await updateBlogPost(id, updates);
         return { success: true };
       }),
-    publish: adminProcedure
+    publish: governedProcedure("academy.blog.publish")
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const { publishBlogPost } = await import("./db");
         await publishBlogPost(input.id);
         return { success: true };
       }),
-    delete: adminProcedure
+    delete: governedProcedure("academy.blog.delete")
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const { deleteBlogPost } = await import("./db");
@@ -2467,7 +2470,7 @@ export const appRouter = router({
           });
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.metric.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           await deleteAthleteMetric(input.id);
@@ -2531,7 +2534,7 @@ export const appRouter = router({
           return await updateShowcase(id, data);
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.showcase.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           await deleteShowcase(input.id);
@@ -2579,7 +2582,7 @@ export const appRouter = router({
           return await markDropSent(input.id);
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.merch-drop.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           await deleteMerchDrop(input.id);
@@ -2854,7 +2857,7 @@ export const appRouter = router({
           return await updateTriviaQuestion(id, data);
         }),
 
-      deleteTrivia: adminProcedure
+      deleteTrivia: governedProcedure("academy.trivia.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           await deleteTriviaQuestion(input.id);
@@ -2901,7 +2904,7 @@ export const appRouter = router({
           return await toggleSocialPostVisibility(input.id);
         }),
 
-      delete: adminProcedure
+      delete: governedProcedure("academy.social-post.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           await deleteSocialPost(input.id);

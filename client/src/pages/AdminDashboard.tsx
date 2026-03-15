@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList } from "lucide-react";
+import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList, Shield } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
@@ -17,6 +17,7 @@ import { AnnouncementsManager } from "@/components/admin/managers/AnnouncementsM
 import { ContactsManager } from "@/components/admin/managers/ContactsManager";
 import { VideosManager } from "@/components/admin/managers/VideosManager";
 import { GalleryManager } from "@/components/admin/managers/GalleryManager";
+import { GovernanceEvidencePane } from "@/components/admin/GovernanceEvidencePane";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -101,6 +102,10 @@ export default function AdminDashboard() {
                 <Image className="h-4 w-4" />
                 <span className="hidden sm:inline">Gallery</span>
               </TabsTrigger>
+              <TabsTrigger value="governance" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline">Governance</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="schedules">
@@ -139,6 +144,9 @@ export default function AdminDashboard() {
             </TabsContent>
             <TabsContent value="gallery">
               <GalleryManager />
+            </TabsContent>
+            <TabsContent value="governance">
+              <GovernanceEvidencePane />
             </TabsContent>
           </Tabs>
         </div>
