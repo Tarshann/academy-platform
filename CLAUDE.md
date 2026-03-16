@@ -79,8 +79,8 @@ academy-platform/
 │
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
-│   ├── routers.ts           #   All tRPC routes (~2,200 lines)
-│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~1,900 lines)
+│   ├── routers.ts           #   All tRPC routes (~2,970 lines)
+│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~2,570 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
 │   ├── chat-sse.ts          #   SSE-based real-time chat (primary)
@@ -125,8 +125,11 @@ academy-platform/
 ├── academy-app/             # Mobile app (Expo + React Native)
 │   ├── app/                 #   Expo Router file-based routes
 │   │   ├── _layout.tsx      #   Root layout: Clerk + AuthGuard + PushRegistration + PostHog
-│   │   ├── (tabs)/          #   Tab-based navigation (dashboard, chat, media, games, programs, profile)
-│   │   └── (auth)/          #   Auth screens (sign-in, sign-up)
+│   │   ├── (tabs)/          #   Tab-based navigation (dashboard, chat, media, programs, profile)
+│   │   │                    #   Hidden tabs: games, messages, schedule (href: null)
+│   │   ├── (auth)/          #   Auth screens (sign-in, sign-up)
+│   │   └── *.tsx            #   Stack screens: admin, metrics, showcase, drops, gallery,
+│   │                        #   attendance, shop, payments, notifications-settings, chat/[room], dm/[id]
 │   ├── components/          #   React Native UI components
 │   ├── lib/                 #   tRPC client, Clerk auth, utilities
 │   ├── assets/              #   App icon, splash screen, adaptive icon
@@ -141,8 +144,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (37+ tables, enums, relations)
-│   └── 0001-0015_*.sql      #   Sequential migrations (latest: social sort order + drops engagement)
+│   ├── schema.ts            #   Full PostgreSQL schema (43 tables, enums, relations)
+│   └── 0000-0015_*.sql      #   Sequential migrations (latest: social sort order + drops engagement)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -363,15 +366,28 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~2,900 | All tRPC routes (programs, shop, admin, chat, metrics, games, etc.) |
-| `server/db.ts` | ~2,500 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~1,000 | Full database schema (37+ tables) |
-| `server/chat-sse.ts` | ~365 | SSE real-time chat system |
-| `server/_core/index.ts` | ~130 | Express app setup + middleware + Vite dev integration |
+| `server/routers.ts` | ~2,970 | All tRPC routes (programs, shop, admin, chat, metrics, games, etc.) |
+| `server/db.ts` | ~2,570 | Drizzle connection + all DB query functions |
+| `drizzle/schema.ts` | ~1,025 | Full database schema (43 tables) |
+| `server/chat-sse.ts` | ~416 | SSE real-time chat system |
+| `server/_core/index.ts` | ~170 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
 | `client/src/main.tsx` | ~175 | React entry: providers, auth, service worker, analytics |
 | `client/src/index.css` | — | Portal theme (oklch colors) |
 | `client/src/contexts/ClerkStateContext.tsx` | — | Clerk auth state wrapper with fallback provider |
+
+### Admin Manager Components
+
+The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 15 manager panels in `client/src/components/admin/managers/`:
+
+| Group | Managers |
+|-------|---------|
+| **Operations** | Schedules, Attendance, Locations |
+| **People** | Members, Coaches, Contacts |
+| **Content** | Announcements, Blog, Videos, Gallery, Social Posts, Merch Drops, Metrics, Showcases |
+| **Programs** | Programs |
+
+Desktop: persistent sidebar. Mobile: Sheet overlay.
 
 ### Client Routing
 
@@ -468,7 +484,9 @@ eas submit --platform android
 | `app.json` | Expo config: name, slug, icon, splash, bundle ID, plugins |
 | `eas.json` | Build profiles: development, preview, production (with EAS Update channels) |
 | `app/_layout.tsx` | Root layout: auth + push + analytics + notification handling |
-| `assets/` | App icon (`icon.png`), splash screen (`splash-icon.png`), adaptive icon |
+| `app/(tabs)/_layout.tsx` | Tab config: 5 visible tabs (Dashboard, Chat, Media, Programs, Profile), 3 hidden (games, messages, schedule) |
+| `lib/theme.ts` | Centralized design tokens: colors, spacing, radius, shadows, typography |
+| `assets/` | App icon (`icon.png`), splash screen (`splash-icon.png`), adaptive icon, Bebas Neue font |
 
 ### Release Checklist
 
@@ -500,7 +518,7 @@ eas submit --platform android
 - Academy Gold `#CFB87C`, Navy `#1a1a2e` (full token system: colors, spacing, radius, shadows, typography)
 - Bebas Neue (display) + system fonts (body) via `expo-font`
 - Ionicons via `@expo/vector-icons`
-- Reusable components: AnimatedCard, AnimatedCounter, GradientCard, PressableScale, FilterChips, SectionHeader, EmptyState
+- Reusable components (15): AnimatedCard, AnimatedCounter, ChatInput, EmptyState, ErrorBoundary, FilterChips, GradientCard, ImageViewer, Loading, MessageBubble, PressableScale, Screen, SectionHeader, Skeleton, TypingIndicator
 - Minimum 44px tap targets
 
 Each app has its own design language. They should never be mixed.
@@ -529,7 +547,7 @@ Each app has its own design language. They should never be mixed.
 
 ### Key Dependency Versions
 
-- React 19.2.1 / React Native 0.81
+- React 19.2.1 / React Native 0.81.5
 - Express 4.21.2
 - tRPC 11.6.0
 - Drizzle ORM 0.44.5
@@ -769,7 +787,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 ## Known Improvement Opportunities (Not Yet Implemented)
 
 - **CI/CD enforcement** — Quality gates exist but are manually run; no GitHub Actions blocking merges
-- **Router/DB monolith split** — `server/routers.ts` (~2,900 lines) and `server/db.ts` (~2,500 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~2,970 lines) and `server/db.ts` (~2,570 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability** — No Sentry/error reporting or request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
