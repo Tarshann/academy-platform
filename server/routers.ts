@@ -61,10 +61,57 @@ import {
   updateSocialPost,
   deleteSocialPost,
   toggleSocialPostVisibility,
+  // Family / Household
+  addFamilyMember,
+  removeFamilyMember,
+  getFamilyMembers,
+  getParentsForChild,
+  getFamilyChildMetrics,
+  getFamilyChildAttendance,
+  getFamilyChildSchedules,
+  // Waitlist
+  addToWaitlist,
+  getWaitlistForSchedule,
+  getWaitlistForProgram,
+  getUserWaitlistEntries,
+  notifyNextOnWaitlist,
+  cancelWaitlistEntry,
+  enrollFromWaitlist,
+  // Referrals
+  getUserReferralCode,
+  createReferral,
+  getReferralByCode,
+  getUserReferrals,
+  convertReferral,
+  getReferralStats,
+  // Schedule Templates
+  getAllScheduleTemplates,
+  getActiveScheduleTemplates,
+  createScheduleTemplate,
+  updateScheduleTemplate,
+  deleteScheduleTemplate,
+  generateSchedulesFromTemplates,
+  // Billing Reminders
+  getActiveBillingReminders,
+  getUserBillingReminders,
+  resolveBillingReminder,
+  // Onboarding
+  getOnboardingProgress,
+  completeOnboardingStep,
+  completeOnboarding,
+  updateUserOnboardingProfile,
+  // RBAC
+  getUserExtendedRole,
+  setUserExtendedRole,
+  getUsersByExtendedRole,
+  // AI Reports
+  getAthleteReportData,
 } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { TRPCError } from "@trpc/server";
 import { logger } from "./_core/logger";
+import { invokeLLM } from "./_core/llm";
+import { sendEmail } from "./email";
 
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
@@ -1396,6 +1443,16 @@ export const appRouter = router({
         return await getUserSubscriptions(ctx.user.id, input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
+    // Calculate sibling discount based on number of enrolled children
+    getSiblingDiscount: protectedProcedure.query(async ({ ctx }) => {
+      const familyMembers = await getFamilyMembers(ctx.user.id);
+      // Discount tiers: 2 children = 10%, 3+ = 15%
+      const childCount = familyMembers.length;
+      if (childCount >= 3) return { discount: 15, childCount, message: "15% family discount (3+ children)" };
+      if (childCount >= 2) return { discount: 10, childCount, message: "10% sibling discount (2 children)" };
+      return { discount: 0, childCount, message: null };
+    }),
+
     createPortalSession: protectedProcedure.mutation(async ({ ctx }) => {
       const { ENV } = await import("./_core/env");
       const Stripe = (await import("stripe")).default;
@@ -1412,7 +1469,7 @@ export const appRouter = router({
 
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
-        return_url: `${resolveCheckoutOrigin()}/member`,
+        return_url: `${resolveCheckoutOrigin(ctx.req, ENV.siteUrl)}/member`,
       });
 
       return { url: session.url };
@@ -2894,6 +2951,386 @@ export const appRouter = router({
           return { success: true };
         }),
     }),
+  }),
+
+  // ============================================================================
+  // FAMILY / HOUSEHOLD ACCOUNTS
+  // ============================================================================
+
+  family: router({
+    getMembers: protectedProcedure.query(async ({ ctx }) => {
+      return await getFamilyMembers(ctx.user.id);
+    }),
+
+    getChildData: protectedProcedure
+      .input(z.object({ childId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        // Verify parent-child relationship
+        const members = await getFamilyMembers(ctx.user.id);
+        const isParent = members.some((m: any) => m.id === input.childId);
+        if (!isParent && ctx.user.role !== "admin") {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to view this child's data" });
+        }
+        const [metrics, attendance, schedules] = await Promise.all([
+          getFamilyChildMetrics(input.childId),
+          getFamilyChildAttendance(input.childId),
+          getFamilyChildSchedules(input.childId),
+        ]);
+        return { metrics, attendance, schedules };
+      }),
+
+    addMember: protectedProcedure
+      .input(z.object({ childId: z.number(), relationshipType: z.string().max(50).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.id === input.childId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot add yourself as a family member" });
+        }
+        return await addFamilyMember(ctx.user.id, input.childId, input.relationshipType ?? "parent");
+      }),
+
+    removeMember: protectedProcedure
+      .input(z.object({ childId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await removeFamilyMember(ctx.user.id, input.childId);
+        return { success: true };
+      }),
+
+    getParents: protectedProcedure.query(async ({ ctx }) => {
+      return await getParentsForChild(ctx.user.id);
+    }),
+  }),
+
+  // ============================================================================
+  // WAITLIST
+  // ============================================================================
+
+  waitlist: router({
+    myEntries: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserWaitlistEntries(ctx.user.id);
+    }),
+
+    join: protectedProcedure
+      .input(z.object({
+        scheduleId: z.number().optional(),
+        programId: z.number().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (!input.scheduleId && !input.programId) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Either scheduleId or programId is required" });
+        }
+        return await addToWaitlist({ userId: ctx.user.id, ...input });
+      }),
+
+    cancel: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await cancelWaitlistEntry(input.id, ctx.user.id);
+      }),
+
+    // Admin routes
+    forSchedule: adminProcedure
+      .input(z.object({ scheduleId: z.number() }))
+      .query(async ({ input }) => {
+        return await getWaitlistForSchedule(input.scheduleId);
+      }),
+
+    forProgram: adminProcedure
+      .input(z.object({ programId: z.number() }))
+      .query(async ({ input }) => {
+        return await getWaitlistForProgram(input.programId);
+      }),
+
+    notifyNext: adminProcedure
+      .input(z.object({ scheduleId: z.number().optional(), programId: z.number().optional() }))
+      .mutation(async ({ input }) => {
+        return await notifyNextOnWaitlist(input.scheduleId, input.programId);
+      }),
+
+    enrollFromWaitlist: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        return await enrollFromWaitlist(input.id);
+      }),
+  }),
+
+  // ============================================================================
+  // REFERRAL PROGRAM
+  // ============================================================================
+
+  referrals: router({
+    getMyCode: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserReferralCode(ctx.user.id);
+    }),
+
+    getMyReferrals: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserReferrals(ctx.user.id);
+    }),
+
+    getStats: protectedProcedure.query(async ({ ctx }) => {
+      return await getReferralStats(ctx.user.id);
+    }),
+
+    invite: protectedProcedure
+      .input(z.object({ email: z.string().email().max(320) }))
+      .mutation(async ({ ctx, input }) => {
+        const referral = await createReferral(ctx.user.id, input.email);
+        // Send referral email
+        try {
+          await sendEmail({
+            to: input.email,
+            subject: "You've been invited to The Academy!",
+            html: `
+              <h2>You're Invited!</h2>
+              <p>${ctx.user.name || "A member"} has invited you to join The Academy in Gallatin, TN.</p>
+              <p>Use referral code <strong>${referral.referralCode}</strong> when you sign up to get started.</p>
+              <p><a href="https://academytn.com">Learn more about The Academy</a></p>
+            `,
+          });
+        } catch (e) {
+          logger.error("[Referral] Failed to send invite email:", e);
+        }
+        return referral;
+      }),
+
+    validateCode: publicProcedure
+      .input(z.object({ code: z.string().max(20) }))
+      .query(async ({ input }) => {
+        const referral = await getReferralByCode(input.code);
+        return { valid: !!referral };
+      }),
+
+    convert: protectedProcedure
+      .input(z.object({ code: z.string().max(20) }))
+      .mutation(async ({ ctx, input }) => {
+        return await convertReferral(input.code, ctx.user.id);
+      }),
+  }),
+
+  // ============================================================================
+  // SCHEDULE TEMPLATES (Admin)
+  // ============================================================================
+
+  scheduleTemplates: router({
+    list: adminProcedure.query(async () => {
+      return await getAllScheduleTemplates();
+    }),
+
+    create: adminProcedure
+      .input(z.object({
+        name: z.string().max(255),
+        programId: z.number().optional(),
+        dayOfWeek: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]),
+        startHour: z.number().min(0).max(23),
+        startMinute: z.number().min(0).max(59).default(0),
+        endHour: z.number().min(0).max(23),
+        endMinute: z.number().min(0).max(59).default(0),
+        location: z.string().max(255).optional(),
+        maxParticipants: z.number().min(1).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await createScheduleTemplate({ ...input, createdBy: ctx.user.id });
+      }),
+
+    update: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().max(255).optional(),
+        programId: z.number().optional(),
+        dayOfWeek: z.enum(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]).optional(),
+        startHour: z.number().min(0).max(23).optional(),
+        startMinute: z.number().min(0).max(59).optional(),
+        endHour: z.number().min(0).max(23).optional(),
+        endMinute: z.number().min(0).max(59).optional(),
+        location: z.string().max(255).optional(),
+        maxParticipants: z.number().min(1).optional(),
+        isActive: z.boolean().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateScheduleTemplate(id, data);
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteScheduleTemplate(input.id);
+        return { success: true };
+      }),
+
+    generate: adminProcedure
+      .input(z.object({ weekStartDate: z.string().transform(s => new Date(s)) }))
+      .mutation(async ({ input }) => {
+        return await generateSchedulesFromTemplates(input.weekStartDate);
+      }),
+  }),
+
+  // ============================================================================
+  // BILLING & PAYMENT REMINDERS
+  // ============================================================================
+
+  billing: router({
+    myReminders: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserBillingReminders(ctx.user.id);
+    }),
+
+    adminActiveReminders: adminProcedure.query(async () => {
+      return await getActiveBillingReminders();
+    }),
+
+    resolve: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await resolveBillingReminder(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // ONBOARDING
+  // ============================================================================
+
+  onboarding: router({
+    getProgress: protectedProcedure.query(async ({ ctx }) => {
+      const steps = await getOnboardingProgress(ctx.user.id);
+      return {
+        steps,
+        completed: steps.some((s: any) => s.step === "complete"),
+      };
+    }),
+
+    completeStep: protectedProcedure
+      .input(z.object({
+        step: z.enum(["select_sport", "set_goals", "choose_program", "schedule_first_session", "complete"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await completeOnboardingStep(ctx.user.id, input.step);
+      }),
+
+    updateProfile: protectedProcedure
+      .input(z.object({
+        sport: z.string().max(50).optional(),
+        goals: z.string().max(1000).optional(),
+        dateOfBirth: z.string().optional().transform(s => s ? new Date(s) : undefined),
+        extendedRole: z.enum(["parent", "athlete"]).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return await updateUserOnboardingProfile(ctx.user.id, input);
+      }),
+
+    complete: protectedProcedure.mutation(async ({ ctx }) => {
+      await completeOnboarding(ctx.user.id);
+      return { success: true };
+    }),
+  }),
+
+  // ============================================================================
+  // RBAC / EXTENDED ROLES
+  // ============================================================================
+
+  roles: router({
+    getMyRole: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserExtendedRole(ctx.user.id);
+    }),
+
+    setRole: adminProcedure
+      .input(z.object({
+        userId: z.number(),
+        role: z.enum(["owner", "admin", "head_coach", "assistant_coach", "front_desk", "parent", "athlete"]),
+      }))
+      .mutation(async ({ input }) => {
+        return await setUserExtendedRole(input.userId, input.role);
+      }),
+
+    listByRole: adminProcedure
+      .input(z.object({
+        role: z.enum(["owner", "admin", "head_coach", "assistant_coach", "front_desk", "parent", "athlete"]),
+      }))
+      .query(async ({ input }) => {
+        return await getUsersByExtendedRole(input.role);
+      }),
+  }),
+
+  // ============================================================================
+  // AI WEEKLY PROGRESS REPORTS
+  // ============================================================================
+
+  progressReports: router({
+    generate: protectedProcedure
+      .input(z.object({ athleteId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Auth check: only the athlete, their parents, or admins can generate
+        if (ctx.user.id !== input.athleteId && ctx.user.role !== "admin") {
+          const parents = await getParentsForChild(input.athleteId);
+          if (!parents.some((p: any) => p.id === ctx.user.id)) {
+            throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to view this report" });
+          }
+        }
+
+        const data = await getAthleteReportData(input.athleteId);
+        if (!data) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Athlete not found" });
+        }
+
+        try {
+          const result = await invokeLLM({
+            messages: [
+              {
+                role: "system",
+                content: `You are a youth sports training analyst for The Academy, a training facility in Gallatin, TN. Generate a concise, encouraging weekly progress report for a young athlete's parent. Include: performance trends, attendance summary, achievements, and actionable next steps. Keep it positive and motivating. Format in clean HTML suitable for email.`,
+              },
+              {
+                role: "user",
+                content: JSON.stringify({
+                  athleteName: data.athlete.name ?? "Athlete",
+                  sport: data.athlete.sport,
+                  recentMetrics: data.metrics.slice(0, 10).map((m: any) => ({
+                    name: m.metricName,
+                    value: m.value,
+                    unit: m.unit,
+                    category: m.category,
+                    date: m.sessionDate,
+                  })),
+                  attendanceRecent: data.attendance.slice(0, 10).map((a: any) => ({
+                    status: a.status,
+                    date: a.markedAt,
+                  })),
+                  showcases: data.showcases.map((s: any) => s.title),
+                  points: data.points ? { total: data.points.totalPoints, streak: data.points.currentStreak } : null,
+                }),
+              },
+            ],
+          });
+
+          const reportHtml = typeof result.choices?.[0]?.message?.content === "string"
+            ? result.choices[0].message.content
+            : "Unable to generate report at this time.";
+
+          return { report: reportHtml, athleteName: data.athlete.name };
+        } catch (e) {
+          logger.error("[ProgressReport] LLM generation failed:", e);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to generate report" });
+        }
+      }),
+
+    sendToParents: adminProcedure
+      .input(z.object({ athleteId: z.number(), reportHtml: z.string().max(50000) }))
+      .mutation(async ({ input }) => {
+        const parents = await getParentsForChild(input.athleteId);
+        const data = await getAthleteReportData(input.athleteId);
+        const athleteName = data?.athlete?.name ?? "Your athlete";
+        let sent = 0;
+        for (const parent of parents) {
+          if (parent.email) {
+            const success = await sendEmail({
+              to: parent.email,
+              subject: `Weekly Progress Report: ${athleteName}`,
+              html: input.reportHtml,
+            });
+            if (success) sent++;
+          }
+        }
+        return { sent, total: parents.length };
+      }),
   }),
 
   // ============================================================================

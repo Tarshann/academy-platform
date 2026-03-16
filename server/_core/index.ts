@@ -11,6 +11,10 @@ import { serveStatic, setupVite } from "./vite";
 import { logger } from "./logger";
 import { validateEnv } from "./validateEnv";
 import { getHealthStatus } from "./health";
+import { initSentry } from "./sentry";
+
+// Initialize Sentry as early as possible
+initSentry();
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {

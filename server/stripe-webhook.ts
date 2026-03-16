@@ -2,7 +2,8 @@ import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
 import { logger } from "./_core/logger";
-import { getDb } from "./db";
+import { getDb, createBillingReminder } from "./db";
+import { sendEmail } from "./email";
 import {
   payments,
   stripeWebhookEvents,
@@ -372,14 +373,52 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (!db) return;
 
   // Update subscription status to past_due if associated
-  if (invoice.subscription && typeof invoice.subscription === "string") {
+  const invoiceAny = invoice as any;
+  if (invoiceAny.subscription && typeof invoiceAny.subscription === "string") {
     await db
       .update(subscriptions)
       .set({
         status: "past_due",
         updatedAt: new Date(),
       })
-      .where(eq(subscriptions.stripeSubscriptionId, invoice.subscription));
+      .where(eq(subscriptions.stripeSubscriptionId, invoiceAny.subscription));
+  }
+
+  // Send dunning email to the customer
+  const customerEmail = typeof invoice.customer_email === "string" ? invoice.customer_email : null;
+  if (customerEmail) {
+    try {
+      // Find user by email for billing reminder record
+      const [user] = await db.select().from(users).where(eq(users.email, customerEmail));
+      if (user) {
+        // Create billing reminder record with 3-day follow-up
+        const nextSendAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+        await createBillingReminder({
+          userId: user.id,
+          stripeInvoiceId: invoice.id,
+          reminderType: "payment_failed",
+          reminderCount: 1,
+          nextSendAt,
+        });
+      }
+
+      await sendEmail({
+        to: customerEmail,
+        subject: "Action Required: Payment Failed — The Academy",
+        html: `
+          <h2>Payment Issue</h2>
+          <p>Hi there,</p>
+          <p>We were unable to process your recent payment for The Academy. This could be due to an expired card or insufficient funds.</p>
+          <p><strong>Amount:</strong> $${((invoice.amount_due ?? 0) / 100).toFixed(2)}</p>
+          <p>Please update your payment method at your earliest convenience to avoid any interruption in your membership.</p>
+          <p>If you believe this is an error, please contact us at <a href="mailto:info@academytn.com">info@academytn.com</a>.</p>
+          <p>Thank you,<br>The Academy Team</p>
+        `,
+      });
+      logger.info(`[Webhook] Dunning email sent to ${customerEmail} for invoice ${invoice.id}`);
+    } catch (e) {
+      logger.error("[Webhook] Failed to send dunning email:", e);
+    }
   }
 }
 

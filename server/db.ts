@@ -56,6 +56,16 @@ import {
   type InsertGameEntry,
   type InsertTriviaQuestion,
   type InsertSocialPost,
+  waitlist,
+  referrals,
+  scheduleTemplates,
+  billingReminders,
+  onboardingSteps,
+  type InsertWaitlistEntry,
+  type InsertReferral,
+  type InsertScheduleTemplate,
+  type InsertBillingReminder,
+  type InsertOnboardingStep,
 } from "../drizzle/schema";
 
 // ============================================================================
@@ -2571,4 +2581,543 @@ export async function toggleSocialPostVisibility(id: number) {
     .where(eq(socialPosts.id, id))
     .returning();
   return updated;
+}
+
+// ============================================================================
+// FAMILY / HOUSEHOLD ACCOUNT FUNCTIONS
+// ============================================================================
+
+export async function addFamilyMember(parentId: number, childId: number, relationshipType = "parent") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Prevent duplicate links
+  const existing = await db
+    .select()
+    .from(userRelations)
+    .where(and(eq(userRelations.parentId, parentId), eq(userRelations.childId, childId)));
+  if (existing.length > 0) return existing[0];
+  const [relation] = await db
+    .insert(userRelations)
+    .values({ parentId, childId, relationshipType })
+    .returning();
+  return relation;
+}
+
+export async function removeFamilyMember(parentId: number, childId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .delete(userRelations)
+    .where(and(eq(userRelations.parentId, parentId), eq(userRelations.childId, childId)));
+}
+
+export async function getFamilyMembers(parentId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const relations = await db
+    .select()
+    .from(userRelations)
+    .where(eq(userRelations.parentId, parentId));
+  if (relations.length === 0) return [];
+  const childIds = relations.map((r: any) => r.childId);
+  const children = await db
+    .select()
+    .from(users)
+    .where(inArray(users.id, childIds));
+  return children;
+}
+
+export async function getFamilyChildMetrics(childId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(athleteMetrics)
+    .where(eq(athleteMetrics.athleteId, childId))
+    .orderBy(desc(athleteMetrics.sessionDate));
+}
+
+export async function getFamilyChildAttendance(childId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(attendanceRecords)
+    .where(eq(attendanceRecords.userId, childId))
+    .orderBy(desc(attendanceRecords.markedAt));
+}
+
+export async function getFamilyChildSchedules(childId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const registrations = await db
+    .select()
+    .from(sessionRegistrations)
+    .where(eq(sessionRegistrations.userId, childId));
+  if (registrations.length === 0) return [];
+  const scheduleIds = registrations.map((r: any) => r.scheduleId);
+  return await db
+    .select()
+    .from(schedules)
+    .where(inArray(schedules.id, scheduleIds))
+    .orderBy(asc(schedules.startTime));
+}
+
+// ============================================================================
+// WAITLIST FUNCTIONS
+// ============================================================================
+
+export async function addToWaitlist(data: InsertWaitlistEntry) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Calculate next position
+  const existing = await db
+    .select({ maxPos: sql<number>`COALESCE(MAX(${waitlist.position}), 0)` })
+    .from(waitlist)
+    .where(
+      and(
+        data.scheduleId ? eq(waitlist.scheduleId, data.scheduleId) : eq(waitlist.programId, data.programId!),
+        eq(waitlist.status, "waiting")
+      )
+    );
+  const nextPosition = (existing[0]?.maxPos ?? 0) + 1;
+  const [entry] = await db
+    .insert(waitlist)
+    .values({ ...data, position: nextPosition })
+    .returning();
+  return entry;
+}
+
+export async function getWaitlistForSchedule(scheduleId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(waitlist)
+    .where(and(eq(waitlist.scheduleId, scheduleId), eq(waitlist.status, "waiting")))
+    .orderBy(asc(waitlist.position));
+}
+
+export async function getWaitlistForProgram(programId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(waitlist)
+    .where(and(eq(waitlist.programId, programId), eq(waitlist.status, "waiting")))
+    .orderBy(asc(waitlist.position));
+}
+
+export async function getUserWaitlistEntries(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(waitlist)
+    .where(and(eq(waitlist.userId, userId), eq(waitlist.status, "waiting")))
+    .orderBy(desc(waitlist.createdAt));
+}
+
+export async function notifyNextOnWaitlist(scheduleId?: number, programId?: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const condition = scheduleId
+    ? and(eq(waitlist.scheduleId, scheduleId), eq(waitlist.status, "waiting"))
+    : and(eq(waitlist.programId, programId!), eq(waitlist.status, "waiting"));
+  const [next] = await db
+    .select()
+    .from(waitlist)
+    .where(condition)
+    .orderBy(asc(waitlist.position))
+    .limit(1);
+  if (!next) return null;
+  // Mark as notified with 24-hour expiry
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  const [updated] = await db
+    .update(waitlist)
+    .set({ status: "notified", notifiedAt: new Date(), expiresAt })
+    .where(eq(waitlist.id, next.id))
+    .returning();
+  return updated;
+}
+
+export async function cancelWaitlistEntry(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [entry] = await db
+    .update(waitlist)
+    .set({ status: "cancelled" })
+    .where(and(eq(waitlist.id, id), eq(waitlist.userId, userId)))
+    .returning();
+  return entry;
+}
+
+export async function enrollFromWaitlist(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [entry] = await db
+    .update(waitlist)
+    .set({ status: "enrolled" })
+    .where(eq(waitlist.id, id))
+    .returning();
+  return entry;
+}
+
+// ============================================================================
+// REFERRAL FUNCTIONS
+// ============================================================================
+
+function generateReferralCode(): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "REF-";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+export async function getUserReferralCode(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user) throw new Error("User not found");
+  if (user.referralCode) return user.referralCode;
+  // Generate and save a new code
+  const code = generateReferralCode();
+  await db.update(users).set({ referralCode: code }).where(eq(users.id, userId));
+  return code;
+}
+
+export async function createReferral(referrerId: number, referredEmail: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const code = generateReferralCode();
+  const [referral] = await db
+    .insert(referrals)
+    .values({ referrerId, referredEmail, referralCode: code })
+    .returning();
+  return referral;
+}
+
+export async function getReferralByCode(code: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const [referral] = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referralCode, code));
+  return referral ?? null;
+}
+
+export async function getUserReferrals(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId))
+    .orderBy(desc(referrals.createdAt));
+}
+
+export async function convertReferral(referralCode: string, referredUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [referral] = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referralCode, referralCode));
+  if (!referral) return null;
+  // Mark as converted
+  const [updated] = await db
+    .update(referrals)
+    .set({ status: "signed_up", referredUserId, convertedAt: new Date() })
+    .where(eq(referrals.id, referral.id))
+    .returning();
+  // Award points to referrer (100 points for each referral)
+  const REFERRAL_POINTS = 100;
+  await addUserPoints(referral.referrerId, REFERRAL_POINTS);
+  await db
+    .update(referrals)
+    .set({ pointsAwarded: REFERRAL_POINTS, status: "rewarded" })
+    .where(eq(referrals.id, referral.id));
+  // Record the referrer on the new user
+  await db.update(users).set({ referredBy: referral.referrerId }).where(eq(users.id, referredUserId));
+  return updated;
+}
+
+export async function getReferralStats(userId: number) {
+  const db = await getDb();
+  if (!db) return { totalReferrals: 0, converted: 0, totalPoints: 0 };
+  const allReferrals = await db
+    .select()
+    .from(referrals)
+    .where(eq(referrals.referrerId, userId));
+  const converted = allReferrals.filter((r: any) => r.status === "rewarded" || r.status === "signed_up");
+  const totalPoints = allReferrals.reduce((sum: number, r: any) => sum + (r.pointsAwarded || 0), 0);
+  return { totalReferrals: allReferrals.length, converted: converted.length, totalPoints };
+}
+
+// ============================================================================
+// SCHEDULE TEMPLATE FUNCTIONS
+// ============================================================================
+
+export async function getAllScheduleTemplates() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(scheduleTemplates)
+    .orderBy(asc(scheduleTemplates.dayOfWeek), asc(scheduleTemplates.startHour));
+}
+
+export async function getActiveScheduleTemplates() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(scheduleTemplates)
+    .where(eq(scheduleTemplates.isActive, true))
+    .orderBy(asc(scheduleTemplates.dayOfWeek), asc(scheduleTemplates.startHour));
+}
+
+export async function createScheduleTemplate(data: InsertScheduleTemplate) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [template] = await db
+    .insert(scheduleTemplates)
+    .values(data)
+    .returning();
+  return template;
+}
+
+export async function updateScheduleTemplate(id: number, data: Partial<InsertScheduleTemplate>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [template] = await db
+    .update(scheduleTemplates)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(scheduleTemplates.id, id))
+    .returning();
+  return template;
+}
+
+export async function deleteScheduleTemplate(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(scheduleTemplates).where(eq(scheduleTemplates.id, id));
+}
+
+export async function generateSchedulesFromTemplates(weekStartDate: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const templates = await getActiveScheduleTemplates();
+  const dayMap: Record<string, number> = {
+    monday: 1, tuesday: 2, wednesday: 3, thursday: 4,
+    friday: 5, saturday: 6, sunday: 0,
+  };
+  const created: any[] = [];
+  for (const tpl of templates) {
+    const targetDay = dayMap[tpl.dayOfWeek];
+    const weekStart = new Date(weekStartDate);
+    const currentDay = weekStart.getDay();
+    const diff = (targetDay - currentDay + 7) % 7;
+    const scheduleDate = new Date(weekStart);
+    scheduleDate.setDate(scheduleDate.getDate() + diff);
+    const startTime = new Date(scheduleDate);
+    startTime.setHours(tpl.startHour, tpl.startMinute, 0, 0);
+    const endTime = new Date(scheduleDate);
+    endTime.setHours(tpl.endHour, tpl.endMinute, 0, 0);
+    const [schedule] = await db
+      .insert(schedules)
+      .values({
+        title: tpl.name,
+        programId: tpl.programId,
+        startTime,
+        endTime,
+        dayOfWeek: tpl.dayOfWeek,
+        location: tpl.location,
+        maxParticipants: tpl.maxParticipants,
+        isRecurring: true,
+      })
+      .returning();
+    created.push(schedule);
+  }
+  return created;
+}
+
+// ============================================================================
+// BILLING REMINDER FUNCTIONS
+// ============================================================================
+
+export async function createBillingReminder(data: InsertBillingReminder) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [reminder] = await db
+    .insert(billingReminders)
+    .values(data)
+    .returning();
+  return reminder;
+}
+
+export async function getActiveBillingReminders() {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(billingReminders)
+    .where(eq(billingReminders.status, "active"))
+    .orderBy(asc(billingReminders.nextSendAt));
+}
+
+export async function getUserBillingReminders(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(billingReminders)
+    .where(eq(billingReminders.userId, userId))
+    .orderBy(desc(billingReminders.createdAt));
+}
+
+export async function updateBillingReminder(id: number, data: Partial<InsertBillingReminder>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [updated] = await db
+    .update(billingReminders)
+    .set(data)
+    .where(eq(billingReminders.id, id))
+    .returning();
+  return updated;
+}
+
+export async function resolveBillingReminder(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(billingReminders)
+    .set({ status: "resolved" })
+    .where(eq(billingReminders.id, id));
+}
+
+// ============================================================================
+// ONBOARDING FUNCTIONS
+// ============================================================================
+
+export async function getOnboardingProgress(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(onboardingSteps)
+    .where(eq(onboardingSteps.userId, userId))
+    .orderBy(asc(onboardingSteps.completedAt));
+}
+
+export async function completeOnboardingStep(userId: number, step: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Prevent duplicates
+  const existing = await db
+    .select()
+    .from(onboardingSteps)
+    .where(and(eq(onboardingSteps.userId, userId), eq(onboardingSteps.step, step)));
+  if (existing.length > 0) return existing[0];
+  const [entry] = await db
+    .insert(onboardingSteps)
+    .values({ userId, step })
+    .returning();
+  return entry;
+}
+
+export async function completeOnboarding(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await completeOnboardingStep(userId, "complete");
+  await db
+    .update(users)
+    .set({ onboardingCompleted: true, onboardingCompletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(users.id, userId));
+}
+
+export async function updateUserOnboardingProfile(userId: number, data: { sport?: string; goals?: string; dateOfBirth?: Date; extendedRole?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [updated] = await db
+    .update(users)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  return updated;
+}
+
+// ============================================================================
+// RBAC / EXTENDED ROLE FUNCTIONS
+// ============================================================================
+
+export async function getUserExtendedRole(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [user] = await db.select({ extendedRole: users.extendedRole }).from(users).where(eq(users.id, userId));
+  return user?.extendedRole ?? "athlete";
+}
+
+export async function setUserExtendedRole(userId: number, role: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [updated] = await db
+    .update(users)
+    .set({ extendedRole: role, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning();
+  return updated;
+}
+
+export async function getUsersByExtendedRole(role: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return await db
+    .select()
+    .from(users)
+    .where(eq(users.extendedRole, role))
+    .orderBy(asc(users.name));
+}
+
+// ============================================================================
+// AI PROGRESS REPORT FUNCTIONS
+// ============================================================================
+
+export async function getAthleteReportData(athleteId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [athlete] = await db.select().from(users).where(eq(users.id, athleteId));
+  if (!athlete) return null;
+  const metrics = await db
+    .select()
+    .from(athleteMetrics)
+    .where(eq(athleteMetrics.athleteId, athleteId))
+    .orderBy(desc(athleteMetrics.sessionDate))
+    .limit(50);
+  const attendance = await db
+    .select()
+    .from(attendanceRecords)
+    .where(eq(attendanceRecords.userId, athleteId))
+    .orderBy(desc(attendanceRecords.markedAt))
+    .limit(30);
+  const showcases = await db
+    .select()
+    .from(athleteShowcases)
+    .where(eq(athleteShowcases.athleteId, athleteId))
+    .orderBy(desc(athleteShowcases.featuredFrom))
+    .limit(5);
+  const points = await db
+    .select()
+    .from(userPoints)
+    .where(eq(userPoints.userId, athleteId));
+  return {
+    athlete,
+    metrics,
+    attendance,
+    showcases,
+    points: points[0] ?? null,
+  };
 }
