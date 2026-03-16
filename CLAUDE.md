@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.6 (mobile app v1.6.1, build 26). Previous v1.5 delivered: unified media feed, DM performance, New Architecture. v1.6 adds: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat.
+**Current release**: v1.7 (mobile app v1.7.0, build 27). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening.
 
 ---
 
@@ -422,7 +422,7 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.6.1 / **Build**: 26 (iOS + Android synchronized)
+- **Version**: 1.7.0 / **Build**: 27 (iOS + Android synchronized)
 
 ### Key Features
 
@@ -496,10 +496,11 @@ eas submit --platform android
 - **Animation**: Framer Motion
 
 ### Mobile — Native
-- React Native StyleSheet
-- Academy Gold `#CFB87C`, Navy `#1a1a2e`
-- System fonts (no custom fonts loaded)
+- React Native StyleSheet + centralized theme (`academy-app/lib/theme.ts`)
+- Academy Gold `#CFB87C`, Navy `#1a1a2e` (full token system: colors, spacing, radius, shadows, typography)
+- Bebas Neue (display) + system fonts (body) via `expo-font`
 - Ionicons via `@expo/vector-icons`
+- Reusable components: AnimatedCard, AnimatedCounter, GradientCard, PressableScale, FilterChips, SectionHeader, EmptyState
 - Minimum 44px tap targets
 
 Each app has its own design language. They should never be mixed.
@@ -760,6 +761,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Security hardening** (commit `f8ef06c`) — Removed unused mysql2/AWS SDK dependencies, added `.max()` limits on DM search/block reason, stopped leaking internal errors in Stripe webhook responses, removed hardcoded admin email fallbacks, replaced `console.error` with `logger.error` across server modules, added try-catch around localStorage for private browsing compatibility.
 - **TestFlight fixes** (v1.6.1) — Added Stack screens for Shop/Payments with back button navigation, fixed chat room history to use chat token (not Clerk JWT), disabled Vercel body parser in API entry points for multer multipart compatibility, added `/api/chat/upload-image` endpoint to serverless.ts (was only in dev server).
 - **P0/P1 review fixes** (build 26, migration 0014) — Fixed dashboard crash (showcases query ordering), added `.catch()` on `Linking.openURL` in social gallery, added `.max()` limits on socialPosts input fields, replaced push subscription read-then-write with atomic `ON CONFLICT` upsert + unique index on `(userId, deviceId)`, increased spin button tap target to 56px, disabled spin button when no spins remaining.
+- **v1.7 platform hardening** (build 27) — 12 targeted fixes: rate limiter periodic cleanup (unbounded memory), DM error masking, Ably/push error logging, multer error sanitization, `Linking.openURL` crash guards, debounce timer leak fix, push notification deep link param validation, SMS link URL encoding. New shared theme system (`academy-app/lib/theme.ts`) with centralized color/spacing/typography tokens. 7 new reusable components (AnimatedCard, AnimatedCounter, GradientCard, PressableScale, FilterChips, SectionHeader, EmptyState). Bebas Neue font added via `expo-font`.
 
 ---
 
