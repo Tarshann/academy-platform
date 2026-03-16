@@ -158,9 +158,17 @@ export default function DashboardScreen() {
                 </Text>
               </View>
               {isAdmin && (
-                <View style={styles.badge}>
-                  <Text style={styles.badgeText}>Admin</Text>
-                </View>
+                <TouchableOpacity
+                  style={styles.adminButton}
+                  onPress={() => {
+                    trackEvent('dashboard_admin_panel_tapped');
+                    router.push('/admin');
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="shield-checkmark" size={14} color={colors.card} />
+                  <Text style={styles.adminButtonText}>Admin</Text>
+                </TouchableOpacity>
               )}
             </View>
           </LinearGradient>
@@ -411,17 +419,23 @@ const styles = StyleSheet.create({
   welcome: {
     ...typography.heading,
   },
-  badge: {
+  adminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: colors.gold,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     marginLeft: 12,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
   },
-  badgeText: {
+  adminButtonText: {
     color: colors.card,
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   // Next Session
   sessionCardOuter: {

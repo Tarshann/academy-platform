@@ -1,4 +1,5 @@
 import { getLoginUrl, isAuthConfigured } from "@/const";
+import { useClerkState } from "@/contexts/ClerkStateContext";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
@@ -14,6 +15,7 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
   const authConfigured = isAuthConfigured();
+  const { signOut: clerkSignOut } = useClerkState();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
@@ -34,14 +36,23 @@ export function useAuth(options?: UseAuthOptions) {
         error instanceof TRPCClientError &&
         error.data?.code === "UNAUTHORIZED"
       ) {
-        return;
+        // Already logged out — continue to cleanup
+      } else {
+        throw error;
       }
-      throw error;
     } finally {
+      // Clear Clerk session if Clerk is configured
+      if (clerkSignOut) {
+        try {
+          await clerkSignOut();
+        } catch {
+          // Clerk sign-out failed — continue with local cleanup
+        }
+      }
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, utils, clerkSignOut]);
 
   const state = useMemo(() => {
     try {
