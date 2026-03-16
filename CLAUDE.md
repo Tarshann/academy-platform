@@ -142,7 +142,7 @@ academy-platform/
 │
 ├── drizzle/                 # Database schema + SQL migrations
 │   ├── schema.ts            #   Full PostgreSQL schema (37+ tables, enums, relations)
-│   └── 0001-0014_*.sql      #   Sequential migrations (latest: push subscription unique index)
+│   └── 0001-0015_*.sql      #   Sequential migrations (latest: social sort order + drops engagement)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -762,7 +762,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **TestFlight fixes** (v1.6.1) — Added Stack screens for Shop/Payments with back button navigation, fixed chat room history to use chat token (not Clerk JWT), disabled Vercel body parser in API entry points for multer multipart compatibility, added `/api/chat/upload-image` endpoint to serverless.ts (was only in dev server).
 - **P0/P1 review fixes** (build 26, migration 0014) — Fixed dashboard crash (showcases query ordering), added `.catch()` on `Linking.openURL` in social gallery, added `.max()` limits on socialPosts input fields, replaced push subscription read-then-write with atomic `ON CONFLICT` upsert + unique index on `(userId, deviceId)`, increased spin button tap target to 56px, disabled spin button when no spins remaining.
 - **v1.7 platform hardening** (build 27) — 12 targeted fixes: rate limiter periodic cleanup (unbounded memory), DM error masking, Ably/push error logging, multer error sanitization, `Linking.openURL` crash guards, debounce timer leak fix, push notification deep link param validation, SMS link URL encoding. New shared theme system (`academy-app/lib/theme.ts`) with centralized color/spacing/typography tokens. 7 new reusable components (AnimatedCard, AnimatedCounter, GradientCard, PressableScale, FilterChips, SectionHeader, EmptyState). Bebas Neue font added via `expo-font`.
-- **Admin content management** — Three new admin manager panels in web portal: SocialPostsManager (CRUD, platform filtering, visibility toggle), MerchDropsManager (create/schedule drops, send notifications, countdown timers, status filtering), MetricsManager (record athlete metrics with 12 preset templates, category/athlete filtering). Backend update routes added for merch drops and social posts. AdminDashboard now has 14 management tabs.
+- **Admin content management** — Three new admin manager panels in web portal: SocialPostsManager (CRUD, platform filtering, visibility toggle, arrow-based reordering), MerchDropsManager (create/schedule drops, send notifications, countdown timers, status filtering, engagement tracking with view/click counts), MetricsManager (record athlete metrics with 12 preset templates, category/athlete filtering, trend visualization bar charts with improvement calculations). ShowcasesManager added for athlete spotlight CRUD (sport selection, achievements, stats, featured dates). All managers have inline edit dialogs. Backend update routes added for merch drops and social posts. Migration 0015 adds socialPosts.sortOrder and merchDrops view/click counts. AdminDashboard restructured: portal uses grouped sidebar navigation (Operations, People, Content, Programs) with desktop persistent sidebar and mobile Sheet overlay; mobile has dedicated admin hub screen with quick stats, organized sections, and sub-screens for Members, Contacts, Announcements, Schedules.
 
 ---
 
