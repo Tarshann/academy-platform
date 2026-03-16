@@ -2359,16 +2359,17 @@ export async function createGameEntryWithLimit(
   if (!db) throw new Error("Database not available");
 
   // Use a raw SQL transaction to atomically check + insert
+  // Enum columns require explicit casts when using parameterized queries
   const result = await db.execute(sql`
     WITH play_count AS (
       SELECT COUNT(*) as cnt
       FROM "gameEntries"
       WHERE "userId" = ${data.userId}
-        AND "gameType" = ${data.gameType}
+        AND "gameType" = ${data.gameType}::game_type
         AND "playedAt" >= CURRENT_DATE
     )
     INSERT INTO "gameEntries" ("userId", "gameType", "rewardType", "rewardValue", "pointsEarned", "metadata", "playedAt")
-    SELECT ${data.userId}, ${data.gameType}, ${data.rewardType ?? "none"}, ${data.rewardValue ?? null}, ${data.pointsEarned ?? 0}, ${data.metadata ?? null}, NOW()
+    SELECT ${data.userId}, ${data.gameType}::game_type, ${data.rewardType ?? "none"}::reward_type, ${data.rewardValue ?? null}, ${data.pointsEarned ?? 0}, ${data.metadata ?? null}::text, NOW()
     FROM play_count
     WHERE play_count.cnt < ${maxPlays}
     RETURNING *
