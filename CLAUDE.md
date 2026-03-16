@@ -440,7 +440,7 @@ The root layout (`app/_layout.tsx`) sets up:
 - Payment history
 - Athlete Metrics — admin-recorded performance data (vertical jump, speed, agility, 12 presets + custom), trend visualization
 - Athlete Showcase — weekly spotlight with achievements, stats, sport badges
-- Games Hub tab — Gold Rush, Academy Trivia, Scratch & Win (daily limits, points, streaks, leaderboard)
+- Games Hub — Gold Rush, Academy Trivia, Scratch & Win (daily limits, points, streaks, leaderboard). Tab currently hidden pending optimization.
 - Social Gallery — aggregated social media posts (Instagram, TikTok, Twitter, Facebook, YouTube)
 - Merch Drops — scheduled drop alerts with countdown timers
 
