@@ -5,7 +5,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList, Share2, BellRing, Activity } from "lucide-react";
+import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList, Share2, BellRing, Activity, Trophy } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
@@ -20,6 +20,7 @@ import { GalleryManager } from "@/components/admin/managers/GalleryManager";
 import { SocialPostsManager } from "@/components/admin/managers/SocialPostsManager";
 import { MerchDropsManager } from "@/components/admin/managers/MerchDropsManager";
 import { MetricsManager } from "@/components/admin/managers/MetricsManager";
+import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
 
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
@@ -116,6 +117,10 @@ export default function AdminDashboard() {
                 <Activity className="h-4 w-4" />
                 <span className="hidden sm:inline">Metrics</span>
               </TabsTrigger>
+              <TabsTrigger value="showcases" className="flex items-center gap-2">
+                <Trophy className="h-4 w-4" />
+                <span className="hidden sm:inline">Showcases</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="schedules">
@@ -163,6 +168,9 @@ export default function AdminDashboard() {
             </TabsContent>
             <TabsContent value="metrics">
               <MetricsManager />
+            </TabsContent>
+            <TabsContent value="showcases">
+              <ShowcasesManager />
             </TabsContent>
           </Tabs>
         </div>

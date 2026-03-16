@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Bell, BellRing, Clock, Zap, Package, BookOpen, Film, CalendarDays, Send } from "lucide-react";
+import { Plus, Trash2, Bell, BellRing, Clock, Zap, Package, BookOpen, Film, CalendarDays, Send, Pencil, Eye, MousePointerClick, BarChart3 } from "lucide-react";
 
 type DropType = "product" | "program" | "content" | "event";
 
@@ -73,6 +73,68 @@ function CountdownBadge({ scheduledAt }: { scheduledAt: Date }) {
   );
 }
 
+function DropFormFields({
+  form,
+  setForm,
+}: {
+  form: DropForm;
+  setForm: (f: DropForm) => void;
+}) {
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Title *</Label>
+        <Input
+          placeholder="e.g., New Academy Hoodie Drop"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <Textarea
+          placeholder="Details about this drop..."
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          rows={3}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Type *</Label>
+        <Select
+          value={form.dropType}
+          onValueChange={(value: DropType) => setForm({ ...form, dropType: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select type" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(DROP_TYPE_CONFIG).map(([key, config]) => (
+              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Drop Date & Time *</Label>
+        <Input
+          type="datetime-local"
+          value={form.scheduledAt}
+          onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Cover Image URL</Label>
+        <Input
+          placeholder="https://... (optional)"
+          value={form.imageUrl}
+          onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function MerchDropsManager() {
   const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
     if (variant === "destructive") {
@@ -83,6 +145,8 @@ export function MerchDropsManager() {
   };
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<DropForm>(defaultForm);
   const [filterStatus, setFilterStatus] = useState<"all" | "upcoming" | "sent">("all");
 
@@ -99,6 +163,20 @@ export function MerchDropsManager() {
     },
     onError: (error) => {
       toast({ title: "Error creating drop", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = trpc.merchDrops.admin.update.useMutation({
+    onSuccess: () => {
+      utils.merchDrops.admin.list.invalidate();
+      utils.merchDrops.upcoming.invalidate();
+      setIsEditOpen(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      toast({ title: "Drop updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating drop", description: error.message, variant: "destructive" });
     },
   });
 
@@ -138,6 +216,33 @@ export function MerchDropsManager() {
     });
   };
 
+  const handleUpdate = () => {
+    if (!editingId || !form.title) {
+      toast({ title: "Please fill in the title", variant: "destructive" });
+      return;
+    }
+    updateMutation.mutate({
+      id: editingId,
+      title: form.title,
+      description: form.description || undefined,
+      dropType: form.dropType,
+      imageUrl: form.imageUrl || undefined,
+      scheduledAt: form.scheduledAt || undefined,
+    });
+  };
+
+  const openEditDialog = (drop: any) => {
+    setEditingId(drop.id);
+    setForm({
+      title: drop.title || "",
+      description: drop.description || "",
+      dropType: drop.dropType || "product",
+      imageUrl: drop.imageUrl || "",
+      scheduledAt: drop.scheduledAt ? new Date(drop.scheduledAt).toISOString().slice(0, 16) : "",
+    });
+    setIsEditOpen(true);
+  };
+
   const handleSendNow = (id: number, title: string) => {
     if (confirm(`Send "${title}" notification now?`)) {
       sendNowMutation.mutate({ id });
@@ -158,6 +263,8 @@ export function MerchDropsManager() {
 
   const upcomingCount = (drops ?? []).filter((d: any) => !d.isSent).length;
   const sentCount = (drops ?? []).filter((d: any) => d.isSent).length;
+  const totalViews = (drops ?? []).reduce((sum: number, d: any) => sum + (d.viewCount || 0), 0);
+  const totalClicks = (drops ?? []).reduce((sum: number, d: any) => sum + (d.clickCount || 0), 0);
 
   if (isLoading) {
     return (
@@ -197,72 +304,38 @@ export function MerchDropsManager() {
             <DialogHeader>
               <DialogTitle>Schedule New Drop</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., New Academy Hoodie Drop"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Details about this drop..."
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dropType">Type *</Label>
-                <Select
-                  value={form.dropType}
-                  onValueChange={(value: DropType) => setForm({ ...form, dropType: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(DROP_TYPE_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>
-                        <span className="flex items-center gap-2">
-                          {config.label}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="scheduledAt">Drop Date & Time *</Label>
-                <Input
-                  id="scheduledAt"
-                  type="datetime-local"
-                  value={form.scheduledAt}
-                  onChange={(e) => setForm({ ...form, scheduledAt: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="imageUrl">Cover Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  placeholder="https://... (optional)"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                />
-              </div>
-              <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
-                {createMutation.isPending ? "Creating..." : "Schedule Drop"}
-              </Button>
-            </div>
+            <DropFormFields form={form} setForm={setForm} />
+            <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
+              {createMutation.isPending ? "Creating..." : "Schedule Drop"}
+            </Button>
           </DialogContent>
         </Dialog>
       </CardHeader>
       <CardContent>
+        {/* Engagement Stats */}
+        {drops && drops.length > 0 && (totalViews > 0 || totalClicks > 0) && (
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="text-2xl font-bold tabular-nums">{drops.length}</div>
+              <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <BarChart3 className="h-3 w-3" /> Total Drops
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="text-2xl font-bold tabular-nums">{totalViews}</div>
+              <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <Eye className="h-3 w-3" /> Views
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/50 text-center">
+              <div className="text-2xl font-bold tabular-nums">{totalClicks}</div>
+              <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                <MousePointerClick className="h-3 w-3" /> Clicks
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Filter Tabs */}
         {drops && drops.length > 0 && (
           <div className="flex gap-2 mb-4">
@@ -308,7 +381,7 @@ export function MerchDropsManager() {
               const typeConfig = DROP_TYPE_CONFIG[drop.dropType as DropType];
               const TypeIcon = typeConfig?.icon || Package;
               const scheduledDate = new Date(drop.scheduledAt);
-              const isPast = scheduledDate <= new Date();
+              const hasEngagement = (drop.viewCount || 0) > 0 || (drop.clickCount || 0) > 0;
 
               return (
                 <div
@@ -351,10 +424,22 @@ export function MerchDropsManager() {
                     {drop.description && (
                       <p className="text-sm text-muted-foreground truncate">{drop.description}</p>
                     )}
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      <CalendarDays className="inline h-3 w-3 mr-1" />
-                      {scheduledDate.toLocaleDateString()} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <p className="text-xs text-muted-foreground">
+                        <CalendarDays className="inline h-3 w-3 mr-1" />
+                        {scheduledDate.toLocaleDateString()} at {scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {hasEngagement && (
+                        <span className="text-xs text-muted-foreground flex items-center gap-2">
+                          <span className="flex items-center gap-0.5">
+                            <Eye className="h-3 w-3" /> {drop.viewCount || 0}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <MousePointerClick className="h-3 w-3" /> {drop.clickCount || 0}
+                          </span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Actions */}
@@ -375,6 +460,14 @@ export function MerchDropsManager() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => openEditDialog(drop)}
+                      title="Edit"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleDelete(drop.id)}
                       className="text-destructive hover:text-destructive"
                       title="Delete"
@@ -388,6 +481,30 @@ export function MerchDropsManager() {
           </div>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => {
+        setIsEditOpen(open);
+        if (!open) {
+          setEditingId(null);
+          setForm(defaultForm);
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Drop</DialogTitle>
+          </DialogHeader>
+          <DropFormFields form={form} setForm={setForm} />
+          <div className="flex gap-2">
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

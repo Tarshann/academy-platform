@@ -33,6 +33,8 @@ import {
   createMerchDrop,
   markDropSent,
   updateMerchDrop,
+  incrementDropView,
+  incrementDropClick,
   deleteMerchDrop,
   // Games & Rewards
   getUserPoints,
@@ -54,6 +56,7 @@ import {
   // Social Posts
   getVisibleSocialPosts,
   getAllSocialPostsAdmin,
+  reorderSocialPosts,
   createSocialPost,
   updateSocialPost,
   deleteSocialPost,
@@ -2549,6 +2552,20 @@ export const appRouter = router({
       return await getUpcomingDrops();
     }),
 
+    trackView: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await incrementDropView(input.id);
+        return { success: true };
+      }),
+
+    trackClick: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await incrementDropClick(input.id);
+        return { success: true };
+      }),
+
     admin: router({
       list: adminProcedure.query(async () => {
         return await getAllDropsAdmin();
@@ -2931,6 +2948,13 @@ export const appRouter = router({
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
           return await toggleSocialPostVisibility(input.id);
+        }),
+
+      reorder: adminProcedure
+        .input(z.object({ orderedIds: z.array(z.number()) }))
+        .mutation(async ({ input }) => {
+          await reorderSocialPosts(input.orderedIds);
+          return { success: true };
         }),
 
       delete: adminProcedure

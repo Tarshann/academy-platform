@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Activity, TrendingUp, Search, User, Filter } from "lucide-react";
+import { Plus, Trash2, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, X } from "lucide-react";
 
 type MetricCategory = "speed" | "power" | "agility" | "endurance" | "strength" | "flexibility";
 
@@ -47,14 +47,133 @@ const METRIC_PRESETS: Record<string, { category: MetricCategory; unit: string }>
   "Sprint Speed": { category: "speed", unit: "mph" },
 };
 
-const CATEGORY_CONFIG: Record<MetricCategory, { label: string; colorClass: string }> = {
-  speed: { label: "Speed", colorClass: "bg-blue-100 text-blue-700" },
-  power: { label: "Power", colorClass: "bg-red-100 text-red-700" },
-  agility: { label: "Agility", colorClass: "bg-green-100 text-green-700" },
-  endurance: { label: "Endurance", colorClass: "bg-purple-100 text-purple-700" },
-  strength: { label: "Strength", colorClass: "bg-orange-100 text-orange-700" },
-  flexibility: { label: "Flexibility", colorClass: "bg-teal-100 text-teal-700" },
+const CATEGORY_CONFIG: Record<MetricCategory, { label: string; colorClass: string; barColor: string }> = {
+  speed: { label: "Speed", colorClass: "bg-blue-100 text-blue-700", barColor: "#3b82f6" },
+  power: { label: "Power", colorClass: "bg-red-100 text-red-700", barColor: "#ef4444" },
+  agility: { label: "Agility", colorClass: "bg-green-100 text-green-700", barColor: "#22c55e" },
+  endurance: { label: "Endurance", colorClass: "bg-purple-100 text-purple-700", barColor: "#a855f7" },
+  strength: { label: "Strength", colorClass: "bg-orange-100 text-orange-700", barColor: "#f97316" },
+  flexibility: { label: "Flexibility", colorClass: "bg-teal-100 text-teal-700", barColor: "#14b8a6" },
 };
+
+// For metrics where lower = better (times)
+const LOWER_IS_BETTER = new Set(["40-Yard Dash", "Pro Agility (5-10-5)", "10-Yard Split", "L-Drill", "Mile Run"]);
+
+function TrendChart({ data, metricName, barColor }: { data: any[]; metricName: string; barColor: string }) {
+  if (data.length < 2) return null;
+
+  const values = data.map((d) => parseFloat(d.value));
+  const maxVal = Math.max(...values);
+  const minVal = Math.min(...values);
+  const range = maxVal - minVal || 1;
+
+  const first = values[0];
+  const last = values[values.length - 1];
+  const lowerBetter = LOWER_IS_BETTER.has(metricName);
+  const improved = lowerBetter ? last < first : last > first;
+  const changePercent = first !== 0 ? Math.abs(((last - first) / first) * 100).toFixed(1) : "0";
+
+  return (
+    <div className="mt-3 p-3 rounded-lg bg-muted/30">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Trend ({data.length} recordings)
+        </span>
+        <span className={`text-xs font-medium flex items-center gap-1 ${improved ? "text-green-600" : "text-red-500"}`}>
+          {improved ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {changePercent}% {improved ? "improved" : "declined"}
+        </span>
+      </div>
+      <div className="flex items-end gap-1 h-16">
+        {values.map((val, i) => {
+          const height = ((val - minVal) / range) * 100;
+          const normalizedHeight = Math.max(height, 8);
+          return (
+            <div
+              key={i}
+              className="flex-1 rounded-t-sm transition-all hover:opacity-80 relative group"
+              style={{
+                height: `${normalizedHeight}%`,
+                backgroundColor: barColor,
+                opacity: 0.4 + (i / values.length) * 0.6,
+              }}
+              title={`${val} (${new Date(data[i].sessionDate).toLocaleDateString()})`}
+            >
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 hidden group-hover:block bg-foreground text-background text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+                {val}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-muted-foreground">
+          {new Date(data[0].sessionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </span>
+        <span className="text-[10px] text-muted-foreground">
+          {new Date(data[data.length - 1].sessionDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TrendPanel({ athleteId, metricName, category, onClose }: {
+  athleteId: number;
+  metricName: string;
+  category: MetricCategory;
+  onClose: () => void;
+}) {
+  const { data: trendData, isLoading } = trpc.metrics.getTrend.useQuery(
+    { athleteId, metricName },
+    { enabled: !!athleteId && !!metricName }
+  );
+
+  const catConfig = CATEGORY_CONFIG[category];
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            {metricName} Trend
+          </DialogTitle>
+        </DialogHeader>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : !trendData || trendData.length < 2 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>Not enough data points for a trend. Need at least 2 recordings.</p>
+          </div>
+        ) : (
+          <div>
+            <TrendChart
+              data={trendData}
+              metricName={metricName}
+              barColor={catConfig?.barColor || "#888"}
+            />
+            <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+              {[...trendData].reverse().map((entry: any, i: number) => (
+                <div key={entry.id || i} className="flex items-center justify-between text-sm py-1 border-b last:border-0">
+                  <span className="text-muted-foreground">
+                    {new Date(entry.sessionDate).toLocaleDateString()}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {entry.value} {entry.unit}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function MetricsManager() {
   const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
@@ -70,6 +189,7 @@ export function MetricsManager() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<MetricCategory | "all">("all");
   const [filterAthleteId, setFilterAthleteId] = useState<string>("all");
+  const [trendView, setTrendView] = useState<{ athleteId: number; metricName: string; category: MetricCategory } | null>(null);
 
   const utils = trpc.useUtils();
   const { data: metrics, isLoading } = trpc.metrics.admin.list.useQuery();
@@ -153,6 +273,13 @@ export function MetricsManager() {
     return matchesCategory && matchesAthlete && matchesSearch;
   });
 
+  // Group metrics by athlete + metricName for trend indicators
+  const metricGroups = new Map<string, number>();
+  for (const m of metrics ?? []) {
+    const key = `${(m as any).athleteId}-${(m as any).metricName}`;
+    metricGroups.set(key, (metricGroups.get(key) || 0) + 1);
+  }
+
   // Get unique athlete IDs from metrics
   const uniqueAthleteIds = [...new Set((metrics ?? []).map((m: any) => m.athleteId))];
 
@@ -195,7 +322,6 @@ export function MetricsManager() {
               <DialogTitle>Record Athlete Metric</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              {/* Athlete Selection */}
               <div className="space-y-2">
                 <Label>Athlete *</Label>
                 <Select
@@ -215,7 +341,6 @@ export function MetricsManager() {
                 </Select>
               </div>
 
-              {/* Quick Preset Buttons */}
               <div className="space-y-2">
                 <Label>Quick Presets</Label>
                 <div className="flex flex-wrap gap-1.5">
@@ -233,7 +358,6 @@ export function MetricsManager() {
                 </div>
               </div>
 
-              {/* Custom metric name */}
               <div className="space-y-2">
                 <Label htmlFor="metricName">Metric Name *</Label>
                 <Input
@@ -316,7 +440,6 @@ export function MetricsManager() {
         {/* Filter Bar */}
         {metrics && metrics.length > 0 && (
           <div className="space-y-3 mb-4">
-            {/* Category Filters */}
             <div className="flex flex-wrap gap-1.5">
               <Badge
                 variant={filterCategory === "all" ? "default" : "outline"}
@@ -337,7 +460,6 @@ export function MetricsManager() {
               ))}
             </div>
 
-            {/* Athlete Filter */}
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -391,6 +513,9 @@ export function MetricsManager() {
               {filteredMetrics.map((metric: any) => {
                 const catConfig = CATEGORY_CONFIG[metric.category as MetricCategory];
                 const athleteName = athleteNameMap.get(metric.athleteId) || `Athlete #${metric.athleteId}`;
+                const groupKey = `${metric.athleteId}-${metric.metricName}`;
+                const groupCount = metricGroups.get(groupKey) || 1;
+                const hasTrend = groupCount >= 2;
 
                 return (
                   <div
@@ -410,6 +535,21 @@ export function MetricsManager() {
                         <Badge variant="outline" className={`text-xs ${catConfig?.colorClass || ""}`}>
                           {catConfig?.label || metric.category}
                         </Badge>
+                        {hasTrend && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs cursor-pointer hover:bg-muted"
+                            onClick={() => setTrendView({
+                              athleteId: metric.athleteId,
+                              metricName: metric.metricName,
+                              category: metric.category,
+                            })}
+                          >
+                            <TrendingUp className="h-3 w-3 mr-1" />
+                            {groupCount} pts
+                            <ChevronRight className="h-3 w-3 ml-0.5" />
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User className="h-3 w-3" />
@@ -439,6 +579,16 @@ export function MetricsManager() {
           </div>
         )}
       </CardContent>
+
+      {/* Trend Dialog */}
+      {trendView && (
+        <TrendPanel
+          athleteId={trendView.athleteId}
+          metricName={trendView.metricName}
+          category={trendView.category}
+          onClose={() => setTrendView(null)}
+        />
+      )}
     </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Eye, EyeOff, ExternalLink, Share2, Search, Filter } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, ExternalLink, Share2, Search, Filter, Pencil, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 
 type SocialPlatform = "instagram" | "tiktok" | "twitter" | "facebook" | "youtube";
 
@@ -47,6 +47,73 @@ function detectPlatform(url: string): SocialPlatform | null {
   return null;
 }
 
+function PostFormFields({
+  form,
+  setForm,
+  onUrlChange,
+}: {
+  form: PostForm;
+  setForm: (f: PostForm) => void;
+  onUrlChange?: (url: string) => void;
+}) {
+  return (
+    <div className="space-y-4 py-4">
+      <div className="space-y-2">
+        <Label>Post URL *</Label>
+        <Input
+          placeholder="https://www.instagram.com/p/... or https://www.tiktok.com/@..."
+          value={form.postUrl}
+          onChange={(e) => onUrlChange ? onUrlChange(e.target.value) : setForm({ ...form, postUrl: e.target.value })}
+        />
+        <p className="text-xs text-muted-foreground">
+          Paste a social media post URL. Platform will be auto-detected.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label>Platform *</Label>
+        <Select
+          value={form.platform}
+          onValueChange={(value: SocialPlatform) => setForm({ ...form, platform: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select platform" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(PLATFORM_CONFIG).map(([key, config]) => (
+              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-2">
+        <Label>Caption</Label>
+        <Textarea
+          placeholder="Optional caption or description"
+          value={form.caption}
+          onChange={(e) => setForm({ ...form, caption: e.target.value })}
+          rows={3}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Thumbnail URL</Label>
+        <Input
+          placeholder="https://... (optional preview image)"
+          value={form.thumbnailUrl}
+          onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Original Post Date</Label>
+        <Input
+          type="datetime-local"
+          value={form.postedAt}
+          onChange={(e) => setForm({ ...form, postedAt: e.target.value })}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function SocialPostsManager() {
   const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
     if (variant === "destructive") {
@@ -57,6 +124,8 @@ export function SocialPostsManager() {
   };
 
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<PostForm>(defaultForm);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPlatform, setFilterPlatform] = useState<SocialPlatform | "all">("all");
@@ -77,14 +146,37 @@ export function SocialPostsManager() {
     },
   });
 
+  const updateMutation = trpc.socialPosts.admin.update.useMutation({
+    onSuccess: () => {
+      utils.socialPosts.admin.list.invalidate();
+      utils.socialPosts.list.invalidate();
+      setIsEditOpen(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      toast({ title: "Post updated successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error updating post", description: error.message, variant: "destructive" });
+    },
+  });
+
   const toggleMutation = trpc.socialPosts.admin.toggleVisibility.useMutation({
     onSuccess: () => {
       utils.socialPosts.admin.list.invalidate();
       utils.socialPosts.list.invalidate();
-      toast({ title: "Visibility updated" });
     },
     onError: (error) => {
       toast({ title: "Error updating visibility", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const reorderMutation = trpc.socialPosts.admin.reorder.useMutation({
+    onSuccess: () => {
+      utils.socialPosts.admin.list.invalidate();
+      utils.socialPosts.list.invalidate();
+    },
+    onError: (error) => {
+      toast({ title: "Error reordering", description: error.message, variant: "destructive" });
     },
   });
 
@@ -123,11 +215,47 @@ export function SocialPostsManager() {
     });
   };
 
+  const handleUpdate = () => {
+    if (!editingId || !form.postUrl) {
+      toast({ title: "Please fill in the post URL", variant: "destructive" });
+      return;
+    }
+    updateMutation.mutate({
+      id: editingId,
+      platform: form.platform,
+      postUrl: form.postUrl,
+      thumbnailUrl: form.thumbnailUrl || undefined,
+      caption: form.caption || undefined,
+    });
+  };
+
+  const openEditDialog = (post: any) => {
+    setEditingId(post.id);
+    setForm({
+      platform: post.platform || "instagram",
+      postUrl: post.postUrl || "",
+      thumbnailUrl: post.thumbnailUrl || "",
+      caption: post.caption || "",
+      embedHtml: post.embedHtml || "",
+      postedAt: post.postedAt ? new Date(post.postedAt).toISOString().slice(0, 16) : "",
+    });
+    setIsEditOpen(true);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this social post?")) {
       deleteMutation.mutate({ id });
     }
   };
+
+  const movePost = useCallback((index: number, direction: "up" | "down") => {
+    if (!posts) return;
+    const ids = posts.map((p: any) => p.id);
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= ids.length) return;
+    [ids[index], ids[newIndex]] = [ids[newIndex], ids[index]];
+    reorderMutation.mutate({ orderedIds: ids });
+  }, [posts, reorderMutation]);
 
   const filteredPosts = (posts ?? []).filter((post: any) => {
     const matchesPlatform = filterPlatform === "all" || post.platform === filterPlatform;
@@ -163,7 +291,7 @@ export function SocialPostsManager() {
             Social Gallery
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage social media posts displayed in the member gallery
+            Manage social media posts displayed in the member gallery. Drag to reorder.
           </p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={(open) => {
@@ -180,67 +308,10 @@ export function SocialPostsManager() {
             <DialogHeader>
               <DialogTitle>Add Social Media Post</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="postUrl">Post URL *</Label>
-                <Input
-                  id="postUrl"
-                  placeholder="https://www.instagram.com/p/... or https://www.tiktok.com/@..."
-                  value={form.postUrl}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Paste a social media post URL. Platform will be auto-detected.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="platform">Platform *</Label>
-                <Select
-                  value={form.platform}
-                  onValueChange={(value: SocialPlatform) => setForm({ ...form, platform: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select platform" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PLATFORM_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="caption">Caption</Label>
-                <Textarea
-                  id="caption"
-                  placeholder="Optional caption or description"
-                  value={form.caption}
-                  onChange={(e) => setForm({ ...form, caption: e.target.value })}
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="thumbnailUrl">Thumbnail URL</Label>
-                <Input
-                  id="thumbnailUrl"
-                  placeholder="https://... (optional preview image)"
-                  value={form.thumbnailUrl}
-                  onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="postedAt">Original Post Date</Label>
-                <Input
-                  id="postedAt"
-                  type="datetime-local"
-                  value={form.postedAt}
-                  onChange={(e) => setForm({ ...form, postedAt: e.target.value })}
-                />
-              </div>
-              <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
-                {createMutation.isPending ? "Adding..." : "Add Post"}
-              </Button>
-            </div>
+            <PostFormFields form={form} setForm={setForm} onUrlChange={handleUrlChange} />
+            <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
+              {createMutation.isPending ? "Adding..." : "Add Post"}
+            </Button>
           </DialogContent>
         </Dialog>
       </CardHeader>
@@ -304,18 +375,43 @@ export function SocialPostsManager() {
             <p>No posts match your filters</p>
           </div>
         ) : (
-          <div className="grid gap-3">
-            {filteredPosts.map((post: any) => {
+          <div className="grid gap-2">
+            {filteredPosts.map((post: any, index: number) => {
               const config = PLATFORM_CONFIG[post.platform as SocialPlatform];
               return (
                 <div
                   key={post.id}
-                  className={`flex items-center gap-4 p-4 border rounded-lg transition-colors hover:bg-muted/30 ${
+                  className={`flex items-center gap-3 p-3 border rounded-lg transition-colors hover:bg-muted/30 ${
                     !post.isVisible ? "opacity-60 bg-muted/50" : ""
                   }`}
                 >
+                  {/* Reorder Controls */}
+                  <div className="flex flex-col gap-0.5 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => movePost(index, "up")}
+                      disabled={index === 0 || reorderMutation.isPending}
+                      title="Move up"
+                    >
+                      <ArrowUp className="h-3 w-3" />
+                    </Button>
+                    <GripVertical className="h-4 w-4 text-muted-foreground mx-auto" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => movePost(index, "down")}
+                      disabled={index === filteredPosts.length - 1 || reorderMutation.isPending}
+                      title="Move down"
+                    >
+                      <ArrowDown className="h-3 w-3" />
+                    </Button>
+                  </div>
+
                   {/* Thumbnail */}
-                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
+                  <div className="w-14 h-14 rounded-lg overflow-hidden bg-muted flex-shrink-0 relative">
                     {post.thumbnailUrl ? (
                       <img
                         src={post.thumbnailUrl}
@@ -346,11 +442,6 @@ export function SocialPostsManager() {
                       <p className="text-sm truncate max-w-md">{post.caption}</p>
                     )}
                     <p className="text-xs text-muted-foreground truncate">{post.postUrl}</p>
-                    {post.postedAt && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Posted: {new Date(post.postedAt).toLocaleDateString()}
-                      </p>
-                    )}
                   </div>
 
                   {/* Actions */}
@@ -362,6 +453,14 @@ export function SocialPostsManager() {
                       title={post.isVisible ? "Hide" : "Show"}
                     >
                       {post.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(post)}
+                      title="Edit"
+                    >
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <a
                       href={post.postUrl}
@@ -388,6 +487,30 @@ export function SocialPostsManager() {
           </div>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => {
+        setIsEditOpen(open);
+        if (!open) {
+          setEditingId(null);
+          setForm(defaultForm);
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Social Post</DialogTitle>
+          </DialogHeader>
+          <PostFormFields form={form} setForm={setForm} />
+          <div className="flex gap-2">
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
+              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
