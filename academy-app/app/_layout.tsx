@@ -53,7 +53,7 @@ function PushRegistration() {
             {
               onSuccess: () => {
                 registered.current = true;
-                console.log('[Push] Token registered:', token, 'device:', deviceId);
+                if (__DEV__) console.log('[Push] Token registered:', token, 'device:', deviceId);
               },
               onError: (err) => console.error('[Push] Registration failed:', err),
             }

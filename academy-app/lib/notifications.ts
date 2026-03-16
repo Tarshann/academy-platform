@@ -19,7 +19,7 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotifications(): Promise<string | null> {
   // Push notifications require a physical device
   if (!Device.isDevice) {
-    console.log('[Push] Not a physical device — skipping registration');
+    if (__DEV__) console.log('[Push] Not a physical device — skipping registration');
     return null;
   }
 
@@ -34,7 +34,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('[Push] Permission not granted');
+    if (__DEV__) console.log('[Push] Permission not granted');
     return null;
   }
 
