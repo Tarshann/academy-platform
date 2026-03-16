@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.7 (mobile app v1.7.0, build 27). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD.
+**Current release**: v1.7 (mobile app v1.7.0, build 28). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD.
 
 ---
 
@@ -146,7 +146,7 @@ academy-platform/
 │
 ├── drizzle/                 # Database schema + SQL migrations
 │   ├── schema.ts            #   Full PostgreSQL schema (48 tables, enums, relations)
-│   └── 0000-0016_*.sql      #   Sequential migrations (latest: family, waitlist, referral, onboarding, RBAC)
+│   └── 0000-0017_*.sql      #   Sequential migrations (latest: gallery viewCount engagement tracking)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -447,7 +447,7 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.7.0 / **Build**: 27 (iOS + Android synchronized)
+- **Version**: 1.7.0 / **Build**: 28 (iOS + Android synchronized)
 
 ### Key Features
 
