@@ -20,6 +20,7 @@ import {
   getAthleteMetricsByName,
   getAllMetricsAdmin,
   createAthleteMetric,
+  updateAthleteMetric,
   deleteAthleteMetric,
   // Athlete Showcases
   getActiveShowcases,
@@ -2390,83 +2391,95 @@ export const appRouter = router({
         const offset = input?.offset ?? 0;
         const category = input?.category ?? "all";
 
-        const { getAllVideos, getVideosByCategory, getDb } = await import("./db");
-        const { galleryPhotos } = await import("../drizzle/schema");
-        const { desc, eq, and } = await import("drizzle-orm");
+        const { getDb } = await import("./db");
+        const { galleryPhotos, videos } = await import("../drizzle/schema");
+        const { desc, eq, and, sql, count } = await import("drizzle-orm");
 
-        // Fetch published videos
-        const videosData = category === "all"
-          ? await getAllVideos(true)
-          : await getVideosByCategory(category, true);
-
-        // Fetch visible gallery photos
         const db = await getDb();
-        let photosData: Array<{
-          id: number;
-          title: string;
-          description: string | null;
-          imageUrl: string;
-          imageKey: string | null;
-          category: string;
-          createdAt: Date;
-        }> = [];
-        if (db) {
-          const conditions = [eq(galleryPhotos.isVisible, true)];
-          if (category !== "all") {
-            conditions.push(eq(galleryPhotos.category, category as "training" | "highlights"));
-          }
-          photosData = await db
-            .select({
-              id: galleryPhotos.id,
-              title: galleryPhotos.title,
-              description: galleryPhotos.description,
-              imageUrl: galleryPhotos.imageUrl,
-              imageKey: galleryPhotos.imageKey,
-              category: galleryPhotos.category,
-              createdAt: galleryPhotos.createdAt,
-            })
-            .from(galleryPhotos)
-            .where(and(...conditions))
-            .orderBy(desc(galleryPhotos.createdAt));
+        if (!db) return { items: [], total: 0, hasMore: false };
+
+        // Build video conditions
+        const videoConditions = [eq(videos.isPublished, true)];
+        if (category !== "all") {
+          videoConditions.push(eq(videos.category, category as "training" | "highlights"));
         }
 
-        // Normalize into a unified feed
-        type VideoRecord = typeof videosData[number];
-        const feedItems = [
-          ...videosData.map((v: VideoRecord) => ({
-            id: `video-${v.id}`,
-            type: "video" as const,
-            title: v.title,
-            description: v.description ?? null,
-            mediaUrl: v.url,
-            thumbnail: v.thumbnail ?? null,
-            platform: v.platform ?? null,
-            category: v.category,
-            viewCount: v.viewCount ?? 0,
-            createdAt: v.createdAt,
-          })),
-          ...photosData.map((p) => ({
-            id: `photo-${p.id}`,
-            type: "photo" as const,
-            title: p.title,
-            description: p.description ?? null,
-            mediaUrl: p.imageUrl,
-            thumbnail: null as string | null,
-            platform: null as string | null,
-            category: p.category,
-            viewCount: 0,
-            createdAt: p.createdAt,
-          })),
-        ];
+        // Build photo conditions
+        const photoConditions = [eq(galleryPhotos.isVisible, true)];
+        if (category !== "all") {
+          photoConditions.push(eq(galleryPhotos.category, category as "training" | "highlights"));
+        }
 
-        // Sort by date descending
-        feedItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Use SQL UNION for efficient single-query merge with pagination
+        const videoSelect = db
+          .select({
+            id: sql<string>`'video-' || ${videos.id}`.as("id"),
+            type: sql<string>`'video'`.as("type"),
+            title: videos.title,
+            description: videos.description,
+            mediaUrl: videos.url,
+            thumbnail: videos.thumbnail,
+            platform: videos.platform,
+            category: videos.category,
+            viewCount: sql<number>`COALESCE(${videos.viewCount}, 0)`.as("viewCount"),
+            createdAt: videos.createdAt,
+          })
+          .from(videos)
+          .where(and(...videoConditions));
 
-        // Paginate
+        const photoSelect = db
+          .select({
+            id: sql<string>`'photo-' || ${galleryPhotos.id}`.as("id"),
+            type: sql<string>`'photo'`.as("type"),
+            title: galleryPhotos.title,
+            description: galleryPhotos.description,
+            mediaUrl: galleryPhotos.imageUrl,
+            thumbnail: sql<string | null>`NULL`.as("thumbnail"),
+            platform: sql<string | null>`NULL`.as("platform"),
+            category: galleryPhotos.category,
+            viewCount: sql<number>`COALESCE(${galleryPhotos.viewCount}, 0)`.as("viewCount"),
+            createdAt: galleryPhotos.createdAt,
+          })
+          .from(galleryPhotos)
+          .where(and(...photoConditions));
+
+        // Execute UNION ALL with ORDER BY, LIMIT, OFFSET via raw SQL
+        const unionQuery = sql`
+          (${videoSelect.getSQL()})
+          UNION ALL
+          (${photoSelect.getSQL()})
+          ORDER BY "createdAt" DESC
+          LIMIT ${limit}
+          OFFSET ${offset}
+        `;
+
+        const items = await db.execute(unionQuery);
+
+        // Get total count for pagination
+        const countQuery = sql`
+          SELECT (
+            (SELECT COUNT(*) FROM "videos" WHERE ${and(...videoConditions)}) +
+            (SELECT COUNT(*) FROM "galleryPhotos" WHERE ${and(...photoConditions)})
+          ) AS total
+        `;
+        const countResult = await db.execute(countQuery);
+        const total = Number((countResult.rows?.[0] as any)?.total ?? 0);
+
         return {
-          items: feedItems.slice(offset, offset + limit),
-          total: feedItems.length,
-          hasMore: offset + limit < feedItems.length,
+          items: (items.rows ?? []).map((row: any) => ({
+            id: row.id,
+            type: row.type,
+            title: row.title,
+            description: row.description ?? null,
+            mediaUrl: row.mediaUrl ?? row.mediaurl,
+            thumbnail: row.thumbnail ?? null,
+            platform: row.platform ?? null,
+            category: row.category,
+            viewCount: Number(row.viewCount ?? row.viewcount ?? 0),
+            createdAt: row.createdAt ?? row.createdat,
+          })),
+          total,
+          hasMore: offset + limit < total,
         };
       }),
   }),
@@ -2525,6 +2538,23 @@ export const appRouter = router({
             ...input,
             recordedBy: ctx.user.id,
           });
+        }),
+
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            metricName: z.string().trim().min(1).optional(),
+            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility"]).optional(),
+            value: metricValueSchema.optional(),
+            unit: z.string().trim().min(1).optional(),
+            notes: z.string().optional(),
+            sessionDate: z.string().transform((s) => new Date(s)).optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await updateAthleteMetric(id, data);
         }),
 
       delete: adminProcedure

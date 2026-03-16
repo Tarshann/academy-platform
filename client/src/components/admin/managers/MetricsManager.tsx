@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, Loader2 } from "lucide-react";
 
 type MetricCategory = "speed" | "power" | "agility" | "endurance" | "strength" | "flexibility";
 
@@ -176,8 +176,147 @@ function TrendPanel({ athleteId, metricName, category, onClose }: {
   );
 }
 
+function MetricFormFields({
+  form,
+  setForm,
+  members,
+  showAthleteSelect,
+}: {
+  form: MetricForm;
+  setForm: (f: MetricForm) => void;
+  members: any[] | undefined;
+  showAthleteSelect: boolean;
+}) {
+  const handlePresetSelect = (presetName: string) => {
+    const preset = METRIC_PRESETS[presetName];
+    if (preset) {
+      setForm({
+        ...form,
+        metricName: presetName,
+        category: preset.category,
+        unit: preset.unit,
+      });
+    }
+  };
+
+  return (
+    <div className="space-y-4 py-4">
+      {showAthleteSelect && (
+        <div className="space-y-2">
+          <Label>Athlete *</Label>
+          <Select
+            value={form.athleteId}
+            onValueChange={(value) => setForm({ ...form, athleteId: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select athlete" />
+            </SelectTrigger>
+            <SelectContent>
+              {(members ?? []).map((member: any) => (
+                <SelectItem key={member.id} value={String(member.id)}>
+                  {member.name || member.email || `User #${member.id}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label>Quick Presets</Label>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.keys(METRIC_PRESETS).map((name) => (
+            <Button
+              key={name}
+              variant={form.metricName === name ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-7"
+              onClick={() => handlePresetSelect(name)}
+            >
+              {name}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="metricName">Metric Name *</Label>
+        <Input
+          id="metricName"
+          placeholder="e.g., Vertical Jump"
+          value={form.metricName}
+          onChange={(e) => setForm({ ...form, metricName: e.target.value })}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="value">Value *</Label>
+          <Input
+            id="value"
+            type="number"
+            step="0.01"
+            placeholder="e.g., 32.5"
+            value={form.value}
+            onChange={(e) => setForm({ ...form, value: e.target.value })}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="unit">Unit *</Label>
+          <Input
+            id="unit"
+            placeholder="e.g., inches"
+            value={form.unit}
+            onChange={(e) => setForm({ ...form, unit: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Category *</Label>
+        <Select
+          value={form.category}
+          onValueChange={(value: MetricCategory) => setForm({ ...form, category: value })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
+              <SelectItem key={key} value={key}>{config.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="sessionDate">Session Date *</Label>
+        <Input
+          id="sessionDate"
+          type="datetime-local"
+          value={form.sessionDate}
+          onChange={(e) => setForm({ ...form, sessionDate: e.target.value })}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Optional notes about this measurement..."
+          value={form.notes}
+          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          rows={2}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function MetricsManager() {
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<MetricForm>(defaultForm);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<MetricCategory | "all">("all");
@@ -200,6 +339,19 @@ export function MetricsManager() {
     },
   });
 
+  const updateMutation = trpc.metrics.admin.update.useMutation({
+    onSuccess: () => {
+      utils.metrics.admin.list.invalidate();
+      setIsEditOpen(false);
+      setEditingId(null);
+      setForm(defaultForm);
+      toast.success("Metric updated successfully");
+    },
+    onError: (error) => {
+      toast.error("Error updating metric", { description: error.message });
+    },
+  });
+
   const deleteMutation = trpc.metrics.admin.delete.useMutation({
     onSuccess: () => {
       utils.metrics.admin.list.invalidate();
@@ -209,18 +361,6 @@ export function MetricsManager() {
       toast.error("Error deleting metric", { description: error.message });
     },
   });
-
-  const handlePresetSelect = (presetName: string) => {
-    const preset = METRIC_PRESETS[presetName];
-    if (preset) {
-      setForm({
-        ...form,
-        metricName: presetName,
-        category: preset.category,
-        unit: preset.unit,
-      });
-    }
-  };
 
   const handleSubmit = () => {
     if (!form.athleteId || !form.metricName || !form.value || !form.unit || !form.sessionDate) {
@@ -241,6 +381,41 @@ export function MetricsManager() {
       notes: form.notes || undefined,
       sessionDate: form.sessionDate,
     });
+  };
+
+  const handleUpdate = () => {
+    if (!editingId || !form.metricName || !form.value || !form.unit || !form.sessionDate) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    const numValue = parseFloat(form.value);
+    if (isNaN(numValue)) {
+      toast.error("Value must be a number");
+      return;
+    }
+    updateMutation.mutate({
+      id: editingId,
+      metricName: form.metricName,
+      category: form.category,
+      value: numValue,
+      unit: form.unit,
+      notes: form.notes || undefined,
+      sessionDate: form.sessionDate,
+    });
+  };
+
+  const openEditDialog = (metric: any) => {
+    setEditingId(metric.id);
+    setForm({
+      athleteId: String(metric.athleteId),
+      metricName: metric.metricName || "",
+      category: metric.category || "speed",
+      value: String(metric.value ?? ""),
+      unit: metric.unit || "",
+      notes: metric.notes || "",
+      sessionDate: metric.sessionDate ? new Date(metric.sessionDate).toISOString().slice(0, 16) : "",
+    });
+    setIsEditOpen(true);
   };
 
   const handleDelete = (id: number) => {
@@ -314,118 +489,17 @@ export function MetricsManager() {
             <DialogHeader>
               <DialogTitle>Record Athlete Metric</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Athlete *</Label>
-                <Select
-                  value={form.athleteId}
-                  onValueChange={(value) => setForm({ ...form, athleteId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select athlete" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(members as any[] ?? []).map((member: any) => (
-                      <SelectItem key={member.id} value={String(member.id)}>
-                        {member.name || member.email || `User #${member.id}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Quick Presets</Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.keys(METRIC_PRESETS).map((name) => (
-                    <Button
-                      key={name}
-                      variant={form.metricName === name ? "default" : "outline"}
-                      size="sm"
-                      className="text-xs h-7"
-                      onClick={() => handlePresetSelect(name)}
-                    >
-                      {name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="metricName">Metric Name *</Label>
-                <Input
-                  id="metricName"
-                  placeholder="e.g., Vertical Jump"
-                  value={form.metricName}
-                  onChange={(e) => setForm({ ...form, metricName: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="value">Value *</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    step="0.01"
-                    placeholder="e.g., 32.5"
-                    value={form.value}
-                    onChange={(e) => setForm({ ...form, value: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit">Unit *</Label>
-                  <Input
-                    id="unit"
-                    placeholder="e.g., inches"
-                    value={form.unit}
-                    onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Category *</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(value: MetricCategory) => setForm({ ...form, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CATEGORY_CONFIG).map(([key, config]) => (
-                      <SelectItem key={key} value={key}>{config.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sessionDate">Session Date *</Label>
-                <Input
-                  id="sessionDate"
-                  type="datetime-local"
-                  value={form.sessionDate}
-                  onChange={(e) => setForm({ ...form, sessionDate: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Optional notes about this measurement..."
-                  value={form.notes}
-                  onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                  rows={2}
-                />
-              </div>
-
-              <Button onClick={handleSubmit} disabled={recordMutation.isPending} className="w-full">
-                {recordMutation.isPending ? "Recording..." : "Record Metric"}
-              </Button>
-            </div>
+            <MetricFormFields form={form} setForm={setForm} members={members as any[]} showAthleteSelect={true} />
+            <Button onClick={handleSubmit} disabled={recordMutation.isPending} className="w-full">
+              {recordMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                "Record Metric"
+              )}
+            </Button>
           </DialogContent>
         </Dialog>
       </CardHeader>
@@ -556,15 +630,25 @@ export function MetricsManager() {
                     </div>
 
                     {/* Actions */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(metric.id)}
-                      className="text-destructive hover:text-destructive flex-shrink-0"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditDialog(metric)}
+                        title="Edit"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(metric.id)}
+                        className="text-destructive hover:text-destructive"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -572,6 +656,37 @@ export function MetricsManager() {
           </div>
         )}
       </CardContent>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={(open) => {
+        setIsEditOpen(open);
+        if (!open) {
+          setEditingId(null);
+          setForm(defaultForm);
+        }
+      }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Metric</DialogTitle>
+          </DialogHeader>
+          <MetricFormFields form={form} setForm={setForm} members={members as any[]} showAthleteSelect={false} />
+          <div className="flex gap-2">
+            <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Trend Dialog */}
       {trendView && (

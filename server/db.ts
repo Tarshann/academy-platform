@@ -2103,6 +2103,13 @@ export async function createAthleteMetric(data: InsertAthleteMetric) {
   return metric;
 }
 
+export async function updateAthleteMetric(id: number, data: Partial<Omit<InsertAthleteMetric, 'id' | 'recordedBy' | 'createdAt'>>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [metric] = await db.update(athleteMetrics).set(data).where(eq(athleteMetrics.id, id)).returning();
+  return metric;
+}
+
 export async function deleteAthleteMetric(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

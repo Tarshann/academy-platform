@@ -335,6 +335,7 @@ export const galleryPhotos = pgTable("galleryPhotos", {
   category: galleryCategoryEnum("category").notNull().default("training"),
   uploadedBy: integer("uploadedBy").notNull(),
   isVisible: boolean("isVisible").notNull().default(true),
+  viewCount: integer("viewCount").default(0),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
 });
 

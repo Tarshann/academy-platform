@@ -9,9 +9,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil, Star, Eye, EyeOff, Trophy, CalendarDays, User } from "lucide-react";
+import { Plus, Trash2, Pencil, Star, Eye, EyeOff, Trophy, CalendarDays, User, Loader2, X } from "lucide-react";
 
 type Sport = "basketball" | "football" | "flag_football" | "soccer" | "multi_sport" | "saq";
+
+interface StatEntry {
+  key: string;
+  value: string;
+}
 
 interface ShowcaseForm {
   athleteId: string;
@@ -20,7 +25,7 @@ interface ShowcaseForm {
   imageUrl: string;
   sport: Sport | "";
   achievements: string;
-  stats: string;
+  statEntries: StatEntry[];
   featuredFrom: string;
   featuredUntil: string;
 }
@@ -32,10 +37,31 @@ const defaultForm: ShowcaseForm = {
   imageUrl: "",
   sport: "",
   achievements: "",
-  stats: "",
+  statEntries: [{ key: "", value: "" }],
   featuredFrom: new Date().toISOString().slice(0, 16),
   featuredUntil: "",
 };
+
+function statsToEntries(statsJson: string | null): StatEntry[] {
+  if (!statsJson) return [{ key: "", value: "" }];
+  try {
+    const obj = JSON.parse(statsJson);
+    if (typeof obj === "object" && obj !== null) {
+      const entries = Object.entries(obj).map(([key, value]) => ({ key, value: String(value) }));
+      return entries.length > 0 ? entries : [{ key: "", value: "" }];
+    }
+  } catch { /* ignore */ }
+  return [{ key: "", value: "" }];
+}
+
+function entriesToStatsJson(entries: StatEntry[]): string {
+  const obj: Record<string, string> = {};
+  for (const entry of entries) {
+    const key = entry.key.trim();
+    if (key) obj[key] = entry.value.trim();
+  }
+  return Object.keys(obj).length > 0 ? JSON.stringify(obj) : "";
+}
 
 const SPORT_CONFIG: Record<Sport, { label: string; emoji: string }> = {
   basketball: { label: "Basketball", emoji: "🏀" },
@@ -129,14 +155,54 @@ function ShowcaseFormFields({
         <p className="text-xs text-muted-foreground">Enter each achievement on a new line</p>
       </div>
       <div className="space-y-2">
-        <Label>Key Stats (JSON)</Label>
-        <Textarea
-          placeholder='e.g., {"Points": "25", "Assists": "8", "Rebounds": "12"}'
-          value={form.stats}
-          onChange={(e) => setForm({ ...form, stats: e.target.value })}
-          rows={2}
-        />
-        <p className="text-xs text-muted-foreground">JSON object of stat name → value pairs</p>
+        <Label>Key Stats</Label>
+        <div className="space-y-2">
+          {form.statEntries.map((entry, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Input
+                placeholder="Stat name (e.g., Points)"
+                value={entry.key}
+                onChange={(e) => {
+                  const updated = [...form.statEntries];
+                  updated[i] = { ...updated[i], key: e.target.value };
+                  setForm({ ...form, statEntries: updated });
+                }}
+                className="flex-1"
+              />
+              <Input
+                placeholder="Value (e.g., 25)"
+                value={entry.value}
+                onChange={(e) => {
+                  const updated = [...form.statEntries];
+                  updated[i] = { ...updated[i], value: e.target.value };
+                  setForm({ ...form, statEntries: updated });
+                }}
+                className="w-28"
+              />
+              {form.statEntries.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 flex-shrink-0"
+                  onClick={() => {
+                    const updated = form.statEntries.filter((_, j) => j !== i);
+                    setForm({ ...form, statEntries: updated });
+                  }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
+          ))}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setForm({ ...form, statEntries: [...form.statEntries, { key: "", value: "" }] })}
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add Stat
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -242,7 +308,7 @@ export function ShowcasesManager() {
       imageUrl: form.imageUrl || undefined,
       sport: (form.sport || undefined) as any,
       achievements: parseAchievements(form.achievements) || undefined,
-      stats: form.stats || undefined,
+      stats: entriesToStatsJson(form.statEntries) || undefined,
       featuredFrom: form.featuredFrom,
       featuredUntil: form.featuredUntil || undefined,
     });
@@ -260,7 +326,7 @@ export function ShowcasesManager() {
       imageUrl: form.imageUrl || undefined,
       sport: (form.sport || undefined) as any,
       achievements: parseAchievements(form.achievements) || undefined,
-      stats: form.stats || undefined,
+      stats: entriesToStatsJson(form.statEntries) || undefined,
       featuredUntil: form.featuredUntil || undefined,
     });
   };
@@ -274,7 +340,7 @@ export function ShowcasesManager() {
       imageUrl: showcase.imageUrl || "",
       sport: showcase.sport || "",
       achievements: formatAchievements(showcase.achievements),
-      stats: showcase.stats || "",
+      statEntries: statsToEntries(showcase.stats),
       featuredFrom: showcase.featuredFrom ? new Date(showcase.featuredFrom).toISOString().slice(0, 16) : "",
       featuredUntil: showcase.featuredUntil ? new Date(showcase.featuredUntil).toISOString().slice(0, 16) : "",
     });
@@ -336,7 +402,14 @@ export function ShowcasesManager() {
             </DialogHeader>
             <ShowcaseFormFields form={form} setForm={setForm} members={members as any[]} />
             <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
-              {createMutation.isPending ? "Creating..." : "Create Showcase"}
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Showcase"
+              )}
             </Button>
           </DialogContent>
         </Dialog>
@@ -490,7 +563,14 @@ export function ShowcasesManager() {
           <ShowcaseFormFields form={form} setForm={setForm} members={members as any[]} />
           <div className="flex gap-2">
             <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>
               Cancel

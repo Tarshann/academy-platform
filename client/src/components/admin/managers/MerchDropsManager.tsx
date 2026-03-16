@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Bell, BellRing, Clock, Zap, Package, BookOpen, Film, CalendarDays, Send, Pencil, Eye, MousePointerClick, BarChart3 } from "lucide-react";
+import { Plus, Trash2, Bell, BellRing, Clock, Zap, Package, BookOpen, Film, CalendarDays, Send, Pencil, Eye, MousePointerClick, BarChart3, Copy, Loader2 } from "lucide-react";
 
 type DropType = "product" | "program" | "content" | "event";
 
@@ -243,6 +243,17 @@ export function MerchDropsManager() {
     }
   };
 
+  const handleDuplicate = (drop: any) => {
+    setForm({
+      title: `${drop.title} (Copy)`,
+      description: drop.description || "",
+      dropType: drop.dropType || "product",
+      imageUrl: drop.imageUrl || "",
+      scheduledAt: "",
+    });
+    setIsAddOpen(true);
+  };
+
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this drop?")) {
       deleteMutation.mutate({ id });
@@ -454,6 +465,14 @@ export function MerchDropsManager() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => handleDuplicate(drop)}
+                      title="Duplicate"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => openEditDialog(drop)}
                       title="Edit"
                     >
@@ -491,7 +510,14 @@ export function MerchDropsManager() {
           <DropFormFields form={form} setForm={setForm} />
           <div className="flex gap-2">
             <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>
               Cancel

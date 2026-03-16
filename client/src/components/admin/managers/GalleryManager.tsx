@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,15 +24,10 @@ const defaultForm: PhotoForm = {
   category: "training",
 };
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
 export function GalleryManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      console.log(title);
-    }
-  };
-  
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -52,10 +48,10 @@ export function GalleryManager() {
       setForm(defaultForm);
       setPreviewUrl(null);
       setSelectedFile(null);
-      toast({ title: "Photo added successfully" });
+      toast.success("Photo added successfully");
     },
     onError: (error) => {
-      toast({ title: "Error adding photo", description: error.message, variant: "destructive" });
+      toast.error("Error adding photo", { description: error.message });
     },
   });
 
@@ -66,10 +62,10 @@ export function GalleryManager() {
       setIsEditOpen(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: "Photo updated successfully" });
+      toast.success("Photo updated successfully");
     },
     onError: (error) => {
-      toast({ title: "Error updating photo", description: error.message, variant: "destructive" });
+      toast.error("Error updating photo", { description: error.message });
     },
   });
 
@@ -77,28 +73,38 @@ export function GalleryManager() {
     onSuccess: () => {
       utils.gallery.admin.list.invalidate();
       utils.gallery.list.invalidate();
-      toast({ title: "Photo deleted successfully" });
+      toast.success("Photo deleted successfully");
     },
     onError: (error) => {
-      toast({ title: "Error deleting photo", description: error.message, variant: "destructive" });
+      toast.error("Error deleting photo", { description: error.message });
     },
   });
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!ACCEPTED_TYPES.includes(file.type)) {
+      toast.error("Invalid file type", { description: "Please upload a JPEG, PNG, WebP, or GIF image." });
+      return;
     }
+
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File too large", { description: `Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` });
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPreviewUrl(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
     if (!form.title || !selectedFile) {
-      toast({ title: "Please fill in required fields and select an image", variant: "destructive" });
+      toast.error("Please fill in required fields and select an image");
       return;
     }
 
@@ -107,18 +113,18 @@ export function GalleryManager() {
       // Upload to S3 via API
       const formData = new FormData();
       formData.append("file", selectedFile);
-      
+
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       });
-      
+
       if (!response.ok) {
         throw new Error("Upload failed");
       }
-      
+
       const { url, key } = await response.json();
-      
+
       uploadMutation.mutate({
         title: form.title,
         description: form.description || undefined,
@@ -127,7 +133,7 @@ export function GalleryManager() {
         category: form.category,
       });
     } catch (error) {
-      toast({ title: "Error uploading image", description: String(error), variant: "destructive" });
+      toast.error("Error uploading image", { description: String(error) });
     } finally {
       setUploading(false);
     }
@@ -135,7 +141,7 @@ export function GalleryManager() {
 
   const handleUpdate = () => {
     if (!editingId || !form.title) {
-      toast({ title: "Please fill in required fields", variant: "destructive" });
+      toast.error("Please fill in required fields");
       return;
     }
 
@@ -211,7 +217,7 @@ export function GalleryManager() {
               {/* Image Upload */}
               <div className="space-y-2">
                 <Label>Image *</Label>
-                <div 
+                <div
                   className="border-2 border-dashed rounded-lg p-6 text-center cursor-pointer hover:border-primary transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -224,14 +230,14 @@ export function GalleryManager() {
                     <>
                       <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">Click to upload an image</p>
-                      <p className="text-xs text-muted-foreground mt-1">PNG, JPG up to 10MB</p>
+                      <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP, or GIF up to 10MB</p>
                     </>
                   )}
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
@@ -270,9 +276,9 @@ export function GalleryManager() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button 
-                onClick={handleSubmit} 
-                disabled={uploading || uploadMutation.isPending} 
+              <Button
+                onClick={handleSubmit}
+                disabled={uploading || uploadMutation.isPending}
                 className="w-full"
               >
                 {uploading || uploadMutation.isPending ? (
@@ -414,7 +420,14 @@ export function GalleryManager() {
             </div>
             <div className="flex gap-2">
               <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
-                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
               <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                 Cancel

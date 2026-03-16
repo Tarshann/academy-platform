@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Eye, EyeOff, ExternalLink, Share2, Search, Filter, Pencil, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, ExternalLink, Share2, Search, Filter, Pencil, GripVertical, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 
 type SocialPlatform = "instagram" | "tiktok" | "twitter" | "facebook" | "youtube";
 
@@ -305,7 +305,14 @@ export function SocialPostsManager() {
             </DialogHeader>
             <PostFormFields form={form} setForm={setForm} onUrlChange={handleUrlChange} />
             <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
-              {createMutation.isPending ? "Adding..." : "Add Post"}
+              {createMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Post"
+              )}
             </Button>
           </DialogContent>
         </Dialog>
@@ -466,7 +473,7 @@ export function SocialPostsManager() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent"
-                      title="Open original post"
+                      title="Open original post in new tab"
                     >
                       <ExternalLink className="h-4 w-4" />
                     </a>
@@ -502,7 +509,14 @@ export function SocialPostsManager() {
           <PostFormFields form={form} setForm={setForm} />
           <div className="flex gap-2">
             <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="flex-1">
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              {updateMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
             </Button>
             <Button variant="outline" onClick={() => setIsEditOpen(false)}>
               Cancel

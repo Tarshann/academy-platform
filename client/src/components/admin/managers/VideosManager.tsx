@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, ExternalLink, Video, Eye, EyeOff } from "lucide-react";
-// Simple toast replacement using alerts
+import { Badge } from "@/components/ui/badge";
+import { Plus, Pencil, Trash2, ExternalLink, Video, Eye, EyeOff, Loader2, CheckSquare } from "lucide-react";
 
 type VideoCategory = "training" | "highlights";
 type VideoPlatform = "tiktok" | "instagram";
@@ -33,18 +33,12 @@ const defaultForm: VideoForm = {
 };
 
 export function VideosManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      // Use console for success messages to avoid blocking
-      console.log(title);
-    }
-  };
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<VideoForm>(defaultForm);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkMode, setBulkMode] = useState(false);
 
   const utils = trpc.useUtils();
   const { data: videos, isLoading } = trpc.videos.admin.list.useQuery();
@@ -55,10 +49,10 @@ export function VideosManager() {
       utils.videos.list.invalidate();
       setIsAddOpen(false);
       setForm(defaultForm);
-      toast({ title: "Video added successfully" });
+      toast.success("Video added successfully");
     },
     onError: (error) => {
-      toast({ title: "Error adding video", description: error.message, variant: "destructive" });
+      toast.error("Error adding video", { description: error.message });
     },
   });
 
@@ -69,10 +63,10 @@ export function VideosManager() {
       setIsEditOpen(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: "Video updated successfully" });
+      toast.success("Video updated successfully");
     },
     onError: (error) => {
-      toast({ title: "Error updating video", description: error.message, variant: "destructive" });
+      toast.error("Error updating video", { description: error.message });
     },
   });
 
@@ -80,20 +74,19 @@ export function VideosManager() {
     onSuccess: () => {
       utils.videos.admin.list.invalidate();
       utils.videos.list.invalidate();
-      toast({ title: "Video deleted successfully" });
+      toast.success("Video deleted successfully");
     },
     onError: (error) => {
-      toast({ title: "Error deleting video", description: error.message, variant: "destructive" });
+      toast.error("Error deleting video", { description: error.message });
     },
   });
 
   const handleSubmit = () => {
     if (!form.title || !form.url) {
-      toast({ title: "Please fill in required fields", variant: "destructive" });
+      toast.error("Please fill in required fields");
       return;
     }
 
-    // Auto-detect platform from URL
     let platform = form.platform;
     if (form.url.includes("tiktok.com")) {
       platform = "tiktok";
@@ -113,11 +106,10 @@ export function VideosManager() {
 
   const handleUpdate = () => {
     if (!editingId || !form.title || !form.url) {
-      toast({ title: "Please fill in required fields", variant: "destructive" });
+      toast.error("Please fill in required fields");
       return;
     }
 
-    // Auto-detect platform from URL
     let platform = form.platform;
     if (form.url.includes("tiktok.com")) {
       platform = "tiktok";
@@ -162,6 +154,27 @@ export function VideosManager() {
     }
   };
 
+  const toggleSelectId = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const bulkSetPublished = async (publish: boolean) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    const label = publish ? "Publishing" : "Unpublishing";
+    toast.info(`${label} ${ids.length} video${ids.length !== 1 ? "s" : ""}...`);
+    for (const id of ids) {
+      updateMutation.mutate({ id, isPublished: publish });
+    }
+    setSelectedIds(new Set());
+    setBulkMode(false);
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -181,83 +194,128 @@ export function VideosManager() {
           <Video className="h-5 w-5" />
           Video Library
         </CardTitle>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setForm(defaultForm)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Video
+        <div className="flex items-center gap-2">
+          {videos && videos.length > 1 && (
+            <Button
+              variant={bulkMode ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => {
+                setBulkMode(!bulkMode);
+                setSelectedIds(new Set());
+              }}
+            >
+              <CheckSquare className="h-4 w-4 mr-1" />
+              {bulkMode ? "Cancel" : "Bulk"}
             </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Add New Video</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="url">Video URL *</Label>
-                <Input
-                  id="url"
-                  placeholder="https://www.tiktok.com/@... or https://www.instagram.com/reel/..."
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Paste a TikTok or Instagram video/reel URL. Platform will be auto-detected.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Video title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Optional description"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Category *</Label>
-                <Select
-                  value={form.category}
-                  onValueChange={(value: VideoCategory) => setForm({ ...form, category: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="training">Training</SelectItem>
-                    <SelectItem value="highlights">Highlights</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="thumbnail">Thumbnail URL</Label>
-                <Input
-                  id="thumbnail"
-                  placeholder="https://... (optional)"
-                  value={form.thumbnail}
-                  onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Optional custom thumbnail image URL. Leave blank to use platform-branded placeholder (TikTok/Instagram logo).
-                </p>
-              </div>
-              <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
-                {createMutation.isPending ? "Adding..." : "Add Video"}
+          )}
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={() => setForm(defaultForm)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Video
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Add New Video</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="url">Video URL *</Label>
+                  <Input
+                    id="url"
+                    placeholder="https://www.tiktok.com/@... or https://www.instagram.com/reel/..."
+                    value={form.url}
+                    onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Paste a TikTok or Instagram video/reel URL. Platform will be auto-detected.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Video title"
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Optional description"
+                    value={form.description}
+                    onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select
+                    value={form.category}
+                    onValueChange={(value: VideoCategory) => setForm({ ...form, category: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="training">Training</SelectItem>
+                      <SelectItem value="highlights">Highlights</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="thumbnail">Thumbnail URL</Label>
+                  <Input
+                    id="thumbnail"
+                    placeholder="https://... (optional)"
+                    value={form.thumbnail}
+                    onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional custom thumbnail image URL. Leave blank to use platform-branded placeholder (TikTok/Instagram logo).
+                  </p>
+                </div>
+                <Button onClick={handleSubmit} disabled={createMutation.isPending} className="w-full">
+                  {createMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    "Add Video"
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
+        {/* Bulk Actions Bar */}
+        {bulkMode && selectedIds.size > 0 && (
+          <div className="flex items-center gap-2 mb-4 p-3 bg-muted rounded-lg">
+            <span className="text-sm font-medium">{selectedIds.size} selected</span>
+            <Button size="sm" variant="outline" onClick={() => bulkSetPublished(true)} disabled={updateMutation.isPending}>
+              <Eye className="h-3.5 w-3.5 mr-1" /> Publish All
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => bulkSetPublished(false)} disabled={updateMutation.isPending}>
+              <EyeOff className="h-3.5 w-3.5 mr-1" /> Unpublish All
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (!videos) return;
+                setSelectedIds(new Set(videos.map((v: any) => v.id)));
+              }}
+            >
+              Select All
+            </Button>
+          </div>
+        )}
+
         {!videos || videos.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -274,8 +332,22 @@ export function VideosManager() {
                   key={video.id}
                   className={`flex items-center gap-4 p-4 border rounded-lg ${
                     !video.isPublished ? "opacity-60 bg-muted/50" : ""
-                  }`}
+                  } ${bulkMode && selectedIds.has(video.id) ? "ring-2 ring-primary" : ""}`}
+                  onClick={bulkMode ? () => toggleSelectId(video.id) : undefined}
+                  style={bulkMode ? { cursor: "pointer" } : undefined}
                 >
+                  {/* Bulk checkbox */}
+                  {bulkMode && (
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(video.id)}
+                      onChange={() => toggleSelectId(video.id)}
+                      className="h-4 w-4 flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label={`Select ${video.title}`}
+                    />
+                  )}
+
                   {/* Thumbnail */}
                   <div className="w-24 h-16 rounded overflow-hidden bg-muted flex-shrink-0">
                     {video.thumbnail ? (
@@ -303,8 +375,8 @@ export function VideosManager() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span className={`px-2 py-0.5 rounded text-xs ${
-                        video.platform === "tiktok" 
-                          ? "bg-black text-white" 
+                        video.platform === "tiktok"
+                          ? "bg-black text-white"
                           : "bg-gradient-to-r from-purple-500 to-pink-500 text-white"
                       }`}>
                         {video.platform === "tiktok" ? "TikTok" : "Instagram"}
@@ -317,43 +389,47 @@ export function VideosManager() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => togglePublished(video)}
-                      title={video.isPublished ? "Unpublish" : "Publish"}
-                    >
-                      {video.isPublished ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(video)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(video.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  {!bulkMode && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => togglePublished(video)}
+                        disabled={updateMutation.isPending}
+                        title={video.isPublished ? "Unpublish" : "Publish"}
+                      >
+                        {video.isPublished ? (
+                          <Eye className="h-4 w-4" />
+                        ) : (
+                          <EyeOff className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <a
+                        href={video.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center h-9 w-9 rounded-md hover:bg-accent"
+                        title="Open in new tab"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditDialog(video)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(video.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -419,7 +495,14 @@ export function VideosManager() {
                 />
               </div>
               <Button onClick={handleUpdate} disabled={updateMutation.isPending} className="w-full">
-                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
               </Button>
             </div>
           </DialogContent>
