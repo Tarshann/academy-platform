@@ -38,23 +38,23 @@ export function useAuth(options?: UseAuthOptions) {
       ) {
         // Already logged out — continue to cleanup
       } else {
-        throw error;
+        // Log but don't re-throw — always proceed to cleanup
+        logger.error("[Auth] Backend logout failed, continuing with cleanup:", error);
       }
-    } finally {
-      // Clear Clerk session if Clerk is configured
-      if (clerkSignOut) {
-        try {
-          await clerkSignOut();
-        } catch {
-          // Clerk sign-out failed — continue with local cleanup
-        }
-      }
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
     }
+    // Always clear Clerk session and local cache
+    if (clerkSignOut) {
+      try {
+        await clerkSignOut();
+      } catch {
+        // Clerk sign-out failed — continue with local cleanup
+      }
+    }
+    utils.auth.me.setData(undefined, null);
+    await utils.auth.me.invalidate();
   }, [logoutMutation, utils, clerkSignOut]);
 
-  const state = useMemo(() => {
+  useEffect(() => {
     try {
       localStorage.setItem(
         "academy-auth-user-info",
@@ -63,6 +63,9 @@ export function useAuth(options?: UseAuthOptions) {
     } catch {
       // localStorage may be unavailable in private/incognito mode
     }
+  }, [meQuery.data]);
+
+  const state = useMemo(() => {
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,

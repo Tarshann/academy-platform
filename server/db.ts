@@ -2201,9 +2201,10 @@ export async function markDropSent(id: number) {
 export async function updateMerchDrop(id: number, data: Partial<InsertMerchDrop>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const { title, description, dropType, imageUrl, scheduledAt } = data;
   const [drop] = await db
     .update(merchDrops)
-    .set(data)
+    .set({ title, description, dropType, imageUrl, scheduledAt })
     .where(eq(merchDrops.id, id))
     .returning();
   return drop;
@@ -2541,9 +2542,10 @@ export async function createSocialPost(data: InsertSocialPost) {
 export async function updateSocialPost(id: number, data: Partial<InsertSocialPost>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+  const { platform, postUrl, embedHtml, thumbnailUrl, caption } = data;
   const [post] = await db
     .update(socialPosts)
-    .set(data)
+    .set({ platform, postUrl, embedHtml, thumbnailUrl, caption })
     .where(eq(socialPosts.id, id))
     .returning();
   return post;

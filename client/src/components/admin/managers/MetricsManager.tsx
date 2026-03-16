@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,14 +177,6 @@ function TrendPanel({ athleteId, metricName, category, onClose }: {
 }
 
 export function MetricsManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      console.log(title);
-    }
-  };
-
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [form, setForm] = useState<MetricForm>(defaultForm);
   const [searchQuery, setSearchQuery] = useState("");
@@ -200,20 +193,20 @@ export function MetricsManager() {
       utils.metrics.admin.list.invalidate();
       setIsAddOpen(false);
       setForm(defaultForm);
-      toast({ title: "Metric recorded successfully" });
+      toast.success("Metric recorded successfully");
     },
     onError: (error) => {
-      toast({ title: "Error recording metric", description: error.message, variant: "destructive" });
+      toast.error("Error recording metric", { description: error.message });
     },
   });
 
   const deleteMutation = trpc.metrics.admin.delete.useMutation({
     onSuccess: () => {
       utils.metrics.admin.list.invalidate();
-      toast({ title: "Metric deleted" });
+      toast.success("Metric deleted");
     },
     onError: (error) => {
-      toast({ title: "Error deleting metric", description: error.message, variant: "destructive" });
+      toast.error("Error deleting metric", { description: error.message });
     },
   });
 
@@ -231,12 +224,12 @@ export function MetricsManager() {
 
   const handleSubmit = () => {
     if (!form.athleteId || !form.metricName || !form.value || !form.unit || !form.sessionDate) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+      toast.error("Please fill in all required fields");
       return;
     }
     const numValue = parseFloat(form.value);
     if (isNaN(numValue)) {
-      toast({ title: "Value must be a number", variant: "destructive" });
+      toast.error("Value must be a number");
       return;
     }
     recordMutation.mutate({

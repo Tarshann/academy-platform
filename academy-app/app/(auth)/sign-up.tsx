@@ -257,9 +257,9 @@ export default function SignUpScreen() {
           <Text style={styles.hint}>Must be at least 8 characters</Text>
 
           <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
+            style={[styles.button, (loading || !email.trim() || password.length < 8) && styles.buttonDisabled]}
             onPress={onSignUp}
-            disabled={loading || !email.trim() || !password}
+            disabled={loading || !email.trim() || password.length < 8}
           >
             {loading ? (
               <ActivityIndicator color={colors.card} />

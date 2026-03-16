@@ -33,9 +33,11 @@ export default function AdminAnnouncementsScreen() {
   });
   const publish = trpc.admin.announcements.publish.useMutation({
     onSuccess: () => announcements.refetch(),
+    onError: (err) => Alert.alert('Error', err.message),
   });
   const remove = trpc.admin.announcements.delete.useMutation({
     onSuccess: () => announcements.refetch(),
+    onError: (err) => Alert.alert('Error', err.message),
   });
 
   const onRefresh = async () => {
@@ -119,6 +121,14 @@ export default function AdminAnnouncementsScreen() {
           announcements.isLoading ? (
             <View style={styles.center}>
               <Text style={styles.emptyText}>Loading...</Text>
+            </View>
+          ) : announcements.isError ? (
+            <View style={styles.center}>
+              <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
+              <Text style={styles.emptyText}>Failed to load announcements</Text>
+              <TouchableOpacity onPress={() => announcements.refetch()} style={styles.retryBtn}>
+                <Text style={styles.retryText}>Retry</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.center}>
@@ -252,4 +262,17 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   actionText: { fontSize: 12, fontWeight: '600' },
+  retryBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center' as const,
+  },
+  retryText: {
+    color: colors.card,
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
 });
