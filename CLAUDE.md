@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.7 (mobile app v1.7.0, build 27). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening.
+**Current release**: v1.7 (mobile app v1.7.0, build 27). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD.
 
 ---
 
@@ -79,8 +79,8 @@ academy-platform/
 │
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
-│   ├── routers.ts           #   All tRPC routes (~2,970 lines)
-│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~2,570 lines)
+│   ├── routers.ts           #   All tRPC routes (~3,400 lines)
+│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,120 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
 │   ├── chat-sse.ts          #   SSE-based real-time chat (primary)
@@ -119,6 +119,7 @@ academy-platform/
 │   ├── dataApi.ts           #   External data API client
 │   ├── map.ts               #   Map/geocoding utilities
 │   ├── sdk.ts               #   SDK authentication helpers
+│   ├── sentry.ts            #   Sentry error monitoring (optional, activated via SENTRY_DSN)
 │   ├── systemRouter.ts      #   System-level tRPC routes (health, version)
 │   └── types/               #   TypeScript type definitions
 │
@@ -144,8 +145,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (43 tables, enums, relations)
-│   └── 0000-0015_*.sql      #   Sequential migrations (latest: social sort order + drops engagement)
+│   ├── schema.ts            #   Full PostgreSQL schema (48 tables, enums, relations)
+│   └── 0000-0016_*.sql      #   Sequential migrations (latest: family, waitlist, referral, onboarding, RBAC)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -160,6 +161,8 @@ academy-platform/
 │   ├── 50_REPORTS/          #   Status reports, audit findings, competitor snapshots
 │   └── 60_AGENT_PROMPTS/    #   Specialized agent prompt templates
 │
+├── .github/workflows/       # CI/CD pipeline (GitHub Actions)
+│   └── ci.yml               #   3 jobs: portal (build+test), marketing (build+validate), mobile (typecheck)
 ├── .agents/                 # Legacy agent planning files (MASTER_PLAN, per-agent plans)
 ├── docs/                    # Strategy docs, ship-readiness checklists, investor materials
 ├── dist/                    # Build output (compiled server + SPA)
@@ -340,7 +343,13 @@ appRouter
 ├── merchDrops.*      # Scheduled merch/content drop alerts
 ├── games.*           # Engagement games (spin wheel, trivia, scratch & win)
 ├── socialPosts.*     # Social media post aggregation
-└── pushNotifications.* # Push notification settings
+├── pushNotifications.* # Push notification settings
+├── family.*          # Household accounts, add/remove children, child metrics/attendance
+├── waitlist.*        # Capacity waitlists, auto-notify, admin enrollment
+├── referrals.*       # Referral codes, invite by email, conversion tracking
+├── scheduleTemplates.* # Recurring weekly schedule templates, auto-generate sessions
+├── onboarding.*      # 4-step guided first-login flow (role → sport → goals → complete)
+└── progressReports.* # AI-generated weekly athlete progress reports (LLM via Gemini)
 ```
 
 Procedures use three auth levels (all defined in `server/_core/trpc.ts`):
@@ -366,11 +375,11 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~2,970 | All tRPC routes (programs, shop, admin, chat, metrics, games, etc.) |
-| `server/db.ts` | ~2,570 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~1,025 | Full database schema (43 tables) |
+| `server/routers.ts` | ~3,400 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, etc.) |
+| `server/db.ts` | ~3,120 | Drizzle connection + all DB query functions |
+| `drizzle/schema.ts` | ~1,160 | Full database schema (48 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
-| `server/_core/index.ts` | ~170 | Express app setup + middleware + Vite dev integration |
+| `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
 | `client/src/main.tsx` | ~175 | React entry: providers, auth, service worker, analytics |
 | `client/src/index.css` | — | Portal theme (oklch colors) |
@@ -393,7 +402,7 @@ Desktop: persistent sidebar. Mobile: Sheet overlay.
 
 The portal uses **wouter** for client-side routing with lazy-loaded pages:
 - Root `/` redirects to `/member` (auth wall)
-- ~40+ routes including: `/admin`, `/coach-dashboard`, `/chat`, `/shop`, `/programs`, `/blog`, `/blog/:slug`, `/gallery`, `/videos`, `/orders`, `/about`, `/contact`, `/faqs`, `/schedule`, `/signup`
+- ~45+ routes including: `/admin`, `/coach-dashboard`, `/chat`, `/shop`, `/programs`, `/blog`, `/blog/:slug`, `/gallery`, `/videos`, `/orders`, `/about`, `/contact`, `/faqs`, `/schedule`, `/signup`, `/family`, `/onboarding`, `/referrals`
 - All pages wrapped in `Suspense` + `ErrorBoundary`
 - `ThemeProvider` + `TooltipProvider` at root
 
@@ -621,7 +630,7 @@ The `ops/` directory is a structured project management system for multi-agent c
 - **OTA updates**: EAS Update channels configured per build profile
 - **Trigger**: Manual (`eas build` + `eas submit`)
 
-No CI/CD pipelines (GitHub Actions). Deployment is Vercel auto-deploy on push for web apps, manual EAS for mobile.
+**CI/CD**: GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on push/PR with 3 jobs: portal (install, typecheck, test, build), marketing (install, build, validate), mobile (install, typecheck). Deployment is Vercel auto-deploy on push for web apps, manual EAS for mobile.
 
 ---
 
@@ -638,6 +647,7 @@ See `.env.example` for the full list. Key groups:
 - **Push**: VAPID keys (for Web Push notifications)
 - **AI**: LLM API keys (for AI-powered features)
 - **Admin**: `ADMIN_NOTIFY_EMAILS` (comma-separated admin notification recipients)
+- **Error Monitoring**: `SENTRY_DSN` (optional, activates Sentry error tracking)
 
 - **Analytics**: `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` (Umami)
 - **Socket.IO**: `ENABLE_SOCKET_IO` (toggle, disabled by default)
@@ -782,18 +792,20 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **v1.7 platform hardening** (build 27) — 12 targeted fixes: rate limiter periodic cleanup (unbounded memory), DM error masking, Ably/push error logging, multer error sanitization, `Linking.openURL` crash guards, debounce timer leak fix, push notification deep link param validation, SMS link URL encoding. New shared theme system (`academy-app/lib/theme.ts`) with centralized color/spacing/typography tokens. 7 new reusable components (AnimatedCard, AnimatedCounter, GradientCard, PressableScale, FilterChips, SectionHeader, EmptyState). Bebas Neue font added via `expo-font`.
 - **Admin content management** — Three new admin manager panels in web portal: SocialPostsManager (CRUD, platform filtering, visibility toggle, arrow-based reordering), MerchDropsManager (create/schedule drops, send notifications, countdown timers, status filtering, engagement tracking with view/click counts), MetricsManager (record athlete metrics with 12 preset templates, category/athlete filtering, trend visualization bar charts with improvement calculations). ShowcasesManager added for athlete spotlight CRUD (sport selection, achievements, stats, featured dates). All managers have inline edit dialogs. Backend update routes added for merch drops and social posts. Migration 0015 adds socialPosts.sortOrder and merchDrops view/click counts. AdminDashboard restructured: portal uses grouped sidebar navigation (Operations, People, Content, Programs) with desktop persistent sidebar and mobile Sheet overlay; mobile has dedicated admin hub screen with quick stats, organized sections, and sub-screens for Members, Contacts, Announcements, Schedules.
 - **Post-review hardening** — Replaced mock toast (console.log/alert) with sonner in all 4 new admin managers. Fixed social posts reorder bug (now uses post ID instead of filtered-list index). Added error states with retry buttons to all mobile admin screens. Logout no longer re-throws on backend 500. Field whitelisting on `updateMerchDrop` and `updateSocialPost` prevents accidental overwrites of createdBy/createdAt/counters. Sign-up button disabled when password < 8 chars. Mobile admin mutations have onError handlers.
+- **Strategic audit implementation** (migration 0016, 12 features) — Family/household accounts with parent dashboard page (`/family`) viewing child metrics/attendance/schedules. Waitlist & capacity management with auto-notify when spots open. Onboarding flow (`/onboarding`) — 4-step guided first-login (role → sport → goals → complete). Automated billing & dunning via Stripe webhook (`invoice.payment_failed` triggers email + reminder record). Referral program (`/referrals`) — invite by email, referral codes, 100-point rewards, conversion tracking. RBAC with 7 roles (owner, admin, head_coach, assistant_coach, front_desk, parent, athlete) — `extendedRole` column on users table. Recurring schedule templates — admin creates weekly templates, auto-generates sessions. AI weekly progress reports — LLM-generated via Gemini, emailed to parents. Sibling/family discounts — auto 10%/15% based on enrolled children count. CI/CD pipeline (`.github/workflows/ci.yml`) with 3 jobs (portal build+test, marketing build+validate, mobile typecheck). Sentry error monitoring (`server/_core/sentry.ts`) — optional activation via `SENTRY_DSN` env var, integrated into Express error handler. All changes purely additive — no existing routes or signatures modified.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **CI/CD enforcement** — Quality gates exist but are manually run; no GitHub Actions blocking merges
-- **Router/DB monolith split** — `server/routers.ts` (~2,970 lines) and `server/db.ts` (~2,570 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~3,400 lines) and `server/db.ts` (~3,120 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
-- **Observability** — No Sentry/error reporting or request log correlation IDs yet
+- **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
-- **Caching** — Every request hits the database; no caching layer
+- **Caching** — Every request hits the database; no caching layer (Redis planned Q3 2026)
 - **API versioning** — All routes in single appRouter; no versioning strategy
+- **Offline mobile support** — No offline capability in the native app
+- **Accessibility audit** — No WCAG compliance testing or a11y tooling configured
 
 ---
 
