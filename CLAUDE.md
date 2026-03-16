@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.7 (mobile app v1.7.0, build 28). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD.
+**Current release**: v1.7.1 (mobile app v1.7.1, build 29). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization.
 
 ---
 
@@ -447,11 +447,12 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.7.0 / **Build**: 28 (iOS + Android synchronized)
+- **Version**: 1.7.1 / **Build**: 29 (iOS + Android synchronized)
 
 ### Key Features
 
-- Dashboard with quick stats, upcoming sessions, and Media quick action
+- Dashboard with quick stats, upcoming sessions, Media quick action, and athlete progress card
+- Calendar sync via `expo-calendar` (session reminders with 1hr + 15min alarms)
 - Unified Media Feed tab (videos + gallery photos, category filtering, pagination)
 - In-app program enrollment (Stripe checkout via expo-web-browser)
 - Attendance tracking with stats
@@ -793,6 +794,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Admin content management** — Three new admin manager panels in web portal: SocialPostsManager (CRUD, platform filtering, visibility toggle, arrow-based reordering), MerchDropsManager (create/schedule drops, send notifications, countdown timers, status filtering, engagement tracking with view/click counts), MetricsManager (record athlete metrics with 12 preset templates, category/athlete filtering, trend visualization bar charts with improvement calculations). ShowcasesManager added for athlete spotlight CRUD (sport selection, achievements, stats, featured dates). All managers have inline edit dialogs. Backend update routes added for merch drops and social posts. Migration 0015 adds socialPosts.sortOrder and merchDrops view/click counts. AdminDashboard restructured: portal uses grouped sidebar navigation (Operations, People, Content, Programs) with desktop persistent sidebar and mobile Sheet overlay; mobile has dedicated admin hub screen with quick stats, organized sections, and sub-screens for Members, Contacts, Announcements, Schedules.
 - **Post-review hardening** — Replaced mock toast (console.log/alert) with sonner in all 4 new admin managers. Fixed social posts reorder bug (now uses post ID instead of filtered-list index). Added error states with retry buttons to all mobile admin screens. Logout no longer re-throws on backend 500. Field whitelisting on `updateMerchDrop` and `updateSocialPost` prevents accidental overwrites of createdBy/createdAt/counters. Sign-up button disabled when password < 8 chars. Mobile admin mutations have onError handlers.
 - **Strategic audit implementation** (migration 0016, 12 features) — Family/household accounts with parent dashboard page (`/family`) viewing child metrics/attendance/schedules. Waitlist & capacity management with auto-notify when spots open. Onboarding flow (`/onboarding`) — 4-step guided first-login (role → sport → goals → complete). Automated billing & dunning via Stripe webhook (`invoice.payment_failed` triggers email + reminder record). Referral program (`/referrals`) — invite by email, referral codes, 100-point rewards, conversion tracking. RBAC with 7 roles (owner, admin, head_coach, assistant_coach, front_desk, parent, athlete) — `extendedRole` column on users table. Recurring schedule templates — admin creates weekly templates, auto-generates sessions. AI weekly progress reports — LLM-generated via Gemini, emailed to parents. Sibling/family discounts — auto 10%/15% based on enrolled children count. CI/CD pipeline (`.github/workflows/ci.yml`) with 3 jobs (portal build+test, marketing build+validate, mobile typecheck). Sentry error monitoring (`server/_core/sentry.ts`) — optional activation via `SENTRY_DSN` env var, integrated into Express error handler. All changes purely additive — no existing routes or signatures modified.
+- **v1.7.1 enhancements** (build 29) — Marketing: App Store/Google Play download badges on homepage hero, footer, and dedicated "Get the App" section; Performance Lab cohort urgency messaging with pulsing enrollment badges. Mobile: app name updated for ASO ("The Academy - Youth Sports"); calendar sync via `expo-calendar` with 1hr + 15min reminder alarms on schedule screen; athlete progress card on dashboard showing recent metrics. Server: feed query optimized to raw SQL `UNION ALL` for better performance.
 
 ---
 
