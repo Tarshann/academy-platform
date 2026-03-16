@@ -1,11 +1,33 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useLocation } from "wouter";
-import { Calendar, Users, MessageSquare, Settings, UserPlus, Video, Image, ClipboardList, Share2, BellRing, Activity, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Calendar,
+  Users,
+  MessageSquare,
+  UserPlus,
+  Video,
+  Image,
+  ClipboardList,
+  FileText,
+  MapPin,
+  Mail,
+  CheckSquare,
+  Menu,
+  ChevronRight,
+  LayoutDashboard,
+  Trophy,
+  Share2,
+  BellRing,
+  Activity,
+  Star,
+} from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
 import { BlogManager } from "@/components/admin/managers/BlogManager";
@@ -22,18 +44,143 @@ import { MerchDropsManager } from "@/components/admin/managers/MerchDropsManager
 import { MetricsManager } from "@/components/admin/managers/MetricsManager";
 import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
 
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: "Operations",
+    items: [
+      { id: "schedules", label: "Schedules", icon: Calendar },
+      { id: "attendance", label: "Attendance", icon: CheckSquare },
+      { id: "locations", label: "Locations", icon: MapPin },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { id: "members", label: "Members", icon: ClipboardList },
+      { id: "coaches", label: "Coaches", icon: UserPlus },
+      { id: "contacts", label: "Contacts", icon: Mail },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { id: "announcements", label: "Announcements", icon: MessageSquare },
+      { id: "blog", label: "Blog", icon: FileText },
+      { id: "videos", label: "Videos", icon: Video },
+      { id: "gallery", label: "Gallery", icon: Image },
+      { id: "social", label: "Social", icon: Share2 },
+    ],
+  },
+  {
+    label: "Programs & Athletes",
+    items: [
+      { id: "programs", label: "Programs", icon: Trophy },
+      { id: "metrics", label: "Metrics", icon: Activity },
+      { id: "showcases", label: "Showcases", icon: Star },
+    ],
+  },
+  {
+    label: "Engagement",
+    items: [
+      { id: "drops", label: "Merch Drops", icon: BellRing },
+    ],
+  },
+];
+
+const allItems = navGroups.flatMap((g) => g.items);
+
+const panels: Record<string, React.ComponentType> = {
+  schedules: SchedulesManager,
+  members: MembersManager,
+  programs: ProgramsManager,
+  announcements: AnnouncementsManager,
+  blog: BlogManager,
+  attendance: AttendanceManager,
+  coaches: CoachesManager,
+  locations: LocationsManager,
+  contacts: ContactsManager,
+  videos: VideosManager,
+  gallery: GalleryManager,
+  social: SocialPostsManager,
+  drops: MerchDropsManager,
+  metrics: MetricsManager,
+  showcases: ShowcasesManager,
+};
+
+function SidebarNav({
+  active,
+  onSelect,
+}: {
+  active: string;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <ScrollArea className="h-full">
+      <div className="py-4 space-y-6">
+        {navGroups.map((group) => (
+          <div key={group.label}>
+            <p className="px-4 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </p>
+            <div className="space-y-0.5 px-2">
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = active === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onSelect(item.id)}
+                    className={`w-full flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            <Separator className="mt-4" />
+          </div>
+        ))}
+      </div>
+    </ScrollArea>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState("schedules");
+  const [activeSection, setActiveSection] = useState("schedules");
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'admin')) {
-      setLocation('/');
+    if (!loading && (!user || user.role !== "admin")) {
+      setLocation("/");
     }
   }, [loading, user, setLocation]);
 
-  if (!loading && (!user || user.role !== 'admin')) {
+  const activeItem = useMemo(
+    () => allItems.find((i) => i.id === activeSection),
+    [activeSection]
+  );
+
+  const ActivePanel = panels[activeSection];
+
+  if (!loading && (!user || user.role !== "admin")) {
     return null;
   }
 
@@ -41,140 +188,79 @@ export default function AdminDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
   }
 
+  const handleSelect = (id: string) => {
+    setActiveSection(id);
+    setMobileOpen(false);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navigation />
 
-      <main id="main-content" className="flex-1 py-8">
-        <div className="container">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2 text-foreground">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage schedules, programs, announcements, and more</p>
+      <div className="flex-1 flex">
+        {/* Desktop sidebar */}
+        <aside className="hidden lg:flex w-60 shrink-0 border-r border-border bg-card">
+          <SidebarNav active={activeSection} onSelect={handleSelect} />
+        </aside>
+
+        {/* Main content */}
+        <main id="main-content" className="flex-1 min-w-0">
+          {/* Top bar with mobile menu + breadcrumb */}
+          <div className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
+              {/* Mobile menu trigger */}
+              <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden shrink-0"
+                  >
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open admin menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                  <div className="px-4 py-4 border-b border-border">
+                    <div className="flex items-center gap-2">
+                      <LayoutDashboard className="h-5 w-5 text-primary" />
+                      <h2 className="font-semibold">Admin</h2>
+                    </div>
+                  </div>
+                  <SidebarNav
+                    active={activeSection}
+                    onSelect={handleSelect}
+                  />
+                </SheetContent>
+              </Sheet>
+
+              {/* Breadcrumb */}
+              <div className="flex items-center gap-2 text-sm min-w-0">
+                <span className="text-muted-foreground hidden sm:inline">Admin</span>
+                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground hidden sm:block shrink-0" />
+                {activeItem && (
+                  <div className="flex items-center gap-2 font-medium truncate">
+                    <activeItem.icon className="h-4 w-4 shrink-0 text-primary" />
+                    <span>{activeItem.label}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
-              <TabsTrigger value="schedules" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="hidden sm:inline">Schedules</span>
-              </TabsTrigger>
-              <TabsTrigger value="members" className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4" />
-                <span className="hidden sm:inline">Members</span>
-              </TabsTrigger>
-              <TabsTrigger value="programs" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Programs</span>
-              </TabsTrigger>
-              <TabsTrigger value="announcements" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Announcements</span>
-              </TabsTrigger>
-              <TabsTrigger value="blog" className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">Blog</span>
-              </TabsTrigger>
-              <TabsTrigger value="attendance" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">Attendance</span>
-              </TabsTrigger>
-              <TabsTrigger value="coaches" className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Coaches</span>
-              </TabsTrigger>
-              <TabsTrigger value="locations" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Locations</span>
-              </TabsTrigger>
-              <TabsTrigger value="contacts" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">Contacts</span>
-              </TabsTrigger>
-              <TabsTrigger value="videos" className="flex items-center gap-2">
-                <Video className="h-4 w-4" />
-                <span className="hidden sm:inline">Videos</span>
-              </TabsTrigger>
-              <TabsTrigger value="gallery" className="flex items-center gap-2">
-                <Image className="h-4 w-4" />
-                <span className="hidden sm:inline">Gallery</span>
-              </TabsTrigger>
-              <TabsTrigger value="social" className="flex items-center gap-2">
-                <Share2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Social</span>
-              </TabsTrigger>
-              <TabsTrigger value="drops" className="flex items-center gap-2">
-                <BellRing className="h-4 w-4" />
-                <span className="hidden sm:inline">Drops</span>
-              </TabsTrigger>
-              <TabsTrigger value="metrics" className="flex items-center gap-2">
-                <Activity className="h-4 w-4" />
-                <span className="hidden sm:inline">Metrics</span>
-              </TabsTrigger>
-              <TabsTrigger value="showcases" className="flex items-center gap-2">
-                <Trophy className="h-4 w-4" />
-                <span className="hidden sm:inline">Showcases</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="schedules">
-              <SchedulesManager />
-            </TabsContent>
-
-            <TabsContent value="members">
-              <MembersManager />
-            </TabsContent>
-
-            <TabsContent value="programs">
-              <ProgramsManager />
-            </TabsContent>
-
-            <TabsContent value="announcements">
-              <AnnouncementsManager />
-            </TabsContent>
-
-            <TabsContent value="blog">
-              <BlogManager />
-            </TabsContent>
-            <TabsContent value="attendance">
-              <AttendanceManager />
-            </TabsContent>
-            <TabsContent value="coaches">
-              <CoachesManager />
-            </TabsContent>
-            <TabsContent value="locations">
-              <LocationsManager />
-            </TabsContent>
-            <TabsContent value="contacts">
-              <ContactsManager />
-            </TabsContent>
-            <TabsContent value="videos">
-              <VideosManager />
-            </TabsContent>
-            <TabsContent value="gallery">
-              <GalleryManager />
-            </TabsContent>
-            <TabsContent value="social">
-              <SocialPostsManager />
-            </TabsContent>
-            <TabsContent value="drops">
-              <MerchDropsManager />
-            </TabsContent>
-            <TabsContent value="metrics">
-              <MetricsManager />
-            </TabsContent>
-            <TabsContent value="showcases">
-              <ShowcasesManager />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
+          {/* Content area */}
+          <div className="p-4 sm:p-6">
+            {ActivePanel && <ActivePanel />}
+          </div>
+        </main>
+      </div>
 
       <Footer />
     </div>

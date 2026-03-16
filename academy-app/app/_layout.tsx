@@ -13,6 +13,7 @@ import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
+import { closeAbly } from '../lib/realtime';
 import { colors } from '../lib/theme';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -118,6 +119,7 @@ function IdentitySync() {
         name: user.fullName ?? null,
       });
     } else if (!isSignedIn) {
+      closeAbly();
       resetUser();
     }
   }, [isSignedIn, user]);
@@ -163,6 +165,11 @@ function AuthGuard() {
           <Stack.Screen name="showcase" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="metrics" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="drops" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="admin" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="admin-members" options={{ headerShown: true, presentation: 'card', title: 'Members', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="admin-contacts" options={{ headerShown: true, presentation: 'card', title: 'Contacts', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="admin-announcements" options={{ headerShown: true, presentation: 'card', title: 'Announcements', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="admin-schedules" options={{ headerShown: true, presentation: 'card', title: 'Schedules', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
         </Stack>
