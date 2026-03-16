@@ -63,6 +63,13 @@ export default function DashboardScreen() {
   const showcases = trpc.showcases.active.useQuery();
   const currentShowcase = showcases.data?.[0];
 
+  // Get athlete metrics for progress card (uses own user ID)
+  const metricsQuery = trpc.metrics.getByAthlete.useQuery(
+    { athleteId: me.data?.id ?? 0 },
+    { enabled: !!me.data?.id }
+  );
+  const recentMetrics = (metricsQuery.data ?? []).slice(0, 3);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await Promise.all([
@@ -242,6 +249,41 @@ export default function DashboardScreen() {
               </GlassCard>
             </AnimatedCard>
           ) : null}
+
+          {/* Athlete Progress Card */}
+          {recentMetrics.length > 0 && (
+            <AnimatedCard index={2}>
+              <TouchableOpacity
+                style={styles.progressCard}
+                onPress={() => {
+                  trackEvent('dashboard_progress_tapped');
+                  router.push('/metrics');
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.progressHeader}>
+                  <View style={styles.progressIconWrap}>
+                    <Ionicons name="trending-up" size={16} color={colors.gold} />
+                  </View>
+                  <Text style={styles.progressTitle}>ATHLETE PROGRESS</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                </View>
+                <View style={styles.progressMetrics}>
+                  {recentMetrics.map((m: any) => (
+                    <View key={m.id} style={styles.progressItem}>
+                      <Text style={styles.progressMetricName} numberOfLines={1}>
+                        {m.metricName}
+                      </Text>
+                      <Text style={styles.progressMetricValue}>
+                        {m.value}{m.unit ? ` ${m.unit}` : ''}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.progressCta}>View all metrics</Text>
+              </TouchableOpacity>
+            </AnimatedCard>
+          )}
 
           {/* Quick Actions */}
           <View style={styles.quickActionsGrid}>
@@ -565,6 +607,64 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: colors.textPrimary,
+  },
+  // Athlete Progress Card
+  progressCard: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    ...shadows.card,
+  },
+  progressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  progressIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.goldMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressTitle: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.textMuted,
+    letterSpacing: 1,
+  },
+  progressMetrics: {
+    gap: 8,
+  },
+  progressItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  progressMetricName: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    flex: 1,
+  },
+  progressMetricValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    fontFamily: typography.display.fontFamily,
+  },
+  progressCta: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.gold,
+    textAlign: 'center',
+    marginTop: 10,
   },
   // Feature Links
   featureLinksRow: {

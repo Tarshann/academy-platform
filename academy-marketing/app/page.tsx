@@ -11,6 +11,7 @@ import {
   TRUSTED_SCHOOLS,
   CONTACT,
   CONTACTS,
+  APP_LINKS,
 } from "@/lib/config";
 import { RevealSection } from "./HomepageClient";
 import StickyCTA from "@/components/ui/StickyCTA";
@@ -89,6 +90,38 @@ export default function HomePage() {
               Free Assessment
             </Link>
           </div>
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <a
+              href={APP_LINKS.ios}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-transform hover:scale-105"
+              aria-label="Download on the App Store"
+            >
+              <img
+                src="/images/badge-app-store.svg"
+                alt="Download on the App Store"
+                width={135}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </a>
+            <a
+              href={APP_LINKS.android}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block transition-transform hover:scale-105"
+              aria-label="Get it on Google Play"
+            >
+              <img
+                src="/images/badge-google-play.svg"
+                alt="Get it on Google Play"
+                width={135}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </a>
+          </div>
         </div>
       </section>
 
@@ -143,9 +176,9 @@ export default function HomePage() {
                     }`}
                   >
                     {i === 0 && (
-                      <div className="absolute -top-3 right-4">
-                        <span className="inline-block px-3 py-1 bg-[var(--color-brand-gold)]/10 text-[var(--color-brand-gold-dark)] text-xs font-semibold rounded-full border border-[var(--color-brand-gold)]/20">
-                          Most Popular
+                      <div className="absolute -top-3 right-4 flex gap-2">
+                        <span className="inline-block px-3 py-1 bg-orange-500/10 text-orange-600 text-xs font-semibold rounded-full border border-orange-500/20 animate-pulse">
+                          Now Enrolling
                         </span>
                       </div>
                     )}
@@ -162,6 +195,11 @@ export default function HomePage() {
                     {program.groupSize && (
                       <p className="text-[11px] text-orange-600 font-semibold mt-3">
                         Limited to {program.groupSize}
+                      </p>
+                    )}
+                    {program.nextCohort && (
+                      <p className="text-[11px] text-[var(--color-brand-gold-dark)] font-medium mt-1">
+                        Next cohort starts {program.nextCohort}
                       </p>
                     )}
                     <p className="text-[11px] text-[var(--color-brand-gray)]/60 mt-1">
@@ -373,6 +411,61 @@ export default function HomePage() {
                 </div>
               </RevealSection>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Get the App */}
+      <section className="py-20 md:py-28 section-light">
+        <div className="container">
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 text-center md:text-left">
+              <RevealSection>
+                <p
+                  className="text-[var(--color-brand-gold)] text-sm font-semibold uppercase tracking-widest mb-3"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  Download the App
+                </p>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                  Your Athlete&apos;s Training.
+                  <br />
+                  <span className="text-[var(--color-brand-gold-dark)]">In Your Pocket.</span>
+                </h2>
+                <p className="text-[var(--color-brand-gray)] leading-relaxed mb-6 max-w-md">
+                  Book sessions, track progress, chat with coaches, and stay connected to The Academy community — all from one app.
+                </p>
+                <div className="flex gap-4 justify-center md:justify-start">
+                  <a
+                    href={APP_LINKS.ios}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block transition-transform hover:scale-105"
+                  >
+                    <img src="/images/badge-app-store.svg" alt="Download on the App Store" width={150} height={44} className="h-11 w-auto" />
+                  </a>
+                  <a
+                    href={APP_LINKS.android}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block transition-transform hover:scale-105"
+                  >
+                    <img src="/images/badge-google-play.svg" alt="Get it on Google Play" width={150} height={44} className="h-11 w-auto" />
+                  </a>
+                </div>
+              </RevealSection>
+            </div>
+            <RevealSection delay={1} className="flex-shrink-0">
+              <div className="w-48 h-96 rounded-[2rem] bg-[var(--color-brand-black)] border-4 border-[var(--color-brand-gray-light)] shadow-2xl flex items-center justify-center overflow-hidden">
+                <div className="text-center px-4">
+                  <div className="w-16 h-16 rounded-2xl bg-[var(--color-brand-gold)]/10 flex items-center justify-center mx-auto mb-4">
+                    <Zap className="w-8 h-8 text-[var(--color-brand-gold)]" />
+                  </div>
+                  <p className="text-white text-sm font-bold" style={{ fontFamily: "var(--font-display)" }}>THE ACADEMY</p>
+                  <p className="text-white/50 text-xs mt-1">Youth Sports</p>
+                </div>
+              </div>
+            </RevealSection>
           </div>
         </div>
       </section>

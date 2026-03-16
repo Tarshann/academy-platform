@@ -6,15 +6,46 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Platform,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import * as Calendar from 'expo-calendar';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
 import { AnimatedCard } from '../../components/AnimatedCard';
 import { trackEvent } from '../../lib/analytics';
 import { trackSessionRegistration } from '../../lib/rating-prompt';
 import { colors, shadows, typography } from '../../lib/theme';
+
+async function addToCalendar(title: string, startTime: Date, endTime: Date, location?: string | null) {
+  const { status } = await Calendar.requestCalendarPermissionsAsync();
+  if (status !== 'granted') {
+    Alert.alert('Permission Required', 'Calendar access is needed to add sessions.');
+    return;
+  }
+
+  const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+  const defaultCalendar = Platform.OS === 'ios'
+    ? calendars.find((c) => c.source?.name === 'Default') || calendars.find((c) => c.allowsModifications) || calendars[0]
+    : calendars.find((c) => c.accessLevel === 'owner' && c.isPrimary) || calendars.find((c) => c.allowsModifications) || calendars[0];
+
+  if (!defaultCalendar) {
+    Alert.alert('No Calendar', 'Could not find a calendar on your device.');
+    return;
+  }
+
+  await Calendar.createEventAsync(defaultCalendar.id, {
+    title: `The Academy: ${title}`,
+    startDate: startTime,
+    endDate: endTime,
+    location: location || 'Gallatin, TN',
+    notes: 'Session at The Academy — Youth Athletic Training',
+    alarms: [{ relativeOffset: -60 }, { relativeOffset: -15 }],
+  });
+
+  Alert.alert('Added to Calendar', `"${title}" has been added to your calendar with reminders.`);
+}
 
 export default function ScheduleScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -139,22 +170,36 @@ export default function ScheduleScreen() {
                 )}
               </View>
 
-              {isRegistered ? (
-                <View style={styles.registeredBadge}>
-                  <Ionicons name="checkmark-circle" size={16} color="#2ecc71" />
-                  <Text style={styles.registeredText}>Registered</Text>
-                </View>
-              ) : (
+              <View style={styles.actionRow}>
+                {isRegistered ? (
+                  <View style={styles.registeredBadge}>
+                    <Ionicons name="checkmark-circle" size={16} color="#2ecc71" />
+                    <Text style={styles.registeredText}>Registered</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.registerButton, isRegistering && styles.registerButtonDisabled]}
+                    onPress={() => onRegister(item.id, item.title, item.sessionType)}
+                    disabled={isRegistering}
+                  >
+                    <Text style={styles.registerButtonText}>
+                      {isRegistering ? 'Registering...' : 'Register'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity
-                  style={[styles.registerButton, isRegistering && styles.registerButtonDisabled]}
-                  onPress={() => onRegister(item.id, item.title, item.sessionType)}
-                  disabled={isRegistering}
+                  style={styles.calendarButton}
+                  onPress={() => {
+                    trackEvent('calendar_add_tapped', { schedule_id: item.id, session_name: item.title });
+                    addToCalendar(item.title, start, end, item.location).catch(() => {
+                      Alert.alert('Error', 'Could not add to calendar.');
+                    });
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Text style={styles.registerButtonText}>
-                    {isRegistering ? 'Registering...' : 'Register'}
-                  </Text>
+                  <Ionicons name="calendar-outline" size={18} color={colors.gold} />
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           </View>
           </AnimatedCard>
@@ -256,13 +301,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: colors.textMuted,
   },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    gap: 12,
+  },
   registerButton: {
     backgroundColor: colors.gold,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    alignSelf: 'flex-start',
-    marginTop: 10,
     ...shadows.glow,
   },
   registerButtonDisabled: {
@@ -273,10 +322,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  calendarButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: colors.cardElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   registeredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
     gap: 6,
   },
   registeredText: {

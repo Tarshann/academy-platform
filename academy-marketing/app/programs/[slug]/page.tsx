@@ -53,6 +53,14 @@ export default async function ProgramDetailPage({
       <section className="py-24 md:py-32 section-dark">
         <div className="container">
           <div className="max-w-3xl">
+            {program.nextCohort && (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/15 border border-orange-500/30 mb-6">
+                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-orange-300 text-sm font-semibold">
+                  Now Enrolling — Next cohort starts {program.nextCohort}
+                </span>
+              </div>
+            )}
             <p
               className="text-[var(--color-brand-gold)] text-sm font-semibold uppercase tracking-widest mb-4"
               style={{ fontFamily: "var(--font-display)" }}
@@ -126,6 +134,16 @@ export default async function ProgramDetailPage({
                       Group Size
                     </p>
                     <p className="text-lg font-semibold">{program.groupSize}</p>
+                  </div>
+                )}
+
+                {program.nextCohort && (
+                  <div className="rounded-xl p-6 bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200">
+                    <p className="text-xs uppercase tracking-widest text-orange-700 font-semibold mb-2">
+                      Next Cohort
+                    </p>
+                    <p className="text-lg font-semibold text-orange-900">{program.nextCohort}</p>
+                    <p className="text-sm text-orange-700/80 mt-1">Limited spots — enrollment closing soon</p>
                   </div>
                 )}
 

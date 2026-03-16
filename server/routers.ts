@@ -2392,62 +2392,52 @@ export const appRouter = router({
         const category = input?.category ?? "all";
 
         const { getDb } = await import("./db");
-        const { galleryPhotos, videos } = await import("../drizzle/schema");
-        const { desc, eq, and, sql, count } = await import("drizzle-orm");
+        const { sql } = await import("drizzle-orm");
 
         const db = await getDb();
         if (!db) return { items: [], total: 0, hasMore: false };
 
-        // Build video conditions
-        const videoConditions = [eq(videos.isPublished, true)];
-        if (category !== "all") {
-          videoConditions.push(eq(videos.category, category as "training" | "highlights"));
-        }
+        // Build category filter clause for both tables
+        const videoCategoryFilter = category !== "all"
+          ? sql`AND "category" = ${category}`
+          : sql``;
+        const photoCategoryFilter = category !== "all"
+          ? sql`AND "category" = ${category}`
+          : sql``;
 
-        // Build photo conditions
-        const photoConditions = [eq(galleryPhotos.isVisible, true)];
-        if (category !== "all") {
-          photoConditions.push(eq(galleryPhotos.category, category as "training" | "highlights"));
-        }
-
-        // Use SQL UNION for efficient single-query merge with pagination
-        const videoSelect = db
-          .select({
-            id: sql<string>`'video-' || ${videos.id}`.as("id"),
-            type: sql<string>`'video'`.as("type"),
-            title: videos.title,
-            description: videos.description,
-            mediaUrl: videos.url,
-            thumbnail: videos.thumbnail,
-            platform: videos.platform,
-            category: videos.category,
-            viewCount: sql<number>`COALESCE(${videos.viewCount}, 0)`.as("viewCount"),
-            createdAt: videos.createdAt,
-          })
-          .from(videos)
-          .where(and(...videoConditions));
-
-        const photoSelect = db
-          .select({
-            id: sql<string>`'photo-' || ${galleryPhotos.id}`.as("id"),
-            type: sql<string>`'photo'`.as("type"),
-            title: galleryPhotos.title,
-            description: galleryPhotos.description,
-            mediaUrl: galleryPhotos.imageUrl,
-            thumbnail: sql<string | null>`NULL`.as("thumbnail"),
-            platform: sql<string | null>`NULL`.as("platform"),
-            category: galleryPhotos.category,
-            viewCount: sql<number>`COALESCE(${galleryPhotos.viewCount}, 0)`.as("viewCount"),
-            createdAt: galleryPhotos.createdAt,
-          })
-          .from(galleryPhotos)
-          .where(and(...photoConditions));
-
-        // Execute UNION ALL with ORDER BY, LIMIT, OFFSET via raw SQL
+        // Single UNION ALL query with DB-level sort + pagination
         const unionQuery = sql`
-          (${videoSelect.getSQL()})
-          UNION ALL
-          (${photoSelect.getSQL()})
+          SELECT * FROM (
+            SELECT
+              'video-' || "id" AS "id",
+              'video' AS "type",
+              "title",
+              "description",
+              "url" AS "mediaUrl",
+              "thumbnail",
+              "platform"::text,
+              "category"::text,
+              COALESCE("viewCount", 0) AS "viewCount",
+              "createdAt"
+            FROM "videos"
+            WHERE "isPublished" = true ${videoCategoryFilter}
+
+            UNION ALL
+
+            SELECT
+              'photo-' || "id" AS "id",
+              'photo' AS "type",
+              "title",
+              "description",
+              "imageUrl" AS "mediaUrl",
+              NULL AS "thumbnail",
+              NULL AS "platform",
+              "category"::text,
+              COALESCE("viewCount", 0) AS "viewCount",
+              "createdAt"
+            FROM "galleryPhotos"
+            WHERE "isVisible" = true ${photoCategoryFilter}
+          ) AS feed
           ORDER BY "createdAt" DESC
           LIMIT ${limit}
           OFFSET ${offset}
@@ -2458,9 +2448,9 @@ export const appRouter = router({
         // Get total count for pagination
         const countQuery = sql`
           SELECT (
-            (SELECT COUNT(*) FROM "videos" WHERE ${and(...videoConditions)}) +
-            (SELECT COUNT(*) FROM "galleryPhotos" WHERE ${and(...photoConditions)})
-          ) AS total
+            (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
+            (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter})
+          )::int AS "total"
         `;
         const countResult = await db.execute(countQuery);
         const total = Number((countResult.rows?.[0] as any)?.total ?? 0);
@@ -2549,12 +2539,16 @@ export const appRouter = router({
             value: metricValueSchema.optional(),
             unit: z.string().trim().min(1).optional(),
             notes: z.string().optional(),
-            sessionDate: z.string().transform((s) => new Date(s)).optional(),
+            sessionDate: z.string().optional().transform((s) => s ? new Date(s) : undefined),
           })
         )
         .mutation(async ({ input }) => {
           const { id, ...data } = input;
-          return await updateAthleteMetric(id, data);
+          // Filter out undefined values so we only update provided fields
+          const updates = Object.fromEntries(
+            Object.entries(data).filter(([_, v]) => v !== undefined)
+          );
+          return await updateAthleteMetric(id, updates);
         }),
 
       delete: adminProcedure

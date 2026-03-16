@@ -39,6 +39,12 @@ export const ADDRESS = {
   geo: { lat: 36.3884, lng: -86.4467 },
 };
 
+export const APP_LINKS = {
+  // Update iOS URL with actual Apple ID once confirmed in App Store Connect
+  ios: "https://apps.apple.com/app/the-academy/id6744076365",
+  android: "https://play.google.com/store/apps/details?id=com.academytn.app",
+};
+
 export const SOCIAL = {
   facebook: "https://www.facebook.com/share/1DY8v2AEuN/?mibextid=wwXIfr",
   instagram: "https://www.instagram.com/the_academytn",
@@ -58,7 +64,7 @@ export const PROGRAMS = [
     unit: "per 6-week cohort",
     schedule: "Tue & Thu 7:00–8:00 PM • Sun 11:00 AM–12:00 PM",
     scheduleDays: ["Tuesday", "Thursday", "Sunday"],
-    nextCohort: "February 24, 2026",
+    nextCohort: "March 24, 2026",
     ages: "8–14",
     groupSize: "6–8 athletes per cohort",
     description:

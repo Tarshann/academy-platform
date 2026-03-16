@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SITE, CONTACT, CONTACTS, ADDRESS, SOCIAL } from "@/lib/config";
+import { SITE, CONTACT, CONTACTS, ADDRESS, SOCIAL, APP_LINKS } from "@/lib/config";
 import { Facebook, Instagram, MapPin, Clock, Mail, Phone } from "lucide-react";
 
 export default function Footer() {
@@ -24,7 +24,7 @@ export default function Footer() {
               Building complete athletes through multi-sport development in
               basketball, flag football, and soccer.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 mb-5">
               <a
                 href={SOCIAL.facebook}
                 target="_blank"
@@ -53,6 +53,14 @@ export default function Footer() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
                 </svg>
+              </a>
+            </div>
+            <div className="flex gap-3">
+              <a href={APP_LINKS.ios} target="_blank" rel="noopener noreferrer" aria-label="Download on the App Store">
+                <img src="/images/badge-app-store.svg" alt="App Store" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+              </a>
+              <a href={APP_LINKS.android} target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play">
+                <img src="/images/badge-google-play.svg" alt="Google Play" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
               </a>
             </div>
           </div>
