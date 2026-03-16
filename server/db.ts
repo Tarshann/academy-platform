@@ -2209,6 +2209,24 @@ export async function updateMerchDrop(id: number, data: Partial<InsertMerchDrop>
   return drop;
 }
 
+export async function incrementDropView(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(merchDrops)
+    .set({ viewCount: sql`${merchDrops.viewCount} + 1` })
+    .where(eq(merchDrops.id, id));
+}
+
+export async function incrementDropClick(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db
+    .update(merchDrops)
+    .set({ clickCount: sql`${merchDrops.clickCount} + 1` })
+    .where(eq(merchDrops.id, id));
+}
+
 export async function deleteMerchDrop(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2499,7 +2517,18 @@ export async function getAllSocialPostsAdmin() {
   return await db
     .select()
     .from(socialPosts)
-    .orderBy(desc(socialPosts.createdAt));
+    .orderBy(asc(socialPosts.sortOrder), desc(socialPosts.createdAt));
+}
+
+export async function reorderSocialPosts(orderedIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  for (let i = 0; i < orderedIds.length; i++) {
+    await db
+      .update(socialPosts)
+      .set({ sortOrder: i })
+      .where(eq(socialPosts.id, orderedIds[i]));
+  }
 }
 
 export async function createSocialPost(data: InsertSocialPost) {

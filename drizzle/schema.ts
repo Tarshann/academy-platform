@@ -908,6 +908,8 @@ export const merchDrops = pgTable("merchDrops", {
   scheduledAt: timestamp("scheduledAt", { mode: 'date' }).notNull(),
   isSent: boolean("isSent").notNull().default(false),
   sentAt: timestamp("sentAt", { mode: 'date' }),
+  viewCount: integer("viewCount").notNull().default(0),
+  clickCount: integer("clickCount").notNull().default(0),
   createdBy: integer("createdBy").notNull(),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
 });
@@ -1014,6 +1016,7 @@ export const socialPosts = pgTable("socialPosts", {
   caption: text("caption"),
   postedAt: timestamp("postedAt", { mode: 'date' }),
   isVisible: boolean("isVisible").notNull().default(true),
+  sortOrder: integer("sortOrder").notNull().default(0),
   addedBy: integer("addedBy").notNull(),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
 });
