@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { Alert } from 'react-native';
 import { trpc } from '../lib/trpc';
 import { colors, shadows, typography } from '../lib/theme';
 
@@ -22,9 +23,11 @@ export default function AdminContactsScreen() {
   const contacts = trpc.contact.list.useQuery();
   const markRead = trpc.admin.contacts.markRead.useMutation({
     onSuccess: () => contacts.refetch(),
+    onError: (err) => Alert.alert('Error', err.message),
   });
   const markResponded = trpc.admin.contacts.markResponded.useMutation({
     onSuccess: () => contacts.refetch(),
+    onError: (err) => Alert.alert('Error', err.message),
   });
 
   const onRefresh = async () => {
@@ -44,6 +47,14 @@ export default function AdminContactsScreen() {
         contacts.isLoading ? (
           <View style={styles.center}>
             <Text style={styles.emptyText}>Loading contacts...</Text>
+          </View>
+        ) : contacts.isError ? (
+          <View style={styles.center}>
+            <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
+            <Text style={styles.emptyText}>Failed to load contacts</Text>
+            <TouchableOpacity onPress={() => contacts.refetch()} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.center}>
@@ -140,4 +151,17 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   actionText: { fontSize: 12, fontWeight: '600' },
+  retryBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center' as const,
+  },
+  retryText: {
+    color: colors.card,
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
 });

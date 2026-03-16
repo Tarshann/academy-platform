@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,14 +161,6 @@ function ShowcaseFormFields({
 }
 
 export function ShowcasesManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      console.log(title);
-    }
-  };
-
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -190,10 +183,10 @@ export function ShowcasesManager() {
       utils.showcases.active.invalidate();
       setIsAddOpen(false);
       setForm(defaultForm);
-      toast({ title: "Showcase created successfully" });
+      toast.success("Showcase created successfully");
     },
     onError: (error) => {
-      toast({ title: "Error creating showcase", description: error.message, variant: "destructive" });
+      toast.error("Error creating showcase", { description: error.message });
     },
   });
 
@@ -204,10 +197,10 @@ export function ShowcasesManager() {
       setIsEditOpen(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: "Showcase updated" });
+      toast.success("Showcase updated");
     },
     onError: (error) => {
-      toast({ title: "Error updating showcase", description: error.message, variant: "destructive" });
+      toast.error("Error updating showcase", { description: error.message });
     },
   });
 
@@ -215,10 +208,10 @@ export function ShowcasesManager() {
     onSuccess: () => {
       utils.showcases.admin.list.invalidate();
       utils.showcases.active.invalidate();
-      toast({ title: "Showcase deleted" });
+      toast.success("Showcase deleted");
     },
     onError: (error) => {
-      toast({ title: "Error deleting showcase", description: error.message, variant: "destructive" });
+      toast.error("Error deleting showcase", { description: error.message });
     },
   });
 
@@ -239,7 +232,7 @@ export function ShowcasesManager() {
 
   const handleSubmit = () => {
     if (!form.athleteId || !form.title || !form.description || !form.featuredFrom) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+      toast.error("Please fill in all required fields");
       return;
     }
     createMutation.mutate({
@@ -257,7 +250,7 @@ export function ShowcasesManager() {
 
   const handleUpdate = () => {
     if (!editingId || !form.title) {
-      toast({ title: "Please fill in the title", variant: "destructive" });
+      toast.error("Please fill in the title");
       return;
     }
     updateMutation.mutate({

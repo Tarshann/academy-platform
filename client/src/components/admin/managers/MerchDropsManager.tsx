@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ function CountdownBadge({ scheduledAt }: { scheduledAt: Date }) {
   const [text, setText] = useState(() => formatCountdown(scheduledAt));
 
   useEffect(() => {
+    setText(formatCountdown(scheduledAt));
     const interval = setInterval(() => {
       setText(formatCountdown(scheduledAt));
     }, 60000);
@@ -136,14 +138,6 @@ function DropFormFields({
 }
 
 export function MerchDropsManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      console.log(title);
-    }
-  };
-
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -159,10 +153,10 @@ export function MerchDropsManager() {
       utils.merchDrops.upcoming.invalidate();
       setIsAddOpen(false);
       setForm(defaultForm);
-      toast({ title: "Drop created successfully" });
+      toast.success("Drop created successfully");
     },
     onError: (error) => {
-      toast({ title: "Error creating drop", description: error.message, variant: "destructive" });
+      toast.error("Error creating drop", { description: error.message });
     },
   });
 
@@ -173,10 +167,10 @@ export function MerchDropsManager() {
       setIsEditOpen(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: "Drop updated successfully" });
+      toast.success("Drop updated successfully");
     },
     onError: (error) => {
-      toast({ title: "Error updating drop", description: error.message, variant: "destructive" });
+      toast.error("Error updating drop", { description: error.message });
     },
   });
 
@@ -184,10 +178,10 @@ export function MerchDropsManager() {
     onSuccess: () => {
       utils.merchDrops.admin.list.invalidate();
       utils.merchDrops.upcoming.invalidate();
-      toast({ title: "Drop sent!" });
+      toast.success("Drop sent!");
     },
     onError: (error) => {
-      toast({ title: "Error sending drop", description: error.message, variant: "destructive" });
+      toast.error("Error sending drop", { description: error.message });
     },
   });
 
@@ -195,16 +189,16 @@ export function MerchDropsManager() {
     onSuccess: () => {
       utils.merchDrops.admin.list.invalidate();
       utils.merchDrops.upcoming.invalidate();
-      toast({ title: "Drop deleted" });
+      toast.success("Drop deleted");
     },
     onError: (error) => {
-      toast({ title: "Error deleting drop", description: error.message, variant: "destructive" });
+      toast.error("Error deleting drop", { description: error.message });
     },
   });
 
   const handleSubmit = () => {
     if (!form.title || !form.scheduledAt) {
-      toast({ title: "Please fill in the title and schedule date", variant: "destructive" });
+      toast.error("Please fill in the title and schedule date");
       return;
     }
     createMutation.mutate({
@@ -218,7 +212,7 @@ export function MerchDropsManager() {
 
   const handleUpdate = () => {
     if (!editingId || !form.title) {
-      toast({ title: "Please fill in the title", variant: "destructive" });
+      toast.error("Please fill in the title");
       return;
     }
     updateMutation.mutate({

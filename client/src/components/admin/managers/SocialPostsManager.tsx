@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,14 +116,6 @@ function PostFormFields({
 }
 
 export function SocialPostsManager() {
-  const toast = ({ title, description, variant }: { title: string; description?: string; variant?: string }) => {
-    if (variant === "destructive") {
-      alert(`Error: ${title}${description ? ` - ${description}` : ""}`);
-    } else {
-      console.log(title);
-    }
-  };
-
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -139,10 +132,10 @@ export function SocialPostsManager() {
       utils.socialPosts.list.invalidate();
       setIsAddOpen(false);
       setForm(defaultForm);
-      toast({ title: "Social post added successfully" });
+      toast.success("Social post added successfully");
     },
     onError: (error) => {
-      toast({ title: "Error adding post", description: error.message, variant: "destructive" });
+      toast.error("Error adding post", { description: error.message });
     },
   });
 
@@ -153,10 +146,10 @@ export function SocialPostsManager() {
       setIsEditOpen(false);
       setEditingId(null);
       setForm(defaultForm);
-      toast({ title: "Post updated successfully" });
+      toast.success("Post updated successfully");
     },
     onError: (error) => {
-      toast({ title: "Error updating post", description: error.message, variant: "destructive" });
+      toast.error("Error updating post", { description: error.message });
     },
   });
 
@@ -166,7 +159,7 @@ export function SocialPostsManager() {
       utils.socialPosts.list.invalidate();
     },
     onError: (error) => {
-      toast({ title: "Error updating visibility", description: error.message, variant: "destructive" });
+      toast.error("Error updating visibility", { description: error.message });
     },
   });
 
@@ -176,7 +169,7 @@ export function SocialPostsManager() {
       utils.socialPosts.list.invalidate();
     },
     onError: (error) => {
-      toast({ title: "Error reordering", description: error.message, variant: "destructive" });
+      toast.error("Error reordering", { description: error.message });
     },
   });
 
@@ -184,10 +177,10 @@ export function SocialPostsManager() {
     onSuccess: () => {
       utils.socialPosts.admin.list.invalidate();
       utils.socialPosts.list.invalidate();
-      toast({ title: "Post deleted" });
+      toast.success("Post deleted");
     },
     onError: (error) => {
-      toast({ title: "Error deleting post", description: error.message, variant: "destructive" });
+      toast.error("Error deleting post", { description: error.message });
     },
   });
 
@@ -202,7 +195,7 @@ export function SocialPostsManager() {
 
   const handleSubmit = () => {
     if (!form.postUrl) {
-      toast({ title: "Please provide a post URL", variant: "destructive" });
+      toast.error("Please provide a post URL");
       return;
     }
     createMutation.mutate({
@@ -217,7 +210,7 @@ export function SocialPostsManager() {
 
   const handleUpdate = () => {
     if (!editingId || !form.postUrl) {
-      toast({ title: "Please fill in the post URL", variant: "destructive" });
+      toast.error("Please fill in the post URL");
       return;
     }
     updateMutation.mutate({
@@ -248,12 +241,14 @@ export function SocialPostsManager() {
     }
   };
 
-  const movePost = useCallback((index: number, direction: "up" | "down") => {
+  const movePost = useCallback((postId: number, direction: "up" | "down") => {
     if (!posts) return;
     const ids = posts.map((p: any) => p.id);
-    const newIndex = direction === "up" ? index - 1 : index + 1;
+    const currentIndex = ids.indexOf(postId);
+    if (currentIndex === -1) return;
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (newIndex < 0 || newIndex >= ids.length) return;
-    [ids[index], ids[newIndex]] = [ids[newIndex], ids[index]];
+    [ids[currentIndex], ids[newIndex]] = [ids[newIndex], ids[currentIndex]];
     reorderMutation.mutate({ orderedIds: ids });
   }, [posts, reorderMutation]);
 
@@ -376,8 +371,12 @@ export function SocialPostsManager() {
           </div>
         ) : (
           <div className="grid gap-2">
-            {filteredPosts.map((post: any, index: number) => {
+            {filteredPosts.map((post: any) => {
               const config = PLATFORM_CONFIG[post.platform as SocialPlatform];
+              const postsArr = posts ?? [];
+              const fullIndex = postsArr.findIndex((p: any) => p.id === post.id);
+              const isFirst = fullIndex <= 0;
+              const isLast = fullIndex >= postsArr.length - 1;
               return (
                 <div
                   key={post.id}
@@ -391,8 +390,8 @@ export function SocialPostsManager() {
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={() => movePost(index, "up")}
-                      disabled={index === 0 || reorderMutation.isPending}
+                      onClick={() => movePost(post.id, "up")}
+                      disabled={isFirst || reorderMutation.isPending}
                       title="Move up"
                     >
                       <ArrowUp className="h-3 w-3" />
@@ -402,8 +401,8 @@ export function SocialPostsManager() {
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={() => movePost(index, "down")}
-                      disabled={index === filteredPosts.length - 1 || reorderMutation.isPending}
+                      onClick={() => movePost(post.id, "down")}
+                      disabled={isLast || reorderMutation.isPending}
                       title="Move down"
                     >
                       <ArrowDown className="h-3 w-3" />

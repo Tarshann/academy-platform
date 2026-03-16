@@ -4,6 +4,7 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,6 +39,14 @@ export default function AdminSchedulesScreen() {
         schedules.isLoading ? (
           <View style={styles.center}>
             <Text style={styles.emptyText}>Loading schedules...</Text>
+          </View>
+        ) : schedules.isError ? (
+          <View style={styles.center}>
+            <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
+            <Text style={styles.emptyText}>Failed to load schedules</Text>
+            <TouchableOpacity onPress={() => schedules.refetch()} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.center}>
@@ -174,5 +183,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textMuted,
     textTransform: 'uppercase',
+  },
+  retryBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center' as const,
+  },
+  retryText: {
+    color: colors.card,
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });

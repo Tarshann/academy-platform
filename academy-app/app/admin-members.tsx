@@ -4,6 +4,7 @@ import {
   StyleSheet,
   FlatList,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +32,14 @@ export default function AdminMembersScreen() {
         members.isLoading ? (
           <View style={styles.center}>
             <Text style={styles.emptyText}>Loading members...</Text>
+          </View>
+        ) : members.isError ? (
+          <View style={styles.center}>
+            <Ionicons name="alert-circle-outline" size={40} color={colors.error} />
+            <Text style={styles.emptyText}>Failed to load members</Text>
+            <TouchableOpacity onPress={() => members.refetch()} style={styles.retryBtn}>
+              <Text style={styles.retryText}>Retry</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.center}>
@@ -146,5 +155,18 @@ const styles = StyleSheet.create({
   },
   adminRoleText: {
     color: colors.gold,
+  },
+  retryBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    justifyContent: 'center' as const,
+  },
+  retryText: {
+    color: colors.card,
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });
