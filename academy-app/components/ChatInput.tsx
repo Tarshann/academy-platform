@@ -21,9 +21,7 @@ import {
   type MediaType,
   type UploadProgress,
 } from '../lib/chat-images';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors } from '../lib/theme';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -160,7 +158,7 @@ export function ChatInput({
             disabled={isBusy}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="image-outline" size={24} color={isBusy ? '#ccc' : ACADEMY_GOLD} />
+            <Ionicons name="image-outline" size={24} color={isBusy ? colors.textMuted : colors.gold} />
           </TouchableOpacity>
         )}
 
@@ -173,7 +171,7 @@ export function ChatInput({
               if (val.length > 0) onTyping?.();
             }}
             placeholder={placeholder || 'Type a message...'}
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             multiline
             maxLength={5000}
             editable={!isBusy}
@@ -209,8 +207,8 @@ export function ChatInput({
 const styles = StyleSheet.create({
   outerContainer: {
     borderTopWidth: 1,
-    borderTopColor: '#e8e8ed',
-    backgroundColor: '#fff',
+    borderTopColor: colors.border,
+    backgroundColor: colors.card,
   },
   container: {
     flexDirection: 'row',
@@ -230,13 +228,13 @@ const styles = StyleSheet.create({
     minHeight: 40,
     maxHeight: 100,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
-    backgroundColor: '#f8f8f8',
-    color: '#1a1a2e',
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
   },
   captionArea: {
     flex: 1,
@@ -245,13 +243,13 @@ const styles = StyleSheet.create({
   },
   captionHint: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
   },
   sendButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
@@ -265,7 +263,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#e8e8ed',
+    backgroundColor: colors.surface,
   },
   previewImage: {
     width: '100%',
@@ -292,11 +290,11 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     opacity: 0.7,
   },
   progressText: {
-    color: '#fff',
+    color: colors.textPrimary,
     fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',

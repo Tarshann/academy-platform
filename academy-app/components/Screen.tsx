@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors } from '../lib/theme';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -18,7 +19,7 @@ export function Screen({ children, style }: ScreenProps) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,

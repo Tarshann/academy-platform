@@ -8,12 +8,12 @@ import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '../../lib/trpc';
 import { Skeleton, SkeletonCircle, SkeletonLine } from '../../components/Skeleton';
+import { AnimatedCard } from '../../components/AnimatedCard';
 import { trackEvent } from '../../lib/analytics';
-
-const GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
 
 // Phone-only bridge — name and email now come from API (coaches JOIN users, commit da4a61b).
 // Users table has no phone column, so phone numbers are bridged here.
@@ -80,6 +80,7 @@ function EditNameModal({
             value={name}
             onChangeText={setName}
             placeholder="Your name"
+            placeholderTextColor={colors.textMuted}
             autoFocus
             maxLength={100}
             returnKeyType="done"
@@ -95,7 +96,7 @@ function EditNameModal({
               disabled={!name.trim() || saving}
             >
               {saving ? (
-                <ActivityIndicator size="small" color={NAVY} />
+                <ActivityIndicator size="small" color={colors.card} />
               ) : (
                 <Text style={styles.modalSaveText}>Save</Text>
               )}
@@ -319,7 +320,7 @@ export default function ProfileScreen() {
         <SkeletonLine width={80} height={12} style={{ marginBottom: 8, marginLeft: 4 }} />
         <View style={styles.section}>
           {[1, 2].map((i) => (
-            <View key={i} style={[styles.contactRow, i > 1 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
+            <View key={i} style={[styles.contactRow, i > 1 && { borderTopWidth: 1, borderTopColor: colors.border }]}>
               <SkeletonCircle size={36} style={{ marginRight: 12 }} />
               <View style={{ flex: 1 }}>
                 <SkeletonLine width={100} height={14} />
@@ -332,7 +333,7 @@ export default function ProfileScreen() {
         <SkeletonLine width={80} height={12} style={{ marginBottom: 8, marginLeft: 4 }} />
         <View style={styles.section}>
           {[1, 2, 3].map((i) => (
-            <View key={i} style={[styles.linkRow, i > 1 && { borderTopWidth: 1, borderTopColor: '#f0f0f0' }]}>
+            <View key={i} style={[styles.linkRow, i > 1 && { borderTopWidth: 1, borderTopColor: colors.border }]}>
               <Skeleton width={18} height={18} borderRadius={4} />
               <SkeletonLine width={150} height={14} style={{ marginLeft: 12 }} />
             </View>
@@ -354,7 +355,8 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       {/* Profile header */}
-      <View style={styles.headerCard}>
+      <AnimatedCard index={0}>
+      <LinearGradient colors={[colors.cardElevated, colors.card]} style={styles.headerCard}>
         <TouchableOpacity onPress={onChangeProfilePicture} style={styles.avatarWrapper} disabled={uploadingPicture}>
           {profilePictureUrl ? (
             <Image
@@ -389,9 +391,11 @@ export default function ProfileScreen() {
             {role === 'admin' ? 'Administrator' : role === 'coach' ? 'Coach' : 'Member'}
           </Text>
         </View>
-      </View>
+      </LinearGradient>
+      </AnimatedCard>
 
       {/* Contact Coaches */}
+      <AnimatedCard index={1}>
       <Text style={styles.sectionLabel}>CONTACT</Text>
       {coaches.isLoading ? (
         <CoachContactSkeleton />
@@ -411,7 +415,7 @@ export default function ProfileScreen() {
       ) : coachList.length === 0 ? (
         <View style={styles.section}>
           <View style={styles.emptyContainer}>
-            <Ionicons name="people-outline" size={24} color="#ccc" />
+            <Ionicons name="people-outline" size={24} color={colors.textMuted} />
             <Text style={styles.emptyText}>No coaches available</Text>
           </View>
         </View>
@@ -426,7 +430,7 @@ export default function ProfileScreen() {
                 disabled={!coach.phone}
               >
                 <View style={styles.contactIcon}>
-                  <Ionicons name="call-outline" size={18} color={GOLD} />
+                  <Ionicons name="call-outline" size={18} color={colors.gold} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.contactName}>{coach.name}</Text>
@@ -438,7 +442,7 @@ export default function ProfileScreen() {
                 </View>
                 {coach.phone && (
                   <TouchableOpacity onPress={() => onText(coach.name, coach.phone!)} style={styles.textBtn}>
-                    <Ionicons name="chatbox-outline" size={16} color={GOLD} />
+                    <Ionicons name="chatbox-outline" size={16} color={colors.gold} />
                   </TouchableOpacity>
                 )}
               </TouchableOpacity>
@@ -446,17 +450,19 @@ export default function ProfileScreen() {
           ))}
         </View>
       )}
+      </AnimatedCard>
 
       {/* Features */}
+      <AnimatedCard index={2}>
       <Text style={styles.sectionLabel}>FEATURES</Text>
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.linkRow}
           onPress={() => router.push('/metrics' as any)}
         >
-          <Ionicons name="analytics-outline" size={18} color="#666" />
+          <Ionicons name="analytics-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Athlete Metrics</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -465,9 +471,9 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => router.push('/showcase' as any)}
         >
-          <Ionicons name="star-outline" size={18} color="#666" />
+          <Ionicons name="star-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Athlete Showcase</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -476,9 +482,9 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => router.push('/gallery' as any)}
         >
-          <Ionicons name="images-outline" size={18} color="#666" />
+          <Ionicons name="images-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Social Gallery</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -487,22 +493,24 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => router.push('/drops' as any)}
         >
-          <Ionicons name="megaphone-outline" size={18} color="#666" />
+          <Ionicons name="megaphone-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Drops & Alerts</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
+      </AnimatedCard>
 
       {/* Account */}
+      <AnimatedCard index={3}>
       <Text style={styles.sectionLabel}>ACCOUNT</Text>
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.linkRow}
           onPress={() => router.push('/payments')}
         >
-          <Ionicons name="card-outline" size={18} color="#666" />
+          <Ionicons name="card-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Payments & Subscriptions</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -511,9 +519,9 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => router.push('/shop')}
         >
-          <Ionicons name="bag-outline" size={18} color="#666" />
+          <Ionicons name="bag-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Shop</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -522,22 +530,24 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => router.push('/notifications-settings')}
         >
-          <Ionicons name="notifications-outline" size={18} color="#666" />
+          <Ionicons name="notifications-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Notification Settings</Text>
-          <Ionicons name="chevron-forward" size={14} color="#ccc" />
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
+      </AnimatedCard>
 
       {/* Links */}
+      <AnimatedCard index={4}>
       <Text style={styles.sectionLabel}>RESOURCES</Text>
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.linkRow}
           onPress={() => Linking.openURL('https://academytn.com')}
         >
-          <Ionicons name="globe-outline" size={18} color="#666" />
+          <Ionicons name="globe-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Visit Website</Text>
-          <Ionicons name="open-outline" size={14} color="#ccc" />
+          <Ionicons name="open-outline" size={14} color={colors.textMuted} />
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -546,11 +556,12 @@ export default function ProfileScreen() {
           style={styles.linkRow}
           onPress={() => Linking.openURL('https://academytn.com/privacy')}
         >
-          <Ionicons name="shield-outline" size={18} color="#666" />
+          <Ionicons name="shield-outline" size={18} color={colors.textSecondary} />
           <Text style={styles.linkText}>Privacy Policy</Text>
-          <Ionicons name="open-outline" size={14} color="#ccc" />
+          <Ionicons name="open-outline" size={14} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
+      </AnimatedCard>
 
       {/* Sign out */}
       <TouchableOpacity style={styles.signOutBtn} onPress={onSignOut}>
@@ -564,7 +575,7 @@ export default function ProfileScreen() {
         onPress={onDeleteAccount}
         disabled={deleting}
       >
-        <Ionicons name="trash-outline" size={16} color="#999" />
+        <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
         <Text style={styles.deleteText}>
           {deleting ? 'Deleting Account...' : 'Delete Account'}
         </Text>
@@ -572,7 +583,7 @@ export default function ProfileScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.5.0'}</Text>
+        <Text style={styles.footerText}>The Academy v{Constants.expoConfig?.version ?? '1.6.1'}</Text>
         <Text style={styles.footerText}>Gallatin, Tennessee</Text>
       </View>
 
@@ -590,14 +601,14 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
     paddingBottom: 40,
   },
   headerCard: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -611,19 +622,23 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: GOLD,
+    backgroundColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: colors.gold,
   },
   avatarImage: {
     width: 80,
     height: 80,
     borderRadius: 40,
+    borderWidth: 3,
+    borderColor: colors.gold,
   },
   avatarText: {
     fontSize: 32,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.card,
   },
   avatarEditBadge: {
     position: 'absolute',
@@ -632,11 +647,11 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: GOLD,
+    backgroundColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: NAVY,
+    borderColor: colors.cardElevated,
   },
   nameRow: {
     flexDirection: 'row',
@@ -644,17 +659,17 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   name: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#fff',
+    fontFamily: 'BebasNeue',
+    fontSize: 24,
+    color: colors.textPrimary,
   },
   email: {
     fontSize: 14,
-    color: '#aaa',
+    color: colors.textSecondary,
     marginBottom: 10,
   },
   roleBadge: {
-    backgroundColor: 'rgba(207,184,124,0.15)',
+    backgroundColor: colors.goldMuted,
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -662,27 +677,21 @@ const styles = StyleSheet.create({
   roleText: {
     fontSize: 12,
     fontWeight: '600',
-    color: GOLD,
+    color: colors.gold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#999',
-    letterSpacing: 1,
+    ...typography.overline,
+    color: colors.textMuted,
     marginBottom: 8,
     marginLeft: 4,
   },
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   contactRow: {
     flexDirection: 'row',
@@ -694,7 +703,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -702,11 +711,11 @@ const styles = StyleSheet.create({
   contactName: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   contactDetail: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
     marginTop: 1,
   },
   textBtn: {
@@ -718,17 +727,17 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.border,
     marginLeft: 64,
   },
   // Skeleton styles
   skeletonCircle: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
   },
   skeletonLine: {
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
   },
   // Error state
   errorContainer: {
@@ -738,20 +747,20 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
   },
   retryBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 14,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Empty state
   emptyContainer: {
@@ -761,7 +770,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textMuted,
   },
   linkRow: {
     flexDirection: 'row',
@@ -772,22 +781,18 @@ const styles = StyleSheet.create({
   linkText: {
     flex: 1,
     fontSize: 15,
-    color: NAVY,
+    color: colors.textPrimary,
   },
   signOutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     gap: 8,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   signOutText: {
     fontSize: 15,
@@ -804,7 +809,7 @@ const styles = StyleSheet.create({
   },
   deleteText: {
     fontSize: 13,
-    color: '#999',
+    color: colors.textMuted,
   },
   footer: {
     alignItems: 'center',
@@ -812,18 +817,18 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#bbb',
+    color: colors.textMuted,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardElevated,
     borderRadius: 16,
     padding: 24,
     width: '100%',
@@ -832,16 +837,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 16,
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 10,
     padding: 14,
     fontSize: 16,
-    color: NAVY,
+    color: colors.textPrimary,
+    backgroundColor: colors.surface,
     marginBottom: 20,
   },
   modalActions: {
@@ -853,27 +859,27 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surface,
     minHeight: 48,
     justifyContent: 'center',
   },
   modalCancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   modalSaveBtn: {
     flex: 1,
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: GOLD,
+    backgroundColor: colors.gold,
     minHeight: 48,
     justifyContent: 'center',
   },
   modalSaveText: {
     fontSize: 15,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.card,
   },
 });

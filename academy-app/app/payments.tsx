@@ -14,9 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 function formatCurrency(amount: string | number, currency = 'usd'): string {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -40,16 +38,16 @@ function getStatusColor(status: string): string {
   switch (status) {
     case 'active':
     case 'succeeded':
-      return '#27ae60';
+      return colors.success;
     case 'past_due':
     case 'pending':
-      return '#f39c12';
+      return colors.warning;
     case 'canceled':
     case 'cancelled':
     case 'failed':
-      return '#e74c3c';
+      return colors.error;
     default:
-      return '#888';
+      return colors.textSecondary;
   }
 }
 
@@ -176,8 +174,8 @@ export default function PaymentsScreen() {
       <Stack.Screen
         options={{
           title: 'Payments',
-          headerStyle: { backgroundColor: NAVY },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Profile',
         }}
       />
@@ -188,7 +186,7 @@ export default function PaymentsScreen() {
         </View>
       ) : isError ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load payments</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
@@ -219,7 +217,7 @@ export default function PaymentsScreen() {
                 <View style={styles.card}>
                   <View style={styles.subscriptionHeader}>
                     <View style={styles.iconCircle}>
-                      <Ionicons name="card-outline" size={18} color={ACADEMY_GOLD} />
+                      <Ionicons name="card-outline" size={18} color={colors.gold} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.subscriptionTitle}>Subscription</Text>
@@ -252,11 +250,11 @@ export default function PaymentsScreen() {
                     disabled={portalSession.isPending}
                   >
                     {portalSession.isPending ? (
-                      <ActivityIndicator size="small" color={NAVY} />
+                      <ActivityIndicator size="small" color={colors.card} />
                     ) : (
                       <>
                         <Text style={styles.manageBtnText}>Manage Subscription</Text>
-                        <Ionicons name="open-outline" size={14} color={NAVY} />
+                        <Ionicons name="open-outline" size={14} color={colors.card} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -299,7 +297,7 @@ export default function PaymentsScreen() {
           }}
           ListEmptyComponent={
             <View style={styles.emptyWrapper}>
-              <Ionicons name="receipt-outline" size={48} color="#ccc" />
+              <Ionicons name="receipt-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No payments yet</Text>
               <Text style={styles.emptySubtitle}>
                 Your payment history will appear here after your first purchase
@@ -310,7 +308,7 @@ export default function PaymentsScreen() {
             if (section.data.length === 0 && section.title.includes('Payment')) {
               return (
                 <View style={styles.emptyWrapper}>
-                  <Ionicons name="receipt-outline" size={48} color="#ccc" />
+                  <Ionicons name="receipt-outline" size={48} color={colors.textMuted} />
                   <Text style={styles.emptyTitle}>No payments yet</Text>
                   <Text style={styles.emptySubtitle}>
                     Your payment history will appear here after your first purchase
@@ -329,7 +327,7 @@ export default function PaymentsScreen() {
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -343,14 +341,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   // Section
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 8,
     marginTop: 16,
@@ -358,15 +356,11 @@ const styles = StyleSheet.create({
   },
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   // Subscription
   subscriptionHeader: {
@@ -378,7 +372,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -386,7 +380,7 @@ const styles = StyleSheet.create({
   subscriptionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   statusRow: {
@@ -401,12 +395,12 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   renewalText: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 12,
     marginLeft: 48,
   },
@@ -414,7 +408,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -427,7 +421,7 @@ const styles = StyleSheet.create({
   manageBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Payment
   paymentRow: {
@@ -437,12 +431,12 @@ const styles = StyleSheet.create({
   paymentDescription: {
     fontSize: 15,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   paymentDate: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
   },
   paymentRight: {
     alignItems: 'flex-end',
@@ -450,7 +444,7 @@ const styles = StyleSheet.create({
   paymentAmount: {
     fontSize: 16,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   // Error
@@ -458,33 +452,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     padding: 32,
     gap: 8,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Empty
   emptyWrapper: {
@@ -495,12 +489,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

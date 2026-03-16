@@ -16,7 +16,12 @@ export const useLocalStorageState = <T,>(key: string, initialValue: T) => {
     if (typeof window === "undefined") {
       return initialValue;
     }
-    return safeParseJson<T>(localStorage.getItem(key), initialValue);
+    try {
+      return safeParseJson<T>(localStorage.getItem(key), initialValue);
+    } catch {
+      // localStorage.getItem can throw in private/incognito mode
+      return initialValue;
+    }
   });
 
   useEffect(() => {

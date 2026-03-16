@@ -7,9 +7,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-
-const SKELETON_BASE = '#e8e8e8';
-const SKELETON_HIGHLIGHT = '#f5f5f5';
+import { colors } from '../lib/theme';
 
 interface SkeletonProps {
   width: number | `${number}%`;
@@ -44,7 +42,7 @@ export function Skeleton({ width, height, borderRadius = 6, style }: SkeletonPro
           width,
           height,
           borderRadius,
-          backgroundColor: SKELETON_BASE,
+          backgroundColor: colors.skeletonBase,
         },
         animatedStyle,
         style,
@@ -153,7 +151,7 @@ const skeletonStyles = StyleSheet.create({
   conversationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
@@ -175,16 +173,16 @@ const skeletonStyles = StyleSheet.create({
   },
   messageLeft: {
     alignSelf: 'flex-start',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surface,
   },
   messageRight: {
     alignSelf: 'flex-end',
-    backgroundColor: '#e8e8f0',
+    backgroundColor: colors.cardElevated,
   },
   channelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,

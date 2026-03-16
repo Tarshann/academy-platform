@@ -3,8 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { ImageViewer } from './ImageViewer';
-
-const ACADEMY_GOLD = '#CFB87C';
+import { colors } from '../lib/theme';
 
 interface MessageBubbleProps {
   message: string;
@@ -52,7 +51,7 @@ export function MessageBubble({
             {/* Skeleton placeholder shown while loading */}
             {!imageLoaded && (
               <View style={styles.imageSkeleton}>
-                <Ionicons name="image-outline" size={32} color="#ccc" />
+                <Ionicons name="image-outline" size={32} color={colors.textMuted} />
               </View>
             )}
             <Image
@@ -69,7 +68,7 @@ export function MessageBubble({
         {/* Error state for failed image load */}
         {hasImage && imageError && (
           <View style={styles.imageErrorContainer}>
-            <Ionicons name="alert-circle-outline" size={24} color="#999" />
+            <Ionicons name="alert-circle-outline" size={24} color={colors.textSecondary} />
             <Text style={styles.imageErrorText}>Image failed to load</Text>
           </View>
         )}
@@ -114,17 +113,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   ownBubble: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: colors.cardElevated,
     borderBottomRightRadius: 4,
   },
   otherBubble: {
-    backgroundColor: '#e8e8ed',
+    backgroundColor: colors.surface,
     borderBottomLeftRadius: 4,
   },
   senderName: {
     fontSize: 12,
     fontWeight: '600',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     marginBottom: 4,
   },
   imageWrapper: {
@@ -145,7 +144,7 @@ const styles = StyleSheet.create({
     width: 220,
     height: 165,
     borderRadius: 10,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: colors.skeletonBase,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -153,27 +152,27 @@ const styles = StyleSheet.create({
     width: 220,
     height: 100,
     borderRadius: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
   },
   imageErrorText: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   messageText: {
     fontSize: 15,
-    color: '#1a1a2e',
+    color: colors.textPrimary,
     lineHeight: 20,
   },
   ownMessageText: {
-    color: '#fff',
+    color: colors.textPrimary,
   },
   timestamp: {
     fontSize: 10,
-    color: '#888',
+    color: colors.textSecondary,
     marginTop: 4,
     alignSelf: 'flex-end',
   },

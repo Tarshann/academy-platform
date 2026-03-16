@@ -12,9 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 function ShowcaseSkeleton() {
   return (
@@ -34,7 +32,7 @@ function SportBadge({ sport }: { sport: string | null }) {
   const label = sport.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
   return (
     <View style={styles.sportBadge}>
-      <Ionicons name="trophy-outline" size={12} color={ACADEMY_GOLD} />
+      <Ionicons name="trophy-outline" size={12} color={colors.gold} />
       <Text style={styles.sportBadgeText}>{label}</Text>
     </View>
   );
@@ -74,7 +72,7 @@ export default function ShowcaseScreen() {
           <View>
             {/* Hero Section */}
             <View style={styles.heroSection}>
-              <Ionicons name="star" size={28} color={ACADEMY_GOLD} />
+              <Ionicons name="star" size={28} color={colors.gold} />
               <Text style={styles.heroTitle}>ATHLETE OF THE WEEK</Text>
               <Text style={styles.heroSubtitle}>
                 Celebrating outstanding Academy athletes
@@ -90,7 +88,7 @@ export default function ShowcaseScreen() {
 
             {!showcases.isLoading && (showcases.data?.length ?? 0) === 0 && (
               <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={48} color="#ccc" />
+                <Ionicons name="people-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No showcases yet</Text>
                 <Text style={styles.emptySubtitle}>
                   Check back to see featured Academy athletes!
@@ -134,7 +132,7 @@ export default function ShowcaseScreen() {
                 />
               ) : (
                 <View style={[styles.cardImage, styles.placeholderImage]}>
-                  <Ionicons name="person-outline" size={48} color={ACADEMY_GOLD} />
+                  <Ionicons name="person-outline" size={48} color={colors.gold} />
                 </View>
               )}
 
@@ -165,7 +163,7 @@ export default function ShowcaseScreen() {
                     <Text style={styles.achievementsHeader}>ACHIEVEMENTS</Text>
                     {achievements.map((achievement, i) => (
                       <View key={i} style={styles.achievementRow}>
-                        <Ionicons name="medal-outline" size={14} color={ACADEMY_GOLD} />
+                        <Ionicons name="medal-outline" size={14} color={colors.gold} />
                         <Text style={styles.achievementText}>{achievement}</Text>
                       </View>
                     ))}
@@ -190,22 +188,22 @@ export default function ShowcaseScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: NAVY,
+    backgroundColor: colors.card,
     paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   listContent: { paddingBottom: 32 },
   heroSection: {
     alignItems: 'center',
-    backgroundColor: NAVY,
+    backgroundColor: colors.card,
     paddingVertical: 24,
     paddingHorizontal: 20,
     marginBottom: 16,
@@ -213,22 +211,18 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     letterSpacing: 2,
     marginTop: 8,
   },
-  heroSubtitle: { fontSize: 14, color: '#aaa', marginTop: 4 },
+  heroSubtitle: { fontSize: 14, color: colors.textMuted, marginTop: 4 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 20,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    ...shadows.card,
   },
   spotlightBanner: {
     position: 'absolute',
@@ -238,15 +232,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
-  spotlightText: { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 1 },
+  spotlightText: { fontSize: 11, fontWeight: '800', color: colors.textPrimary, letterSpacing: 1 },
   cardImage: { width: '100%', height: 240 },
   placeholderImage: {
-    backgroundColor: '#2a2a4e',
+    backgroundColor: colors.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -257,18 +251,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  cardTitle: { fontSize: 20, fontWeight: '700', color: NAVY, flex: 1 },
+  cardTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, flex: 1 },
   sportBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  sportBadgeText: { fontSize: 11, fontWeight: '600', color: NAVY },
-  cardDescription: { fontSize: 14, color: '#555', lineHeight: 20, marginBottom: 14 },
+  sportBadgeText: { fontSize: 11, fontWeight: '600', color: colors.gold },
+  cardDescription: { fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 14 },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -276,28 +270,28 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   statBox: {
-    backgroundColor: '#f8f6f1',
+    backgroundColor: colors.cardElevated,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     alignItems: 'center',
     minWidth: 80,
   },
-  statValue: { fontSize: 18, fontWeight: '700', color: NAVY },
-  statLabel: { fontSize: 10, fontWeight: '600', color: '#888', textTransform: 'uppercase', marginTop: 2 },
+  statValue: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  statLabel: { fontSize: 10, fontWeight: '600', color: colors.textSecondary, textTransform: 'uppercase', marginTop: 2 },
   achievementsList: { marginBottom: 14 },
   achievementsHeader: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 8,
   },
   achievementRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
-  achievementText: { fontSize: 13, color: '#444' },
-  featuredDate: { fontSize: 12, color: '#aaa', fontStyle: 'italic' },
-  skeletonBlock: { backgroundColor: '#e8e8e8', borderRadius: 6 },
+  achievementText: { fontSize: 13, color: colors.textSecondary },
+  featuredDate: { fontSize: 12, color: colors.textMuted, fontStyle: 'italic' },
+  skeletonBlock: { backgroundColor: colors.skeletonBase, borderRadius: 6 },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: NAVY },
-  emptySubtitle: { fontSize: 14, color: '#999', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
 });

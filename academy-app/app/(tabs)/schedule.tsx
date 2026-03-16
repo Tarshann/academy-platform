@@ -11,10 +11,10 @@ import { useState, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { Loading } from '../../components/Loading';
+import { AnimatedCard } from '../../components/AnimatedCard';
 import { trackEvent } from '../../lib/analytics';
 import { trackSessionRegistration } from '../../lib/rating-prompt';
-
-const ACADEMY_GOLD = '#CFB87C';
+import { colors, shadows, typography } from '../../lib/theme';
 
 export default function ScheduleScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -89,13 +89,14 @@ export default function ScheduleScreen() {
           <Text style={styles.empty}>No upcoming sessions.</Text>
         </View>
       }
-      renderItem={({ item }) => {
+      renderItem={({ item, index }) => {
         const start = new Date(item.startTime);
         const end = new Date(item.endTime);
         const isRegistered = registeredIds.has(item.id);
         const isRegistering = register.isPending && register.variables?.scheduleId === item.id;
 
         return (
+          <AnimatedCard index={index}>
           <View style={styles.card}>
             <View style={styles.dateColumn}>
               <Text style={styles.dateMonth}>
@@ -156,6 +157,7 @@ export default function ScheduleScreen() {
               )}
             </View>
           </View>
+          </AnimatedCard>
         );
       }}
     />
@@ -165,7 +167,7 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -176,20 +178,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   empty: {
-    color: '#999',
+    color: colors.textMuted,
     fontSize: 16,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.card,
   },
   dateColumn: {
     width: 56,
@@ -197,24 +195,25 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     marginRight: 16,
     borderRightWidth: 1,
-    borderRightColor: '#eee',
+    borderRightColor: colors.border,
     paddingRight: 16,
     paddingTop: 4,
   },
   dateMonth: {
     fontSize: 11,
     fontWeight: '600',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     letterSpacing: 1,
   },
   dateDay: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
+    fontFamily: typography.display.fontFamily,
   },
   dateWeekday: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
   },
   details: {
     flex: 1,
@@ -222,17 +221,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   time: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   location: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textMuted,
     marginTop: 2,
   },
   bottomRow: {
@@ -242,7 +241,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   typeBadge: {
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -250,26 +249,27 @@ const styles = StyleSheet.create({
   typeBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#8a7340',
+    color: colors.gold,
     textTransform: 'capitalize',
   },
   spots: {
     fontSize: 11,
-    color: '#888',
+    color: colors.textMuted,
   },
   registerButton: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignSelf: 'flex-start',
     marginTop: 10,
+    ...shadows.glow,
   },
   registerButtonDisabled: {
     opacity: 0.6,
   },
   registerButtonText: {
-    color: '#1a1a2e',
+    color: colors.card,
     fontSize: 13,
     fontWeight: '600',
   },

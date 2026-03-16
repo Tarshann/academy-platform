@@ -365,8 +365,9 @@ export function setupSSEChat(app: Express) {
       upload(req, res, async (err: unknown) => {
         if (err) {
           logger.error("[Chat] Image upload error:", err);
-          const errorMessage = err instanceof Error ? err.message : "Upload failed";
-          return res.status(400).json({ error: errorMessage });
+          // Return a generic message to avoid leaking internal details
+          const isFileTooLarge = err instanceof Error && err.message.includes("limit");
+          return res.status(400).json({ error: isFileTooLarge ? "File too large" : "Upload failed" });
         }
 
         const file = (req as Request & { file?: Express.Multer.File }).file;

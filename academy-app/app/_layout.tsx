@@ -1,8 +1,10 @@
 import { ClerkProvider, ClerkLoaded, useAuth, useUser } from '@clerk/clerk-expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Slot, Stack, useRouter, useSegments, usePathname } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-system-ui';
 import { tokenCache } from '../lib/clerk';
 import { TRPCProvider, queryClient } from '../lib/trpc';
 import { trpc } from '../lib/trpc';
@@ -11,6 +13,7 @@ import { getDeviceId } from '../lib/device';
 import { Loading } from '../components/Loading';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
+import { colors } from '../lib/theme';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -24,9 +27,9 @@ function ConfigError({ message }: { message: string }) {
 }
 
 const configStyles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1a1a2e', padding: 24 },
-  title: { fontSize: 20, fontWeight: '700', color: '#CFB87C', marginBottom: 12 },
-  message: { fontSize: 14, color: '#ccc', textAlign: 'center', lineHeight: 20 },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.card, padding: 24 },
+  title: { fontSize: 20, fontWeight: '700', color: colors.gold, marginBottom: 12 },
+  message: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
 });
 
 function PushRegistration() {
@@ -73,9 +76,10 @@ function NotificationHandler() {
     const cleanup = addNotificationResponseListener((response) => {
       try {
         const data = response.notification.request.content.data;
-        if (data?.type === 'chat' && data?.room) {
+        const VALID_ROOMS = ['general', 'coaches', 'parents', 'announcements'];
+        if (data?.type === 'chat' && data?.room && VALID_ROOMS.includes(String(data.room))) {
           router.push(`/chat/${data.room}`);
-        } else if (data?.type === 'dm' && data?.conversationId) {
+        } else if (data?.type === 'dm' && data?.conversationId && Number.isFinite(Number(data.conversationId))) {
           router.push(`/dm/${data.conversationId}`);
         }
       } catch (err) {
@@ -159,8 +163,8 @@ function AuthGuard() {
           <Stack.Screen name="showcase" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="metrics" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="drops" options={{ headerShown: false, presentation: 'card' }} />
-          <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: '#1a1a2e' }, headerTintColor: '#fff' }} />
-          <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: '#1a1a2e' }, headerTintColor: '#fff' }} />
+          <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
         </Stack>
       </ErrorBoundary>
     </>
@@ -168,9 +172,17 @@ function AuthGuard() {
 }
 
 function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    BebasNeue: require('../assets/fonts/BebasNeue-Regular.ttf'),
+  });
+
   useEffect(() => {
     initPostHog();
   }, []);
+
+  if (!fontsLoaded) {
+    return <Loading />;
+  }
 
   if (!CLERK_PUBLISHABLE_KEY) {
     return (

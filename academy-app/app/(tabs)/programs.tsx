@@ -14,9 +14,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { trpc } from '../../lib/trpc';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { GradientCard } from '../../components/GradientCard';
 
 function formatPrice(price: string | number): string {
   const num = typeof price === 'string' ? parseFloat(price) : price;
@@ -99,7 +99,7 @@ export default function ProgramsScreen() {
           text: 'Text Us',
           onPress: () => {
             trackEvent('program_inquiry_text', { program_name: programName });
-            Linking.openURL(`sms:+15712920633&body=Hi, I'm interested in ${programName}`);
+            Linking.openURL(`sms:+15712920633&body=${encodeURIComponent(`Hi, I'm interested in ${programName}`)}`);
           },
         },
         {
@@ -204,12 +204,12 @@ export default function ProgramsScreen() {
       keyExtractor={(item) => String(item.id)}
       ListEmptyComponent={
         <View style={styles.emptyWrapper}>
-          <Ionicons name="fitness-outline" size={48} color="#ccc" />
+          <Ionicons name="fitness-outline" size={48} color={colors.textMuted} />
           <Text style={styles.emptyTitle}>No programs available</Text>
           <Text style={styles.emptySubtitle}>Check back soon for new offerings</Text>
         </View>
       }
-      renderItem={({ item }) => {
+      renderItem={({ item, index }) => {
         const sport = getSportLabel(item.sport);
         const isPerformanceLab = item.slug?.includes('performance');
         const isPrivate = item.category === 'individual';
@@ -228,66 +228,68 @@ export default function ProgramsScreen() {
         const ctaLabel = isPerformanceLab ? 'Apply' : isPrivate ? 'Inquire' : 'Sign Up';
 
         return (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>
-                  {getCategoryLabel(item.category)}
-                </Text>
-              </View>
-              {sport && <Text style={styles.sportLabel}>{sport}</Text>}
-            </View>
-
-            <Text style={styles.programName}>{item.name}</Text>
-            <Text style={styles.description} numberOfLines={2}>
-              {item.description}
-            </Text>
-
-            <View style={styles.metaRow}>
-              <Ionicons name="people-outline" size={14} color="#888" />
-              <Text style={styles.ageRange}>
-                Ages {item.ageMin}\u2013{item.ageMax}
-              </Text>
-              {item.maxParticipants && (
-                <>
-                  <Text style={styles.metaDot}>&middot;</Text>
-                  <Text style={styles.ageRange}>
-                    Max {item.maxParticipants}
+          <AnimatedCard index={index}>
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.categoryBadge}>
+                  <Text style={styles.categoryText}>
+                    {getCategoryLabel(item.category)}
                   </Text>
-                </>
-              )}
-            </View>
-
-            <View style={styles.priceRow}>
-              <View>
-                {priceDetail ? (
-                  <Text style={styles.priceDetail}>{priceDetail}</Text>
-                ) : null}
-                <Text style={styles.price}>{priceDisplay}</Text>
+                </View>
+                {sport && <Text style={styles.sportLabel}>{sport}</Text>}
               </View>
-              <TouchableOpacity
-                style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
-                onPress={() => {
-                  if (isPrivate) {
-                    onInquire(item.name);
-                  } else if (item.slug) {
-                    onEnroll(item.slug, item.name, item.price);
-                  }
-                }}
-                disabled={isLoadingThis || (!isPrivate && !item.slug)}
-                activeOpacity={0.7}
-              >
-                {isLoadingThis ? (
-                  <ActivityIndicator size="small" color={NAVY} />
-                ) : (
+
+              <Text style={styles.programName}>{item.name}</Text>
+              <Text style={styles.description} numberOfLines={2}>
+                {item.description}
+              </Text>
+
+              <View style={styles.metaRow}>
+                <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                <Text style={styles.ageRange}>
+                  Ages {item.ageMin}\u2013{item.ageMax}
+                </Text>
+                {item.maxParticipants && (
                   <>
-                    <Text style={styles.ctaText}>{ctaLabel}</Text>
-                    <Ionicons name="arrow-forward" size={14} color={NAVY} />
+                    <Text style={styles.metaDot}>&middot;</Text>
+                    <Text style={styles.ageRange}>
+                      Max {item.maxParticipants}
+                    </Text>
                   </>
                 )}
-              </TouchableOpacity>
+              </View>
+
+              <View style={styles.priceRow}>
+                <View>
+                  {priceDetail ? (
+                    <Text style={styles.priceDetail}>{priceDetail}</Text>
+                  ) : null}
+                  <Text style={styles.price}>{priceDisplay}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
+                  onPress={() => {
+                    if (isPrivate) {
+                      onInquire(item.name);
+                    } else if (item.slug) {
+                      onEnroll(item.slug, item.name, item.price);
+                    }
+                  }}
+                  disabled={isLoadingThis || (!isPrivate && !item.slug)}
+                  activeOpacity={0.7}
+                >
+                  {isLoadingThis ? (
+                    <ActivityIndicator size="small" color={colors.card} />
+                  ) : (
+                    <>
+                      <Text style={styles.ctaText}>{ctaLabel}</Text>
+                      <Ionicons name="arrow-forward" size={14} color={colors.card} />
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </AnimatedCard>
         );
       }}
     />
@@ -297,7 +299,7 @@ export default function ProgramsScreen() {
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -305,7 +307,7 @@ const styles = StyleSheet.create({
   },
   // Skeleton
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   // Error state
@@ -313,33 +315,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     padding: 32,
     gap: 8,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Empty state
   emptyWrapper: {
@@ -350,24 +352,20 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textMuted,
   },
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.card,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -376,13 +374,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   categoryBadge: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   categoryText: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -390,18 +388,18 @@ const styles = StyleSheet.create({
   },
   sportLabel: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   programName: {
     fontSize: 18,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   description: {
     fontSize: 14,
-    color: '#555',
+    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 10,
   },
@@ -413,10 +411,10 @@ const styles = StyleSheet.create({
   },
   ageRange: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textMuted,
   },
   metaDot: {
-    color: '#ccc',
+    color: colors.textMuted,
     fontSize: 12,
   },
   priceRow: {
@@ -424,23 +422,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
     paddingTop: 14,
   },
   priceDetail: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textMuted,
     marginBottom: 2,
   },
   price: {
     fontSize: 20,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
+    fontFamily: typography.display.fontFamily,
   },
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -448,12 +447,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     minWidth: 90,
     justifyContent: 'center',
+    ...shadows.glow,
   },
   ctaButtonLoading: {
     opacity: 0.7,
   },
   ctaText: {
-    color: NAVY,
+    color: colors.card,
     fontSize: 14,
     fontWeight: '600',
   },

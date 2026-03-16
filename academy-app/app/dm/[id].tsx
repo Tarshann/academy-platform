@@ -7,6 +7,7 @@ import {
   Platform,
   Text,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { trpc } from '../../lib/trpc';
@@ -24,8 +25,7 @@ import {
 } from '../../lib/chat-images';
 import { MessageListSkeleton } from '../../components/Skeleton';
 import { trackMessageSent } from '../../lib/rating-prompt';
-
-const ACADEMY_GOLD = '#CFB87C';
+import { colors } from '../../lib/theme';
 
 interface DmMessage {
   id: number;
@@ -276,11 +276,11 @@ export default function DmConversationScreen() {
       <>
         <Stack.Screen options={{
           title: 'Conversation',
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),
         }} />
@@ -296,11 +296,11 @@ export default function DmConversationScreen() {
       <Stack.Screen
         options={{
           title: otherUserName || 'Conversation',
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -382,13 +382,13 @@ export default function DmConversationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   messageList: {
     flex: 1,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
   },
   statusDot: {
     width: 8,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
   },
   readReceipt: {
     fontSize: 11,
-    color: '#888',
+    color: colors.textSecondary,
     textAlign: 'right',
     paddingRight: 20,
     marginTop: -2,

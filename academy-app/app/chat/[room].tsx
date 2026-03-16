@@ -23,8 +23,8 @@ import {
   type ImageSource,
 } from '../../lib/chat-images';
 import { trackMessageSent } from '../../lib/rating-prompt';
+import { colors } from '../../lib/theme';
 
-const ACADEMY_GOLD = '#CFB87C';
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const ROOM_TITLES: Record<string, string> = {
@@ -239,16 +239,16 @@ export default function ChatRoomScreen() {
       <>
         <Stack.Screen options={{
           title: ROOM_TITLES[room!] || `#${room}`,
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),
         }} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={ACADEMY_GOLD} />
+          <ActivityIndicator size="large" color={colors.gold} />
         </View>
       </>
     );
@@ -259,11 +259,11 @@ export default function ChatRoomScreen() {
       <Stack.Screen
         options={{
           title: ROOM_TITLES[room!] || `#${room}`,
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-              <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+              <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),
           headerRight: () => (
@@ -330,13 +330,13 @@ export default function ChatRoomScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   messageList: {
     flex: 1,
@@ -353,12 +353,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
   },
   statusDot: {
     width: 8,

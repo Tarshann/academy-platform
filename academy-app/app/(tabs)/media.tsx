@@ -7,15 +7,16 @@ import {
   RefreshControl,
   Linking,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { GlassCard } from '../../components/GradientCard';
 
 type FeedItem = {
   id: string;
@@ -112,7 +113,7 @@ function MediaImage({
           <Ionicons
             name={getPlatformIcon(item.platform)}
             size={48}
-            color={ACADEMY_GOLD}
+            color={colors.gold}
           />
         </View>
       )}
@@ -183,7 +184,7 @@ function FeedCard({
           </View>
           {isVideo && item.viewCount > 0 && (
             <View style={styles.viewCount}>
-              <Ionicons name="eye-outline" size={12} color="#999" />
+              <Ionicons name="eye-outline" size={12} color={colors.textMuted} />
               <Text style={styles.viewCountText}>{item.viewCount}</Text>
             </View>
           )}
@@ -218,7 +219,9 @@ export default function MediaFeedScreen() {
       if (!isNaN(numericId)) {
         trackViewMutation.mutate({ id: numericId });
       }
-      Linking.openURL(item.mediaUrl);
+      Linking.openURL(item.mediaUrl).catch(() =>
+        Alert.alert('Error', 'Could not open this media.')
+      );
     },
     [trackViewMutation]
   );
@@ -230,8 +233,10 @@ export default function MediaFeedScreen() {
   };
 
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => (
-      <FeedCard item={item} onVideoPress={handleVideoPress} />
+    ({ item, index }: { item: FeedItem; index: number }) => (
+      <AnimatedCard index={index}>
+        <FeedCard item={item} onVideoPress={handleVideoPress} />
+      </AnimatedCard>
     ),
     [handleVideoPress]
   );
@@ -300,7 +305,9 @@ export default function MediaFeedScreen() {
             {/* Empty */}
             {!feed.isLoading && !feed.isError && (feed.data?.items?.length ?? 0) === 0 && (
               <View style={styles.emptyState}>
-                <Ionicons name="film-outline" size={48} color="#ccc" />
+                <GlassCard style={{ padding: 40, alignItems: 'center' }}>
+                  <Ionicons name="film-outline" size={48} color={colors.textMuted} />
+                </GlassCard>
                 <Text style={styles.emptyTitle}>No media yet</Text>
                 <Text style={styles.emptySubtitle}>
                   Check back soon for training clips and highlights!
@@ -313,7 +320,7 @@ export default function MediaFeedScreen() {
           feed.isFetching && !feed.isLoading ? (
             <ActivityIndicator
               size="small"
-              color={ACADEMY_GOLD}
+              color={colors.gold}
               style={{ paddingVertical: 20 }}
             />
           ) : null
@@ -326,7 +333,7 @@ export default function MediaFeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   listContent: {
     padding: 16,
@@ -334,7 +341,7 @@ const styles = StyleSheet.create({
   },
   // Skeleton
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   // Filter
@@ -347,34 +354,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.border,
     minHeight: 36,
     justifyContent: 'center',
   },
   filterChipActive: {
-    backgroundColor: NAVY,
-    borderColor: NAVY,
+    backgroundColor: colors.cardElevated,
+    borderColor: colors.cardElevated,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
+    color: colors.textSecondary,
   },
   filterChipTextActive: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
   },
   // Card
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.card,
     overflow: 'hidden',
   },
   // Media
@@ -388,7 +391,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   placeholderImage: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -436,12 +439,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   categoryTag: {
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -460,7 +463,7 @@ const styles = StyleSheet.create({
   categoryTagText: {
     fontSize: 11,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.gold,
   },
   viewCount: {
     flexDirection: 'row',
@@ -469,11 +472,11 @@ const styles = StyleSheet.create({
   },
   viewCountText: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
   },
   dateText: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
     marginLeft: 'auto',
   },
   // Empty / Error
@@ -485,22 +488,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textMuted,
     textAlign: 'center',
   },
   retryButton: {
     marginTop: 8,
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 14,
     fontWeight: '600',
   },

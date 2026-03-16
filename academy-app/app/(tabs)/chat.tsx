@@ -2,9 +2,10 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { GlassCard } from '../../components/GradientCard';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface ChatChannel {
   id: string;
@@ -54,28 +55,30 @@ export default function ChatScreen() {
         data={CHANNELS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.channelCard}
-            onPress={() => onRoomPress(item)}
-            activeOpacity={0.7}
-          >
-            <View style={[
-              styles.iconContainer,
-              item.id === 'announcements' && styles.iconContainerAnnouncement,
-            ]}>
-              <Ionicons
-                name={item.icon}
-                size={24}
-                color={item.id === 'announcements' ? NAVY : ACADEMY_GOLD}
-              />
-            </View>
-            <View style={styles.channelInfo}>
-              <Text style={styles.channelName}>#{item.name}</Text>
-              <Text style={styles.channelDescription}>{item.description}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#ccc" />
-          </TouchableOpacity>
+        renderItem={({ item, index }) => (
+          <AnimatedCard index={index}>
+            <TouchableOpacity
+              style={styles.channelCard}
+              onPress={() => onRoomPress(item)}
+              activeOpacity={0.7}
+            >
+              <View style={[
+                styles.iconContainer,
+                item.id === 'announcements' && styles.iconContainerAnnouncement,
+              ]}>
+                <Ionicons
+                  name={item.icon}
+                  size={24}
+                  color={item.id === 'announcements' ? colors.card : colors.gold}
+                />
+              </View>
+              <View style={styles.channelInfo}>
+                <Text style={styles.channelName}>#{item.name}</Text>
+                <Text style={styles.channelDescription}>{item.description}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </AnimatedCard>
         )}
       />
     </View>
@@ -85,7 +88,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   list: {
     padding: 16,
@@ -93,27 +96,26 @@ const styles = StyleSheet.create({
   channelCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     padding: 16,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.gold,
+    ...shadows.card,
   },
   iconContainer: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
   },
   iconContainerAnnouncement: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
+    ...shadows.glow,
   },
   channelInfo: {
     flex: 1,
@@ -121,11 +123,11 @@ const styles = StyleSheet.create({
   channelName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a2e',
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   channelDescription: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
   },
 });

@@ -16,9 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 type MetricCategory = 'speed' | 'power' | 'agility' | 'endurance' | 'strength' | 'flexibility';
 
@@ -76,7 +74,7 @@ function TrendBars({ values }: { values: number[] }) {
               styles.trendBar,
               {
                 height,
-                backgroundColor: i === values.length - 1 ? ACADEMY_GOLD : '#ddd',
+                backgroundColor: i === values.length - 1 ? colors.gold : colors.surface,
               },
             ]}
           />
@@ -153,7 +151,7 @@ function RecordMetricForm({
         <View style={styles.formHeader}>
           <Text style={styles.formTitle}>Record Metric</Text>
           <TouchableOpacity onPress={onCancel}>
-            <Ionicons name="close" size={24} color="#666" />
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -169,7 +167,7 @@ function RecordMetricForm({
             <Ionicons
               name={isCustom ? 'list-outline' : 'create-outline'}
               size={16}
-              color={ACADEMY_GOLD}
+              color={colors.gold}
             />
           </TouchableOpacity>
 
@@ -188,12 +186,12 @@ function RecordMetricForm({
                   <Ionicons
                     name={preset.icon}
                     size={16}
-                    color={selectedPreset?.name === preset.name ? '#fff' : NAVY}
+                    color={selectedPreset?.name === preset.name ? colors.textPrimary : colors.textPrimary}
                   />
                   <Text
                     style={[
                       styles.presetChipText,
-                      selectedPreset?.name === preset.name && { color: '#fff' },
+                      selectedPreset?.name === preset.name && { color: colors.textPrimary },
                     ]}
                   >
                     {preset.name}
@@ -215,14 +213,14 @@ function RecordMetricForm({
               <TextInput
                 style={styles.input}
                 placeholder="Metric Name (e.g., Box Jump)"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textMuted}
                 value={customName}
                 onChangeText={setCustomName}
               />
               <TextInput
                 style={styles.input}
                 placeholder="Unit (e.g., inches, seconds, lbs)"
-                placeholderTextColor="#999"
+                placeholderTextColor={colors.textMuted}
                 value={customUnit}
                 onChangeText={setCustomUnit}
               />
@@ -233,7 +231,7 @@ function RecordMetricForm({
                     style={[
                       styles.categoryChip,
                       {
-                        backgroundColor: customCategory === cat ? CATEGORY_COLORS[cat] : '#f0f0f0',
+                        backgroundColor: customCategory === cat ? CATEGORY_COLORS[cat] : colors.surface,
                       },
                     ]}
                     onPress={() => setCustomCategory(cat)}
@@ -241,7 +239,7 @@ function RecordMetricForm({
                     <Text
                       style={[
                         styles.categoryChipText,
-                        customCategory === cat && { color: '#fff' },
+                        customCategory === cat && { color: colors.textPrimary },
                       ]}
                     >
                       {cat}
@@ -257,7 +255,7 @@ function RecordMetricForm({
             <TextInput
               style={[styles.input, styles.valueInput]}
               placeholder="Value"
-              placeholderTextColor="#999"
+              placeholderTextColor={colors.textMuted}
               value={value}
               onChangeText={setValue}
               keyboardType="decimal-pad"
@@ -273,7 +271,7 @@ function RecordMetricForm({
           <TextInput
             style={[styles.input, styles.notesInput]}
             placeholder="Notes (optional)"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={notes}
             onChangeText={setNotes}
             multiline
@@ -363,7 +361,7 @@ export default function MetricsScreen() {
             }}
             style={styles.addBtn}
           >
-            <Ionicons name="add" size={24} color={ACADEMY_GOLD} />
+            <Ionicons name="add" size={24} color={colors.gold} />
           </TouchableOpacity>
         )}
         {!isAdmin && <View style={{ width: 40 }} />}
@@ -372,11 +370,11 @@ export default function MetricsScreen() {
       {/* Search (admin) */}
       {isAdmin && (
         <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color="#999" />
+          <Ionicons name="search-outline" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search athlete or metric..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -404,7 +402,7 @@ export default function MetricsScreen() {
         ListEmptyComponent={
           !metrics.isLoading ? (
             <View style={styles.emptyState}>
-              <Ionicons name="analytics-outline" size={48} color="#ccc" />
+              <Ionicons name="analytics-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No metrics recorded</Text>
               <Text style={styles.emptySubtitle}>
                 {isAdmin
@@ -478,23 +476,23 @@ export default function MetricsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: NAVY,
+    backgroundColor: colors.card,
     paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   addBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-end' },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     margin: 16,
     marginBottom: 0,
     borderRadius: 12,
@@ -502,22 +500,18 @@ const styles = StyleSheet.create({
     gap: 8,
     height: 44,
   },
-  searchInput: { flex: 1, fontSize: 14, color: NAVY },
+  searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary },
   legendRow: { paddingHorizontal: 16, paddingVertical: 12, maxHeight: 50 },
   legendItem: { flexDirection: 'row', alignItems: 'center', marginRight: 16, gap: 4 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontSize: 11, color: '#888', textTransform: 'capitalize' },
+  legendText: { fontSize: 11, color: colors.textSecondary, textTransform: 'capitalize' },
   listContent: { padding: 16, paddingBottom: 100 },
   metricCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.subtle,
   },
   metricHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   metricIcon: {
@@ -527,11 +521,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  metricName: { fontSize: 15, fontWeight: '600', color: NAVY },
-  metricCategory: { fontSize: 12, color: '#888', marginTop: 1 },
+  metricName: { fontSize: 15, fontWeight: '600', color: colors.textPrimary },
+  metricCategory: { fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   latestValue: { alignItems: 'flex-end' },
-  latestValueText: { fontSize: 22, fontWeight: '700', color: NAVY },
-  latestUnitText: { fontSize: 11, color: '#888' },
+  latestValueText: { fontSize: 22, fontWeight: '700', color: colors.textPrimary },
+  latestUnitText: { fontSize: 11, color: colors.textSecondary },
   trendContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -539,7 +533,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
     height: 48,
   },
   trendBar: { flex: 1, borderRadius: 3, minHeight: 4 },
@@ -549,9 +543,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
   },
-  metricMetaText: { fontSize: 11, color: '#aaa' },
+  metricMetaText: { fontSize: 11, color: colors.textMuted },
   // Form
   formOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -559,7 +553,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   formContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '85%',
@@ -571,9 +565,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
-  formTitle: { fontSize: 18, fontWeight: '700', color: NAVY },
+  formTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   formScroll: { paddingHorizontal: 20 },
   customToggle: {
     flexDirection: 'row',
@@ -582,7 +576,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
   },
-  customToggleText: { fontSize: 13, fontWeight: '600', color: ACADEMY_GOLD },
+  customToggleText: { fontSize: 13, fontWeight: '600', color: colors.gold },
   presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   presetChip: {
     flexDirection: 'row',
@@ -591,50 +585,50 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
+    borderColor: colors.border,
   },
-  presetChipActive: { backgroundColor: NAVY, borderColor: NAVY },
-  presetChipText: { fontSize: 13, fontWeight: '500', color: NAVY },
-  presetUnitText: { fontSize: 11, color: '#999' },
+  presetChipActive: { backgroundColor: colors.cardElevated, borderColor: colors.gold },
+  presetChipText: { fontSize: 13, fontWeight: '500', color: colors.textPrimary },
+  presetUnitText: { fontSize: 11, color: colors.textMuted },
   customFields: { gap: 10, marginBottom: 16 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   categoryChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14 },
-  categoryChipText: { fontSize: 12, fontWeight: '600', color: '#666', textTransform: 'capitalize' },
+  categoryChipText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary, textTransform: 'capitalize' },
   input: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: NAVY,
+    color: colors.textPrimary,
   },
   valueRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   valueInput: { flex: 1 },
   unitLabel: {
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     borderRadius: 10,
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
-  unitLabelText: { fontSize: 13, fontWeight: '600', color: NAVY },
+  unitLabelText: { fontSize: 13, fontWeight: '600', color: colors.gold },
   notesInput: { marginBottom: 16, minHeight: 60, textAlignVertical: 'top' },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 12,
     paddingVertical: 14,
     marginBottom: 20,
   },
-  submitBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  submitBtnText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: NAVY },
-  emptySubtitle: { fontSize: 14, color: '#999', textAlign: 'center', paddingHorizontal: 40 },
-  skeletonBlock: { backgroundColor: '#e8e8e8', borderRadius: 6 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 40 },
+  skeletonBlock: { backgroundColor: colors.skeletonBase, borderRadius: 6 },
 });

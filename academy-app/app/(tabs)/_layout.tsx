@@ -1,17 +1,16 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-
-const ACADEMY_GOLD = '#CFB87C';
-const INACTIVE_COLOR = '#8e8e93';
+import { colors } from '../../lib/theme';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: ACADEMY_GOLD,
-        tabBarInactiveTintColor: INACTIVE_COLOR,
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#fff',
+        tabBarActiveTintColor: colors.gold,
+        tabBarInactiveTintColor: colors.tabInactive,
+        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
+        headerStyle: { backgroundColor: colors.card },
+        headerTintColor: colors.textPrimary,
         headerTitleStyle: { fontWeight: '600' },
       }}
     >

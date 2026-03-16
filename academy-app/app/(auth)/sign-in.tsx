@@ -13,8 +13,7 @@ import {
   Image,
 } from 'react-native';
 import { Screen } from '../../components/Screen';
-
-const ACADEMY_GOLD = '#CFB87C';
+import { colors } from '../../lib/theme';
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn();
@@ -76,7 +75,7 @@ export default function SignInScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
@@ -87,7 +86,7 @@ export default function SignInScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -136,22 +135,22 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
-    backgroundColor: '#f9f9f9',
-    color: '#1a1a2e',
+    backgroundColor: colors.surface,
+    color: colors.textPrimary,
   },
   button: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -161,7 +160,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#1a1a2e',
+    color: colors.card,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -171,11 +170,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   linkText: {
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 14,
   },
   link: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -3,10 +3,10 @@
     "name": "The Academy",
     "slug": "academy-app",
     "scheme": "academy",
-    "version": "1.6.1",
+    "version": "1.7.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "platforms": [
       "ios",
@@ -19,7 +19,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "26",
+      "buildNumber": "27",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -34,7 +34,7 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 26
+      "versionCode": 27
     },
     "plugins": [
       "expo-router",

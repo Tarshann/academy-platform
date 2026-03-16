@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,9 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { trpc } from '../../lib/trpc';
 import { ConversationListSkeleton } from '../../components/Skeleton';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../../lib/theme';
 
 export default function MessagesScreen() {
   const router = useRouter();
@@ -110,6 +108,13 @@ export default function MessagesScreen() {
     { enabled: searchQuery.length > 0 }
   );
 
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
   const onSearchChange = useCallback((text: string) => {
     setSearchText(text);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
@@ -167,7 +172,7 @@ export default function MessagesScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#999" />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
           <Text style={styles.errorText}>Failed to load conversations</Text>
           <Text style={styles.errorDetail}>{errMsg}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => conversations.refetch()}>
@@ -186,11 +191,11 @@ export default function MessagesScreen() {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color="#999" />
+          <Ionicons name="search-outline" size={18} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search messages..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={searchText}
             onChangeText={onSearchChange}
             returnKeyType="search"
@@ -198,7 +203,7 @@ export default function MessagesScreen() {
           />
           {searchText.length > 0 && (
             <TouchableOpacity onPress={onClearSearch} style={styles.clearBtn}>
-              <Ionicons name="close-circle" size={18} color="#ccc" />
+              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -213,7 +218,7 @@ export default function MessagesScreen() {
           ListHeaderComponent={
             searchResults.isLoading ? (
               <View style={styles.searchLoadingRow}>
-                <ActivityIndicator size="small" color={ACADEMY_GOLD} />
+                <ActivityIndicator size="small" color={colors.gold} />
                 <Text style={styles.searchLoadingText}>Searching...</Text>
               </View>
             ) : (
@@ -225,7 +230,7 @@ export default function MessagesScreen() {
           ListEmptyComponent={
             !searchResults.isLoading ? (
               <View style={styles.emptyContainer}>
-                <Ionicons name="search-outline" size={36} color="#ccc" />
+                <Ionicons name="search-outline" size={36} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No results</Text>
                 <Text style={styles.emptySubtitle}>Try a different search term</Text>
               </View>
@@ -248,7 +253,7 @@ export default function MessagesScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.searchResultIcon}>
-                  <Ionicons name="chatbubble-outline" size={16} color={ACADEMY_GOLD} />
+                  <Ionicons name="chatbubble-outline" size={16} color={colors.gold} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.searchResultName} numberOfLines={1}>
@@ -286,7 +291,7 @@ export default function MessagesScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons name="chatbubble-ellipses-outline" size={48} color="#ccc" />
+              <Ionicons name="chatbubble-ellipses-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No Conversations</Text>
               <Text style={styles.emptySubtitle}>
                 Start a conversation with a coach or parent
@@ -354,33 +359,29 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   // Search bar
   searchContainer: {
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 4,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: NAVY,
+    color: colors.textPrimary,
     paddingVertical: 0,
   },
   clearBtn: {
@@ -400,33 +401,29 @@ const styles = StyleSheet.create({
   },
   searchLoadingText: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
   },
   searchResultCount: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#999',
+    color: colors.textMuted,
     marginBottom: 8,
     marginLeft: 4,
   },
   searchResultCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
     gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   searchResultIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -434,21 +431,21 @@ const styles = StyleSheet.create({
   searchResultName: {
     fontSize: 14,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   searchResultSnippet: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 18,
   },
   searchResultSender: {
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   searchResultDate: {
     fontSize: 11,
-    color: '#999',
+    color: colors.textMuted,
     marginTop: 4,
   },
   // Conversation list
@@ -459,14 +456,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
     gap: 8,
   },
   newMessageText: {
-    color: '#fff',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },
@@ -477,43 +474,39 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
   },
   conversationCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 14,
     padding: 14,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadows.subtle,
   },
   unreadCard: {
     borderLeftWidth: 3,
-    borderLeftColor: ACADEMY_GOLD,
+    borderLeftColor: colors.gold,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   avatarText: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 18,
     fontWeight: '700',
   },
@@ -529,7 +522,7 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: 15,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
     flex: 1,
   },
   unreadName: {
@@ -537,28 +530,28 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textMuted,
     marginLeft: 8,
   },
   lastMessage: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
   },
   unreadMessage: {
-    color: NAVY,
+    color: colors.textPrimary,
     fontWeight: '500',
   },
   unreadBadge: {
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
   },
   unreadCount: {
-    color: NAVY,
+    color: colors.card,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -570,25 +563,25 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 12,
     marginBottom: 4,
   },
   errorDetail: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textMuted,
     marginBottom: 16,
     textAlign: 'center',
     paddingHorizontal: 24,
   },
   retryButton: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
   retryText: {
-    color: '#fff',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '600',
   },

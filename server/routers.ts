@@ -63,6 +63,17 @@ import { logger } from "./_core/logger";
 
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
+
+// Periodically clean up expired entries to prevent unbounded memory growth
+setInterval(() => {
+  const now = Date.now();
+  for (const key of Object.keys(publicMutationRateStore)) {
+    if (publicMutationRateStore[key].resetTime < now) {
+      delete publicMutationRateStore[key];
+    }
+  }
+}, 5 * 60 * 1000); // Every 5 minutes
+
 function checkPublicMutationRate(key: string, maxPerWindow = 5, windowMs = 15 * 60 * 1000) {
   const now = Date.now();
   const entry = publicMutationRateStore[key];
@@ -1845,11 +1856,10 @@ export const appRouter = router({
         const { getUserConversations } = await import("./db");
         return await getUserConversations(ctx.user.id);
       } catch (error: any) {
-        const msg = error?.message || String(error) || "Unknown error";
-        logger.error("[DM] getConversations failed for user", ctx.user.id, ":", msg, error?.stack);
+        logger.error("[DM] getConversations failed for user", ctx.user.id, ":", error?.message, error?.stack);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: msg,
+          message: "Failed to load conversations",
         });
       }
     }),
@@ -1937,7 +1947,7 @@ export const appRouter = router({
             imageUrl: input.imageUrl,
             createdAt: new Date().toISOString(),
           })
-        ).catch(() => {});
+        ).catch((err) => logger.error("[DM] Ably publish failed:", err));
 
         // Send push notifications to DM recipient (fire-and-forget)
         import("./push").then(({ notifyDmMessage }) =>
@@ -1947,7 +1957,7 @@ export const appRouter = router({
             senderName,
             input.content
           )
-        ).catch(() => {});
+        ).catch((err) => logger.error("[DM] Push notification failed:", err));
 
         return message;
       }),
@@ -1970,7 +1980,7 @@ export const appRouter = router({
         logger.error("[DM] getAvailableUsers failed:", error?.message || error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error?.message || "Failed to fetch available users",
+          message: "Failed to fetch available users",
         });
       }
     }),

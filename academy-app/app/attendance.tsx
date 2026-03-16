@@ -22,9 +22,7 @@ import {
 } from 'date-fns';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 const STATUS_COLORS: Record<string, string> = {
   present: '#27ae60',
@@ -153,8 +151,8 @@ export default function AttendanceScreen() {
       <Stack.Screen
         options={{
           title: 'Attendance',
-          headerStyle: { backgroundColor: NAVY },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Back',
         }}
       />
@@ -165,7 +163,7 @@ export default function AttendanceScreen() {
         </ScrollView>
       ) : isError ? (
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load attendance</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
@@ -216,13 +214,13 @@ export default function AttendanceScreen() {
           <View style={styles.calendarCard}>
             <View style={styles.calendarHeader}>
               <TouchableOpacity onPress={onPrevMonth} style={styles.calendarNav}>
-                <Ionicons name="chevron-back" size={20} color={NAVY} />
+                <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
               </TouchableOpacity>
               <Text style={styles.calendarMonth}>
                 {format(currentMonth, 'MMMM yyyy')}
               </Text>
               <TouchableOpacity onPress={onNextMonth} style={styles.calendarNav}>
-                <Ionicons name="chevron-forward" size={20} color={NAVY} />
+                <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -252,7 +250,7 @@ export default function AttendanceScreen() {
                       style={[
                         styles.calendarDay,
                         status && {
-                          backgroundColor: STATUS_COLORS[status] || '#888',
+                          backgroundColor: STATUS_COLORS[status] || colors.textSecondary,
                         },
                         isToday && !status && styles.calendarDayToday,
                       ]}
@@ -260,8 +258,8 @@ export default function AttendanceScreen() {
                       <Text
                         style={[
                           styles.calendarDayText,
-                          status && { color: '#fff' },
-                          isToday && !status && { color: ACADEMY_GOLD },
+                          status && { color: colors.textPrimary },
+                          isToday && !status && { color: colors.gold },
                         ]}
                       >
                         {format(day, 'd')}
@@ -289,7 +287,7 @@ export default function AttendanceScreen() {
           </Text>
           {monthRecords.length === 0 ? (
             <View style={styles.emptyWrapper}>
-              <Ionicons name="calendar-outline" size={36} color="#ccc" />
+              <Ionicons name="calendar-outline" size={36} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No records this month</Text>
               <Text style={styles.emptySubtitle}>
                 Attendance records will appear here as you attend sessions
@@ -314,19 +312,19 @@ export default function AttendanceScreen() {
                   <View
                     style={[
                       styles.statusBadge,
-                      { backgroundColor: `${STATUS_COLORS[record.status] || '#888'}20` },
+                      { backgroundColor: `${STATUS_COLORS[record.status] || colors.textSecondary}20` },
                     ]}
                   >
                     <View
                       style={[
                         styles.statusDot,
-                        { backgroundColor: STATUS_COLORS[record.status] || '#888' },
+                        { backgroundColor: STATUS_COLORS[record.status] || colors.textSecondary },
                       ]}
                     />
                     <Text
                       style={[
                         styles.statusBadgeText,
-                        { color: STATUS_COLORS[record.status] || '#888' },
+                        { color: STATUS_COLORS[record.status] || colors.textSecondary },
                       ]}
                     >
                       {STATUS_LABELS[record.status] || record.status}
@@ -345,7 +343,7 @@ export default function AttendanceScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -356,20 +354,16 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   // Stats
   statsCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -381,25 +375,21 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   // Calendar
   calendarCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   calendarHeader: {
     flexDirection: 'row',
@@ -417,7 +407,7 @@ const styles = StyleSheet.create({
   calendarMonth: {
     fontSize: 17,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   weekdayRow: {
     flexDirection: 'row',
@@ -428,7 +418,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
+    color: colors.textMuted,
   },
   calendarGrid: {
     flexDirection: 'row',
@@ -450,12 +440,12 @@ const styles = StyleSheet.create({
   },
   calendarDayToday: {
     borderWidth: 2,
-    borderColor: ACADEMY_GOLD,
+    borderColor: colors.gold,
   },
   calendarDayText: {
     fontSize: 13,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   // Legend
   legendRow: {
@@ -465,7 +455,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
   },
   legendItem: {
     flexDirection: 'row',
@@ -479,27 +469,23 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 11,
-    color: '#888',
+    color: colors.textSecondary,
   },
   // Records
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 8,
     marginLeft: 4,
   },
   recordCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   recordRow: {
     flexDirection: 'row',
@@ -508,11 +494,11 @@ const styles = StyleSheet.create({
   recordDate: {
     fontSize: 14,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   recordNotes: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   statusBadge: {
@@ -537,33 +523,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     padding: 32,
     gap: 8,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Empty
   emptyWrapper: {
@@ -574,12 +560,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 4,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });

@@ -4,6 +4,7 @@ import {
   Text,
   Image,
   FlatList,
+  ScrollView,
   StyleSheet,
   RefreshControl,
   TouchableOpacity,
@@ -11,11 +12,13 @@ import {
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GradientCard, GlassCard } from '../../components/GradientCard';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { AnimatedCounter } from '../../components/AnimatedCounter';
 import { trpc } from '../../lib/trpc';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
 
 function StatsSkeleton() {
   return (
@@ -77,7 +80,7 @@ export default function DashboardScreen() {
   const nextSession = schedules.data?.[0];
 
   // Find active subscription with nearest renewal
-  const activeSub = (subscriptions.data ?? []).find((s) => s.status === 'active');
+  const activeSub = (subscriptions.data ?? []).find((s: any) => s.status === 'active');
 
   const quickActions = [
     {
@@ -136,108 +139,126 @@ export default function DashboardScreen() {
       keyExtractor={(item) => String(item.id)}
       ListHeaderComponent={
         <View>
-          {/* Header */}
-          <View style={styles.headerRow}>
-            <Image
-              source={require('../../assets/academy-logo.jpeg')}
-              style={styles.headerLogo}
-              resizeMode="contain"
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.welcome}>
-                Welcome, {user?.firstName || 'Member'}
-              </Text>
-            </View>
-            {isAdmin && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>Admin</Text>
+          {/* Hero Header */}
+          <LinearGradient
+            colors={[colors.cardElevated, colors.background]}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.heroGradient}
+          >
+            <View style={styles.headerRow}>
+              <Image
+                source={require('../../assets/academy-logo.jpeg')}
+                style={styles.headerLogo}
+                resizeMode="contain"
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.welcome}>
+                  Welcome, {user?.firstName || 'Member'}
+                </Text>
               </View>
-            )}
-          </View>
+              {isAdmin && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>Admin</Text>
+                </View>
+              )}
+            </View>
+          </LinearGradient>
 
           {/* Next Session Card */}
           {nextSession && (
-            <View style={styles.sessionCard}>
-              <Text style={styles.cardLabel}>Next Session</Text>
-              <Text style={styles.cardTitle}>{nextSession.title}</Text>
-              <Text style={styles.cardMeta}>
-                {new Date(nextSession.startTime).toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}{' '}
-                at{' '}
-                {new Date(nextSession.startTime).toLocaleTimeString(undefined, {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </Text>
-              {nextSession.location && (
-                <Text style={styles.cardMeta}>{nextSession.location}</Text>
-              )}
-            </View>
+            <AnimatedCard index={0}>
+              <GradientCard borderOnly borderWidth={1.5} style={styles.sessionCardOuter}>
+                <View style={styles.sessionCard}>
+                  <Text style={styles.cardLabel}>Next Session</Text>
+                  <Text style={styles.cardTitle}>{nextSession.title}</Text>
+                  <Text style={styles.cardMeta}>
+                    {new Date(nextSession.startTime).toLocaleDateString(undefined, {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                    })}{' '}
+                    at{' '}
+                    {new Date(nextSession.startTime).toLocaleTimeString(undefined, {
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                  {nextSession.location && (
+                    <Text style={styles.cardMeta}>{nextSession.location}</Text>
+                  )}
+                </View>
+              </GradientCard>
+            </AnimatedCard>
           )}
 
           {/* Attendance Stats */}
           {stats.isLoading ? (
             <StatsSkeleton />
           ) : stats.data && stats.data.total > 0 ? (
-            <View style={styles.statsCard}>
-              <Text style={styles.statsTitle}>YOUR ATTENDANCE</Text>
-              <View style={styles.statsGrid}>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{stats.data.total}</Text>
-                  <Text style={styles.statLabel}>Sessions</Text>
+            <AnimatedCard index={1}>
+              <GlassCard style={styles.statsCard}>
+                <Text style={styles.statsTitle}>YOUR ATTENDANCE</Text>
+                <View style={styles.statsGrid}>
+                  <View style={styles.statItem}>
+                    <AnimatedCounter value={stats.data.total} style={styles.statValue} />
+                    <Text style={styles.statLabel}>Sessions</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <AnimatedCounter value={stats.data.present} style={styles.statValue} />
+                    <Text style={styles.statLabel}>Present</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={[styles.statValue, { color: '#27ae60' }]}>
+                      {stats.data.total > 0
+                        ? `${Math.round((stats.data.present / stats.data.total) * 100)}%`
+                        : '—'}
+                    </Text>
+                    <Text style={styles.statLabel}>Rate</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <AnimatedCounter value={stats.data.late} style={styles.statValue} />
+                    <Text style={styles.statLabel}>Late</Text>
+                  </View>
                 </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{stats.data.present}</Text>
-                  <Text style={styles.statLabel}>Present</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statValue, { color: '#27ae60' }]}>
-                    {stats.data.total > 0
-                      ? `${Math.round((stats.data.present / stats.data.total) * 100)}%`
-                      : '—'}
-                  </Text>
-                  <Text style={styles.statLabel}>Rate</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{stats.data.late}</Text>
-                  <Text style={styles.statLabel}>Late</Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                style={styles.statsLink}
-                onPress={() => {
-                  trackEvent('dashboard_quick_action_tapped', { action: 'attendance' });
-                  router.push('/attendance');
-                }}
-              >
-                <Text style={styles.statsLinkText}>View Details</Text>
-                <Ionicons name="chevron-forward" size={14} color={ACADEMY_GOLD} />
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={styles.statsLink}
+                  onPress={() => {
+                    trackEvent('dashboard_quick_action_tapped', { action: 'attendance' });
+                    router.push('/attendance');
+                  }}
+                >
+                  <Text style={styles.statsLinkText}>View Details</Text>
+                  <Ionicons name="chevron-forward" size={14} color={colors.gold} />
+                </TouchableOpacity>
+              </GlassCard>
+            </AnimatedCard>
           ) : null}
 
           {/* Quick Actions */}
           <View style={styles.quickActionsGrid}>
-            {quickActions.map((action) => (
-              <TouchableOpacity
-                key={action.key}
-                style={styles.quickActionBtn}
-                onPress={action.onPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.quickActionIcon}>
-                  <Ionicons name={action.icon} size={22} color={ACADEMY_GOLD} />
-                </View>
-                <Text style={styles.quickActionLabel}>{action.label}</Text>
-              </TouchableOpacity>
+            {quickActions.map((action, i) => (
+              <AnimatedCard key={action.key} index={i + 2} animation="zoom">
+                <TouchableOpacity
+                  style={styles.quickActionBtn}
+                  onPress={action.onPress}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.quickActionIcon}>
+                    <Ionicons name={action.icon} size={22} color={colors.gold} />
+                  </View>
+                  <Text style={styles.quickActionLabel}>{action.label}</Text>
+                </TouchableOpacity>
+              </AnimatedCard>
             ))}
           </View>
 
           {/* Feature Links Row */}
-          <View style={styles.featureLinksRow}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.featureLinksRow}
+          >
             {featureLinks.map((link) => (
               <TouchableOpacity
                 key={link.key}
@@ -248,63 +269,72 @@ export default function DashboardScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name={link.icon} size={18} color={ACADEMY_GOLD} />
+                <Ionicons name={link.icon} size={18} color={colors.gold} />
                 <Text style={styles.featureLinkLabel}>{link.label}</Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
 
           {/* Athlete Showcase */}
           {currentShowcase && (
-            <TouchableOpacity
-              style={styles.showcaseCard}
-              activeOpacity={0.8}
-              onPress={() => {
-                trackEvent('dashboard_showcase_tapped');
-                router.push('/showcase');
-              }}
-            >
-              <View style={styles.showcaseHeader}>
-                <Ionicons name="star" size={16} color={ACADEMY_GOLD} />
-                <Text style={styles.showcaseLabel}>ATHLETE SPOTLIGHT</Text>
-                <Ionicons name="chevron-forward" size={14} color="#aaa" />
-              </View>
-              <Text style={styles.showcaseName}>{currentShowcase.title}</Text>
-              <Text style={styles.showcaseDesc} numberOfLines={2}>
-                {currentShowcase.description}
-              </Text>
-            </TouchableOpacity>
+            <AnimatedCard index={7}>
+              <GradientCard
+                gradientColors={[colors.cardElevated, colors.card]}
+                style={styles.showcaseCardOuter}
+              >
+                <TouchableOpacity
+                  style={styles.showcaseCard}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    trackEvent('dashboard_showcase_tapped');
+                    router.push('/showcase');
+                  }}
+                >
+                  <View style={styles.showcaseHeader}>
+                    <Ionicons name="star" size={16} color={colors.gold} />
+                    <Text style={styles.showcaseLabel}>ATHLETE SPOTLIGHT</Text>
+                    <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+                  </View>
+                  <Text style={styles.showcaseName}>{currentShowcase.title}</Text>
+                  <Text style={styles.showcaseDesc} numberOfLines={2}>
+                    {currentShowcase.description}
+                  </Text>
+                </TouchableOpacity>
+              </GradientCard>
+            </AnimatedCard>
           )}
 
           {/* Upcoming Payment */}
           {activeSub && activeSub.currentPeriodEnd && (
-            <TouchableOpacity
-              style={styles.paymentCard}
-              onPress={() => {
-                trackEvent('dashboard_quick_action_tapped', { action: 'payments' });
-                router.push('/payments');
-              }}
-              activeOpacity={0.7}
-            >
-              <View style={styles.paymentIcon}>
-                <Ionicons name="card-outline" size={18} color={ACADEMY_GOLD} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.paymentLabel}>Next Payment</Text>
-                <Text style={styles.paymentDate}>
-                  {new Date(activeSub.currentPeriodEnd).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#ccc" />
-            </TouchableOpacity>
+            <AnimatedCard index={6}>
+              <TouchableOpacity
+                style={styles.paymentCard}
+                onPress={() => {
+                  trackEvent('dashboard_quick_action_tapped', { action: 'payments' });
+                  router.push('/payments');
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.paymentIcon}>
+                  <Ionicons name="card-outline" size={18} color={colors.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.paymentLabel}>Next Payment</Text>
+                  <Text style={styles.paymentDate}>
+                    {new Date(activeSub.currentPeriodEnd).toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </AnimatedCard>
           )}
 
           {/* Announcements Header */}
-          <Text style={styles.sectionTitle}>Announcements</Text>
+          <Text style={styles.sectionTitle}>ANNOUNCEMENTS</Text>
 
           {announcements.isLoading && (
             <View style={{ gap: 10 }}>
@@ -322,20 +352,22 @@ export default function DashboardScreen() {
           )}
         </View>
       }
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          style={styles.announcementCard}
-          activeOpacity={0.8}
-          onPress={() => trackEvent('dashboard_content_tapped', { content_type: 'announcement', content_id: item.id })}
-        >
-          <Text style={styles.announcementTitle}>{item.title}</Text>
-          <Text style={styles.announcementContent}>{item.content}</Text>
-          {item.publishedAt && (
-            <Text style={styles.announcementDate}>
-              {new Date(item.publishedAt).toLocaleDateString()}
-            </Text>
-          )}
-        </TouchableOpacity>
+      renderItem={({ item, index: i }) => (
+        <AnimatedCard index={i + 8}>
+          <TouchableOpacity
+            style={styles.announcementCard}
+            activeOpacity={0.8}
+            onPress={() => trackEvent('dashboard_content_tapped', { content_type: 'announcement', content_id: item.id })}
+          >
+            <Text style={styles.announcementTitle}>{item.title}</Text>
+            <Text style={styles.announcementContent}>{item.content}</Text>
+            {item.publishedAt && (
+              <Text style={styles.announcementDate}>
+                {new Date(item.publishedAt).toLocaleDateString()}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </AnimatedCard>
       )}
     />
   );
@@ -344,7 +376,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -352,47 +384,54 @@ const styles = StyleSheet.create({
   },
   // Skeleton
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
+  },
+  // Hero gradient
+  heroGradient: {
+    paddingTop: 24,
+    paddingHorizontal: 16,
+    marginHorizontal: -16,
+    marginTop: -16,
+    marginBottom: 20,
   },
   // Header
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
   },
   headerLogo: {
     width: 44,
     height: 44,
     borderRadius: 8,
     marginRight: 12,
+    borderWidth: 2,
+    borderColor: colors.gold,
   },
   welcome: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: NAVY,
+    ...typography.heading,
   },
   badge: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 4,
     marginLeft: 12,
   },
   badgeText: {
-    color: NAVY,
+    color: colors.card,
     fontSize: 12,
     fontWeight: '600',
   },
   // Next Session
-  sessionCard: {
-    backgroundColor: NAVY,
-    borderRadius: 16,
-    padding: 20,
+  sessionCardOuter: {
     marginBottom: 16,
   },
+  sessionCard: {
+    padding: 20,
+  },
   cardLabel: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -400,33 +439,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardTitle: {
-    color: '#fff',
+    color: colors.textPrimary,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 4,
   },
   cardMeta: {
-    color: '#aaa',
+    color: colors.textMuted,
     fontSize: 14,
     marginTop: 2,
   },
   // Attendance Stats
   statsCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
   },
   statsTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#999',
-    letterSpacing: 1,
+    ...typography.overline,
     marginBottom: 12,
   },
   statsGrid: {
@@ -437,14 +466,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: NAVY,
+    ...typography.displaySmall,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    color: '#888',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   statsLink: {
@@ -454,14 +481,14 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
     gap: 4,
     minHeight: 44,
   },
   statsLinkText: {
     fontSize: 13,
     fontWeight: '600',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
   },
   // Quick Actions
   quickActionsGrid: {
@@ -479,29 +506,28 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
+    ...shadows.glow,
   },
   quickActionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textSecondary,
   },
   // Upcoming Payment
   paymentCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.card,
     gap: 12,
     minHeight: 56,
   },
@@ -509,14 +535,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f0e8d5',
+    backgroundColor: colors.goldMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   paymentLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#999',
+    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -524,42 +550,40 @@ const styles = StyleSheet.create({
   paymentDate: {
     fontSize: 14,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
   },
   // Feature Links
   featureLinksRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
+    paddingVertical: 2,
   },
   featureLinkBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fff',
+    backgroundColor: colors.cardElevated,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    ...shadows.subtle,
   },
   featureLinkLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textSecondary,
   },
   // Showcase
-  showcaseCard: {
-    backgroundColor: NAVY,
-    borderRadius: 14,
-    padding: 16,
+  showcaseCardOuter: {
     marginBottom: 16,
+  },
+  showcaseCard: {
+    padding: 16,
     borderLeftWidth: 3,
-    borderLeftColor: ACADEMY_GOLD,
+    borderLeftColor: colors.gold,
   },
   showcaseHeader: {
     flexDirection: 'row',
@@ -570,59 +594,55 @@ const styles = StyleSheet.create({
   showcaseLabel: {
     fontSize: 10,
     fontWeight: '800',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     letterSpacing: 1.5,
     flex: 1,
   },
   showcaseName: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   showcaseDesc: {
     fontSize: 13,
-    color: '#aaa',
+    color: colors.textMuted,
     lineHeight: 18,
   },
   // Announcements
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: NAVY,
+    ...typography.overline,
     marginBottom: 12,
   },
   empty: {
-    color: '#999',
+    color: colors.textMuted,
     fontSize: 14,
     textAlign: 'center',
     marginTop: 12,
   },
   announcementCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.gold,
+    ...shadows.card,
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 6,
   },
   announcementContent: {
     fontSize: 14,
-    color: '#444',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   announcementDate: {
     fontSize: 12,
-    color: '#999',
+    color: colors.textMuted,
     marginTop: 8,
   },
 });

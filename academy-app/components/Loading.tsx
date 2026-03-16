@@ -1,12 +1,11 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
-
-const ACADEMY_GOLD = '#CFB87C';
+import { colors } from '../lib/theme';
 
 export function Loading() {
   return (
     <View style={styles.container}>
-      <ActivityIndicator size="large" color={ACADEMY_GOLD} />
+      <ActivityIndicator size="large" color={colors.gold} />
     </View>
   );
 }
@@ -16,6 +15,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
 });

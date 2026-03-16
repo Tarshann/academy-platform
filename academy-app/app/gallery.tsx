@@ -14,9 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 type PlatformFilter = 'all' | 'instagram' | 'tiktok' | 'twitter' | 'facebook' | 'youtube';
 
@@ -36,7 +34,7 @@ function getPlatformColor(platform: string): string {
     case 'twitter': return '#1DA1F2';
     case 'facebook': return '#1877F2';
     case 'youtube': return '#FF0000';
-    default: return NAVY;
+    default: return colors.card;
   }
 }
 
@@ -114,7 +112,7 @@ export default function GalleryScreen() {
                   <Ionicons
                     name={plat.icon}
                     size={14}
-                    color={platform === plat.key ? ACADEMY_GOLD : '#666'}
+                    color={platform === plat.key ? colors.gold : colors.textSecondary}
                   />
                   <Text
                     style={[
@@ -139,7 +137,7 @@ export default function GalleryScreen() {
             {/* Empty */}
             {!posts.isLoading && filteredPosts.length === 0 && (
               <View style={styles.emptyState}>
-                <Ionicons name="images-outline" size={48} color="#ccc" />
+                <Ionicons name="images-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No posts yet</Text>
                 <Text style={styles.emptySubtitle}>
                   Follow us on social media for the latest content!
@@ -166,7 +164,7 @@ export default function GalleryScreen() {
                 <Ionicons
                   name={PLATFORMS.find((p) => p.key === item.platform)?.icon ?? 'link-outline'}
                   size={32}
-                  color={ACADEMY_GOLD}
+                  color={colors.gold}
                 />
               </View>
             )}
@@ -193,18 +191,18 @@ export default function GalleryScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: NAVY,
+    backgroundColor: colors.card,
     paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   listContent: { padding: 12, paddingBottom: 32 },
   row: { gap: 10 },
   filterRow: { gap: 8, paddingBottom: 16, paddingHorizontal: 4 },
@@ -215,29 +213,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: colors.border,
   },
-  filterChipActive: { backgroundColor: NAVY, borderColor: NAVY },
-  filterChipText: { fontSize: 12, fontWeight: '600', color: '#666' },
-  filterChipTextActive: { color: ACADEMY_GOLD },
+  filterChipActive: { backgroundColor: colors.cardElevated, borderColor: colors.gold },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
+  filterChipTextActive: { color: colors.gold },
   gridCard: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...shadows.subtle,
     position: 'relative',
   },
   gridImage: { width: '100%', height: 160 },
   placeholderImage: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -252,16 +246,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   captionContainer: { padding: 10 },
-  caption: { fontSize: 12, color: '#444', lineHeight: 16 },
-  skeletonBlock: { backgroundColor: '#e8e8e8', borderRadius: 6 },
+  caption: { fontSize: 12, color: colors.textSecondary, lineHeight: 16 },
+  skeletonBlock: { backgroundColor: colors.skeletonBase, borderRadius: 6 },
   card: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 10,
   },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: NAVY },
-  emptySubtitle: { fontSize: 14, color: '#999', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
 });

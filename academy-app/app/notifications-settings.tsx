@@ -13,9 +13,7 @@ import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) => {
   const hour = i % 12 === 0 ? 12 : i % 12;
@@ -129,8 +127,8 @@ export default function NotificationsSettingsScreen() {
         <Stack.Screen
           options={{
             title: 'Notifications',
-            headerStyle: { backgroundColor: NAVY },
-            headerTintColor: '#fff',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.textPrimary,
             headerBackTitle: 'Profile',
           }}
         />
@@ -147,13 +145,13 @@ export default function NotificationsSettingsScreen() {
         <Stack.Screen
           options={{
             title: 'Notifications',
-            headerStyle: { backgroundColor: NAVY },
-            headerTintColor: '#fff',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.textPrimary,
             headerBackTitle: 'Profile',
           }}
         />
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load settings</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
@@ -171,8 +169,8 @@ export default function NotificationsSettingsScreen() {
       <Stack.Screen
         options={{
           title: 'Notifications',
-          headerStyle: { backgroundColor: NAVY },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Profile',
         }}
       />
@@ -194,7 +192,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.pushEnabled ?? false}
               onValueChange={(v) => onToggle('pushEnabled', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -209,7 +207,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.emailFallback ?? true}
               onValueChange={(v) => onToggle('emailFallback', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -226,7 +224,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.dmNotifications ?? true}
               onValueChange={(v) => onToggle('dmNotifications', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -241,7 +239,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.channelNotifications ?? true}
               onValueChange={(v) => onToggle('channelNotifications', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -256,7 +254,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.mentionNotifications ?? true}
               onValueChange={(v) => onToggle('mentionNotifications', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -271,7 +269,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.announcementNotifications ?? true}
               onValueChange={(v) => onToggle('announcementNotifications', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -288,7 +286,7 @@ export default function NotificationsSettingsScreen() {
             <Switch
               value={data?.quietHoursEnabled ?? false}
               onValueChange={(v) => onToggle('quietHoursEnabled', v)}
-              trackColor={{ false: '#e0e0e0', true: ACADEMY_GOLD }}
+              trackColor={{ false: colors.surface, true: colors.gold }}
               thumbColor="#fff"
             />
           </View>
@@ -307,7 +305,7 @@ export default function NotificationsSettingsScreen() {
                 <Text style={styles.timeValue}>
                   {formatTime(data?.quietHoursStart ?? null)}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color="#ccc" style={{ marginLeft: 4 }} />
+                <Ionicons name="chevron-down" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
 
               {showStartPicker && (
@@ -349,7 +347,7 @@ export default function NotificationsSettingsScreen() {
                 <Text style={styles.timeValue}>
                   {formatTime(data?.quietHoursEnd ?? null)}
                 </Text>
-                <Ionicons name="chevron-down" size={14} color="#ccc" style={{ marginLeft: 4 }} />
+                <Ionicons name="chevron-down" size={14} color={colors.textMuted} style={{ marginLeft: 4 }} />
               </TouchableOpacity>
 
               {showEndPicker && (
@@ -389,7 +387,7 @@ export default function NotificationsSettingsScreen() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -400,28 +398,24 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   // Section
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 8,
     marginTop: 8,
     marginLeft: 4,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    ...shadows.subtle,
   },
   // Setting Row
   settingRow: {
@@ -433,23 +427,23 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 15,
     fontWeight: '500',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 2,
   },
   settingDesc: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
   },
   divider: {
     height: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.border,
     marginLeft: 16,
   },
   // Time picker
   timeValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
   },
   timePicker: {
     flexDirection: 'row',
@@ -468,14 +462,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   timeOptionSelected: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
   },
   timeOptionText: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
   },
   timeOptionTextSelected: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontWeight: '600',
   },
   // Error
@@ -483,32 +477,32 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     padding: 32,
     gap: 8,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
 });

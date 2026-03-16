@@ -15,9 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows } from '../lib/theme';
 
 type DropType = 'product' | 'program' | 'content' | 'event';
 
@@ -101,7 +99,7 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
         <View style={styles.formHeader}>
           <Text style={styles.formTitle}>New Drop Alert</Text>
           <TouchableOpacity onPress={onCancel}>
-            <Ionicons name="close" size={24} color="#666" />
+            <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -122,12 +120,12 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                   <Ionicons
                     name={config.icon}
                     size={16}
-                    color={dropType === type ? '#fff' : '#666'}
+                    color={dropType === type ? colors.textPrimary : colors.textSecondary}
                   />
                   <Text
                     style={[
                       styles.typeChipText,
-                      dropType === type && { color: '#fff' },
+                      dropType === type && { color: colors.textPrimary },
                     ]}
                   >
                     {config.label}
@@ -141,7 +139,7 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
           <TextInput
             style={styles.input}
             placeholder="e.g., Academy Spring Collection"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
           />
@@ -150,7 +148,7 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
           <TextInput
             style={[styles.input, { minHeight: 80, textAlignVertical: 'top' }]}
             placeholder="Tell members what's dropping..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -160,7 +158,7 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
           <TextInput
             style={styles.input}
             placeholder="https://..."
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textMuted}
             value={imageUrl}
             onChangeText={setImageUrl}
             autoCapitalize="none"
@@ -217,7 +215,7 @@ export default function DropsScreen() {
         <Text style={styles.headerTitle}>Drops</Text>
         {isAdmin ? (
           <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn}>
-            <Ionicons name="add" size={24} color={ACADEMY_GOLD} />
+            <Ionicons name="add" size={24} color={colors.gold} />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 40 }} />
@@ -234,7 +232,7 @@ export default function DropsScreen() {
         ListEmptyComponent={
           !drops.isLoading ? (
             <View style={styles.emptyState}>
-              <Ionicons name="notifications-outline" size={48} color="#ccc" />
+              <Ionicons name="notifications-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No upcoming drops</Text>
               <Text style={styles.emptySubtitle}>
                 Stay tuned for new merch, programs, and content!
@@ -257,7 +255,7 @@ export default function DropsScreen() {
                 />
               ) : (
                 <View style={[styles.dropImage, styles.dropImagePlaceholder]}>
-                  <Ionicons name={config.icon} size={40} color={ACADEMY_GOLD} />
+                  <Ionicons name={config.icon} size={40} color={colors.gold} />
                 </View>
               )}
 
@@ -331,34 +329,30 @@ export default function DropsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: NAVY,
+    backgroundColor: colors.card,
     paddingTop: 60,
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   addBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-end' },
   listContent: { padding: 16, paddingBottom: 32 },
   dropCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.card,
   },
   dropImage: { width: '100%', height: 180 },
   dropImagePlaceholder: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -373,41 +367,41 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 12,
   },
-  typeBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  typeBadgeText: { fontSize: 11, fontWeight: '700', color: colors.textPrimary },
   dropContent: { padding: 16 },
-  dropTitle: { fontSize: 18, fontWeight: '700', color: NAVY, marginBottom: 6 },
-  dropDescription: { fontSize: 14, color: '#555', lineHeight: 20, marginBottom: 12 },
+  dropTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  dropDescription: { fontSize: 14, color: colors.textSecondary, lineHeight: 20, marginBottom: 12 },
   countdownRow: { flexDirection: 'row', gap: 10, marginTop: 8 },
   countdownBlock: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
     alignItems: 'center',
     minWidth: 52,
   },
-  countdownValue: { fontSize: 20, fontWeight: '800', color: ACADEMY_GOLD },
-  countdownUnit: { fontSize: 10, color: '#aaa', marginTop: 2 },
+  countdownValue: { fontSize: 20, fontWeight: '800', color: colors.gold },
+  countdownUnit: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
   dropLive: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#27ae60',
+    color: colors.success,
     letterSpacing: 1,
     marginTop: 8,
   },
   sentRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 },
-  sentText: { fontSize: 13, color: '#27ae60', fontWeight: '500' },
+  sentText: { fontSize: 13, color: colors.success, fontWeight: '500' },
   sendNowBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 10,
     paddingVertical: 10,
     marginTop: 12,
   },
-  sendNowText: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  sendNowText: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   // Form
   formOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -415,7 +409,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   formContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: '80%',
@@ -427,14 +421,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
-  formTitle: { fontSize: 18, fontWeight: '700', color: NAVY },
+  formTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   formScroll: { paddingHorizontal: 20 },
   fieldLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginTop: 16,
     marginBottom: 8,
@@ -447,34 +441,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
+    borderColor: colors.border,
   },
-  typeChipText: { fontSize: 13, fontWeight: '500', color: '#666' },
+  typeChipText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
   input: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e8e8e8',
+    borderColor: colors.border,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: NAVY,
+    color: colors.textPrimary,
   },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 12,
     paddingVertical: 14,
     marginTop: 20,
     marginBottom: 20,
   },
-  submitBtnText: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  submitBtnText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary },
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: NAVY },
-  emptySubtitle: { fontSize: 14, color: '#999', textAlign: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
+  emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
 });

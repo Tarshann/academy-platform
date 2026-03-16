@@ -14,10 +14,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as WebBrowser from 'expo-web-browser';
 import { trpc } from '../lib/trpc';
+import { AnimatedCard } from '../components/AnimatedCard';
 import { trackEvent } from '../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../lib/theme';
 
 function formatPrice(price: string | number): string {
   const num = typeof price === 'string' ? parseFloat(price) : price;
@@ -137,11 +136,11 @@ export default function ShopScreen() {
           options={{
             title: 'Shop',
             headerShown: true,
-            headerStyle: { backgroundColor: NAVY },
-            headerTintColor: '#fff',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.textPrimary,
             headerLeft: () => (
               <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
               </TouchableOpacity>
             ),
           }}
@@ -160,17 +159,17 @@ export default function ShopScreen() {
           options={{
             title: 'Shop',
             headerShown: true,
-            headerStyle: { backgroundColor: NAVY },
-            headerTintColor: '#fff',
+            headerStyle: { backgroundColor: colors.card },
+            headerTintColor: colors.textPrimary,
             headerLeft: () => (
               <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
               </TouchableOpacity>
             ),
           }}
         />
         <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+          <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load products</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={() => products.refetch()}>
@@ -191,8 +190,8 @@ export default function ShopScreen() {
       <Stack.Screen
         options={{
           title: 'Shop',
-          headerStyle: { backgroundColor: NAVY },
-          headerTintColor: '#fff',
+          headerStyle: { backgroundColor: colors.card },
+          headerTintColor: colors.textPrimary,
           headerBackTitle: 'Back',
         }}
       />
@@ -206,16 +205,17 @@ export default function ShopScreen() {
         keyExtractor={(item) => String(item.id)}
         ListEmptyComponent={
           <View style={styles.emptyWrapper}>
-            <Ionicons name="bag-outline" size={48} color="#ccc" />
+            <Ionicons name="bag-outline" size={48} color={colors.textMuted} />
             <Text style={styles.emptyTitle}>No products available</Text>
             <Text style={styles.emptySubtitle}>Check back soon for new merchandise</Text>
           </View>
         }
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const isLoadingThis = checkoutLoading === item.id;
           const outOfStock = item.stock !== null && item.stock <= 0;
 
           return (
+            <AnimatedCard index={index}>
             <TouchableOpacity
               style={styles.productCard}
               activeOpacity={0.8}
@@ -235,7 +235,7 @@ export default function ShopScreen() {
                 />
               ) : (
                 <View style={[styles.productImage, styles.productImagePlaceholder]}>
-                  <Ionicons name="image-outline" size={32} color="#ccc" />
+                  <Ionicons name="image-outline" size={32} color={colors.textMuted} />
                 </View>
               )}
 
@@ -272,19 +272,20 @@ export default function ShopScreen() {
                     activeOpacity={0.7}
                   >
                     {isLoadingThis ? (
-                      <ActivityIndicator size="small" color={NAVY} />
+                      <ActivityIndicator size="small" color={colors.card} />
                     ) : outOfStock ? (
                       <Text style={styles.buyBtnText}>Sold Out</Text>
                     ) : (
                       <>
                         <Text style={styles.buyBtnText}>Buy</Text>
-                        <Ionicons name="arrow-forward" size={14} color={NAVY} />
+                        <Ionicons name="arrow-forward" size={14} color={colors.card} />
                       </>
                     )}
                   </TouchableOpacity>
                 </View>
               </View>
             </TouchableOpacity>
+            </AnimatedCard>
           );
         }}
       />
@@ -295,7 +296,7 @@ export default function ShopScreen() {
 const styles = StyleSheet.create({
   list: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 16,
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   },
   // Skeleton
   skeletonBlock: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: colors.skeletonBase,
     borderRadius: 6,
   },
   productImageSkeleton: {
@@ -317,33 +318,33 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: colors.background,
     padding: 32,
     gap: 8,
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   errorSubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   retryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     minHeight: 44,
     justifyContent: 'center',
   },
   retryText: {
     fontSize: 15,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.card,
   },
   // Empty
   emptyWrapper: {
@@ -354,23 +355,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: NAVY,
+    color: colors.textPrimary,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#888',
+    color: colors.textSecondary,
   },
   // Product card
   productCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    ...shadows.card,
     overflow: 'hidden',
   },
   productImage: {
@@ -378,7 +375,7 @@ const styles = StyleSheet.create({
     height: 160,
   },
   productImagePlaceholder: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.cardElevated,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -392,13 +389,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryBadge: {
-    backgroundColor: NAVY,
+    backgroundColor: colors.cardElevated,
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   categoryText: {
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -406,18 +403,18 @@ const styles = StyleSheet.create({
   },
   lowStock: {
     fontSize: 11,
-    color: '#e74c3c',
+    color: colors.error,
     fontWeight: '500',
   },
   productName: {
     fontSize: 17,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
     marginBottom: 4,
   },
   productDescription: {
     fontSize: 13,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -426,18 +423,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
     paddingTop: 12,
   },
   productPrice: {
     fontSize: 20,
     fontWeight: '700',
-    color: NAVY,
+    color: colors.textPrimary,
+    fontFamily: 'BebasNeue',
   },
   buyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -445,12 +443,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     minWidth: 80,
     justifyContent: 'center',
+    ...shadows.glow,
   },
   buyBtnDisabled: {
     opacity: 0.5,
   },
   buyBtnText: {
-    color: NAVY,
+    color: colors.card,
     fontSize: 14,
     fontWeight: '600',
   },

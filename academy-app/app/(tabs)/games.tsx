@@ -12,11 +12,13 @@ import {
 import { useState, useRef, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { trpc } from '../../lib/trpc';
 import { trackEvent } from '../../lib/analytics';
-
-const ACADEMY_GOLD = '#CFB87C';
-const NAVY = '#1a1a2e';
+import { colors, shadows, typography } from '../../lib/theme';
+import { GradientCard, GlassCard } from '../../components/GradientCard';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { AnimatedCounter } from '../../components/AnimatedCounter';
 
 // ============================================================================
 // SPIN WHEEL COMPONENT
@@ -85,7 +87,7 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
     <View style={styles.gameContainer}>
       <View style={styles.gameHeader}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.gameTitle}>Gold Rush</Text>
         <View style={styles.playsRemaining}>
@@ -98,7 +100,7 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
       <View style={styles.wheelContainer}>
         {/* Wheel */}
         <Animated.View
-          style={[styles.wheel, { transform: [{ rotate: rotation }] }]}
+          style={[styles.wheel, shadows.glow, { transform: [{ rotate: rotation }] }]}
         >
           {WHEEL_SEGMENTS.map((seg, i) => {
             const angle = (i * 360) / WHEEL_SEGMENTS.length;
@@ -124,17 +126,17 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
 
         {/* Pointer */}
         <View style={styles.pointer}>
-          <Ionicons name="caret-down" size={32} color={ACADEMY_GOLD} />
+          <Ionicons name="caret-down" size={32} color={colors.gold} />
         </View>
       </View>
 
       {/* Result */}
       {result && (
-        <View style={styles.resultCard}>
+        <GlassCard style={styles.resultCard}>
           <Ionicons
             name={result.type === 'none' ? 'refresh-outline' : 'gift-outline'}
             size={32}
-            color={result.type === 'none' ? '#999' : ACADEMY_GOLD}
+            color={result.type === 'none' ? colors.textMuted : colors.gold}
           />
           <Text style={styles.resultTitle}>
             {result.type === 'none' ? 'Try Again!' : 'You Won!'}
@@ -145,14 +147,15 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
             {result.type === 'badge' && result.value}
             {result.type === 'none' && 'Better luck next time'}
           </Text>
-        </View>
+        </GlassCard>
       )}
 
       {/* Spin Button */}
       <TouchableOpacity
-        style={[styles.spinButton, (isSpinning || noSpinsLeft) && { opacity: 0.5 }]}
+        style={[styles.spinButton, !(isSpinning || noSpinsLeft) && shadows.glow, (isSpinning || noSpinsLeft) && { opacity: 0.5 }]}
         onPress={handleSpin}
         disabled={isSpinning || noSpinsLeft}
+        activeOpacity={0.7}
       >
         <Text style={styles.spinButtonText}>
           {isSpinning ? 'Spinning...' : noSpinsLeft ? 'NO SPINS LEFT' : 'SPIN'}
@@ -220,13 +223,13 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.gameTitle}>Academy Trivia</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.centeredContent}>
-          <Text style={{ color: '#fff', fontSize: 16 }}>Loading questions...</Text>
+          <Text style={{ color: colors.textPrimary, fontSize: 16 }}>Loading questions...</Text>
         </View>
       </View>
     );
@@ -237,14 +240,14 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.gameTitle}>Academy Trivia</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.centeredContent}>
-          <Ionicons name="help-circle-outline" size={48} color="#666" />
-          <Text style={{ color: '#aaa', fontSize: 16, marginTop: 12 }}>
+          <Ionicons name="help-circle-outline" size={48} color={colors.textMuted} />
+          <Text style={{ color: colors.textSecondary, fontSize: 16, marginTop: 12 }}>
             No trivia questions available yet
           </Text>
         </View>
@@ -257,14 +260,14 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
       <View style={styles.gameContainer}>
         <View style={styles.gameHeader}>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
+            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.gameTitle}>Results</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={styles.centeredContent}>
           <View style={styles.triviaResultCircle}>
-            <Text style={styles.triviaResultScore}>
+            <Text style={[styles.triviaResultScore, { fontFamily: typography.display.fontFamily }]}>
               {results.correct}/{results.total}
             </Text>
           </View>
@@ -293,7 +296,7 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
           </ScrollView>
 
           <TouchableOpacity
-            style={styles.playAgainBtn}
+            style={[styles.playAgainBtn, shadows.glow]}
             onPress={() => {
               setCurrentIndex(0);
               setAnswers([]);
@@ -321,7 +324,7 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
     <View style={styles.gameContainer}>
       <View style={styles.gameHeader}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.gameTitle}>Academy Trivia</Text>
         <View style={styles.playsRemaining}>
@@ -372,14 +375,14 @@ function TriviaGame({ onClose }: { onClose: () => void }) {
               ]}>
                 <Text style={[
                   styles.optionLetterText,
-                  selectedOption === opt.key && { color: '#fff' },
+                  selectedOption === opt.key && { color: colors.textPrimary },
                 ]}>
                   {opt.key.toUpperCase()}
                 </Text>
               </View>
               <Text style={[
                 styles.optionText,
-                selectedOption === opt.key && { color: '#fff' },
+                selectedOption === opt.key && { color: colors.textPrimary },
               ]}>
                 {opt.text}
               </Text>
@@ -438,7 +441,7 @@ function ScratchCardGame({ onClose }: { onClose: () => void }) {
     <View style={styles.gameContainer}>
       <View style={styles.gameHeader}>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.gameTitle}>Scratch & Win</Text>
         <View style={styles.playsRemaining}>
@@ -459,6 +462,7 @@ function ScratchCardGame({ onClose }: { onClose: () => void }) {
               key={card.id}
               style={[
                 styles.scratchCard,
+                !card.scratched && shadows.glow,
                 card.scratched && styles.scratchCardRevealed,
               ]}
               onPress={() => handleScratch(card.id)}
@@ -478,7 +482,7 @@ function ScratchCardGame({ onClose }: { onClose: () => void }) {
                         : 'refresh'
                     }
                     size={36}
-                    color={card.result.type === 'none' ? '#999' : ACADEMY_GOLD}
+                    color={card.result.type === 'none' ? colors.textMuted : colors.gold}
                   />
                   <Text style={styles.revealedValue}>
                     {card.result.type === 'points' && `${card.result.value} pts`}
@@ -575,125 +579,141 @@ export default function GamesHubScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       {/* Points Header */}
-      <View style={styles.pointsCard}>
-        <View style={styles.pointsRow}>
-          <View>
-            <Text style={styles.pointsLabel}>YOUR POINTS</Text>
-            <Text style={styles.pointsValue}>{points.data?.totalPoints ?? 0}</Text>
+      <GradientCard
+        gradientColors={[colors.cardElevated, colors.card]}
+        style={styles.pointsCard}
+      >
+        <View style={styles.pointsCardInner}>
+          <View style={styles.pointsRow}>
+            <View>
+              <Text style={styles.pointsLabel}>YOUR POINTS</Text>
+              <AnimatedCounter
+                value={points.data?.totalPoints ?? 0}
+                style={{...typography.display, color: colors.gold}}
+              />
+            </View>
+            <View style={styles.streakBadge}>
+              <Ionicons name="flame" size={18} color="#e74c3c" />
+              <Text style={styles.streakText}>
+                {points.data?.currentStreak ?? 0} day streak
+              </Text>
+            </View>
           </View>
-          <View style={styles.streakBadge}>
-            <Ionicons name="flame" size={18} color="#e74c3c" />
-            <Text style={styles.streakText}>
-              {points.data?.currentStreak ?? 0} day streak
-            </Text>
+          <View style={styles.pointsStats}>
+            <View style={styles.pointsStat}>
+              <Text style={[styles.pointsStatValue, typography.displaySmall]}>{points.data?.lifetimePoints ?? 0}</Text>
+              <Text style={styles.pointsStatLabel}>Lifetime</Text>
+            </View>
+            <View style={styles.pointsStat}>
+              <Text style={[styles.pointsStatValue, typography.displaySmall]}>{points.data?.longestStreak ?? 0}</Text>
+              <Text style={styles.pointsStatLabel}>Best Streak</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.pointsStats}>
-          <View style={styles.pointsStat}>
-            <Text style={styles.pointsStatValue}>{points.data?.lifetimePoints ?? 0}</Text>
-            <Text style={styles.pointsStatLabel}>Lifetime</Text>
-          </View>
-          <View style={styles.pointsStat}>
-            <Text style={styles.pointsStatValue}>{points.data?.longestStreak ?? 0}</Text>
-            <Text style={styles.pointsStatLabel}>Best Streak</Text>
-          </View>
-        </View>
-      </View>
+      </GradientCard>
 
       {/* Games Grid */}
-      <Text style={styles.sectionTitle}>PLAY & EARN</Text>
+      <Text style={[styles.sectionTitle, typography.overline]}>PLAY & EARN</Text>
       <View style={styles.gamesGrid}>
-        {games.map((game) => (
-          <TouchableOpacity
-            key={game.key}
-            style={styles.gameCard}
-            onPress={() => {
-              trackEvent('game_opened', { game: game.key });
-              setActiveGame(game.key);
-            }}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.gameIconCircle, { backgroundColor: game.color + '20' }]}>
-              <Ionicons name={game.icon} size={28} color={game.color} />
-            </View>
-            <Text style={styles.gameCardTitle}>{game.title}</Text>
-            <Text style={styles.gameCardSubtitle}>{game.subtitle}</Text>
-            <Text style={styles.gameCardLimit}>{game.limit}</Text>
-          </TouchableOpacity>
+        {games.map((game, i) => (
+          <AnimatedCard key={game.key} index={i} animation="fade-up">
+            <GradientCard borderOnly borderWidth={1}>
+              <TouchableOpacity
+                style={styles.gameCard}
+                onPress={() => {
+                  trackEvent('game_opened', { game: game.key });
+                  setActiveGame(game.key);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.gameIconCircle, { backgroundColor: game.color + '20' }, {...shadows.glow, shadowColor: game.color}]}>
+                  <Ionicons name={game.icon} size={28} color={game.color} />
+                </View>
+                <Text style={[styles.gameCardTitle, typography.title]}>{game.title}</Text>
+                <Text style={styles.gameCardSubtitle}>{game.subtitle}</Text>
+                <Text style={styles.gameCardLimit}>{game.limit}</Text>
+              </TouchableOpacity>
+            </GradientCard>
+          </AnimatedCard>
         ))}
       </View>
 
       {/* Leaderboard */}
-      <Text style={styles.sectionTitle}>LEADERBOARD</Text>
-      <View style={styles.leaderboardCard}>
-        {(leaderboard.data ?? []).slice(0, 10).map((entry, index) => (
-          <View key={entry.userId} style={styles.leaderboardRow}>
-            <View style={[
-              styles.rankBadge,
-              index < 3 && { backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32'][index] },
-            ]}>
-              <Text style={[styles.rankText, index < 3 && { color: '#fff' }]}>
-                {index + 1}
-              </Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.leaderboardName}>
-                {entry.userId === me.data?.id ? 'You' : `Player #${entry.userId}`}
-              </Text>
-              {entry.currentStreak > 0 && (
-                <Text style={styles.leaderboardStreak}>
-                  {entry.currentStreak} day streak
+      <Text style={[styles.sectionTitle, typography.overline]}>LEADERBOARD</Text>
+      <AnimatedCard index={4}>
+        <GlassCard style={styles.leaderboardCard}>
+          {(leaderboard.data ?? []).slice(0, 10).map((entry: any, index: number) => (
+            <View key={entry.userId} style={styles.leaderboardRow}>
+              <View style={[
+                styles.rankBadge,
+                index < 3 && styles.rankBadgeTop3,
+                index < 3 && { backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32'][index] },
+              ]}>
+                <Text style={[styles.rankText, index < 3 && { color: '#fff' }]}>
+                  {index + 1}
                 </Text>
-              )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.leaderboardName}>
+                  {entry.userId === me.data?.id ? 'You' : `Player #${entry.userId}`}
+                </Text>
+                {entry.currentStreak > 0 && (
+                  <Text style={styles.leaderboardStreak}>
+                    {entry.currentStreak} day streak
+                  </Text>
+                )}
+              </View>
+              <Text style={[styles.leaderboardPoints, { fontFamily: 'BebasNeue' }]}>
+                {entry.lifetimePoints.toLocaleString()} pts
+              </Text>
             </View>
-            <Text style={styles.leaderboardPoints}>
-              {entry.lifetimePoints.toLocaleString()} pts
+          ))}
+          {(leaderboard.data?.length ?? 0) === 0 && (
+            <Text style={styles.emptyLeaderboard}>
+              Be the first to play and claim the top spot!
             </Text>
-          </View>
-        ))}
-        {(leaderboard.data?.length ?? 0) === 0 && (
-          <Text style={styles.emptyLeaderboard}>
-            Be the first to play and claim the top spot!
-          </Text>
-        )}
-      </View>
+          )}
+        </GlassCard>
+      </AnimatedCard>
 
       {/* Recent Activity */}
       {(history.data?.length ?? 0) > 0 && (
         <>
-          <Text style={styles.sectionTitle}>RECENT ACTIVITY</Text>
-          <View style={styles.historyCard}>
-            {(history.data ?? []).map((entry) => (
-              <View key={entry.id} style={styles.historyRow}>
-                <Ionicons
-                  name={
-                    entry.gameType === 'spin_wheel'
-                      ? 'sync-outline'
-                      : entry.gameType === 'trivia'
-                      ? 'help-circle-outline'
-                      : 'gift-outline'
-                  }
-                  size={18}
-                  color={ACADEMY_GOLD}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.historyGame}>
-                    {entry.gameType === 'spin_wheel' ? 'Gold Rush' :
-                     entry.gameType === 'trivia' ? 'Trivia' : 'Scratch Card'}
-                  </Text>
-                  <Text style={styles.historyDate}>
-                    {new Date(entry.playedAt).toLocaleDateString()}
+          <Text style={[styles.sectionTitle, typography.overline]}>RECENT ACTIVITY</Text>
+          <AnimatedCard index={5}>
+            <GlassCard style={styles.historyCard}>
+              {(history.data ?? []).map((entry: any) => (
+                <View key={entry.id} style={styles.historyRow}>
+                  <Ionicons
+                    name={
+                      entry.gameType === 'spin_wheel'
+                        ? 'sync-outline'
+                        : entry.gameType === 'trivia'
+                        ? 'help-circle-outline'
+                        : 'gift-outline'
+                    }
+                    size={18}
+                    color={colors.gold}
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.historyGame}>
+                      {entry.gameType === 'spin_wheel' ? 'Gold Rush' :
+                       entry.gameType === 'trivia' ? 'Trivia' : 'Scratch Card'}
+                    </Text>
+                    <Text style={styles.historyDate}>
+                      {new Date(entry.playedAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Text style={[
+                    styles.historyPoints,
+                    entry.pointsEarned > 0 ? { color: '#27ae60' } : { color: colors.textMuted },
+                  ]}>
+                    {entry.pointsEarned > 0 ? `+${entry.pointsEarned}` : '0'} pts
                   </Text>
                 </View>
-                <Text style={[
-                  styles.historyPoints,
-                  entry.pointsEarned > 0 ? { color: '#27ae60' } : { color: '#999' },
-                ]}>
-                  {entry.pointsEarned > 0 ? `+${entry.pointsEarned}` : '0'} pts
-                </Text>
-              </View>
-            ))}
-          </View>
+              ))}
+            </GlassCard>
+          </AnimatedCard>
         </>
       )}
     </ScrollView>
@@ -702,13 +722,13 @@ export default function GamesHubScreen() {
 
 const styles = StyleSheet.create({
   // Hub
-  hubContainer: { flex: 1, backgroundColor: '#f5f5f5' },
+  hubContainer: { flex: 1, backgroundColor: colors.background },
   hubContent: { padding: 16, paddingBottom: 32 },
   pointsCard: {
-    backgroundColor: NAVY,
-    borderRadius: 20,
-    padding: 20,
     marginBottom: 24,
+  },
+  pointsCardInner: {
+    padding: 20,
   },
   pointsRow: {
     flexDirection: 'row',
@@ -718,11 +738,11 @@ const styles = StyleSheet.create({
   pointsLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#888',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 4,
   },
-  pointsValue: { fontSize: 40, fontWeight: '800', color: ACADEMY_GOLD },
+  pointsValue: { ...typography.display, color: colors.gold },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -732,7 +752,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
   },
-  streakText: { fontSize: 12, fontWeight: '600', color: '#ccc' },
+  streakText: { fontSize: 12, fontWeight: '600', color: colors.textSecondary },
   pointsStats: {
     flexDirection: 'row',
     gap: 24,
@@ -742,27 +762,20 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.1)',
   },
   pointsStat: {},
-  pointsStatValue: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  pointsStatLabel: { fontSize: 11, color: '#888', marginTop: 2 },
+  pointsStatValue: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
+  pointsStatLabel: { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#999',
+    color: colors.textMuted,
     letterSpacing: 1,
     marginBottom: 12,
     marginTop: 8,
   },
   gamesGrid: { gap: 12, marginBottom: 24 },
   gameCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
     padding: 20,
     flexDirection: 'column',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   gameIconCircle: {
     width: 52,
@@ -772,13 +785,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  gameCardTitle: { fontSize: 17, fontWeight: '700', color: NAVY },
-  gameCardSubtitle: { fontSize: 13, color: '#888', marginTop: 2 },
-  gameCardLimit: { fontSize: 11, color: ACADEMY_GOLD, fontWeight: '600', marginTop: 8 },
+  gameCardTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  gameCardSubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  gameCardLimit: { fontSize: 11, color: colors.gold, fontWeight: '600', marginTop: 8 },
   // Leaderboard
   leaderboardCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
   },
@@ -788,36 +799,41 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: colors.border,
   },
   rankBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankText: { fontSize: 13, fontWeight: '700', color: NAVY },
-  leaderboardName: { fontSize: 14, fontWeight: '600', color: NAVY },
+  rankBadgeTop3: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  rankText: { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  leaderboardName: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
   leaderboardStreak: { fontSize: 11, color: '#e74c3c' },
-  leaderboardPoints: { fontSize: 14, fontWeight: '700', color: ACADEMY_GOLD },
-  emptyLeaderboard: { fontSize: 14, color: '#999', textAlign: 'center', paddingVertical: 20 },
+  leaderboardPoints: { fontSize: 14, fontWeight: '700', color: colors.gold },
+  emptyLeaderboard: { fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingVertical: 20 },
   // History
-  historyCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16 },
+  historyCard: { padding: 16 },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
+    borderBottomColor: colors.border,
   },
-  historyGame: { fontSize: 14, fontWeight: '500', color: NAVY },
-  historyDate: { fontSize: 11, color: '#999' },
+  historyGame: { fontSize: 14, fontWeight: '500', color: colors.textPrimary },
+  historyDate: { fontSize: 11, color: colors.textMuted },
   historyPoints: { fontSize: 14, fontWeight: '700' },
   // Game screens shared
-  gameContainer: { flex: 1, backgroundColor: NAVY },
+  gameContainer: { flex: 1, backgroundColor: colors.background },
   gameHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -826,14 +842,14 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     paddingHorizontal: 16,
   },
-  gameTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  gameTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   playsRemaining: {
     backgroundColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  playsText: { fontSize: 13, fontWeight: '600', color: ACADEMY_GOLD },
+  playsText: { fontSize: 13, fontWeight: '600', color: colors.gold },
   centeredContent: {
     flex: 1,
     alignItems: 'center',
@@ -850,9 +866,9 @@ const styles = StyleSheet.create({
     width: 240,
     height: 240,
     borderRadius: 120,
-    backgroundColor: '#2a2a4e',
+    backgroundColor: colors.cardElevated,
     borderWidth: 4,
-    borderColor: ACADEMY_GOLD,
+    borderColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -868,17 +884,15 @@ const styles = StyleSheet.create({
   segmentText: { fontSize: 9, fontWeight: '700', color: '#fff' },
   pointer: { marginTop: -10, alignItems: 'center' },
   resultCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
     padding: 24,
     alignItems: 'center',
     marginHorizontal: 20,
     gap: 8,
   },
-  resultTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
-  resultValue: { fontSize: 16, color: ACADEMY_GOLD, fontWeight: '600' },
+  resultTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary },
+  resultValue: { fontSize: 16, color: colors.gold, fontWeight: '600' },
   spinButton: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 30,
     minHeight: 56,
     paddingVertical: 16,
@@ -897,7 +911,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 2,
   },
   triviaContent: { flex: 1, padding: 20 },
@@ -910,12 +924,12 @@ const styles = StyleSheet.create({
   questionCategory: {
     fontSize: 11,
     fontWeight: '700',
-    color: ACADEMY_GOLD,
+    color: colors.gold,
     letterSpacing: 1,
     marginBottom: 12,
   },
-  questionText: { fontSize: 18, fontWeight: '600', color: '#fff', lineHeight: 26 },
-  questionPoints: { fontSize: 12, color: '#888', marginTop: 12 },
+  questionText: { fontSize: 18, fontWeight: '600', color: colors.textPrimary, lineHeight: 26 },
+  questionPoints: { fontSize: 12, color: colors.textMuted, marginTop: 12 },
   optionsContainer: { gap: 10 },
   optionBtn: {
     flexDirection: 'row',
@@ -928,8 +942,8 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionSelected: {
-    backgroundColor: ACADEMY_GOLD,
-    borderColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
+    borderColor: colors.gold,
   },
   optionLetter: {
     width: 32,
@@ -940,22 +954,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionLetterSelected: { backgroundColor: 'rgba(255,255,255,0.3)' },
-  optionLetterText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-  optionText: { fontSize: 15, color: '#ddd', flex: 1 },
+  optionLetterText: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  optionText: { fontSize: 15, color: colors.textSecondary, flex: 1 },
   // Trivia Results
   triviaResultCircle: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: ACADEMY_GOLD,
+    borderColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  triviaResultScore: { fontSize: 36, fontWeight: '800', color: ACADEMY_GOLD },
-  triviaResultTitle: { fontSize: 24, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  triviaResultPoints: { fontSize: 16, color: ACADEMY_GOLD, marginBottom: 20 },
+  triviaResultScore: { fontSize: 36, fontWeight: '800', color: colors.gold },
+  triviaResultTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  triviaResultPoints: { fontSize: 16, color: colors.gold, marginBottom: 20 },
   triviaResultsList: { width: '100%', maxHeight: 200 },
   triviaResultRow: {
     flexDirection: 'row',
@@ -965,9 +979,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  triviaResultText: { fontSize: 14, color: '#ccc' },
+  triviaResultText: { fontSize: 14, color: colors.textSecondary },
   playAgainBtn: {
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 40,
@@ -981,24 +995,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scratchInstructions: { fontSize: 16, color: '#aaa', marginBottom: 30, textAlign: 'center' },
+  scratchInstructions: { fontSize: 16, color: colors.textSecondary, marginBottom: 30, textAlign: 'center' },
   cardsRow: { flexDirection: 'row', gap: 14 },
   scratchCard: {
     width: 100,
     height: 140,
     borderRadius: 14,
-    backgroundColor: ACADEMY_GOLD,
+    backgroundColor: colors.gold,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    ...shadows.elevated,
   },
-  scratchCardRevealed: { backgroundColor: '#2a2a4e' },
+  scratchCardRevealed: { backgroundColor: colors.cardElevated },
   unscratchedContent: { alignItems: 'center', gap: 8 },
   scratchPrompt: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.7)' },
   revealedContent: { alignItems: 'center', gap: 8 },
-  revealedValue: { fontSize: 14, fontWeight: '700', color: '#fff', textAlign: 'center' },
+  revealedValue: { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
 });
