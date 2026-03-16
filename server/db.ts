@@ -2198,6 +2198,17 @@ export async function markDropSent(id: number) {
   return drop;
 }
 
+export async function updateMerchDrop(id: number, data: Partial<InsertMerchDrop>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [drop] = await db
+    .update(merchDrops)
+    .set(data)
+    .where(eq(merchDrops.id, id))
+    .returning();
+  return drop;
+}
+
 export async function deleteMerchDrop(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -2495,6 +2506,17 @@ export async function createSocialPost(data: InsertSocialPost) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   const [post] = await db.insert(socialPosts).values(data).returning();
+  return post;
+}
+
+export async function updateSocialPost(id: number, data: Partial<InsertSocialPost>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const [post] = await db
+    .update(socialPosts)
+    .set(data)
+    .where(eq(socialPosts.id, id))
+    .returning();
   return post;
 }
 

@@ -32,6 +32,7 @@ import {
   getAllDropsAdmin,
   createMerchDrop,
   markDropSent,
+  updateMerchDrop,
   deleteMerchDrop,
   // Games & Rewards
   getUserPoints,
@@ -54,6 +55,7 @@ import {
   getVisibleSocialPosts,
   getAllSocialPostsAdmin,
   createSocialPost,
+  updateSocialPost,
   deleteSocialPost,
   toggleSocialPostVisibility,
 } from "./db";
@@ -2570,6 +2572,22 @@ export const appRouter = router({
           });
         }),
 
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            title: textSchema.optional(),
+            description: z.string().optional(),
+            dropType: z.enum(["product", "program", "content", "event"]).optional(),
+            imageUrl: z.string().optional(),
+            scheduledAt: z.string().optional().transform((s) => s ? new Date(s) : undefined),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await updateMerchDrop(id, data);
+        }),
+
       sendNow: adminProcedure
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
@@ -2891,6 +2909,22 @@ export const appRouter = router({
             ...input,
             addedBy: ctx.user.id,
           });
+        }),
+
+      update: adminProcedure
+        .input(
+          z.object({
+            id: z.number(),
+            platform: z.enum(["instagram", "tiktok", "twitter", "facebook", "youtube"]).optional(),
+            postUrl: z.string().url().optional(),
+            embedHtml: z.string().max(10000).optional(),
+            thumbnailUrl: z.string().max(500).optional(),
+            caption: z.string().max(2000).optional(),
+          })
+        )
+        .mutation(async ({ input }) => {
+          const { id, ...data } = input;
+          return await updateSocialPost(id, data);
         }),
 
       toggleVisibility: adminProcedure
