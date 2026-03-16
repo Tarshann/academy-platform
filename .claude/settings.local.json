@@ -83,7 +83,14 @@
       "Bash(git stash:*)",
       "Bash(GITHUB_TOKEN=\"\" gh auth token)",
       "Bash(git fetch:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(ls -la /c/Users/user/Tarshann/academy-platform/academy-app/app/\\\\\\(tabs\\\\\\)/)",
+      "Bash(ls -la drizzle/0016* drizzle/0017*)",
+      "Bash(ls drizzle/*.sql)",
+      "Bash(grep -v \"^[+-]\\\\s*$\")",
+      "Bash(grep -v \"^[+-]\\\\s*//\")"
     ]
   }
 }

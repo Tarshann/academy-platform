@@ -106,7 +106,7 @@ export default function ProgramsScreen() {
           text: 'Visit Website',
           onPress: () => {
             trackEvent('program_inquiry_website', { program_name: programName });
-            WebBrowser.openBrowserAsync('https://academytn.com/contact');
+            WebBrowser.openBrowserAsync('https://academytn.com/get-started');
           },
         },
         { text: 'Cancel', style: 'cancel' },

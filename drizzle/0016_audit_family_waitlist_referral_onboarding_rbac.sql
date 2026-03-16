@@ -4,12 +4,19 @@
 -- ============================================================================
 -- RBAC: Extended user roles
 -- ============================================================================
+-- Note: schema uses varchar(30) for extendedRole, not a custom enum type
+-- Fix any existing enum-typed column by dropping and re-adding as varchar
 DO $$ BEGIN
-  CREATE TYPE "user_role_extended" AS ENUM ('owner', 'admin', 'head_coach', 'assistant_coach', 'front_desk', 'parent', 'athlete');
-EXCEPTION WHEN duplicate_object THEN NULL;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'extendedRole'
+    AND data_type = 'USER-DEFINED'
+  ) THEN
+    ALTER TABLE "users" DROP COLUMN "extendedRole";
+  END IF;
 END $$;
 
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "extendedRole" "user_role_extended" DEFAULT 'athlete';
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "extendedRole" varchar(30) DEFAULT 'athlete';
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboardingCompleted" boolean DEFAULT false NOT NULL;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "onboardingCompletedAt" timestamp;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "sport" varchar(50);
@@ -95,6 +102,18 @@ CREATE TABLE IF NOT EXISTS "onboardingSteps" (
   "userId" integer NOT NULL,
   "step" varchar(50) NOT NULL,
   "completedAt" timestamp DEFAULT now() NOT NULL
+);
+
+-- ============================================================================
+-- USER RELATIONS (Family accounts)
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS "userRelations" (
+  "id" serial PRIMARY KEY,
+  "parentId" integer NOT NULL,
+  "childId" integer NOT NULL,
+  "relationshipType" varchar(50) NOT NULL DEFAULT 'parent',
+  "createdAt" timestamp DEFAULT now() NOT NULL,
+  "updatedAt" timestamp DEFAULT now() NOT NULL
 );
 
 -- ============================================================================
