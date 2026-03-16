@@ -80,7 +80,10 @@
       "Bash(git cherry-pick 68cd537)",
       "Bash(git cherry-pick d2bebba 3f58c4c 1ff1e32 a094c39 7e23e4a 9393e3b 2d33ea5)",
       "Bash(gh auth setup-git)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(GITHUB_TOKEN=\"\" gh auth token)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)"
     ]
   }
 }
