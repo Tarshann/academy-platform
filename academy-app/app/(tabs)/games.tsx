@@ -87,7 +87,7 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
         <TouchableOpacity onPress={onClose}>
           <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.gameTitle}>Spin the Wheel</Text>
+        <Text style={styles.gameTitle}>Gold Rush</Text>
         <View style={styles.playsRemaining}>
           <Text style={styles.playsText}>
             {playsQuery.data?.remaining ?? '...'}/{playsQuery.data?.max ?? 3}
@@ -544,9 +544,9 @@ export default function GamesHubScreen() {
   const games = [
     {
       key: 'spin' as const,
-      title: 'Spin the Wheel',
-      subtitle: 'Win points & discounts',
-      icon: 'sync-outline' as const,
+      title: 'Gold Rush',
+      subtitle: 'Spin to win points & rewards',
+      icon: 'trophy-outline' as const,
       color: '#e74c3c',
       limit: '3 spins/day',
     },
