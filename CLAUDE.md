@@ -440,7 +440,7 @@ The root layout (`app/_layout.tsx`) sets up:
 - Payment history
 - Athlete Metrics — admin-recorded performance data (vertical jump, speed, agility, 12 presets + custom), trend visualization
 - Athlete Showcase — weekly spotlight with achievements, stats, sport badges
-- Games Hub tab — Spin the Wheel, Academy Trivia, Scratch & Win (daily limits, points, streaks, leaderboard)
+- Games Hub tab — Gold Rush, Academy Trivia, Scratch & Win (daily limits, points, streaks, leaderboard)
 - Social Gallery — aggregated social media posts (Instagram, TikTok, Twitter, Facebook, YouTube)
 - Merch Drops — scheduled drop alerts with countdown timers
 
@@ -753,7 +753,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **v1.6 features** (6 new features, 7 new DB tables, 40+ tRPC routes, migration 0013):
   - **Athlete Metrics** — Admin records vertical jump, speed, agility (12 presets + custom). Trend visualization with mini bar charts. Auth-scoped: only athlete or admin can read.
   - **Athlete Showcase** — Weekly spotlight on dashboard. Full showcase page with hero section, achievements, sport badges.
-  - **Games Hub** (new tab) — Spin the Wheel (3/day), Academy Trivia (5 rounds/day), Scratch & Win (3/day). Atomic game entry limits, points system with atomic SQL increments, streaks, leaderboard with user JOINs. Trivia answer deduplication prevents point farming.
+  - **Games Hub** (new tab) — Gold Rush (3/day), Academy Trivia (5 rounds/day), Scratch & Win (3/day). Atomic game entry limits, points system with atomic SQL increments, streaks, leaderboard with user JOINs. Trivia answer deduplication prevents point farming.
   - **Social Gallery** — Browse social media posts from 5 platforms, filterable, 2-column grid.
   - **Merch Drops** — Scheduled drop alerts with countdown timers, admin creation, send-now capability.
   - **Video in Chat/DMs** — Video recording + library selection (60s max, 50MB limit), upload with progress tracking.
