@@ -1856,7 +1856,7 @@ export async function getAvailableDmUsers(userId: number) {
 // PUSH NOTIFICATION FUNCTIONS
 // ============================================================================
 
-// Save push subscription
+// Save push subscription (web push via endpoint)
 export async function savePushSubscription(
   userId: number,
   endpoint: string,
@@ -1867,35 +1867,29 @@ export async function savePushSubscription(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Check if subscription already exists
-  const existing = await db
-    .select()
-    .from(pushSubscriptions)
-    .where(
-      and(
-        eq(pushSubscriptions.userId, userId),
-        sql`${pushSubscriptions.endpoint} = ${endpoint}`
-      )
-    )
-    .limit(1);
+  // Atomic upsert by endpoint (unique per browser push subscription)
+  const [row] = await db
+    .insert(pushSubscriptions)
+    .values({
+      userId,
+      endpoint,
+      p256dh,
+      auth,
+      userAgent,
+    })
+    .onConflictDoUpdate({
+      target: [pushSubscriptions.endpoint],
+      set: {
+        p256dh: sql`excluded."p256dh"`,
+        auth: sql`excluded."auth"`,
+        userAgent: sql`excluded."userAgent"`,
+        isActive: sql`true`,
+        updatedAt: sql`now()`,
+      },
+    })
+    .returning();
 
-  if (existing.length > 0) {
-    await db
-      .update(pushSubscriptions)
-      .set({ p256dh, auth, userAgent, isActive: true, updatedAt: new Date() })
-      .where(eq(pushSubscriptions.id, existing[0].id));
-    return existing[0].id;
-  }
-
-  const [inserted] = await db.insert(pushSubscriptions).values({
-    userId,
-    endpoint,
-    p256dh,
-    auth,
-    userAgent,
-  }).returning();
-
-  return inserted.id;
+  return row.id;
 }
 
 // Get user's push subscriptions
