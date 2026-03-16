@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { HttpError, ErrorCode } from "../../shared/_core/errors";
 import { logger } from "./logger";
+import { captureException } from "./sentry";
 
 /**
  * Transform domain errors to tRPC errors
@@ -27,8 +28,9 @@ export function transformError(error: unknown): TRPCError {
     return error;
   }
 
-  // Log unexpected errors
+  // Log unexpected errors and report to Sentry
   logger.error("[ErrorHandler] Unexpected error:", error);
+  captureException(error, { source: "tRPC" });
 
   return new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
@@ -51,6 +53,11 @@ export function errorHandler() {
         message: transformed.message,
         cause: transformed.cause,
       });
+
+      // Report server errors to Sentry (skip client errors like 400/401/403)
+      if (transformed.code === "INTERNAL_SERVER_ERROR") {
+        captureException(error, { path, code: transformed.code });
+      }
 
       return transformed;
     },

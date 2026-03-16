@@ -147,6 +147,14 @@ export const users = pgTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   profilePictureUrl: text("profilePictureUrl"),
   role: userRoleEnum("role").default("user").notNull(),
+  extendedRole: varchar("extendedRole", { length: 30 }).default("athlete"),
+  onboardingCompleted: boolean("onboardingCompleted").notNull().default(false),
+  onboardingCompletedAt: timestamp("onboardingCompletedAt", { mode: 'date' }),
+  sport: varchar("sport", { length: 50 }),
+  dateOfBirth: timestamp("dateOfBirth", { mode: 'date' }),
+  goals: text("goals"),
+  referralCode: varchar("referralCode", { length: 20 }).unique(),
+  referredBy: integer("referredBy"),
   createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp("updatedAt", { mode: 'date' }).defaultNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn", { mode: 'date' }).defaultNow().notNull(),
@@ -1023,3 +1031,133 @@ export const socialPosts = pgTable("socialPosts", {
 
 export type SocialPost = typeof socialPosts.$inferSelect;
 export type InsertSocialPost = typeof socialPosts.$inferInsert;
+
+// ============================================================================
+// EXTENDED RBAC
+// ============================================================================
+
+export const userRoleExtendedEnum = pgEnum("user_role_extended", [
+  "owner",
+  "admin",
+  "head_coach",
+  "assistant_coach",
+  "front_desk",
+  "parent",
+  "athlete",
+]);
+
+// ============================================================================
+// WAITLIST TABLE
+// ============================================================================
+
+/**
+ * Waitlist entries for sessions/programs at capacity.
+ * When a spot opens, the next person in line is notified.
+ */
+export const waitlist = pgTable("waitlist", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  scheduleId: integer("scheduleId"),
+  programId: integer("programId"),
+  position: integer("position").notNull().default(0),
+  status: varchar("status", { length: 30 }).notNull().default("waiting"), // waiting, notified, enrolled, expired, cancelled
+  notifiedAt: timestamp("notifiedAt", { mode: 'date' }),
+  expiresAt: timestamp("expiresAt", { mode: 'date' }),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type WaitlistEntry = typeof waitlist.$inferSelect;
+export type InsertWaitlistEntry = typeof waitlist.$inferInsert;
+
+// ============================================================================
+// REFERRALS TABLE
+// ============================================================================
+
+/**
+ * Member referral program.
+ * Tracks referral codes, conversions, and point rewards.
+ */
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrerId").notNull(),
+  referredEmail: varchar("referredEmail", { length: 320 }).notNull(),
+  referredUserId: integer("referredUserId"),
+  referralCode: varchar("referralCode", { length: 20 }).notNull().unique(),
+  status: varchar("status", { length: 30 }).notNull().default("pending"), // pending, signed_up, enrolled, rewarded
+  pointsAwarded: integer("pointsAwarded").notNull().default(0),
+  discountPercent: decimal("discountPercent", { precision: 5, scale: 2 }),
+  convertedAt: timestamp("convertedAt", { mode: 'date' }),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;
+
+// ============================================================================
+// SCHEDULE TEMPLATES TABLE
+// ============================================================================
+
+/**
+ * Recurring schedule templates.
+ * Admins define weekly templates; the system generates actual schedule entries from them.
+ */
+export const scheduleTemplates = pgTable("scheduleTemplates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  programId: integer("programId"),
+  dayOfWeek: dayOfWeekEnum("dayOfWeek").notNull(),
+  startHour: integer("startHour").notNull(),
+  startMinute: integer("startMinute").notNull().default(0),
+  endHour: integer("endHour").notNull(),
+  endMinute: integer("endMinute").notNull().default(0),
+  location: varchar("location", { length: 255 }),
+  maxParticipants: integer("maxParticipants"),
+  isActive: boolean("isActive").notNull().default(true),
+  createdBy: integer("createdBy").notNull(),
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type ScheduleTemplate = typeof scheduleTemplates.$inferSelect;
+export type InsertScheduleTemplate = typeof scheduleTemplates.$inferInsert;
+
+// ============================================================================
+// BILLING REMINDERS TABLE
+// ============================================================================
+
+/**
+ * Tracks dunning/billing reminder emails sent to users with failed payments.
+ * Escalates: Day 1 → Day 3 → Day 7 → Day 14 (suspension).
+ */
+export const billingReminders = pgTable("billingReminders", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  subscriptionId: integer("subscriptionId"),
+  stripeInvoiceId: varchar("stripeInvoiceId", { length: 255 }),
+  reminderType: varchar("reminderType", { length: 50 }).notNull().default("payment_failed"),
+  reminderCount: integer("reminderCount").notNull().default(1),
+  lastSentAt: timestamp("lastSentAt", { mode: 'date' }).defaultNow().notNull(),
+  nextSendAt: timestamp("nextSendAt", { mode: 'date' }),
+  status: varchar("status", { length: 30 }).notNull().default("active"), // active, resolved, suspended
+  createdAt: timestamp("createdAt", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type BillingReminder = typeof billingReminders.$inferSelect;
+export type InsertBillingReminder = typeof billingReminders.$inferInsert;
+
+// ============================================================================
+// ONBOARDING STEPS TABLE
+// ============================================================================
+
+/**
+ * Tracks which onboarding steps a user has completed.
+ */
+export const onboardingSteps = pgTable("onboardingSteps", {
+  id: serial("id").primaryKey(),
+  userId: integer("userId").notNull(),
+  step: varchar("step", { length: 50 }).notNull(), // select_sport, set_goals, choose_program, schedule_first_session, complete
+  completedAt: timestamp("completedAt", { mode: 'date' }).defaultNow().notNull(),
+})
+
+export type OnboardingStep = typeof onboardingSteps.$inferSelect;
+export type InsertOnboardingStep = typeof onboardingSteps.$inferInsert;

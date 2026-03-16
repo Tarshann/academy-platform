@@ -38,6 +38,9 @@ const FAQs = lazy(() => import("./pages/FAQs"));
 const Home = lazy(() => import("./pages/Home"));
 const Orders = lazy(() => import("./pages/Orders"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const FamilyDashboard = lazy(() => import("./pages/FamilyDashboard"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Referrals = lazy(() => import("./pages/Referrals"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -169,6 +172,18 @@ function Router() {
         <Route path={"/orders"}>
           <SEO title="Orders" description="View your purchase history and order details." />
           <Orders />
+        </Route>
+        <Route path={"/family"}>
+          <SEO title="Family Dashboard" description="Manage your family members and view their progress." />
+          <FamilyDashboard />
+        </Route>
+        <Route path={"/onboarding"}>
+          <SEO title="Welcome" description="Set up your Academy profile." />
+          <Onboarding />
+        </Route>
+        <Route path={"/referrals"}>
+          <SEO title="Referrals" description="Invite friends and earn rewards." />
+          <Referrals />
         </Route>
         {/* Catch Clerk UserProfile navigation — redirect to dashboard */}
         <Route path={"/user-profile/:rest*"}>
