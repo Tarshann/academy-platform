@@ -191,7 +191,7 @@ export function VisionCaptureManager() {
     } catch {
       toast.error("Microphone access denied. Please allow microphone access.");
     }
-  }, [drillContext]);
+  }, [drillContext, chatTokenQuery.data?.token]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === "recording") {

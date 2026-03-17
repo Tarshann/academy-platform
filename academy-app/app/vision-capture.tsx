@@ -8,13 +8,12 @@ import {
   Alert,
   TextInput,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Audio } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '@clerk/clerk-expo';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
 import { colors, shadows, spacing, radius } from '../lib/theme';
@@ -58,17 +57,19 @@ const CONFIDENCE_ICONS: Record<string, string> = {
 
 export default function VisionCaptureScreen() {
   const router = useRouter();
-  const { getToken } = useAuth();
   const [mode, setMode] = useState<CaptureMode>('idle');
   const [extraction, setExtraction] = useState<ExtractionData | null>(null);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [drillContext, setDrillContext] = useState('');
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0, 10));
+  const [dateModalVisible, setDateModalVisible] = useState(false);
+  const [dateModalValue, setDateModalValue] = useState('');
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: members } = trpc.admin.members.list.useQuery();
+  const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, { staleTime: 5 * 60_000 });
 
   const extractMutation = trpc.visionCapture.extract.useMutation({
     onSuccess: (data) => {
@@ -178,10 +179,10 @@ export default function VisionCaptureScreen() {
 
       setMode('uploading');
 
-      // Upload via chat upload endpoint (reuse existing pattern)
-      const token = await getToken();
+      // Upload via capture endpoint using chat session token
+      const token = chatTokenQuery.data?.token;
       if (!token) {
-        Alert.alert('Error', 'Authentication required.');
+        Alert.alert('Error', 'Authentication required. Please wait a moment and try again.');
         setMode('idle');
         return;
       }
@@ -223,7 +224,7 @@ export default function VisionCaptureScreen() {
       Alert.alert('Error', 'Failed to process recording.');
       setMode('idle');
     }
-  }, [recordingDuration, drillContext, getToken]);
+  }, [recordingDuration, drillContext, chatTokenQuery.data?.token]);
 
   // ── Photo Capture ──
 
@@ -236,9 +237,9 @@ export default function VisionCaptureScreen() {
     setMode('uploading');
 
     try {
-      const token = await getToken();
+      const token = chatTokenQuery.data?.token;
       if (!token) {
-        Alert.alert('Error', 'Authentication required.');
+        Alert.alert('Error', 'Authentication required. Please wait a moment and try again.');
         setMode('idle');
         return;
       }
@@ -279,7 +280,7 @@ export default function VisionCaptureScreen() {
       Alert.alert('Error', 'Failed to upload photo.');
       setMode('idle');
     }
-  }, [drillContext, getToken]);
+  }, [drillContext, chatTokenQuery.data?.token]);
 
   // ── Review helpers ──
 
@@ -484,17 +485,8 @@ export default function VisionCaptureScreen() {
             <TouchableOpacity
               style={styles.dateButton}
               onPress={() => {
-                Alert.prompt(
-                  'Session Date',
-                  'Enter date (YYYY-MM-DD):',
-                  [
-                    { text: 'Today', onPress: () => setSessionDate(new Date().toISOString().slice(0, 10)) },
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Set', onPress: (text) => { if (text && /^\d{4}-\d{2}-\d{2}$/.test(text)) setSessionDate(text); } },
-                  ],
-                  'plain-text',
-                  sessionDate
-                );
+                setDateModalValue(sessionDate);
+                setDateModalVisible(true);
               }}
             >
               <Ionicons name="calendar-outline" size={14} color={colors.gold} />
@@ -524,6 +516,60 @@ export default function VisionCaptureScreen() {
             <Text style={styles.discardButtonText}>Discard</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Cross-platform date edit modal */}
+        <Modal
+          visible={dateModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDateModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Session Date</Text>
+              <Text style={styles.modalSubtitle}>Enter date (YYYY-MM-DD):</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={dateModalValue}
+                onChangeText={setDateModalValue}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+                keyboardType="numbers-and-punctuation"
+              />
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => {
+                    setSessionDate(new Date().toISOString().slice(0, 10));
+                    setDateModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.modalButtonText}>Today</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.modalButton}
+                  onPress={() => setDateModalVisible(false)}
+                >
+                  <Text style={styles.modalButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.modalButtonPrimary]}
+                  onPress={() => {
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(dateModalValue)) {
+                      setSessionDate(dateModalValue);
+                      setDateModalVisible(false);
+                    } else {
+                      Alert.alert('Invalid Date', 'Please use YYYY-MM-DD format.');
+                    }
+                  }}
+                >
+                  <Text style={[styles.modalButtonText, { color: colors.background }]}>Set</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -952,5 +998,58 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '600',
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing.xl,
+    width: '80%',
+    maxWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: spacing.md,
+  },
+  modalInput: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    color: colors.textPrimary,
+    fontSize: 16,
+    marginBottom: spacing.md,
+    fontVariant: ['tabular-nums'],
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'flex-end',
+  },
+  modalButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: radius.sm,
+    minHeight: 36,
+    justifyContent: 'center',
+  },
+  modalButtonPrimary: {
+    backgroundColor: colors.gold,
+  },
+  modalButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
 });
