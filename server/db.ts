@@ -2413,16 +2413,27 @@ export async function createGameEntryWithLimit(
     return null;
   }
 
-  // Insert the game entry using Drizzle query builder (handles enum types natively)
-  const [entry] = await db.insert(gameEntries).values({
-    userId: data.userId,
-    gameType: data.gameType,
-    rewardType: data.rewardType ?? "none",
-    rewardValue: data.rewardValue ?? null,
-    pointsEarned: data.pointsEarned ?? 0,
-    metadata: data.metadata ?? null,
-  }).returning();
+  // Use raw SQL to avoid Drizzle enum binding issues with postgres-js driver.
+  // Do NOT use ::game_type or ::reward_type casts — let PostgreSQL handle
+  // implicit text→enum conversion for parameterized queries.
+  const rows = await db.execute(sql`
+    INSERT INTO "gameEntries" ("userId", "gameType", "rewardType", "rewardValue", "pointsEarned", "metadata")
+    VALUES (
+      ${data.userId},
+      ${data.gameType},
+      ${data.rewardType ?? 'none'},
+      ${data.rewardValue ?? null},
+      ${data.pointsEarned ?? 0},
+      ${data.metadata ?? null}
+    )
+    RETURNING "id", "userId", "gameType"::text, "rewardType"::text, "rewardValue", "pointsEarned", "metadata", "playedAt"
+  `);
 
+  // postgres-js returns array-like result; Drizzle wraps it in { rows } or passes through
+  const resultRows = Array.isArray(rows) ? rows : (rows as any).rows ?? [];
+  const entry = resultRows[0];
+
+  if (!entry) throw new Error("Insert returned no rows");
   return entry as GameEntryRow;
 }
 
