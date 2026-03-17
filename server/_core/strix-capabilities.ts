@@ -14,7 +14,11 @@
  *   MEDIUM   — Data updates, visibility toggles, attendance, content edits
  *   LOW      — Reordering, read-heavy admin ops, non-destructive toggles
  *
- * v1.8.0 — 90 capabilities (81 tRPC mutations + 9 cron jobs)
+ * v1.8.0 — 84 capabilities (75 tRPC mutations + 9 cron jobs)
+ * 
+ * NOTE: All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until
+ * a pre-authorization UI is built. Risk levels are preserved for evidence
+ * recording and future enforcement escalation. See Notion reconciliation.
  */
 
 export interface Capability {
@@ -159,15 +163,15 @@ export const CAPABILITIES: Capability[] = [
   { id: "socialPosts.admin.delete", label: "Delete Social Post", domain: "socialPosts", risk: "high", approvalsRequired: 1, description: "Remove a social media post" },
 
   // ---- CRON JOBS (Automated Actions) ----
-  { id: "cron.nurture", label: "Cron: Nurture Campaign", domain: "cron", risk: "critical", approvalsRequired: 2, description: "Daily bulk email nurture campaign to leads (10 AM CT)" },
-  { id: "cron.generateSessions", label: "Cron: Auto-Generate Sessions", domain: "cron", risk: "high", approvalsRequired: 1, description: "Weekly auto-generate sessions from templates (Sunday 3 AM)" },
-  { id: "cron.sessionReminders", label: "Cron: Session Reminders", domain: "cron", risk: "high", approvalsRequired: 1, description: "Daily push notifications for upcoming sessions (1 PM CT)" },
-  { id: "cron.merchDrops", label: "Cron: Merch Drop Notifications", domain: "cron", risk: "high", approvalsRequired: 1, description: "Check and send merch drop notifications (every 15 min)" },
+  { id: "cron.nurture", label: "Cron: Nurture Campaign", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Daily bulk email nurture campaign to leads (10 AM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.generateSessions", label: "Cron: Auto-Generate Sessions", domain: "cron", risk: "high", approvalsRequired: 0, description: "Weekly auto-generate sessions from templates (Sunday 3 AM) — auto-approve until pre-auth UI built" },
+  { id: "cron.sessionReminders", label: "Cron: Session Reminders", domain: "cron", risk: "high", approvalsRequired: 0, description: "Daily push notifications for upcoming sessions (1 PM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.merchDrops", label: "Cron: Merch Drop Notifications", domain: "cron", risk: "high", approvalsRequired: 0, description: "Check and send merch drop notifications (every 15 min) — auto-approve until pre-auth UI built" },
   { id: "cron.metricsPrompt", label: "Cron: Metrics Prompt", domain: "cron", risk: "medium", approvalsRequired: 0, description: "Prompt coaches to record metrics (Tue/Thu/Sun 1 AM)" },
-  { id: "cron.progressReports", label: "Cron: AI Progress Reports", domain: "cron", risk: "critical", approvalsRequired: 2, description: "Bi-weekly AI-generated progress reports emailed to parents (Friday 11 PM)" },
-  { id: "cron.reengagement", label: "Cron: Re-engagement Campaign", domain: "cron", risk: "critical", approvalsRequired: 2, description: "Weekly re-engagement emails to inactive members (Monday 3 PM)" },
-  { id: "cron.parentDigest", label: "Cron: Parent Weekly Digest", domain: "cron", risk: "critical", approvalsRequired: 2, description: "Weekly digest email to parents with child activity summary (Friday 6 PM)" },
-  { id: "cron.postSessionContent", label: "Cron: Post-Session AI Content", domain: "cron", risk: "high", approvalsRequired: 1, description: "AI-generated session recaps, social captions, parent push (Tue/Thu/Sun 1 AM)" },
+  { id: "cron.progressReports", label: "Cron: AI Progress Reports", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Bi-weekly AI-generated progress reports emailed to parents (Friday 11 PM) — auto-approve until pre-auth UI built" },
+  { id: "cron.reengagement", label: "Cron: Re-engagement Campaign", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Weekly re-engagement emails to inactive members (Monday 3 PM) — auto-approve until pre-auth UI built" },
+  { id: "cron.parentDigest", label: "Cron: Parent Weekly Digest", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Weekly digest email to parents with child activity summary (Friday 6 PM) — auto-approve until pre-auth UI built" },
+  { id: "cron.postSessionContent", label: "Cron: Post-Session AI Content", domain: "cron", risk: "high", approvalsRequired: 0, description: "AI-generated session recaps, social captions, parent push (Tue/Thu/Sun 1 AM) — auto-approve until pre-auth UI built" },
 ];
 
 // Lookup helpers
