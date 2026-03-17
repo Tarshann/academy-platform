@@ -40,8 +40,7 @@ export const ADDRESS = {
 };
 
 export const APP_LINKS = {
-  // Update iOS URL with actual Apple ID once confirmed in App Store Connect
-  ios: "https://apps.apple.com/app/the-academy/id6744076365",
+  ios: "https://apps.apple.com/app/academytn/id6759210519",
   android: "https://play.google.com/store/apps/details?id=com.academytn.app",
 };
 
