@@ -320,4 +320,13 @@ app.use(
   })
 );
 
+// Global error handler — ensures all errors return JSON (not HTML).
+// Without this, Express's default handler returns HTML which causes
+// "JSON Parse error: Unexpected character" on mobile/SPA clients.
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = status === 500 ? "Internal server error" : (err.message || "An error occurred");
+  res.status(status).json({ error: message });
+});
+
 export default app;
