@@ -1,8 +1,15 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendPushToUsers } from "../push";
 
 export async function run() {
   logger.info("[cron/post-session-content] Generating post-session content");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.postSessionContent", "post-session-content");
+  if (!guard.allowed) {
+    logger.info("[cron/post-session-content] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb, getParentsForChild } = await import("../db");
   const {

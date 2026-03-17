@@ -1,3 +1,4 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 
 const DAY_MAP: Record<string, number> = {
@@ -12,6 +13,12 @@ const DAY_MAP: Record<string, number> = {
 
 export async function run() {
   logger.info("[cron/generate-sessions] Generating sessions from templates");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.generateSessions", "generate-sessions");
+  if (!guard.allowed) {
+    logger.info("[cron/generate-sessions] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb } = await import("../db");
   const { scheduleTemplates, schedules } = await import("../../drizzle/schema");

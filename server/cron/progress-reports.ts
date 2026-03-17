@@ -1,9 +1,16 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendEmail } from "../email";
 import { sendPushToUsers } from "../push";
 
 export async function run() {
   logger.info("[cron/progress-reports] Generating bi-weekly progress reports");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.progressReports", "progress-reports");
+  if (!guard.allowed) {
+    logger.info("[cron/progress-reports] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   // Check if this is a report week (even ISO week number)
   const now = new Date();
