@@ -2758,33 +2758,39 @@ export const appRouter = router({
         }
       }
 
-      // Atomic check+insert — returns null if daily limit (3) reached
-      const entry = await createGameEntryWithLimit({
-        userId: ctx.user.id,
-        gameType: "spin_wheel",
-        rewardType: selectedOutcome.rewardType,
-        rewardValue: selectedOutcome.value,
-        pointsEarned: selectedOutcome.points,
-        metadata: JSON.stringify({ outcome: selectedOutcome }),
-      }, 3);
+      try {
+        // Atomic check+insert — returns null if daily limit (3) reached
+        const entry = await createGameEntryWithLimit({
+          userId: ctx.user.id,
+          gameType: "spin_wheel",
+          rewardType: selectedOutcome.rewardType,
+          rewardValue: selectedOutcome.value,
+          pointsEarned: selectedOutcome.points,
+          metadata: JSON.stringify({ outcome: selectedOutcome }),
+        }, 3);
 
-      if (!entry) {
-        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily spin limit reached (3/day)" });
+        if (!entry) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily spin limit reached (3/day)" });
+        }
+
+        if (selectedOutcome.points > 0) {
+          await addUserPoints(ctx.user.id, selectedOutcome.points);
+        }
+        await refreshUserStreak(ctx.user.id);
+
+        return {
+          entry,
+          reward: {
+            type: selectedOutcome.rewardType,
+            value: selectedOutcome.value,
+            points: selectedOutcome.points,
+          },
+        };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        logger.error("[Games] spinWheel error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to play spin wheel. Please try again." });
       }
-
-      if (selectedOutcome.points > 0) {
-        await addUserPoints(ctx.user.id, selectedOutcome.points);
-      }
-      await refreshUserStreak(ctx.user.id);
-
-      return {
-        entry,
-        reward: {
-          type: selectedOutcome.rewardType,
-          value: selectedOutcome.value,
-          points: selectedOutcome.points,
-        },
-      };
     }),
 
     // Get trivia questions
@@ -2850,26 +2856,32 @@ export const appRouter = router({
           };
         });
 
-        // Atomic check+insert — returns null if daily limit (5) reached
-        const entry = await createGameEntryWithLimit({
-          userId: ctx.user.id,
-          gameType: "trivia",
-          rewardType: totalPoints > 0 ? "points" : "none",
-          rewardValue: String(totalPoints),
-          pointsEarned: totalPoints,
-          metadata: JSON.stringify({ results, correct, total: dedupedAnswers.length }),
-        }, 5);
+        try {
+          // Atomic check+insert — returns null if daily limit (5) reached
+          const entry = await createGameEntryWithLimit({
+            userId: ctx.user.id,
+            gameType: "trivia",
+            rewardType: totalPoints > 0 ? "points" : "none",
+            rewardValue: String(totalPoints),
+            pointsEarned: totalPoints,
+            metadata: JSON.stringify({ results, correct, total: dedupedAnswers.length }),
+          }, 5);
 
-        if (!entry) {
-          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
+          if (!entry) {
+            throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily trivia limit reached (5/day)" });
+          }
+
+          if (totalPoints > 0) {
+            await addUserPoints(ctx.user.id, totalPoints);
+          }
+          await refreshUserStreak(ctx.user.id);
+
+          return { entry, results, totalPoints, correct, total: dedupedAnswers.length };
+        } catch (err) {
+          if (err instanceof TRPCError) throw err;
+          logger.error("[Games] submitTrivia error:", err);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to submit trivia answers. Please try again." });
         }
-
-        if (totalPoints > 0) {
-          await addUserPoints(ctx.user.id, totalPoints);
-        }
-        await refreshUserStreak(ctx.user.id);
-
-        return { entry, results, totalPoints, correct, total: dedupedAnswers.length };
       }),
 
     // Scratch card
@@ -2897,33 +2909,39 @@ export const appRouter = router({
         }
       }
 
-      // Atomic check+insert — returns null if daily limit (3) reached
-      const entry = await createGameEntryWithLimit({
-        userId: ctx.user.id,
-        gameType: "scratch_card",
-        rewardType: selectedPrize.rewardType,
-        rewardValue: selectedPrize.value,
-        pointsEarned: selectedPrize.points,
-        metadata: JSON.stringify({ prize: selectedPrize }),
-      }, 3);
+      try {
+        // Atomic check+insert — returns null if daily limit (3) reached
+        const entry = await createGameEntryWithLimit({
+          userId: ctx.user.id,
+          gameType: "scratch_card",
+          rewardType: selectedPrize.rewardType,
+          rewardValue: selectedPrize.value,
+          pointsEarned: selectedPrize.points,
+          metadata: JSON.stringify({ prize: selectedPrize }),
+        }, 3);
 
-      if (!entry) {
-        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily scratch card limit reached (3/day)" });
+        if (!entry) {
+          throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Daily scratch card limit reached (3/day)" });
+        }
+
+        if (selectedPrize.points > 0) {
+          await addUserPoints(ctx.user.id, selectedPrize.points);
+        }
+        await refreshUserStreak(ctx.user.id);
+
+        return {
+          entry,
+          reward: {
+            type: selectedPrize.rewardType,
+            value: selectedPrize.value,
+            points: selectedPrize.points,
+          },
+        };
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        logger.error("[Games] scratchCard error:", err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to play scratch card. Please try again." });
       }
-
-      if (selectedPrize.points > 0) {
-        await addUserPoints(ctx.user.id, selectedPrize.points);
-      }
-      await refreshUserStreak(ctx.user.id);
-
-      return {
-        entry,
-        reward: {
-          type: selectedPrize.rewardType,
-          value: selectedPrize.value,
-          points: selectedPrize.points,
-        },
-      };
     }),
 
     // Admin: trivia management
