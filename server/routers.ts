@@ -955,6 +955,20 @@ export const appRouter = router({
           return { success: true };
         }),
     }),
+
+    // Manual cron trigger for testing
+    triggerCron: adminProcedure
+      .input(z.object({
+        name: z.enum([
+          "nurture", "generate-sessions", "session-reminders", "merch-drops",
+          "metrics-prompt", "progress-reports", "reengagement", "parent-digest",
+          "post-session-content",
+        ]),
+      }))
+      .mutation(async ({ input }) => {
+        const mod = await import(`./cron/${input.name}`);
+        return await mod.run();
+      }),
   }),
 
   chatAdmin: router({
@@ -2434,6 +2448,22 @@ export const appRouter = router({
                 "createdAt"
               FROM "galleryPhotos"
               WHERE "isVisible" = true ${photoCategoryFilter}
+
+              UNION ALL
+
+              SELECT
+                'recap-' || sr."id" AS "id",
+                'recap' AS "type",
+                s."title" AS "title",
+                sr."content" AS "description",
+                NULL AS "mediaUrl",
+                NULL AS "thumbnail",
+                NULL AS "platform",
+                'training' AS "category",
+                0 AS "viewCount",
+                sr."generated_at" AS "createdAt"
+              FROM "session_recaps" sr
+              INNER JOIN "schedules" s ON sr."schedule_id" = s."id"
             ) AS feed
             ORDER BY "createdAt" DESC
             LIMIT ${limit}
@@ -2446,7 +2476,8 @@ export const appRouter = router({
           const countQuery = sql`
             SELECT (
               (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
-              (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter})
+              (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter}) +
+              (SELECT COUNT(*) FROM "session_recaps")
             )::int AS "total"
           `;
           const countResult = await db.execute(countQuery);
@@ -3377,6 +3408,73 @@ export const appRouter = router({
           }
         }
         return { sent, total: parents.length };
+      }),
+  }),
+
+  // ============================================================================
+  // AI CONTENT QUEUE
+  // ============================================================================
+
+  contentQueue: router({
+    list: adminProcedure
+      .input(z.object({ status: z.enum(["all", "draft", "approved", "rejected"]).default("all") }))
+      .query(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { contentQueue, schedules } = await import("../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) return [];
+
+        let query = db
+          .select({
+            id: contentQueue.id,
+            content: contentQueue.content,
+            platform: contentQueue.platform,
+            status: contentQueue.status,
+            scheduleId: contentQueue.scheduleId,
+            reviewedBy: contentQueue.reviewedBy,
+            reviewedAt: contentQueue.reviewedAt,
+            generatedAt: contentQueue.generatedAt,
+            sessionTitle: schedules.title,
+          })
+          .from(contentQueue)
+          .leftJoin(schedules, eq(contentQueue.scheduleId, schedules.id))
+          .orderBy(desc(contentQueue.generatedAt))
+          .$dynamic();
+
+        if (input.status !== "all") {
+          query = query.where(eq(contentQueue.status, input.status));
+        }
+
+        return await query;
+      }),
+
+    review: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["approved", "rejected"]),
+        content: z.string().max(500).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { getDb } = await import("./db");
+        const { contentQueue } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+        const updateData: Record<string, any> = {
+          status: input.status,
+          reviewedBy: ctx.user.id,
+          reviewedAt: new Date(),
+        };
+        if (input.content !== undefined) {
+          updateData.content = input.content;
+        }
+
+        await db.update(contentQueue).set(updateData).where(eq(contentQueue.id, input.id));
+        return { success: true };
       }),
   }),
 

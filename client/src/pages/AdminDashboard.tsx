@@ -27,6 +27,7 @@ import {
   BellRing,
   Activity,
   Star,
+  Sparkles,
 } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
@@ -43,6 +44,7 @@ import { SocialPostsManager } from "@/components/admin/managers/SocialPostsManag
 import { MerchDropsManager } from "@/components/admin/managers/MerchDropsManager";
 import { MetricsManager } from "@/components/admin/managers/MetricsManager";
 import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
+import { ContentQueueManager } from "@/components/admin/managers/ContentQueueManager";
 
 interface NavItem {
   id: string;
@@ -80,6 +82,7 @@ const navGroups: NavGroup[] = [
       { id: "videos", label: "Videos", icon: Video },
       { id: "gallery", label: "Gallery", icon: Image },
       { id: "social", label: "Social", icon: Share2 },
+      { id: "content-queue", label: "Content Queue", icon: Sparkles },
     ],
   },
   {
@@ -116,6 +119,7 @@ const panels: Record<string, React.ComponentType> = {
   drops: MerchDropsManager,
   metrics: MetricsManager,
   showcases: ShowcasesManager,
+  "content-queue": ContentQueueManager,
 };
 
 function SidebarNav({

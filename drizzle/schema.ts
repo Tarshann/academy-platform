@@ -1162,3 +1162,95 @@ export const onboardingSteps = pgTable("onboardingSteps", {
 
 export type OnboardingStep = typeof onboardingSteps.$inferSelect;
 export type InsertOnboardingStep = typeof onboardingSteps.$inferInsert;
+
+// ============================================================================
+// AI PROGRESS REPORTS
+// ============================================================================
+
+/**
+ * AI-generated athlete progress reports — stored for history and parent email.
+ */
+export const progressReports = pgTable("progress_reports", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athlete_id").notNull(),
+  content: text("content").notNull(),
+  generatedAt: timestamp("generated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type ProgressReport = typeof progressReports.$inferSelect;
+export type InsertProgressReport = typeof progressReports.$inferInsert;
+
+// ============================================================================
+// AUTOMATION INFRASTRUCTURE (v1.8.0)
+// ============================================================================
+
+/**
+ * Re-engagement tracking — prevents notification spam for win-back campaigns.
+ */
+export const reengagementLog = pgTable("reengagement_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  sentAt: timestamp("sent_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type ReengagementLogEntry = typeof reengagementLog.$inferSelect;
+export type InsertReengagementLogEntry = typeof reengagementLog.$inferInsert;
+
+/**
+ * AI-generated session recaps — feeds the community/media feed.
+ */
+export const sessionRecaps = pgTable("session_recaps", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id").notNull(),
+  content: text("content").notNull(),
+  generatedAt: timestamp("generated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type SessionRecap = typeof sessionRecaps.$inferSelect;
+export type InsertSessionRecap = typeof sessionRecaps.$inferInsert;
+
+/**
+ * AI-generated social content queue — coach reviews before posting externally.
+ */
+export const contentQueue = pgTable("content_queue", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  platform: varchar("platform", { length: 20 }).default("instagram"),
+  status: varchar("status", { length: 20 }).default("draft").notNull(),
+  scheduleId: integer("schedule_id"),
+  reviewedBy: integer("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { mode: 'date' }),
+  generatedAt: timestamp("generated_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type ContentQueueItem = typeof contentQueue.$inferSelect;
+export type InsertContentQueueItem = typeof contentQueue.$inferInsert;
+
+/**
+ * Digest tracking — prevents duplicate weekly digest sends.
+ */
+export const digestLog = pgTable("digest_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: varchar("type", { length: 30 }).notNull(),
+  weekKey: varchar("week_key", { length: 10 }).notNull(),
+  sentAt: timestamp("sent_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type DigestLogEntry = typeof digestLog.$inferSelect;
+export type InsertDigestLogEntry = typeof digestLog.$inferInsert;
+
+/**
+ * Reminder dedup — prevents re-sending reminders for the same session+user.
+ */
+export const reminderLog = pgTable("reminder_log", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  scheduleId: integer("schedule_id").notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  sentAt: timestamp("sent_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type ReminderLogEntry = typeof reminderLog.$inferSelect;
+export type InsertReminderLogEntry = typeof reminderLog.$inferInsert;

@@ -63,5 +63,16 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "crons": [
+    { "path": "/api/cron/nurture", "schedule": "0 14 * * *" },
+    { "path": "/api/cron/generate-sessions", "schedule": "0 3 * * 0" },
+    { "path": "/api/cron/session-reminders", "schedule": "0 13 * * *" },
+    { "path": "/api/cron/merch-drops", "schedule": "*/15 * * * *" },
+    { "path": "/api/cron/metrics-prompt", "schedule": "0 1 * * 2,4,0" },
+    { "path": "/api/cron/progress-reports", "schedule": "0 23 * * 5" },
+    { "path": "/api/cron/reengagement", "schedule": "0 15 * * 1" },
+    { "path": "/api/cron/parent-digest", "schedule": "0 18 * * 5" },
+    { "path": "/api/cron/post-session-content", "schedule": "0 1 * * 2,4,0" }
+  ]
 }
