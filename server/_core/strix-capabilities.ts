@@ -16,9 +16,18 @@
  *
  * v1.8.0 — 84 capabilities (75 tRPC mutations + 9 cron jobs)
  * 
- * NOTE: All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until
- * a pre-authorization UI is built. Risk levels are preserved for evidence
- * recording and future enforcement escalation. See Notion reconciliation.
+ * CRON / SYSTEM ACTORS:
+ *   All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until a
+ *   pre-authorization UI is built. System actors still require capability
+ *   validation and produce evidence. Approval is policy-driven, not implicit.
+ *   Risk levels are preserved for evidence recording and future enforcement
+ *   escalation. See Notion reconciliation.
+ *
+ * MOBILE COVERAGE:
+ *   Mobile traffic is governed at the server boundary in v1.8.1. All tRPC
+ *   mutations from mobile clients pass through governedProcedure() identically
+ *   to web clients. Client-side token orchestration is introduced in a future
+ *   release.
  */
 
 export interface Capability {

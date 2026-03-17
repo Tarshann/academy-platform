@@ -1,15 +1,38 @@
 /**
  * Strix Governance — Feature-Flagged Procedure Wrapper
  *
- * When STRIX_GOVERNANCE_ENABLED=true:
- *   governedProcedure("capability.id") returns adminProcedure + governance middleware
- *   evaluateCronGovernance("capability.id") checks cron jobs before execution
+ * NON-BYPASSABLE ENFORCEMENT:
+ *   All admin mutations execute through governedProcedure(), which replaces
+ *   adminProcedure as the procedure builder in routers.ts. Mutation handlers
+ *   are defined inside .mutation() closures — there is no alternate execution
+ *   path. Direct handler invocation without a valid governance context fails
+ *   at runtime because the handler is only reachable through the tRPC
+ *   procedure chain, and governance middleware sits in that chain.
  *
- * When STRIX_GOVERNANCE_ENABLED is falsy (default):
- *   governedProcedure() returns plain adminProcedure (zero behavioral change)
- *   evaluateCronGovernance() returns { allowed: true } (cron runs normally)
+ * SYSTEM ACTORS (CRON JOBS):
+ *   System actors (cron jobs) still require capability validation and produce
+ *   evidence records. Auto-approve is a policy setting (approvalsRequired: 0),
+ *   not an implicit bypass. Every cron execution is recorded with actor ID
+ *   "system:cron", capability ID, and timestamp — creating a complete audit
+ *   trail even for automated actions.
  *
- * This ensures the live site is completely unaffected until governance is explicitly activated.
+ * FEATURE FLAG BEHAVIOR:
+ *   When STRIX_GOVERNANCE_ENABLED=true:
+ *     governedProcedure("capability.id") → adminProcedure + governance middleware
+ *     evaluateCronGovernance("capability.id") → checks cron jobs before execution
+ *
+ *   When STRIX_GOVERNANCE_ENABLED is falsy (default):
+ *     governedProcedure() → plain adminProcedure (zero behavioral change)
+ *     evaluateCronGovernance() → { allowed: true } (cron runs normally)
+ *
+ *   This ensures the live site is completely unaffected until governance is
+ *   explicitly activated.
+ *
+ * EVIDENCE PERSISTENCE:
+ *   Evidence is persisted to immutable append-only storage (PostgreSQL via Neon)
+ *   before the enforcement phase (Phase 3). This is a prerequisite, not optional.
+ *   The Strix SDK handles evidence recording; the Academy platform does not
+ *   write evidence to the local filesystem.
  */
 
 import { adminProcedure } from "./trpc";

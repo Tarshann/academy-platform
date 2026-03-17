@@ -4,9 +4,10 @@ This document outlines the exact procedure for safely rolling out the Strix gove
 
 ## 1. The Architecture (v1.8.0)
 
-The governance integration covers **90 total capabilities**:
-- **81 Admin Mutations** (via `governedProcedure()` in `routers.ts`)
+The governance integration covers **84 total capabilities**:
+- **75 Admin Mutations** (via `governedProcedure()` in `routers.ts`)
 - **9 Cron Jobs** (via `evaluateCronGovernance()` in `server/cron/*.ts`)
+- **27 Read-Only Queries** excluded (no governance needed for reads)
 
 **Safety Guarantee:**
 If `STRIX_GOVERNANCE_ENABLED` is false or missing, the `governedProcedure` middleware returns plain `adminProcedure` and the cron guard returns `{ allowed: true }`. There is **zero behavioral difference** from current production.
@@ -47,12 +48,14 @@ If `STRIX_GOVERNANCE_ENABLED` is false or missing, the `governedProcedure` middl
 3. **Verification:**
    - Go to Admin Dashboard > Platform > Governance.
    - The "Governance Not Active" banner should disappear.
-   - The stats should show "Total Capabilities: 90".
+   - The stats should show "Total Capabilities: 84".
    - Perform a low-risk admin action (e.g., toggle a gallery photo visibility).
    - Refresh the Governance tab — the action should appear in the Evidence Trail as "Allowed" (assuming auto-approve policy).
    - Trigger a cron job manually via the admin panel (or wait for the next scheduled run) and verify it appears in the Evidence Trail.
 
 ## 5. Enforcement (The "Lockdown")
+
+**Prerequisite:** Evidence persistence is upgraded to immutable append-only storage (PostgreSQL via Neon) before this phase. This is a hard prerequisite, not optional.
 
 Once the evidence trail proves the integration is stable (typically after 24-48 hours of observation):
 
