@@ -2397,80 +2397,89 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) return { items: [], total: 0, hasMore: false };
 
-        // Build category filter clause for both tables
-        const videoCategoryFilter = category !== "all"
-          ? sql`AND "category" = ${category}`
-          : sql``;
-        const photoCategoryFilter = category !== "all"
-          ? sql`AND "category" = ${category}`
-          : sql``;
+        try {
+          // Build category filter clause for both tables
+          const videoCategoryFilter = category !== "all"
+            ? sql`AND "category" = ${category}`
+            : sql``;
+          const photoCategoryFilter = category !== "all"
+            ? sql`AND "category" = ${category}`
+            : sql``;
 
-        // Single UNION ALL query with DB-level sort + pagination
-        const unionQuery = sql`
-          SELECT * FROM (
-            SELECT
-              'video-' || "id" AS "id",
-              'video' AS "type",
-              "title",
-              "description",
-              "url" AS "mediaUrl",
-              "thumbnail",
-              "platform"::text,
-              "category"::text,
-              COALESCE("viewCount", 0) AS "viewCount",
-              "createdAt"
-            FROM "videos"
-            WHERE "isPublished" = true ${videoCategoryFilter}
+          // Single UNION ALL query with DB-level sort + pagination
+          const unionQuery = sql`
+            SELECT * FROM (
+              SELECT
+                'video-' || "id" AS "id",
+                'video' AS "type",
+                "title",
+                "description",
+                "url" AS "mediaUrl",
+                "thumbnail",
+                "platform"::text,
+                "category"::text,
+                COALESCE("viewCount", 0) AS "viewCount",
+                "createdAt"
+              FROM "videos"
+              WHERE "isPublished" = true ${videoCategoryFilter}
 
-            UNION ALL
+              UNION ALL
 
-            SELECT
-              'photo-' || "id" AS "id",
-              'photo' AS "type",
-              "title",
-              "description",
-              "imageUrl" AS "mediaUrl",
-              NULL AS "thumbnail",
-              NULL AS "platform",
-              "category"::text,
-              COALESCE("viewCount", 0) AS "viewCount",
-              "createdAt"
-            FROM "galleryPhotos"
-            WHERE "isVisible" = true ${photoCategoryFilter}
-          ) AS feed
-          ORDER BY "createdAt" DESC
-          LIMIT ${limit}
-          OFFSET ${offset}
-        `;
+              SELECT
+                'photo-' || "id" AS "id",
+                'photo' AS "type",
+                "title",
+                "description",
+                "imageUrl" AS "mediaUrl",
+                NULL AS "thumbnail",
+                NULL AS "platform",
+                "category"::text,
+                COALESCE("viewCount", 0) AS "viewCount",
+                "createdAt"
+              FROM "galleryPhotos"
+              WHERE "isVisible" = true ${photoCategoryFilter}
+            ) AS feed
+            ORDER BY "createdAt" DESC
+            LIMIT ${limit}
+            OFFSET ${offset}
+          `;
 
-        const items = await db.execute(unionQuery);
+          const items = await db.execute(unionQuery);
 
-        // Get total count for pagination
-        const countQuery = sql`
-          SELECT (
-            (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
-            (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter})
-          )::int AS "total"
-        `;
-        const countResult = await db.execute(countQuery);
-        const total = Number((countResult.rows?.[0] as any)?.total ?? 0);
+          // Get total count for pagination
+          const countQuery = sql`
+            SELECT (
+              (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
+              (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter})
+            )::int AS "total"
+          `;
+          const countResult = await db.execute(countQuery);
 
-        return {
-          items: (items.rows ?? []).map((row: any) => ({
-            id: row.id,
-            type: row.type,
-            title: row.title,
-            description: row.description ?? null,
-            mediaUrl: row.mediaUrl ?? row.mediaurl,
-            thumbnail: row.thumbnail ?? null,
-            platform: row.platform ?? null,
-            category: row.category,
-            viewCount: Number(row.viewCount ?? row.viewcount ?? 0),
-            createdAt: row.createdAt ?? row.createdat,
-          })),
-          total,
-          hasMore: offset + limit < total,
-        };
+          // postgres-js returns results as array-like, access rows via array index or .rows
+          const resultRows = Array.isArray(items) ? items : (items.rows ?? []);
+          const countRows = Array.isArray(countResult) ? countResult : (countResult.rows ?? []);
+          const total = Number((countRows[0] as any)?.total ?? 0);
+
+          return {
+            items: resultRows.map((row: any) => ({
+              id: row.id,
+              type: row.type,
+              title: row.title,
+              description: row.description ?? null,
+              mediaUrl: row.mediaUrl ?? row.mediaurl,
+              thumbnail: row.thumbnail ?? null,
+              platform: row.platform ?? null,
+              category: row.category,
+              viewCount: Number(row.viewCount ?? row.viewcount ?? 0),
+              createdAt: row.createdAt ?? row.createdat,
+            })),
+            total,
+            hasMore: offset + limit < total,
+          };
+        } catch (err) {
+          logger.error("[Feed] list query failed:", err);
+          return { items: [], total: 0, hasMore: false };
+        }
       }),
   }),
 
