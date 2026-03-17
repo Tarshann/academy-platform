@@ -591,69 +591,55 @@ export async function markContactAsResponded(id: number) {
 export async function getAllGalleryPhotos(opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  const photos = await db
+
+  // DB-level sort: photos with imageUrl first, then by newest
+  const query = db
     .select()
     .from(galleryPhotos)
-    .where(
-      and(
-        eq(galleryPhotos.isVisible, true),
-        sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
-        sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
-      )
-    );
+    .where(eq(galleryPhotos.isVisible, true))
+    .orderBy(
+      sql`CASE WHEN ${galleryPhotos.imageUrl} IS NOT NULL AND TRIM(${galleryPhotos.imageUrl}) != '' THEN 0 ELSE 1 END`,
+      desc(galleryPhotos.createdAt)
+    )
+    .$dynamic();
 
-  // Sort: populated images (with imageUrl) first, then by creation date (newest first)
-  const sorted = photos.sort((a: any, b: any) => {
-    const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
-    const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
-
-    if (aHasImage && !bHasImage) return -1;
-    if (!aHasImage && bHasImage) return 1;
-
-    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bDate - aDate;
-  });
-
-  if (opts?.limit != null || opts?.offset != null) {
-    const start = opts?.offset ?? 0;
-    return opts?.limit != null ? sorted.slice(start, start + opts.limit) : sorted.slice(start);
+  if (opts?.limit != null) {
+    query.limit(opts.limit);
   }
-  return sorted;
+  if (opts?.offset != null) {
+    query.offset(opts.offset);
+  }
+
+  return await query;
 }
 
 export async function getGalleryPhotosByCategory(category: string, opts?: { limit?: number; offset?: number }) {
   const db = await getDb();
   if (!db) return [];
-  const photos = await db
+
+  const query = db
     .select()
     .from(galleryPhotos)
     .where(
       and(
         eq(galleryPhotos.isVisible, true),
-        eq(galleryPhotos.category, category as any),
-        sql`lower(${galleryPhotos.title}) NOT LIKE '%test%'`,
-        sql`lower(coalesce(${galleryPhotos.description}, '')) NOT LIKE '%test%'`
+        eq(galleryPhotos.category, category as any)
       )
-    );
+    )
+    .orderBy(
+      sql`CASE WHEN ${galleryPhotos.imageUrl} IS NOT NULL AND TRIM(${galleryPhotos.imageUrl}) != '' THEN 0 ELSE 1 END`,
+      desc(galleryPhotos.createdAt)
+    )
+    .$dynamic();
 
-  const sorted = photos.sort((a: any, b: any) => {
-    const aHasImage = !!(a.imageUrl && a.imageUrl.trim());
-    const bHasImage = !!(b.imageUrl && b.imageUrl.trim());
-
-    if (aHasImage && !bHasImage) return -1;
-    if (!aHasImage && bHasImage) return 1;
-
-    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    return bDate - aDate;
-  });
-
-  if (opts?.limit != null || opts?.offset != null) {
-    const start = opts?.offset ?? 0;
-    return opts?.limit != null ? sorted.slice(start, start + opts.limit) : sorted.slice(start);
+  if (opts?.limit != null) {
+    query.limit(opts.limit);
   }
-  return sorted;
+  if (opts?.offset != null) {
+    query.offset(opts.offset);
+  }
+
+  return await query;
 }
 
 export async function createGalleryPhoto(photoData: InsertGalleryPhoto) {
