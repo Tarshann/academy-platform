@@ -1202,8 +1202,9 @@ export type InsertReengagementLogEntry = typeof reengagementLog.$inferInsert;
  */
 export const sessionRecaps = pgTable("session_recaps", {
   id: serial("id").primaryKey(),
-  scheduleId: integer("schedule_id").notNull(),
+  scheduleId: integer("schedule_id"),
   content: text("content").notNull(),
+  type: varchar("type", { length: 20 }).default("recap").notNull(),
   generatedAt: timestamp("generated_at", { mode: 'date' }).defaultNow().notNull(),
 });
 
@@ -1254,3 +1255,27 @@ export const reminderLog = pgTable("reminder_log", {
 
 export type ReminderLogEntry = typeof reminderLog.$inferSelect;
 export type InsertReminderLogEntry = typeof reminderLog.$inferInsert;
+
+// ============================================================================
+// MILESTONES (PR Celebration Engine)
+// ============================================================================
+
+/**
+ * Athlete personal-record milestones with celebration card images.
+ */
+export const milestones = pgTable("milestones", {
+  id: serial("id").primaryKey(),
+  athleteId: integer("athlete_id").notNull(),
+  metricName: varchar("metric_name", { length: 100 }).notNull(),
+  previousValue: decimal("previous_value", { precision: 10, scale: 2 }),
+  newValue: decimal("new_value", { precision: 10, scale: 2 }).notNull(),
+  unit: varchar("unit", { length: 20 }),
+  improvementPct: decimal("improvement_pct", { precision: 5, scale: 1 }),
+  improvementDisplay: varchar("improvement_display", { length: 100 }).notNull(),
+  cardImageUrl: text("card_image_url"),
+  sharedCount: integer("shared_count").default(0),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type Milestone = typeof milestones.$inferSelect;
+export type InsertMilestone = typeof milestones.$inferInsert;

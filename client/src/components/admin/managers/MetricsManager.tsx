@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Pencil, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, Loader2, Trophy, Sparkles, ExternalLink } from "lucide-react";
 
 type MetricCategory = "speed" | "power" | "agility" | "endurance" | "strength" | "flexibility";
 
@@ -322,17 +322,46 @@ export function MetricsManager() {
   const [filterCategory, setFilterCategory] = useState<MetricCategory | "all">("all");
   const [filterAthleteId, setFilterAthleteId] = useState<string>("all");
   const [trendView, setTrendView] = useState<{ athleteId: number; metricName: string; category: MetricCategory } | null>(null);
+  const [celebration, setCelebration] = useState<{
+    athleteName: string;
+    metricName: string;
+    value: number;
+    unit: string;
+    cardUrl: string | null;
+    milestoneId: number;
+  } | null>(null);
 
   const utils = trpc.useUtils();
   const { data: metrics, isLoading } = trpc.metrics.admin.list.useQuery();
   const { data: members } = trpc.admin.members.list.useQuery();
 
   const recordMutation = trpc.metrics.admin.record.useMutation({
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       utils.metrics.admin.list.invalidate();
       setIsAddOpen(false);
+
+      if (data?.milestone?.id) {
+        // PR detected — show celebration
+        const athleteName = members
+          ? (members as any[]).find((m: any) => m.id === parseInt(form.athleteId))?.name ?? "Athlete"
+          : "Athlete";
+        setCelebration({
+          athleteName,
+          metricName: form.metricName,
+          value: parseFloat(form.value),
+          unit: form.unit,
+          cardUrl: data.milestone.cardUrl ?? null,
+          milestoneId: data.milestone.id,
+        });
+        toast.success("NEW PERSONAL RECORD!", {
+          description: `${athleteName} just set a PR in ${form.metricName}!`,
+          duration: 5000,
+        });
+      } else {
+        toast.success("Metric recorded successfully");
+      }
+
       setForm(defaultForm);
-      toast.success("Metric recorded successfully");
     },
     onError: (error) => {
       toast.error("Error recording metric", { description: error.message });
@@ -697,6 +726,51 @@ export function MetricsManager() {
           onClose={() => setTrendView(null)}
         />
       )}
+
+      {/* PR Celebration Dialog */}
+      <Dialog open={!!celebration} onOpenChange={() => setCelebration(null)}>
+        <DialogContent className="max-w-sm text-center">
+          <div className="space-y-4 py-2">
+            <div className="flex justify-center">
+              <div className="relative">
+                <Trophy className="h-16 w-16 text-yellow-500 animate-bounce" />
+                <Sparkles className="h-6 w-6 text-yellow-400 absolute -top-1 -right-1 animate-pulse" />
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-foreground">NEW PR!</h3>
+              <p className="text-lg font-semibold mt-1" style={{ color: "#d4a843" }}>
+                {celebration?.athleteName}
+              </p>
+            </div>
+            <div className="bg-muted rounded-lg p-4">
+              <p className="text-sm text-muted-foreground">{celebration?.metricName}</p>
+              <p className="text-3xl font-bold tabular-nums mt-1">
+                {celebration?.value} {celebration?.unit}
+              </p>
+            </div>
+            {celebration?.cardUrl && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => {
+                  if (celebration?.cardUrl) window.open(celebration.cardUrl, "_blank");
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Milestone Card
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Parents have been notified. This milestone is now in the community feed.
+            </p>
+            <Button onClick={() => setCelebration(null)} className="w-full">
+              Continue
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

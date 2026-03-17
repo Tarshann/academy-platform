@@ -119,8 +119,9 @@ vi.mock("../../drizzle/schema", () => ({
   userRelations: { parentId: "parentId", childId: "childId" },
   reengagementLog: { userId: "userId", sentAt: "sentAt", type: "type" },
   reminderLog: { userId: "userId", scheduleId: "scheduleId", type: "type" },
-  sessionRecaps: { scheduleId: "scheduleId" },
+  sessionRecaps: { scheduleId: "scheduleId", type: "type" },
   contentQueue: { scheduleId: "scheduleId" },
+  milestones: { id: "id", athleteId: "athleteId", metricName: "metricName", createdAt: "createdAt" },
   digestLog: { userId: "userId", type: "type", weekKey: "weekKey", id: "id" },
 }));
 
@@ -384,5 +385,55 @@ describe("cron/post-session-content", () => {
     expect(result).toHaveProperty("recapsGenerated");
     expect(result).toHaveProperty("socialDraftsQueued");
     expect(result).toHaveProperty("parentPushSent");
+  });
+});
+
+describe("milestones/isPR", () => {
+  it("detects higher-is-better PR correctly", async () => {
+    const { isPR } = await import("../milestones");
+    expect(isPR("Vertical Jump", 30, 28)).toBe(true);
+    expect(isPR("Vertical Jump", 26, 28)).toBe(false);
+    expect(isPR("Vertical Jump", 28, 28)).toBe(false);
+  });
+
+  it("detects lower-is-better PR correctly (timed metrics)", async () => {
+    const { isPR } = await import("../milestones");
+    expect(isPR("40-Yard Dash", 4.5, 4.8)).toBe(true);
+    expect(isPR("40-Yard Dash", 5.0, 4.8)).toBe(false);
+    expect(isPR("Mile Run", 6.0, 6.5)).toBe(true);
+    expect(isPR("L-Drill", 7.2, 7.0)).toBe(false);
+  });
+});
+
+describe("milestone-card/generateMilestoneCardSvg", () => {
+  it("generates valid SVG with correct content", async () => {
+    const { generateMilestoneCardSvg } = await import("../milestone-card");
+    const svg = generateMilestoneCardSvg({
+      athleteName: "John Doe",
+      metricName: "Vertical Jump",
+      newValue: 32,
+      unit: "inches",
+      improvementDisplay: "14.3% higher than previous best",
+    });
+    expect(svg).toContain("<svg");
+    expect(svg).toContain("John Doe");
+    expect(svg).toContain("Vertical Jump");
+    expect(svg).toContain("32 inches");
+    expect(svg).toContain("14.3% higher than previous best");
+    expect(svg).toContain("NEW PERSONAL RECORD");
+    expect(svg).toContain("THE ACADEMY");
+  });
+
+  it("escapes XML special characters", async () => {
+    const { generateMilestoneCardSvg } = await import("../milestone-card");
+    const svg = generateMilestoneCardSvg({
+      athleteName: "O'Brien & Sons",
+      metricName: "Pro Agility <5-10-5>",
+      newValue: 4.2,
+      unit: "s",
+      improvementDisplay: "2.5% faster",
+    });
+    expect(svg).toContain("O&apos;Brien &amp; Sons");
+    expect(svg).toContain("Pro Agility &lt;5-10-5&gt;");
   });
 });

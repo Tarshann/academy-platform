@@ -2464,6 +2464,23 @@ export const appRouter = router({
                 sr."generated_at" AS "createdAt"
               FROM "session_recaps" sr
               INNER JOIN "schedules" s ON sr."schedule_id" = s."id"
+              WHERE sr."type" = 'recap'
+
+              UNION ALL
+
+              SELECT
+                'milestone-' || m."id" AS "id",
+                'milestone' AS "type",
+                u."name" AS "title",
+                m."improvement_display" AS "description",
+                m."card_image_url" AS "mediaUrl",
+                NULL AS "thumbnail",
+                NULL AS "platform",
+                'highlights' AS "category",
+                0 AS "viewCount",
+                m."created_at" AS "createdAt"
+              FROM "milestones" m
+              LEFT JOIN "users" u ON m."athlete_id" = u."id"
             ) AS feed
             ORDER BY "createdAt" DESC
             LIMIT ${limit}
@@ -2477,7 +2494,8 @@ export const appRouter = router({
             SELECT (
               (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
               (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter}) +
-              (SELECT COUNT(*) FROM "session_recaps")
+              (SELECT COUNT(*) FROM "session_recaps" WHERE "type" = 'recap') +
+              (SELECT COUNT(*) FROM "milestones")
             )::int AS "total"
           `;
           const countResult = await db.execute(countQuery);
@@ -2560,10 +2578,75 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ ctx, input }) => {
-          return await createAthleteMetric({
+          // Get previous metrics for PR comparison BEFORE recording
+          const previousMetrics = await getAthleteMetricsByName(
+            input.athleteId,
+            input.metricName
+          );
+
+          const metric = await createAthleteMetric({
             ...input,
             recordedBy: ctx.user.id,
           });
+
+          // PR detection — check if this is a new personal record
+          let milestone: { milestoneId: number; cardUrl: string | null } | null = null;
+          if (previousMetrics && previousMetrics.length > 0) {
+            try {
+              const { isPR, triggerMilestone } = await import("./milestones");
+              const prevValues = previousMetrics.map((m: any) => parseFloat(m.value));
+              const LOWER_IS_BETTER_SET = new Set([
+                "40-Yard Dash", "Pro Agility (5-10-5)", "10-Yard Split",
+                "L-Drill", "Mile Run", "3-Cone Drill",
+              ]);
+              const isLower = LOWER_IS_BETTER_SET.has(input.metricName);
+              const previousBest = isLower ? Math.min(...prevValues) : Math.max(...prevValues);
+
+              const numericValue = parseFloat(input.value as string);
+
+              if (isPR(input.metricName, numericValue, previousBest)) {
+                const improvementPct = previousBest !== 0
+                  ? Math.abs(((numericValue - previousBest) / previousBest) * 100)
+                  : null;
+                const direction = isLower ? "faster" : "higher";
+                const improvementDisplay = improvementPct != null
+                  ? `${improvementPct.toFixed(1)}% ${direction} than previous best`
+                  : `New PR: ${numericValue} ${input.unit}`;
+
+                // Get athlete name for card/push
+                const { getDb } = await import("./db");
+                const { users } = await import("../drizzle/schema");
+                const { eq } = await import("drizzle-orm");
+                const db = await getDb();
+                let athleteName = "Athlete";
+                if (db) {
+                  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, input.athleteId)).limit(1);
+                  if (user?.name) athleteName = user.name;
+                }
+
+                milestone = await triggerMilestone({
+                  athleteId: input.athleteId,
+                  athleteName,
+                  metricName: input.metricName,
+                  previousValue: previousBest,
+                  newValue: numericValue,
+                  unit: input.unit,
+                  improvementPct: improvementPct != null ? parseFloat(improvementPct.toFixed(1)) : null,
+                  improvementDisplay,
+                });
+              }
+            } catch (err) {
+              logger.error("[metrics.record] PR detection failed (non-fatal)", err);
+            }
+          }
+
+          return {
+            ...metric,
+            milestone: milestone ? {
+              id: milestone.milestoneId,
+              cardUrl: milestone.cardUrl,
+            } : null,
+          };
         }),
 
       update: adminProcedure
@@ -3474,6 +3557,82 @@ export const appRouter = router({
         }
 
         await db.update(contentQueue).set(updateData).where(eq(contentQueue.id, input.id));
+        return { success: true };
+      }),
+  }),
+
+  // ============================================================================
+  // MILESTONES (PR Celebration Engine)
+  // ============================================================================
+
+  milestones: router({
+    listForAthlete: protectedProcedure
+      .input(z.object({ athleteId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.id !== input.athleteId && ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You can only view your own milestones",
+          });
+        }
+        const { getDb } = await import("./db");
+        const { milestones } = await import("../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) return [];
+
+        return await db
+          .select()
+          .from(milestones)
+          .where(eq(milestones.athleteId, input.athleteId))
+          .orderBy(desc(milestones.createdAt));
+      }),
+
+    recent: publicProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(20).optional() }).optional())
+      .query(async ({ input }) => {
+        const limit = input?.limit ?? 10;
+        const { getDb } = await import("./db");
+        const { milestones, users } = await import("../drizzle/schema");
+        const { desc, eq } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) return [];
+
+        return await db
+          .select({
+            id: milestones.id,
+            athleteId: milestones.athleteId,
+            metricName: milestones.metricName,
+            newValue: milestones.newValue,
+            unit: milestones.unit,
+            improvementDisplay: milestones.improvementDisplay,
+            cardImageUrl: milestones.cardImageUrl,
+            createdAt: milestones.createdAt,
+            athleteName: users.name,
+          })
+          .from(milestones)
+          .leftJoin(users, eq(milestones.athleteId, users.id))
+          .orderBy(desc(milestones.createdAt))
+          .limit(limit);
+      }),
+
+    trackShare: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { milestones } = await import("../drizzle/schema");
+        const { eq, sql } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+
+        await db
+          .update(milestones)
+          .set({ sharedCount: sql`COALESCE(${milestones.sharedCount}, 0) + 1` })
+          .where(eq(milestones.id, input.id));
+
         return { success: true };
       }),
   }),

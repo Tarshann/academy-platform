@@ -23,11 +23,30 @@ CREATE INDEX "reengagement_log_sent_idx" ON "reengagement_log" ("sent_at");
 -- AI-generated session recaps (feeds community feed)
 CREATE TABLE IF NOT EXISTS "session_recaps" (
   "id" serial PRIMARY KEY,
-  "schedule_id" integer NOT NULL REFERENCES "schedules"("id"),
+  "schedule_id" integer REFERENCES "schedules"("id"),
   "content" text NOT NULL,
+  "type" varchar(20) DEFAULT 'recap' NOT NULL,
   "generated_at" timestamp DEFAULT now() NOT NULL
 );
 CREATE INDEX "session_recaps_schedule_idx" ON "session_recaps" ("schedule_id");
+CREATE INDEX "session_recaps_type_idx" ON "session_recaps" ("type");
+
+-- Athlete PR milestones & celebration engine
+CREATE TABLE IF NOT EXISTS "milestones" (
+  "id" serial PRIMARY KEY,
+  "athlete_id" integer NOT NULL REFERENCES "users"("id"),
+  "metric_name" varchar(100) NOT NULL,
+  "previous_value" numeric(10,2),
+  "new_value" numeric(10,2) NOT NULL,
+  "unit" varchar(20),
+  "improvement_pct" numeric(5,1),
+  "improvement_display" varchar(100) NOT NULL,
+  "card_image_url" text,
+  "shared_count" integer DEFAULT 0,
+  "created_at" timestamp DEFAULT now() NOT NULL
+);
+CREATE INDEX "milestones_athlete_idx" ON "milestones" ("athlete_id");
+CREATE INDEX "milestones_created_idx" ON "milestones" ("created_at");
 
 -- AI-generated social content queue (coach reviews before posting)
 CREATE TABLE IF NOT EXISTS "content_queue" (
