@@ -165,6 +165,7 @@ function AuthGuard() {
           <Stack.Screen name="showcase" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="metrics" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="drops" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="vision-capture" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="admin" options={{ headerShown: false, presentation: 'card' }} />
           <Stack.Screen name="admin-members" options={{ headerShown: true, presentation: 'card', title: 'Members', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="admin-contacts" options={{ headerShown: true, presentation: 'card', title: 'Contacts', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />

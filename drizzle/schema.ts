@@ -8,6 +8,7 @@ import {
   varchar,
   decimal,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // ============================================================================
@@ -841,6 +842,7 @@ export const metricCategoryEnum = pgEnum("metric_category", [
   "endurance",
   "strength",
   "flexibility",
+  "skill",
 ]);
 
 /**
@@ -1279,3 +1281,32 @@ export const milestones = pgTable("milestones", {
 
 export type Milestone = typeof milestones.$inferSelect;
 export type InsertMilestone = typeof milestones.$inferInsert;
+
+// ============================================================================
+// VISION CAPTURES TABLE
+// ============================================================================
+
+/**
+ * Vision Captures — AI-assisted metric extraction from voice memos and photos.
+ * Tracks capture sessions, extraction results, and confirmation status.
+ */
+export const visionCaptures = pgTable("vision_captures", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id"),
+  capturedBy: integer("captured_by").notNull(),
+  mode: varchar("mode", { length: 20 }).notNull(),
+  mediaUrl: text("media_url").notNull(),
+  mediaType: varchar("media_type", { length: 30 }).notNull(),
+  extractionJson: jsonb("extraction_json"),
+  status: varchar("status", { length: 20 }).default("processing").notNull(),
+  athleteCount: integer("athlete_count").default(0),
+  metricCount: integer("metric_count").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  aiObservations: text("ai_observations"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+  confirmedAt: timestamp("confirmed_at", { mode: 'date' }),
+});
+
+export type VisionCapture = typeof visionCaptures.$inferSelect;
+export type InsertVisionCapture = typeof visionCaptures.$inferInsert;

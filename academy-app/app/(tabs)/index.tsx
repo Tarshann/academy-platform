@@ -90,6 +90,15 @@ export default function DashboardScreen() {
   const activeSub = (subscriptions.data ?? []).find((s: any) => s.status === 'active');
 
   const quickActions = [
+    ...(isAdmin ? [{
+      key: 'quick-capture',
+      icon: 'camera-outline' as const,
+      label: 'Quick Capture',
+      onPress: () => {
+        trackEvent('dashboard_quick_action_tapped', { action: 'quick-capture' });
+        router.push('/vision-capture');
+      },
+    }] : []),
     {
       key: 'schedule',
       icon: 'calendar-outline' as const,
