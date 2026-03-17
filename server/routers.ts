@@ -2798,8 +2798,7 @@ export const appRouter = router({
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         logger.error("[Games] spinWheel error:", err);
-        const detail = err instanceof Error ? err.message : String(err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Spin failed: ${detail}` });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to play spin wheel. Please try again." });
       }
     }),
 
@@ -2890,8 +2889,7 @@ export const appRouter = router({
         } catch (err) {
           if (err instanceof TRPCError) throw err;
           logger.error("[Games] submitTrivia error:", err);
-          const detail = err instanceof Error ? err.message : String(err);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Trivia failed: ${detail}` });
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to submit trivia answers. Please try again." });
         }
       }),
 
@@ -2951,8 +2949,7 @@ export const appRouter = router({
       } catch (err) {
         if (err instanceof TRPCError) throw err;
         logger.error("[Games] scratchCard error:", err);
-        const detail = err instanceof Error ? err.message : String(err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `Scratch failed: ${detail}` });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to play scratch card. Please try again." });
       }
     }),
 
