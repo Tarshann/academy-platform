@@ -386,7 +386,7 @@ pnpm test:e2e         # playwright (e2e/ directory)
 | `drizzle/schema.ts` | ~1,281 | Full database schema (55 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
 | `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
-| `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
+| `client/src/App.tsx` | ~222 | wouter SPA routing (~40+ routes, all lazy-loaded) |
 | `client/src/main.tsx` | ~175 | React entry: providers, auth, service worker, analytics |
 | `client/src/index.css` | — | Portal theme (oklch colors) |
 | `client/src/contexts/ClerkStateContext.tsx` | — | Clerk auth state wrapper with fallback provider |
