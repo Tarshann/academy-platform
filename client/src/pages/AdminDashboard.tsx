@@ -27,6 +27,7 @@ import {
   BellRing,
   Activity,
   Star,
+  Shield,
 } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
@@ -43,6 +44,7 @@ import { SocialPostsManager } from "@/components/admin/managers/SocialPostsManag
 import { MerchDropsManager } from "@/components/admin/managers/MerchDropsManager";
 import { MetricsManager } from "@/components/admin/managers/MetricsManager";
 import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
+import { GovernanceManager } from "@/components/admin/managers/GovernanceManager";
 
 interface NavItem {
   id: string;
@@ -96,6 +98,12 @@ const navGroups: NavGroup[] = [
       { id: "drops", label: "Merch Drops", icon: BellRing },
     ],
   },
+  {
+    label: "Platform",
+    items: [
+      { id: "governance", label: "Governance", icon: Shield },
+    ],
+  },
 ];
 
 const allItems = navGroups.flatMap((g) => g.items);
@@ -116,6 +124,7 @@ const panels: Record<string, React.ComponentType> = {
   drops: MerchDropsManager,
   metrics: MetricsManager,
   showcases: ShowcasesManager,
+  governance: GovernanceManager,
 };
 
 function SidebarNav({
