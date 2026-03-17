@@ -95,7 +95,14 @@
       "Bash(python -c \"import sys,json; builds=json.load\\(sys.stdin\\); [print\\(b[''''id''''],b[''''status''''],b[''''platform'''']\\) for b in builds]\")",
       "Bash(eas build:cancel a0848707-1eda-4b0d-ad0b-15c7ba3cd36d)",
       "Bash(python -c \"import sys,json; builds=json.load\\(sys.stdin\\); [print\\(b[''''id''''],b[''''status''''],b[''''platform'''']\\) for b in builds if b[''''status''''] not in \\(''''FINISHED'''',''''CANCELED''''\\)]\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(git log:*)",
+      "Bash(npm run:*)",
+      "Bash(GITHUB_TOKEN=\"\" gh auth setup-git)",
+      "Bash(GITHUB_TOKEN=\"\" git push origin main)",
+      "Bash(GITHUB_TOKEN=\"\" git pull --rebase origin main)",
+      "Bash(eas build:view ac32ccc1-bbc5-4e8b-8fd2-f7d958b379b4)"
     ]
   }
 }
