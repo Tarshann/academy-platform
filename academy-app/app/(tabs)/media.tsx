@@ -17,6 +17,7 @@ import { trackEvent } from '../../lib/analytics';
 import { colors, shadows, typography } from '../../lib/theme';
 import { AnimatedCard } from '../../components/AnimatedCard';
 import { GlassCard } from '../../components/GradientCard';
+import { ImageViewer } from '../../components/ImageViewer';
 
 type FeedItem = {
   id: string;
@@ -145,9 +146,11 @@ function MediaImage({
 function FeedCard({
   item,
   onVideoPress,
+  onPhotoPress,
 }: {
   item: FeedItem;
   onVideoPress: (item: FeedItem) => void;
+  onPhotoPress: (item: FeedItem) => void;
 }) {
   const isVideo = item.type === 'video';
   const imageSource = isVideo
@@ -158,13 +161,12 @@ function FeedCard({
 
   return (
     <View style={styles.card}>
-      {isVideo ? (
-        <TouchableOpacity activeOpacity={0.7} onPress={() => onVideoPress(item)}>
-          <MediaImage item={item} imageSource={imageSource} isVideo={isVideo} />
-        </TouchableOpacity>
-      ) : (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => (isVideo ? onVideoPress(item) : onPhotoPress(item))}
+      >
         <MediaImage item={item} imageSource={imageSource} isVideo={isVideo} />
-      )}
+      </TouchableOpacity>
 
       {/* Info */}
       <View style={styles.cardInfo}>
@@ -198,6 +200,7 @@ function FeedCard({
 export default function MediaFeedScreen() {
   const [category, setCategory] = useState<CategoryFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [viewerImage, setViewerImage] = useState<string | null>(null);
 
   const feed = trpc.feed.list.useQuery({
     limit: 50,
@@ -206,6 +209,11 @@ export default function MediaFeedScreen() {
   });
 
   const trackViewMutation = trpc.videos.trackView.useMutation();
+
+  const handlePhotoPress = useCallback((item: FeedItem) => {
+    trackEvent('media_feed_photo_tapped', { id: item.id });
+    setViewerImage(item.mediaUrl);
+  }, []);
 
   const handleVideoPress = useCallback(
     (item: FeedItem) => {
@@ -235,14 +243,19 @@ export default function MediaFeedScreen() {
   const renderItem = useCallback(
     ({ item, index }: { item: FeedItem; index: number }) => (
       <AnimatedCard index={index}>
-        <FeedCard item={item} onVideoPress={handleVideoPress} />
+        <FeedCard item={item} onVideoPress={handleVideoPress} onPhotoPress={handlePhotoPress} />
       </AnimatedCard>
     ),
-    [handleVideoPress]
+    [handleVideoPress, handlePhotoPress]
   );
 
   return (
     <View style={styles.container}>
+      <ImageViewer
+        visible={!!viewerImage}
+        imageUrl={viewerImage ?? ''}
+        onClose={() => setViewerImage(null)}
+      />
       <FlatList
         data={feed.data?.items ?? []}
         renderItem={renderItem}

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ export default function Gallery() {
   const filteredPhotos = useMemo(() => {
     if (!photos) return [];
     if (selectedCategory === "all") return photos;
-    return photos.filter((photo: any) => photo.category === selectedCategory);
+    return photos.filter((photo) => photo.category === selectedCategory);
   }, [photos, selectedCategory]);
 
   const openLightbox = (index: number) => {
@@ -40,15 +40,27 @@ export default function Gallery() {
     setLightboxOpen(true);
   };
 
-  const nextPhoto = () => {
+  const nextPhoto = useCallback(() => {
     setCurrentPhotoIndex((prev) => (prev + 1) % filteredPhotos.length);
-  };
+  }, [filteredPhotos.length]);
 
-  const prevPhoto = () => {
+  const prevPhoto = useCallback(() => {
     setCurrentPhotoIndex(
       (prev) => (prev - 1 + filteredPhotos.length) % filteredPhotos.length
     );
-  };
+  }, [filteredPhotos.length]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") nextPhoto();
+      else if (e.key === "ArrowLeft") prevPhoto();
+      else if (e.key === "Escape") setLightboxOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, nextPhoto, prevPhoto]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -123,8 +135,12 @@ export default function Gallery() {
             )}
 
             {!isLoading && !isError && filteredPhotos.length > 0 && (
+              <>
+              <p className="text-sm text-muted-foreground mb-4">
+                {filteredPhotos.length} photo{filteredPhotos.length !== 1 ? "s" : ""}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPhotos.map((photo: any, index: number) => (
+                {filteredPhotos.map((photo, index) => (
                   <div
                     key={photo.id}
                     className="group relative overflow-hidden rounded-xl bg-muted cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"
@@ -162,6 +178,7 @@ export default function Gallery() {
                   </div>
                 ))}
               </div>
+              </>
             )}
 
             {!isLoading && !isError && filteredPhotos.length === 0 && (
@@ -201,6 +218,7 @@ export default function Gallery() {
             <button
               onClick={() => setLightboxOpen(false)}
               className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Close lightbox"
             >
               <X className="w-6 h-6 text-white" />
             </button>
@@ -208,6 +226,7 @@ export default function Gallery() {
             <button
               onClick={prevPhoto}
               className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Previous photo"
             >
               <ChevronLeft className="w-8 h-8 text-white" />
             </button>
@@ -215,6 +234,7 @@ export default function Gallery() {
             <button
               onClick={nextPhoto}
               className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label="Next photo"
             >
               <ChevronRight className="w-8 h-8 text-white" />
             </button>
