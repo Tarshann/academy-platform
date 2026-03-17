@@ -1,8 +1,15 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendEmail } from "../email";
 
 export async function run() {
   logger.info("[cron/parent-digest] Generating parent weekly digests");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.parentDigest", "parent-digest");
+  if (!guard.allowed) {
+    logger.info("[cron/parent-digest] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb } = await import("../db");
   const {
