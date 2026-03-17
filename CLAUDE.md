@@ -80,7 +80,7 @@ academy-platform/
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
 │   ├── cron/                #   Scheduled automation functions (9 cron jobs + tests)
-│   ├── routers.ts           #   All tRPC routes (~3,550 lines)
+│   ├── routers.ts           #   All tRPC routes (~3,710 lines)
 │   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,280 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
@@ -93,6 +93,8 @@ academy-platform/
 │   ├── products.ts          #   Product catalog logic
 │   ├── storage.ts           #   File storage (S3/Forge CDN)
 │   ├── stripe-webhook.ts    #   Stripe event processing logic
+│   ├── milestones.ts        #   PR detection + milestone celebration pipeline
+│   ├── milestone-card.ts    #   SVG→PNG celebration card generator (sharp)
 │   ├── performance-lab-apply.ts  # REST endpoint: Performance Lab applications
 │   ├── skills-lab-register.ts    # REST endpoint: Skills Lab registrations
 │   └── *.test.ts            #   Vitest unit tests (co-located with source)
@@ -146,7 +148,7 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (54 tables, enums, relations)
+│   ├── schema.ts            #   Full PostgreSQL schema (55 tables, enums, relations)
 │   └── 0000-0019_*.sql      #   Sequential migrations (latest: automation infrastructure)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
@@ -352,7 +354,8 @@ appRouter
 ├── referrals.*       # Referral codes, invite by email, conversion tracking
 ├── scheduleTemplates.* # Recurring weekly schedule templates, auto-generate sessions
 ├── onboarding.*      # 4-step guided first-login flow (role → sport → goals → complete)
-└── progressReports.* # AI-generated weekly athlete progress reports (LLM via Gemini)
+├── progressReports.* # AI-generated weekly athlete progress reports (LLM via Gemini)
+└── milestones.*      # Personal record detection, celebration cards, feed integration
 ```
 
 Procedures use three auth levels (all defined in `server/_core/trpc.ts`):
@@ -378,9 +381,9 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~3,550 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, etc.) |
+| `server/routers.ts` | ~3,710 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, milestones, etc.) |
 | `server/db.ts` | ~3,280 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~1,256 | Full database schema (54 tables) |
+| `drizzle/schema.ts` | ~1,281 | Full database schema (55 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
 | `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
@@ -801,12 +804,13 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Strategic audit implementation** (migration 0016, 12 features) — Family/household accounts with parent dashboard page (`/family`) viewing child metrics/attendance/schedules. Waitlist & capacity management with auto-notify when spots open. Onboarding flow (`/onboarding`) — 4-step guided first-login (role → sport → goals → complete). Automated billing & dunning via Stripe webhook (`invoice.payment_failed` triggers email + reminder record). Referral program (`/referrals`) — invite by email, referral codes, 100-point rewards, conversion tracking. RBAC with 7 roles (owner, admin, head_coach, assistant_coach, front_desk, parent, athlete) — `extendedRole` column on users table. Recurring schedule templates — admin creates weekly templates, auto-generates sessions. AI weekly progress reports — LLM-generated via Gemini, emailed to parents. Sibling/family discounts — auto 10%/15% based on enrolled children count. CI/CD pipeline (`.github/workflows/ci.yml`) with 3 jobs (portal build+test, marketing build+validate, mobile typecheck). Sentry error monitoring (`server/_core/sentry.ts`) — optional activation via `SENTRY_DSN` env var, integrated into Express error handler. All changes purely additive — no existing routes or signatures modified.
 - **v1.7.1 enhancements** (build 29) — Marketing: App Store/Google Play download badges on homepage hero, footer, and dedicated "Get the App" section; Performance Lab cohort urgency messaging with pulsing enrollment badges. Mobile: app name updated for ASO ("The Academy - Youth Sports"); calendar sync via `expo-calendar` with 1hr + 15min reminder alarms on schedule screen; athlete progress card on dashboard showing recent metrics. Server: feed query optimized to raw SQL `UNION ALL` for better performance.
 - **v1.8.0 automation + AI content engine** (migration 0019, 6 new tables) — 9 Vercel Cron Jobs: nurture campaigns, auto-generate sessions from templates, session reminders, merch drop notifications, metrics prompts, bi-weekly AI progress reports, reengagement campaigns, parent weekly digests, post-session AI content generation. AI content engine uses Gemini 2.5 Flash to auto-generate session recaps, social captions, and parent push notifications. Content queue admin manager with approve/reject/edit workflow. Feed extended with session recap type. `api/cron/` entry points with `CRON_SECRET` auth. `server/cron/` orchestration functions with unit tests. Dedup indexes prevent notification spam.
+- **Milestone celebration engine** — Direction-aware personal record detection in `metrics.record` mutation. Celebration pipeline: milestone DB record → SVG→PNG card generation (via `sharp`) → parent push notification → feed post. New `milestones` tRPC router and `milestones` table (migration 0019 extended). MetricsManager confetti dialog on PR detection. Feed `UNION ALL` extended with milestone type.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~3,550 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~3,710 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
