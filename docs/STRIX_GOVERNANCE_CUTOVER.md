@@ -1,8 +1,17 @@
-# Strix Governance Cutover Checklist (v1.8.0)
+# Strix Governance Cutover Checklist (v1.8.1)
 
 This document outlines the exact procedure for safely rolling out the Strix governance engine on the live Academy platform. The integration is built to be **100% inert** until explicitly enabled via feature flags.
 
-## 1. The Architecture (v1.8.0)
+## Release Sequencing
+
+- **v1.8.1** — Governance silent deploy, feature flag OFF (this release)
+- **v1.9.0** — Vision Capture only (no governance changes)
+- **v1.8.2** — Evidence sink migration (PostgreSQL) + cron pre-authorization UI
+- **Phase 3 activation** — happens only after v1.8.2 is live
+- **Phase 4 enforcement** — happens after web approval flow is validated
+- **Mobile approval UX** — follows later
+
+## 1. The Architecture (v1.8.1)
 
 The governance integration covers **84 total capabilities**:
 - **75 Admin Mutations** (via `governedProcedure()` in `routers.ts`)
@@ -55,16 +64,23 @@ If `STRIX_GOVERNANCE_ENABLED` is false or missing, the `governedProcedure` middl
 
 ## 5. Enforcement (The "Lockdown")
 
-**Prerequisite:** Evidence persistence is upgraded to immutable append-only storage (PostgreSQL via Neon) before this phase. This is a hard prerequisite, not optional.
+**Prerequisites (all must be met before this phase):**
+- Evidence persistence is upgraded to immutable append-only storage (PostgreSQL via Neon). This is a hard prerequisite, not optional.
+- v1.8.2 is deployed with evidence sink migration and cron pre-authorization UI.
+- Web approval flow has been validated in staging.
 
 Once the evidence trail proves the integration is stable (typically after 24-48 hours of observation):
 
 1. Go to the Strix Admin Console.
 2. Change the policy from "Auto-Approve All" to "Enforce Thresholds".
-3. **Verification:**
+3. **What this means:**
+   - All 75 governed tRPC mutations require governance tokens with risk-appropriate approval levels.
+   - Cron enforcement escalates beyond auto-approve only after the pre-authorization UI is live. Until then, cron capabilities remain auto-approved with evidence recording.
+4. **Verification:**
    - Attempt a `critical` action (e.g., change a user's role to Admin).
    - The UI should show an "Approval Required" state or throw a clean "Forbidden" error (depending on client-side handling).
    - The Governance tab should show the action as "Escalated" or "Denied" in the Evidence Trail.
+   - Verify cron jobs continue to run normally (auto-approved with evidence).
 
 ## Rollback Plan
 
