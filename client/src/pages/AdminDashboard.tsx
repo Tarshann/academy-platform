@@ -28,6 +28,7 @@ import {
   Activity,
   Star,
   Sparkles,
+  Camera,
 } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
@@ -45,6 +46,7 @@ import { MerchDropsManager } from "@/components/admin/managers/MerchDropsManager
 import { MetricsManager } from "@/components/admin/managers/MetricsManager";
 import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
 import { ContentQueueManager } from "@/components/admin/managers/ContentQueueManager";
+import { VisionCaptureManager } from "@/components/admin/managers/VisionCaptureManager";
 
 interface NavItem {
   id: string;
@@ -89,6 +91,7 @@ const navGroups: NavGroup[] = [
     label: "Programs & Athletes",
     items: [
       { id: "programs", label: "Programs", icon: Trophy },
+      { id: "quick-capture", label: "Quick Capture", icon: Camera },
       { id: "metrics", label: "Metrics", icon: Activity },
       { id: "showcases", label: "Showcases", icon: Star },
     ],
@@ -117,6 +120,7 @@ const panels: Record<string, React.ComponentType> = {
   gallery: GalleryManager,
   social: SocialPostsManager,
   drops: MerchDropsManager,
+  "quick-capture": VisionCaptureManager,
   metrics: MetricsManager,
   showcases: ShowcasesManager,
   "content-queue": ContentQueueManager,

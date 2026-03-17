@@ -2584,7 +2584,7 @@ export const appRouter = router({
           z.object({
             athleteId: z.number(),
             metricName: z.string().trim().min(1),
-            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility"]),
+            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility", "skill"]),
             value: metricValueSchema,
             unit: z.string().trim().min(1),
             notes: z.string().optional(),
@@ -2668,7 +2668,7 @@ export const appRouter = router({
           z.object({
             id: z.number(),
             metricName: z.string().trim().min(1).optional(),
-            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility"]).optional(),
+            category: z.enum(["speed", "power", "agility", "endurance", "strength", "flexibility", "skill"]).optional(),
             value: metricValueSchema.optional(),
             unit: z.string().trim().min(1).optional(),
             notes: z.string().optional(),
@@ -3719,6 +3719,270 @@ export const appRouter = router({
           return { success: true };
         }),
     }),
+  }),
+
+  // =========================================================================
+  // VISION CAPTURE — AI metric extraction from voice memos and photos
+  // =========================================================================
+  visionCapture: router({
+    extract: adminProcedure
+      .input(
+        z.object({
+          mediaUrl: z.string().url(),
+          mediaType: z.enum([
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "audio/mp4",
+            "audio/wav",
+            "audio/mpeg",
+          ]),
+          mode: z.enum(["voice", "photo"]),
+          scheduleId: z.number().optional(),
+          drillContext: z.string().max(200).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { extractFromVoice, extractFromPhoto } = await import(
+          "./vision-capture"
+        );
+        const { visionCaptures } = await import("../drizzle/schema");
+        const { getDb } = await import("./db");
+
+        const db = await getDb();
+        if (!db)
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Database unavailable",
+          });
+
+        // Create capture record in processing state
+        const [capture] = await db
+          .insert(visionCaptures)
+          .values({
+            scheduleId: input.scheduleId || null,
+            capturedBy: ctx.user.id,
+            mode: input.mode,
+            mediaUrl: input.mediaUrl,
+            mediaType: input.mediaType,
+            status: "processing",
+          })
+          .returning();
+
+        try {
+          const startTime = Date.now();
+          let result;
+
+          if (input.mode === "voice") {
+            result = await extractFromVoice(input.mediaUrl);
+          } else {
+            result = await extractFromPhoto(input.mediaUrl);
+          }
+
+          const processingTime = Date.now() - startTime;
+          const athleteCount = result.athletes.length;
+          const metricCount = result.athletes.reduce(
+            (sum: number, a: any) => sum + a.metrics.length,
+            0
+          );
+
+          // Update capture with results
+          const { eq } = await import("drizzle-orm");
+          await db
+            .update(visionCaptures)
+            .set({
+              extractionJson: result,
+              status: "ready",
+              athleteCount,
+              metricCount,
+              processingTimeMs: processingTime,
+              aiObservations: result.sessionNotes || null,
+            })
+            .where(eq(visionCaptures.id, capture.id));
+
+          return {
+            captureId: capture.id,
+            ...result,
+            processingTimeMs: processingTime,
+          };
+        } catch (err: any) {
+          const { eq } = await import("drizzle-orm");
+          await db
+            .update(visionCaptures)
+            .set({
+              status: "failed",
+              errorMessage: err.message || String(err),
+            })
+            .where(eq(visionCaptures.id, capture.id));
+
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: err.message || "Extraction failed. Please try again.",
+          });
+        }
+      }),
+
+    confirm: adminProcedure
+      .input(
+        z.object({
+          captureId: z.number(),
+          metrics: z.array(
+            z.object({
+              athleteId: z.number(),
+              metricName: z.string().trim().min(1),
+              category: z.enum([
+                "speed",
+                "power",
+                "agility",
+                "endurance",
+                "strength",
+                "flexibility",
+                "skill",
+              ]),
+              value: metricValueSchema,
+              unit: z.string().trim().min(1),
+              notes: z.string().optional(),
+              sessionDate: z.string().transform((s) => new Date(s)),
+            })
+          ),
+          sessionNotes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const { visionCaptures } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const { getDb } = await import("./db");
+
+        const results = [];
+        let prCount = 0;
+
+        for (const metric of input.metrics) {
+          const created = await createAthleteMetric({
+            athleteId: metric.athleteId,
+            metricName: metric.metricName,
+            category: metric.category,
+            value: metric.value,
+            unit: metric.unit,
+            notes: metric.notes || undefined,
+            sessionDate: metric.sessionDate,
+            recordedBy: ctx.user.id,
+          });
+
+          // PR detection (same logic as metrics.admin.record)
+          try {
+            const previousMetrics = await getAthleteMetricsByName(
+              metric.athleteId,
+              metric.metricName
+            );
+            // Filter out the one we just created
+            const prevOnly = (previousMetrics || []).filter(
+              (m: any) => m.id !== created.id
+            );
+
+            if (prevOnly.length > 0) {
+              const { isPR, triggerMilestone } = await import("./milestones");
+              const prevValues = prevOnly.map((m: any) => parseFloat(m.value));
+              const LOWER_IS_BETTER_SET = new Set([
+                "40-Yard Dash",
+                "Pro Agility (5-10-5)",
+                "10-Yard Split",
+                "L-Drill",
+                "Mile Run",
+                "3-Cone Drill",
+              ]);
+              const isLower = LOWER_IS_BETTER_SET.has(metric.metricName);
+              const previousBest = isLower
+                ? Math.min(...prevValues)
+                : Math.max(...prevValues);
+              const numericValue = parseFloat(metric.value as string);
+
+              if (isPR(metric.metricName, numericValue, previousBest)) {
+                const improvementPct =
+                  previousBest !== 0
+                    ? Math.abs(
+                        ((numericValue - previousBest) / previousBest) * 100
+                      )
+                    : null;
+                const direction = isLower ? "faster" : "higher";
+                const improvementDisplay =
+                  improvementPct != null
+                    ? `${improvementPct.toFixed(1)}% ${direction} than previous best`
+                    : `New PR: ${numericValue} ${metric.unit}`;
+
+                const db = await getDb();
+                let athleteName = "Athlete";
+                if (db) {
+                  const { users } = await import("../drizzle/schema");
+                  const [user] = await db
+                    .select({ name: users.name })
+                    .from(users)
+                    .where(eq(users.id, metric.athleteId))
+                    .limit(1);
+                  if (user?.name) athleteName = user.name;
+                }
+
+                await triggerMilestone({
+                  athleteId: metric.athleteId,
+                  athleteName,
+                  metricName: metric.metricName,
+                  previousValue: previousBest,
+                  newValue: numericValue,
+                  unit: metric.unit,
+                  improvementPct:
+                    improvementPct != null
+                      ? parseFloat(improvementPct.toFixed(1))
+                      : null,
+                  improvementDisplay,
+                });
+                prCount++;
+              }
+            }
+          } catch (prErr) {
+            logger.error(
+              "[vision-capture/confirm] PR detection failed for metric",
+              prErr
+            );
+          }
+
+          results.push(created);
+        }
+
+        // Mark capture as confirmed
+        const db = await getDb();
+        if (db) {
+          await db
+            .update(visionCaptures)
+            .set({
+              status: "confirmed",
+              confirmedAt: new Date(),
+              metricCount: input.metrics.length,
+            })
+            .where(eq(visionCaptures.id, input.captureId));
+        }
+
+        return {
+          metricsCreated: results.length,
+          prsDetected: prCount,
+          results,
+        };
+      }),
+
+    listRecent: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(50).default(20) }))
+      .query(async ({ input }) => {
+        const { getDb } = await import("./db");
+        const { visionCaptures } = await import("../drizzle/schema");
+        const { desc } = await import("drizzle-orm");
+
+        const db = await getDb();
+        if (!db) return [];
+
+        return await db
+          .select()
+          .from(visionCaptures)
+          .orderBy(desc(visionCaptures.createdAt))
+          .limit(input.limit);
+      }),
   }),
 });
 
