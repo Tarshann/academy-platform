@@ -1,8 +1,15 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendPushToUsers } from "../push";
 
 export async function run() {
   logger.info("[cron/metrics-prompt] Prompting coaches to enter metrics");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.metricsPrompt", "metrics-prompt");
+  if (!guard.allowed) {
+    logger.info("[cron/metrics-prompt] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb } = await import("../db");
   const { schedules, attendanceRecords, users } = await import("../../drizzle/schema");

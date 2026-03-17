@@ -1,9 +1,16 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendPushToUsers } from "../push";
 import { sendEmail } from "../email";
 
 export async function run() {
   logger.info("[cron/reengagement] Running re-engagement check");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.reengagement", "reengagement");
+  if (!guard.allowed) {
+    logger.info("[cron/reengagement] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb } = await import("../db");
   const { users, attendanceRecords, reengagementLog } = await import("../../drizzle/schema");

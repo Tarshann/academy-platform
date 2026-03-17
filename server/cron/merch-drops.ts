@@ -1,8 +1,15 @@
+import { evaluateCronGovernance } from "../_core/governed-procedure";
 import { logger } from "../_core/logger";
 import { sendPushToUsers } from "../push";
 
 export async function run() {
   logger.info("[cron/merch-drops] Checking for scheduled drops to send");
+  // Strix governance check — when enabled, cron must be approved before executing
+  const guard = await evaluateCronGovernance("cron.merchDrops", "merch-drops");
+  if (!guard.allowed) {
+    logger.info("[cron/merch-drops] Governance denied: " + (guard.reason || "no approval"));
+    return { skipped: true, reason: guard.reason || "governance denied" };
+  }
 
   const { getDb } = await import("../db");
   const { merchDrops, pushSubscriptions } = await import("../../drizzle/schema");
