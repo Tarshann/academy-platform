@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.8.0 (mobile app v1.8.0, build 30). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow.
+**Current release**: v1.8.0 (mobile app v1.8.0, build 30). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. Post-v1.8.0: Strix governance SDK integration — 84 capabilities (75 tRPC mutations + 9 cron jobs) with risk classification, approval workflows, and evidence trail.
 
 ---
 
@@ -50,6 +50,7 @@ Key patterns:
 - **Config-driven content** — Marketing business data lives in one config file; pages are pure renderers.
 - **Auth-graceful degradation** — Clerk is primary auth, but the system works with OAuth fallback if Clerk keys aren't configured.
 - **Isolated security boundaries** — Stripe webhook has its own serverless bundle, separate from main API.
+- **Governance-aware mutations** — Admin mutations use `governedProcedure()` which wraps `adminProcedure` with optional Strix governance middleware. Feature-flagged via `STRIX_GOVERNANCE_ENABLED`.
 
 ---
 
@@ -80,7 +81,7 @@ academy-platform/
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
 │   ├── cron/                #   Scheduled automation functions (9 cron jobs + tests)
-│   ├── routers.ts           #   All tRPC routes (~3,710 lines)
+│   ├── routers.ts           #   All tRPC routes (~3,728 lines)
 │   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,280 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
@@ -95,6 +96,7 @@ academy-platform/
 │   ├── stripe-webhook.ts    #   Stripe event processing logic
 │   ├── milestones.ts        #   PR detection + milestone celebration pipeline
 │   ├── milestone-card.ts    #   SVG→PNG celebration card generator (sharp)
+│   ├── governance-router.ts #   Strix governance admin API (stats, evidence trail, capabilities)
 │   ├── performance-lab-apply.ts  # REST endpoint: Performance Lab applications
 │   ├── skills-lab-register.ts    # REST endpoint: Skills Lab registrations
 │   └── *.test.ts            #   Vitest unit tests (co-located with source)
@@ -123,6 +125,9 @@ academy-platform/
 │   ├── map.ts               #   Map/geocoding utilities
 │   ├── sdk.ts               #   SDK authentication helpers
 │   ├── sentry.ts            #   Sentry error monitoring (optional, activated via SENTRY_DSN)
+│   ├── strix.ts             #   Strix governance SDK client (lazy singleton, null when unconfigured)
+│   ├── strix-capabilities.ts #  84 capability definitions (risk levels, approval requirements)
+│   ├── governed-procedure.ts #  governedProcedure() wrapper — feature-flagged governance middleware
 │   ├── systemRouter.ts      #   System-level tRPC routes (health, version)
 │   └── types/               #   TypeScript type definitions
 │
@@ -303,6 +308,7 @@ npm test              # Playwright E2E tests (tests/e2e/)
 7. **PWA support** — Client registers a service worker; the portal can be installed as a Progressive Web App.
 8. **Web Push notifications** — VAPID keys configured for browser push notifications (`server/push.ts`).
 9. **Input sanitization** — REST endpoints sanitize user inputs to prevent HTML injection in email templates. Chat history limits are capped (1-200) to prevent abuse.
+10. **Strix governance layer** — All 75 admin tRPC mutations use `governedProcedure()` instead of raw `adminProcedure`. Feature-flagged via `STRIX_GOVERNANCE_ENABLED`. When OFF (default), zero behavioral change. When ON, evaluates each mutation against the Strix SDK for approval/deny/escalate decisions with evidence trail. 9 cron jobs also governed (auto-approve with evidence recording). Fails open on SDK errors.
 
 ### Server Module Breakdown
 
@@ -322,6 +328,7 @@ The `server/` directory follows a flat structure (no domain modules yet):
 | `chat-sse.ts` | SSE real-time chat: room management, broadcast, active connection tracking |
 | `chat.ts` | Socket.IO chat (optional, for persistent-connection environments) |
 | `cron/` | 9 automation functions: nurture, generate-sessions, session-reminders, merch-drops, metrics-prompt, progress-reports, reengagement, parent-digest, post-session-content |
+| `governance-router.ts` | Strix governance admin API: stats, evidence trail, capability registry — all feature-flagged |
 
 ### tRPC Router Structure
 
@@ -355,7 +362,8 @@ appRouter
 ├── scheduleTemplates.* # Recurring weekly schedule templates, auto-generate sessions
 ├── onboarding.*      # 4-step guided first-login flow (role → sport → goals → complete)
 ├── progressReports.* # AI-generated weekly athlete progress reports (LLM via Gemini)
-└── milestones.*      # Personal record detection, celebration cards, feed integration
+├── milestones.*      # Personal record detection, celebration cards, feed integration
+└── governance.*      # Strix governance dashboard (stats, evidence trail, capability registry)
 ```
 
 Procedures use three auth levels (all defined in `server/_core/trpc.ts`):
@@ -386,21 +394,23 @@ pnpm test:e2e         # playwright (e2e/ directory)
 | `drizzle/schema.ts` | ~1,281 | Full database schema (55 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
 | `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
-| `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
+| `client/src/App.tsx` | ~222 | wouter SPA routing (~40+ routes, all lazy-loaded) |
 | `client/src/main.tsx` | ~175 | React entry: providers, auth, service worker, analytics |
 | `client/src/index.css` | — | Portal theme (oklch colors) |
 | `client/src/contexts/ClerkStateContext.tsx` | — | Clerk auth state wrapper with fallback provider |
 
 ### Admin Manager Components
 
-The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 16 manager panels in `client/src/components/admin/managers/`:
+The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 17 manager panels in `client/src/components/admin/managers/`:
 
 | Group | Managers |
 |-------|---------|
 | **Operations** | Schedules, Attendance, Locations |
 | **People** | Members, Coaches, Contacts |
-| **Content** | Announcements, Blog, Videos, Gallery, Social Posts, Merch Drops, Metrics, Showcases, Content Queue |
-| **Programs** | Programs |
+| **Content** | Announcements, Blog, Videos, Gallery, Social, Content Queue |
+| **Programs & Athletes** | Programs, Metrics, Showcases |
+| **Engagement** | Merch Drops |
+| **Platform** | Governance |
 
 Desktop: persistent sidebar. Mobile: Sheet overlay.
 
@@ -657,6 +667,7 @@ See `.env.example` for the full list. Key groups:
 - **Admin**: `ADMIN_NOTIFY_EMAILS` (comma-separated admin notification recipients)
 - **Error Monitoring**: `SENTRY_DSN` (optional, activates Sentry error tracking)
 - **Automation**: `CRON_SECRET` (shared secret for Vercel Cron Job auth)
+- **Governance**: `STRIX_GOVERNANCE_ENABLED` (feature flag, default false), `STRIX_API_KEY`, `STRIX_TENANT_ID`, `STRIX_API_URL` (defaults to `https://api.strix.dev/v1`)
 
 - **Analytics**: `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` (Umami)
 - **Socket.IO**: `ENABLE_SOCKET_IO` (toggle, disabled by default)
@@ -805,12 +816,13 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **v1.7.1 enhancements** (build 29) — Marketing: App Store/Google Play download badges on homepage hero, footer, and dedicated "Get the App" section; Performance Lab cohort urgency messaging with pulsing enrollment badges. Mobile: app name updated for ASO ("The Academy - Youth Sports"); calendar sync via `expo-calendar` with 1hr + 15min reminder alarms on schedule screen; athlete progress card on dashboard showing recent metrics. Server: feed query optimized to raw SQL `UNION ALL` for better performance.
 - **v1.8.0 automation + AI content engine** (migration 0019, 6 new tables) — 9 Vercel Cron Jobs: nurture campaigns, auto-generate sessions from templates, session reminders, merch drop notifications, metrics prompts, bi-weekly AI progress reports, reengagement campaigns, parent weekly digests, post-session AI content generation. AI content engine uses Gemini 2.5 Flash to auto-generate session recaps, social captions, and parent push notifications. Content queue admin manager with approve/reject/edit workflow. Feed extended with session recap type. `api/cron/` entry points with `CRON_SECRET` auth. `server/cron/` orchestration functions with unit tests. Dedup indexes prevent notification spam.
 - **Milestone celebration engine** — Direction-aware personal record detection in `metrics.record` mutation. Celebration pipeline: milestone DB record → SVG→PNG card generation (via `sharp`) → parent push notification → feed post. New `milestones` tRPC router and `milestones` table (migration 0019 extended). MetricsManager confetti dialog on PR detection. Feed `UNION ALL` extended with milestone type.
+- **Strix governance integration (v4)** — Feature-flagged governance layer wrapping all 75 admin tRPC mutations and 9 cron jobs (84 total capabilities). `governedProcedure()` replaces `adminProcedure` in `routers.ts` — when `STRIX_GOVERNANCE_ENABLED=false` (default), identical to plain adminProcedure. When enabled, evaluates each action against Strix SDK for allow/deny/escalate decisions. 4 risk levels (critical, high, medium, low) with configurable approval requirements. Cron jobs governed with auto-approve (approvalsRequired: 0) and evidence recording. New files: `server/_core/strix.ts` (SDK client), `server/_core/strix-capabilities.ts` (84 capability definitions), `server/_core/governed-procedure.ts` (middleware), `server/governance-router.ts` (admin API). New admin GovernanceManager panel with stats dashboard, capability registry browser, and evidence trail viewer. Cutover checklist in `docs/STRIX_GOVERNANCE_CUTOVER.md`. Admin sidebar restructured with new "Platform" group.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~3,710 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~3,728 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
