@@ -80,7 +80,7 @@ academy-platform/
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
 │   ├── routers.ts           #   All tRPC routes (~3,400 lines)
-│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,120 lines)
+│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,280 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
 │   ├── chat-sse.ts          #   SSE-based real-time chat (primary)
@@ -146,7 +146,7 @@ academy-platform/
 │
 ├── drizzle/                 # Database schema + SQL migrations
 │   ├── schema.ts            #   Full PostgreSQL schema (48 tables, enums, relations)
-│   └── 0000-0017_*.sql      #   Sequential migrations (latest: gallery viewCount engagement tracking)
+│   └── 0000-0018_*.sql      #   Sequential migrations (latest: seed basketball trivia questions)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -376,7 +376,7 @@ pnpm test:e2e         # playwright (e2e/ directory)
 | File | Lines | Purpose |
 |------|-------|---------|
 | `server/routers.ts` | ~3,400 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, etc.) |
-| `server/db.ts` | ~3,120 | Drizzle connection + all DB query functions |
+| `server/db.ts` | ~3,280 | Drizzle connection + all DB query functions |
 | `drizzle/schema.ts` | ~1,160 | Full database schema (48 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
 | `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
@@ -800,7 +800,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~3,400 lines) and `server/db.ts` (~3,120 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~3,400 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
