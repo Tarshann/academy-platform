@@ -966,7 +966,21 @@ export const appRouter = router({
         ]),
       }))
       .mutation(async ({ input }) => {
-        const mod = await import(`./cron/${input.name}`);
+        // Explicit module map — dynamic template-literal imports cause esbuild
+        // to glob the entire cron/ directory (including test files), which pulls
+        // in vitest and crashes the serverless bundle on startup.
+        const cronModules: Record<string, () => Promise<{ run: () => Promise<any> }>> = {
+          "nurture": () => import("./cron/nurture"),
+          "generate-sessions": () => import("./cron/generate-sessions"),
+          "session-reminders": () => import("./cron/session-reminders"),
+          "merch-drops": () => import("./cron/merch-drops"),
+          "metrics-prompt": () => import("./cron/metrics-prompt"),
+          "progress-reports": () => import("./cron/progress-reports"),
+          "reengagement": () => import("./cron/reengagement"),
+          "parent-digest": () => import("./cron/parent-digest"),
+          "post-session-content": () => import("./cron/post-session-content"),
+        };
+        const mod = await cronModules[input.name]();
         return await mod.run();
       }),
   }),
