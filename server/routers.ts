@@ -1007,8 +1007,8 @@ export const appRouter = router({
         .input(
           z.object({
             id: z.number(),
-            title: z.string().optional(),
-            description: z.string().optional(),
+            title: z.string().max(200).optional(),
+            description: z.string().max(2000).optional(),
             category: z.enum(["training", "highlights"]).optional(),
             isVisible: z.boolean().optional(),
           })
@@ -1027,10 +1027,10 @@ export const appRouter = router({
       upload: adminProcedure
         .input(
           z.object({
-            title: z.string(),
-            description: z.string().optional(),
-            imageUrl: z.string(),
-            imageKey: z.string(),
+            title: z.string().max(200),
+            description: z.string().max(2000).optional(),
+            imageUrl: z.string().max(500),
+            imageKey: z.string().max(500),
             category: z.enum(["training", "highlights"]),
           })
         )
@@ -1300,12 +1300,8 @@ export const appRouter = router({
     byId: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
-        const { getVideoById, incrementVideoViewCount } = await import("./db");
-        const video = await getVideoById(input.id);
-        if (video && video.isPublished) {
-          await incrementVideoViewCount(input.id);
-        }
-        return video;
+        const { getVideoById } = await import("./db");
+        return await getVideoById(input.id);
       }),
 
     byCategory: publicProcedure
@@ -1336,10 +1332,10 @@ export const appRouter = router({
       create: adminProcedure
         .input(
           z.object({
-            title: z.string(),
-            description: z.string().optional(),
-            url: z.string(),
-            thumbnail: z.string().optional(),
+            title: z.string().max(200),
+            description: z.string().max(2000).optional(),
+            url: z.string().max(500),
+            thumbnail: z.string().max(500).optional(),
             category: z.enum(["training", "highlights"]),
             platform: z.enum(["tiktok", "instagram"]),
           })
@@ -1354,10 +1350,10 @@ export const appRouter = router({
         .input(
           z.object({
             id: z.number(),
-            title: z.string().optional(),
-            description: z.string().optional(),
-            url: z.string().optional(),
-            thumbnail: z.string().optional(),
+            title: z.string().max(200).optional(),
+            description: z.string().max(2000).optional(),
+            url: z.string().max(500).optional(),
+            thumbnail: z.string().max(500).optional(),
             category: z.enum(["training", "highlights"]).optional(),
             platform: z.enum(["tiktok", "instagram"]).optional(),
             isPublished: z.boolean().optional(),
@@ -3389,7 +3385,7 @@ export const appRouter = router({
   // ============================================================================
 
   socialPosts: router({
-    list: protectedProcedure.query(async () => {
+    list: publicProcedure.query(async () => {
       return await getVisibleSocialPosts();
     }),
 
