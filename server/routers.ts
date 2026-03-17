@@ -3736,6 +3736,8 @@ export const appRouter = router({
             "audio/mp4",
             "audio/wav",
             "audio/mpeg",
+            "audio/webm",
+            "audio/m4a",
           ]),
           mode: z.enum(["voice", "photo"]),
           scheduleId: z.number().optional(),
@@ -3774,9 +3776,9 @@ export const appRouter = router({
           let result;
 
           if (input.mode === "voice") {
-            result = await extractFromVoice(input.mediaUrl);
+            result = await extractFromVoice(input.mediaUrl, input.drillContext);
           } else {
-            result = await extractFromPhoto(input.mediaUrl);
+            result = await extractFromPhoto(input.mediaUrl, input.drillContext);
           }
 
           const processingTime = Date.now() - startTime;

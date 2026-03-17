@@ -412,5 +412,62 @@ export function setupSSEChat(app: Express) {
     }
   });
 
+  // Vision Capture media upload (images + audio)
+  app.post("/api/capture/upload", async (req: Request, res: Response) => {
+    try {
+      const { storagePut } = await import("./storage");
+      const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/m4a"];
+
+      const upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 10 * 1024 * 1024 }, // 10MB for audio
+        fileFilter: (_req, file, cb) => {
+          if (ALLOWED_TYPES.includes(file.mimetype)) {
+            cb(null, true);
+          } else {
+            cb(new Error("Unsupported file type. Allowed: images and audio."));
+          }
+        },
+      }).single("file");
+
+      upload(req, res, async (err: unknown) => {
+        if (err) {
+          logger.error("[Capture] Upload error:", err);
+          const isFileTooLarge = err instanceof Error && err.message.includes("limit");
+          return res.status(400).json({ error: isFileTooLarge ? "File too large (max 10MB)" : "Upload failed" });
+        }
+
+        const file = (req as Request & { file?: Express.Multer.File }).file;
+        const token = req.body.token;
+
+        if (!file) return res.status(400).json({ error: "No file provided" });
+        if (!token) return res.status(401).json({ error: "No token provided" });
+
+        let user: { id: number; name: string } | null = null;
+        try {
+          user = await resolveUser(token);
+        } catch (error) {
+          logger.error("[Capture] Token verification failed:", error);
+          return res.status(401).json({ error: "Invalid token" });
+        }
+
+        if (!user) return res.status(401).json({ error: "User not found" });
+
+        const ext = file.originalname.split(".").pop() || "bin";
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const key = `captures/${user.id}-${timestamp}-${randomSuffix}.${ext}`;
+
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+
+        logger.info(`[Capture] Media uploaded: ${key}`);
+        res.json({ url, key, mimeType: file.mimetype });
+      });
+    } catch (error) {
+      logger.error("[Capture] Upload failed:", error);
+      res.status(500).json({ error: "Failed to upload media" });
+    }
+  });
+
   logger.info("[SSE] Chat endpoints registered");
 }

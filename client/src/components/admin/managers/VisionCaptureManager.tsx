@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Mic, Camera, Square, Loader2, Check, X, Pencil, Clock, AlertCircle, ChevronDown } from "lucide-react";
+import { Mic, Camera, Square, Loader2, Check, X } from "lucide-react";
 
 type CaptureMode = "idle" | "recording" | "uploading" | "processing" | "review";
 
@@ -54,6 +54,28 @@ const CONFIDENCE_ICONS = {
   low: "🔴",
 };
 
+async function uploadCaptureMedia(
+  blob: Blob,
+  filename: string,
+  token: string
+): Promise<{ url: string; mimeType: string }> {
+  const formData = new FormData();
+  formData.append("file", blob, filename);
+  formData.append("token", token);
+
+  const response = await fetch("/api/capture/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ error: "Upload failed" }));
+    throw new Error(err.error || "Upload failed");
+  }
+
+  return response.json();
+}
+
 export function VisionCaptureManager() {
   const [mode, setMode] = useState<CaptureMode>("idle");
   const [extraction, setExtraction] = useState<ExtractionData | null>(null);
@@ -67,6 +89,7 @@ export function VisionCaptureManager() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: members } = trpc.admin.members.list.useQuery();
+  const chatTokenQuery = trpc.auth.chatToken.useQuery(undefined, { staleTime: 5 * 60_000 });
   const { data: recentCaptures, refetch: refetchCaptures } =
     trpc.visionCapture.listRecent.useQuery({ limit: 10 });
 
@@ -130,18 +153,19 @@ export function VisionCaptureManager() {
         setMode("uploading");
 
         try {
-          // Upload as base64 data URL for the extraction pipeline
-          const reader = new FileReader();
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
+          const token = chatTokenQuery.data?.token;
+          if (!token) {
+            toast.error("Authentication required. Please refresh.");
+            setMode("idle");
+            return;
+          }
+
+          const { url, mimeType } = await uploadCaptureMedia(blob, "voice-capture.webm", token);
 
           setMode("processing");
           extractMutation.mutate({
-            mediaUrl: dataUrl,
-            mediaType: "audio/mpeg",
+            mediaUrl: url,
+            mediaType: (mimeType || "audio/webm") as "audio/wav",
             mode: "voice",
             drillContext: drillContext || undefined,
           });
@@ -182,29 +206,35 @@ export function VisionCaptureManager() {
   // ── Photo Upload ──
 
   const handlePhotoUpload = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       setMode("uploading");
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
+
+      try {
+        const token = chatTokenQuery.data?.token;
+        if (!token) {
+          toast.error("Authentication required. Please refresh.");
+          setMode("idle");
+          return;
+        }
+
+        const { url } = await uploadCaptureMedia(file, file.name, token);
+
         setMode("processing");
         extractMutation.mutate({
-          mediaUrl: dataUrl,
+          mediaUrl: url,
           mediaType: file.type as "image/jpeg" | "image/png" | "image/webp",
           mode: "photo",
           drillContext: drillContext || undefined,
         });
-      };
-      reader.onerror = () => {
-        toast.error("Failed to read image");
+      } catch {
+        toast.error("Failed to upload image");
         setMode("idle");
-      };
-      reader.readAsDataURL(file);
+      }
     },
-    [drillContext]
+    [drillContext, chatTokenQuery.data?.token]
   );
 
   // ── Review Helpers ──

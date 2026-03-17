@@ -64,6 +64,7 @@ export default function VisionCaptureScreen() {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [drillContext, setDrillContext] = useState('');
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [sessionDate, setSessionDate] = useState(new Date().toISOString().slice(0, 10));
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -194,7 +195,7 @@ export default function VisionCaptureScreen() {
       } as any);
       formData.append('token', token);
 
-      const response = await fetch(`${API_URL}/api/chat/upload-image`, {
+      const response = await fetch(`${API_URL}/api/capture/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -203,18 +204,18 @@ export default function VisionCaptureScreen() {
         throw new Error('Upload failed');
       }
 
-      const { url } = await response.json();
+      const { url, mimeType } = await response.json();
 
       trackEvent('vision_capture_uploaded', {
         mode: 'voice',
-        media_type: 'audio/m4a',
+        media_type: mimeType || 'audio/m4a',
         file_size_bytes: 0,
       });
 
       setMode('processing');
       extractMutation.mutate({
         mediaUrl: url,
-        mediaType: 'audio/mp4',
+        mediaType: (mimeType || 'audio/m4a') as 'audio/m4a',
         mode: 'voice',
         drillContext: drillContext || undefined,
       });
@@ -253,7 +254,7 @@ export default function VisionCaptureScreen() {
       } as any);
       formData.append('token', token);
 
-      const response = await fetch(`${API_URL}/api/chat/upload-image`, {
+      const response = await fetch(`${API_URL}/api/capture/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -284,7 +285,43 @@ export default function VisionCaptureScreen() {
 
   const toggleCheck = (key: string) => {
     setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
-    trackEvent('vision_capture_metric_edited', { field: 'value' });
+    trackEvent('vision_capture_metric_edited', { field: 'checked' });
+  };
+
+  const updateAthleteId = (athleteIdx: number, newId: number) => {
+    if (!extraction) return;
+    const member = (members as any[])?.find((m: any) => m.id === newId);
+    const updated = { ...extraction };
+    updated.athletes = [...updated.athletes];
+    updated.athletes[athleteIdx] = {
+      ...updated.athletes[athleteIdx],
+      athleteId: newId,
+      matchedName: member?.name || updated.athletes[athleteIdx].matchedName,
+      nameConfidence: 'high',
+    };
+    setExtraction(updated);
+    trackEvent('vision_capture_athlete_reassigned', { athlete_id: newId });
+  };
+
+  const showAthletePicker = (athleteIdx: number) => {
+    const memberList = (members as any[]) || [];
+    if (memberList.length === 0) {
+      Alert.alert('No Members', 'No members found to assign.');
+      return;
+    }
+
+    const options = memberList.map((m: any) => m.name || `ID ${m.id}`);
+    options.push('Cancel');
+
+    Alert.alert(
+      'Assign Athlete',
+      'Select the correct athlete for this entry:',
+      options.map((label: string, idx: number) => ({
+        text: label,
+        style: idx === options.length - 1 ? 'cancel' as const : 'default' as const,
+        onPress: idx < options.length - 1 ? () => updateAthleteId(athleteIdx, memberList[idx].id) : undefined,
+      }))
+    );
   };
 
   const handleConfirm = () => {
@@ -301,7 +338,7 @@ export default function VisionCaptureScreen() {
             value: String(metric.value),
             unit: metric.unit,
             notes: athlete.observations || undefined,
-            sessionDate: new Date().toISOString(),
+            sessionDate: new Date(sessionDate).toISOString(),
           });
         }
       });
@@ -354,11 +391,21 @@ export default function VisionCaptureScreen() {
                 <Text style={styles.confidenceIcon}>
                   {CONFIDENCE_ICONS[athlete.nameConfidence]}
                 </Text>
-                <Text style={styles.athleteName}>
+                <Text style={styles.athleteName} numberOfLines={1}>
                   {athlete.nameConfidence === 'high'
                     ? athlete.matchedName
                     : `${athlete.extractedName} → ${athlete.matchedName}?`}
                 </Text>
+                <TouchableOpacity
+                  style={styles.reassignButton}
+                  onPress={() => showAthletePicker(ai)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="person-outline" size={14} color={colors.gold} />
+                  <Text style={styles.reassignText}>
+                    {athlete.athleteId > 0 ? 'Change' : 'Assign'}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {athlete.metrics.map((metric, mi) => {
@@ -432,6 +479,28 @@ export default function VisionCaptureScreen() {
         </ScrollView>
 
         <View style={styles.bottomBar}>
+          <View style={styles.dateRow}>
+            <Text style={styles.dateLabel}>Session Date:</Text>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => {
+                Alert.prompt(
+                  'Session Date',
+                  'Enter date (YYYY-MM-DD):',
+                  [
+                    { text: 'Today', onPress: () => setSessionDate(new Date().toISOString().slice(0, 10)) },
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Set', onPress: (text) => { if (text && /^\d{4}-\d{2}-\d{2}$/.test(text)) setSessionDate(text); } },
+                  ],
+                  'plain-text',
+                  sessionDate
+                );
+              }}
+            >
+              <Ionicons name="calendar-outline" size={14} color={colors.gold} />
+              <Text style={styles.dateValue}>{sessionDate}</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={[styles.confirmButton, (confirmMutation.isPending || checkedCount === 0) && styles.buttonDisabled]}
             onPress={handleConfirm}
@@ -728,6 +797,46 @@ const styles = StyleSheet.create({
   },
   confidenceIcon: {
     fontSize: 16,
+  },
+  reassignButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.gold,
+    minHeight: 28,
+  },
+  reassignText: {
+    fontSize: 12,
+    color: colors.gold,
+    fontWeight: '600',
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  dateLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  dateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
+  },
+  dateValue: {
+    fontSize: 13,
+    color: colors.textPrimary,
+    fontWeight: '500',
   },
   athleteName: {
     fontSize: 16,

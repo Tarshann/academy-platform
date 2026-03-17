@@ -179,7 +179,7 @@ function mapExtractedAthletes(
 // Voice Extraction
 // ============================================================================
 
-export async function extractFromVoice(audioUrl: string): Promise<ExtractionResult> {
+export async function extractFromVoice(audioUrl: string, drillContext?: string): Promise<ExtractionResult> {
   const startTime = Date.now();
 
   // Step 1: Transcribe audio
@@ -197,11 +197,15 @@ export async function extractFromVoice(audioUrl: string): Promise<ExtractionResu
   const rosterNames = roster.map((r) => r.fullName).join(", ");
 
   // Step 3: Send transcript to LLM for structured extraction
+  const contextHint = drillContext
+    ? `\n\nDRILL CONTEXT (provided by coach): "${drillContext}" — use this to infer metric names if the coach doesn't explicitly state them.`
+    : "";
+
   const result = await invokeLLM({
     messages: [
       {
         role: "system",
-        content: buildVoicePrompt(rosterNames),
+        content: buildVoicePrompt(rosterNames) + contextHint,
       },
       {
         role: "user",
@@ -257,16 +261,20 @@ export async function extractFromVoice(audioUrl: string): Promise<ExtractionResu
 // Photo Extraction
 // ============================================================================
 
-export async function extractFromPhoto(imageUrl: string): Promise<ExtractionResult> {
+export async function extractFromPhoto(imageUrl: string, drillContext?: string): Promise<ExtractionResult> {
   const startTime = Date.now();
   const roster = await loadAthleteRoster();
   const rosterNames = roster.map((r) => r.fullName).join(", ");
+
+  const contextHint = drillContext
+    ? `\n\nDRILL CONTEXT (provided by coach): "${drillContext}" — use this to infer what metric is being measured if not obvious from the image.`
+    : "";
 
   const result = await invokeLLM({
     messages: [
       {
         role: "system",
-        content: buildPhotoPrompt(rosterNames),
+        content: buildPhotoPrompt(rosterNames) + contextHint,
       },
       {
         role: "user",
