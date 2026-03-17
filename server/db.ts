@@ -2405,25 +2405,37 @@ export async function createGameEntryWithLimit(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Use a raw SQL transaction to atomically check + insert
-  // Enum columns require explicit casts when using parameterized queries
-  const result = await db.execute(sql`
-    WITH play_count AS (
-      SELECT COUNT(*) as cnt
-      FROM "gameEntries"
-      WHERE "userId" = ${data.userId}
-        AND "gameType" = ${data.gameType}::game_type
-        AND "playedAt" >= CURRENT_DATE
-    )
-    INSERT INTO "gameEntries" ("userId", "gameType", "rewardType", "rewardValue", "pointsEarned", "metadata", "playedAt")
-    SELECT ${data.userId}, ${data.gameType}::game_type, ${data.rewardType ?? "none"}::reward_type, ${data.rewardValue ?? null}, ${data.pointsEarned ?? 0}, ${data.metadata ?? null}::text, NOW()
-    FROM play_count
-    WHERE play_count.cnt < ${maxPlays}
-    RETURNING *
-  `);
+  // Use a Drizzle transaction to check play count + insert atomically
+  // This avoids raw SQL enum cast issues with the postgres-js driver
+  return await db.transaction(async (tx: any) => {
+    // Count today's plays for this user + game type
+    const [playCount] = await tx
+      .select({ cnt: count() })
+      .from(gameEntries)
+      .where(
+        and(
+          eq(gameEntries.userId, data.userId!),
+          eq(gameEntries.gameType, data.gameType as any),
+          gte(gameEntries.playedAt, sql`CURRENT_DATE`)
+        )
+      );
 
-  if (!result.rows || result.rows.length === 0) return null;
-  return result.rows[0] as unknown as GameEntryRow;
+    if ((playCount?.cnt ?? 0) >= maxPlays) {
+      return null;
+    }
+
+    // Insert the game entry
+    const [entry] = await tx.insert(gameEntries).values({
+      userId: data.userId,
+      gameType: data.gameType,
+      rewardType: data.rewardType ?? "none",
+      rewardValue: data.rewardValue ?? null,
+      pointsEarned: data.pointsEarned ?? 0,
+      metadata: data.metadata ?? null,
+    }).returning();
+
+    return entry as GameEntryRow;
+  });
 }
 
 // Minimal type for the raw SQL return
