@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { Play, ExternalLink, Search, SortAsc, Loader2, Eye, X } from "lucide-react";
+import { Play, ExternalLink, Search, SortAsc, Loader2, Eye, X, AlertCircle, RefreshCw } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { trpc } from "@/lib/trpc";
@@ -285,6 +286,18 @@ const sortOptions = [
 
 const VIDEOS_PER_PAGE = 8;
 
+function VideoSkeleton() {
+  return (
+    <div>
+      <Skeleton className="aspect-[9/16] w-full rounded-xl" />
+      <div className="mt-3 space-y-2">
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/3" />
+      </div>
+    </div>
+  );
+}
+
 export default function Videos() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -295,7 +308,7 @@ export default function Videos() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Fetch videos from database
-  const { data: dbVideos } = trpc.videos.list.useQuery(undefined, {
+  const { data: dbVideos, isLoading: isDbLoading, isError: isDbError, refetch: refetchVideos } = trpc.videos.list.useQuery(undefined, {
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
@@ -305,7 +318,7 @@ export default function Videos() {
   // Use database videos if available, otherwise use defaults
   const allVideos = useMemo(() => {
     if (dbVideos && dbVideos.length > 0) {
-      return dbVideos.map((v: any) => ({
+      return dbVideos.map((v) => ({
         id: v.id.toString(),
         numericId: v.id,
         url: v.url,
@@ -494,7 +507,23 @@ export default function Videos() {
         {/* Videos Grid */}
         <section className="py-12">
           <div className="container">
-            {filteredVideos.length === 0 ? (
+            {isDbLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <VideoSkeleton key={i} />
+                ))}
+              </div>
+            ) : isDbError ? (
+              <div className="text-center py-16">
+                <AlertCircle className="w-12 h-12 mx-auto text-destructive mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Unable to load videos</h3>
+                <p className="text-muted-foreground mb-4">Something went wrong while fetching videos.</p>
+                <Button variant="outline" onClick={() => refetchVideos()}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            ) : filteredVideos.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">No videos found matching your criteria.</p>
               </div>

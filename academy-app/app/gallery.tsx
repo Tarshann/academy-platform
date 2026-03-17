@@ -8,7 +8,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -57,8 +57,9 @@ export default function GalleryScreen() {
 
   const posts = trpc.socialPosts.list.useQuery();
 
-  const filteredPosts = (posts.data ?? []).filter(
-    (p) => platform === 'all' || p.platform === platform
+  const filteredPosts = useMemo(
+    () => (posts.data ?? []).filter((p) => platform === 'all' || p.platform === platform),
+    [posts.data, platform]
   );
 
   const onRefresh = async () => {
@@ -134,8 +135,25 @@ export default function GalleryScreen() {
               </View>
             )}
 
+            {/* Error */}
+            {posts.isError && (
+              <View style={styles.emptyState}>
+                <Ionicons name="alert-circle-outline" size={48} color="#e74c3c" />
+                <Text style={styles.emptyTitle}>Failed to load posts</Text>
+                <Text style={styles.emptySubtitle}>
+                  Something went wrong. Please try again.
+                </Text>
+                <TouchableOpacity
+                  style={styles.retryButton}
+                  onPress={() => posts.refetch()}
+                >
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Empty */}
-            {!posts.isLoading && filteredPosts.length === 0 && (
+            {!posts.isLoading && !posts.isError && filteredPosts.length === 0 && (
               <View style={styles.emptyState}>
                 <Ionicons name="images-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No posts yet</Text>
@@ -258,4 +276,16 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: colors.cardElevated,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
