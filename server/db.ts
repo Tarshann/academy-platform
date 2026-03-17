@@ -2391,11 +2391,12 @@ export async function getUserDailyPlays(userId: number, gameType: string) {
         gte(gameEntries.playedAt, sql`CURRENT_DATE`)
       )
     );
-  return result?.count ?? 0;
+  // count() returns string from postgres-js driver — convert to number
+  return Number(result?.count ?? 0);
 }
 
 /**
- * Atomically check daily play limit and create a game entry in one transaction.
+ * Check daily play limit and create a game entry.
  * Returns the created entry, or null if the daily limit has been reached.
  */
 export async function createGameEntryWithLimit(
@@ -2405,37 +2406,24 @@ export async function createGameEntryWithLimit(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Use a Drizzle transaction to check play count + insert atomically
-  // This avoids raw SQL enum cast issues with the postgres-js driver
-  return await db.transaction(async (tx: any) => {
-    // Count today's plays for this user + game type
-    const [playCount] = await tx
-      .select({ cnt: count() })
-      .from(gameEntries)
-      .where(
-        and(
-          eq(gameEntries.userId, data.userId!),
-          eq(gameEntries.gameType, data.gameType as any),
-          gte(gameEntries.playedAt, sql`CURRENT_DATE`)
-        )
-      );
+  // Count today's plays for this user + game type
+  const todayPlays = await getUserDailyPlays(data.userId!, data.gameType!);
 
-    if ((playCount?.cnt ?? 0) >= maxPlays) {
-      return null;
-    }
+  if (todayPlays >= maxPlays) {
+    return null;
+  }
 
-    // Insert the game entry
-    const [entry] = await tx.insert(gameEntries).values({
-      userId: data.userId,
-      gameType: data.gameType,
-      rewardType: data.rewardType ?? "none",
-      rewardValue: data.rewardValue ?? null,
-      pointsEarned: data.pointsEarned ?? 0,
-      metadata: data.metadata ?? null,
-    }).returning();
+  // Insert the game entry using Drizzle query builder (handles enum types natively)
+  const [entry] = await db.insert(gameEntries).values({
+    userId: data.userId,
+    gameType: data.gameType,
+    rewardType: data.rewardType ?? "none",
+    rewardValue: data.rewardValue ?? null,
+    pointsEarned: data.pointsEarned ?? 0,
+    metadata: data.metadata ?? null,
+  }).returning();
 
-    return entry as GameEntryRow;
-  });
+  return entry as GameEntryRow;
 }
 
 // Minimal type for the raw SQL return
