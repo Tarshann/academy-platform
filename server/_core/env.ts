@@ -30,4 +30,9 @@ export const ENV = {
   ablyApiKey: process.env.ABLY_API_KEY ?? "",
   // Admin notification email addresses (comma-separated)
   adminNotifyEmails: process.env.ADMIN_NOTIFY_EMAILS ?? "",
+  // Strix Governance
+  strixGovernanceEnabled: process.env.STRIX_GOVERNANCE_ENABLED === "true",
+  strixApiKey: process.env.STRIX_API_KEY ?? "",
+  strixTenantId: process.env.STRIX_TENANT_ID ?? "",
+  strixApiUrl: process.env.STRIX_API_URL ?? "https://api.strix.dev/v1",
 };

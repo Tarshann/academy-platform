@@ -29,6 +29,7 @@ import {
   Star,
   Sparkles,
   Camera,
+  ShieldCheck,
 } from "lucide-react";
 import { MembersManager } from "@/components/admin/managers/MembersManager";
 import { CoachesManager } from "@/components/admin/managers/CoachesManager";
@@ -47,6 +48,7 @@ import { MetricsManager } from "@/components/admin/managers/MetricsManager";
 import { ShowcasesManager } from "@/components/admin/managers/ShowcasesManager";
 import { ContentQueueManager } from "@/components/admin/managers/ContentQueueManager";
 import { VisionCaptureManager } from "@/components/admin/managers/VisionCaptureManager";
+import { GovernanceManager } from "@/components/admin/managers/GovernanceManager";
 
 interface NavItem {
   id: string;
@@ -102,6 +104,12 @@ const navGroups: NavGroup[] = [
       { id: "drops", label: "Merch Drops", icon: BellRing },
     ],
   },
+  {
+    label: "Platform",
+    items: [
+      { id: "governance", label: "Governance", icon: ShieldCheck },
+    ],
+  },
 ];
 
 const allItems = navGroups.flatMap((g) => g.items);
@@ -124,6 +132,7 @@ const panels: Record<string, React.ComponentType> = {
   metrics: MetricsManager,
   showcases: ShowcasesManager,
   "content-queue": ContentQueueManager,
+  governance: GovernanceManager,
 };
 
 function SidebarNav({
