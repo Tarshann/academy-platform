@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.7.1 (mobile app v1.7.1, build 29). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization.
+**Current release**: v1.8.0 (mobile app v1.7.1, build 29). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow.
 
 ---
 
@@ -79,7 +79,8 @@ academy-platform/
 │
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
-│   ├── routers.ts           #   All tRPC routes (~3,400 lines)
+│   ├── cron/                #   Scheduled automation functions (9 cron jobs + tests)
+│   ├── routers.ts           #   All tRPC routes (~3,550 lines)
 │   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,280 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
@@ -145,12 +146,13 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (48 tables, enums, relations)
-│   └── 0000-0018_*.sql      #   Sequential migrations (latest: seed basketball trivia questions)
+│   ├── schema.ts            #   Full PostgreSQL schema (54 tables, enums, relations)
+│   └── 0000-0019_*.sql      #   Sequential migrations (latest: automation infrastructure)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
-│   └── stripe/webhook.ts    #   → dist/serverless-stripe.js (Stripe webhooks)
+│   ├── stripe/webhook.ts    #   → dist/serverless-stripe.js (Stripe webhooks)
+│   └── cron/                #   9 Vercel Cron Job entry points (CRON_SECRET auth)
 │
 ├── ops/                     # Agent coordination & project management system
 │   ├── 00_READ_FIRST/       #   Vision, rules, definitions, quality bar
@@ -317,6 +319,7 @@ The `server/` directory follows a flat structure (no domain modules yet):
 | `stripe-webhook.ts` | Stripe event processing: checkout, subscription, invoice, refund, payment failure |
 | `chat-sse.ts` | SSE real-time chat: room management, broadcast, active connection tracking |
 | `chat.ts` | Socket.IO chat (optional, for persistent-connection environments) |
+| `cron/` | 9 automation functions: nurture, generate-sessions, session-reminders, merch-drops, metrics-prompt, progress-reports, reengagement, parent-digest, post-session-content |
 
 ### tRPC Router Structure
 
@@ -375,9 +378,9 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~3,400 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, etc.) |
+| `server/routers.ts` | ~3,550 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, etc.) |
 | `server/db.ts` | ~3,280 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~1,160 | Full database schema (48 tables) |
+| `drizzle/schema.ts` | ~1,256 | Full database schema (54 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
 | `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~210 | wouter SPA routing (~40+ routes, all lazy-loaded) |
@@ -387,13 +390,13 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 ### Admin Manager Components
 
-The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 15 manager panels in `client/src/components/admin/managers/`:
+The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 16 manager panels in `client/src/components/admin/managers/`:
 
 | Group | Managers |
 |-------|---------|
 | **Operations** | Schedules, Attendance, Locations |
 | **People** | Members, Coaches, Contacts |
-| **Content** | Announcements, Blog, Videos, Gallery, Social Posts, Merch Drops, Metrics, Showcases |
+| **Content** | Announcements, Blog, Videos, Gallery, Social Posts, Merch Drops, Metrics, Showcases, Content Queue |
 | **Programs** | Programs |
 
 Desktop: persistent sidebar. Mobile: Sheet overlay.
@@ -618,6 +621,7 @@ The `ops/` directory is a structured project management system for multi-agent c
   - `/api/trpc/*` → serverless tRPC handler
   - `/api/chat/*` → serverless chat handler
   - `/api/stripe/*` → isolated Stripe webhook
+  - `/api/cron/*` → 9 scheduled cron functions (CRON_SECRET auth)
   - `/*` → `index.html` (SPA fallback)
 - **Security headers**: HSTS (2yr), CSP, X-Frame-Options, X-Content-Type-Options
 - **CORS**: Restricted to `https://app.academytn.com` (GET, POST, OPTIONS only)
@@ -649,6 +653,7 @@ See `.env.example` for the full list. Key groups:
 - **AI**: LLM API keys (for AI-powered features)
 - **Admin**: `ADMIN_NOTIFY_EMAILS` (comma-separated admin notification recipients)
 - **Error Monitoring**: `SENTRY_DSN` (optional, activates Sentry error tracking)
+- **Automation**: `CRON_SECRET` (shared secret for Vercel Cron Job auth)
 
 - **Analytics**: `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` (Umami)
 - **Socket.IO**: `ENABLE_SOCKET_IO` (toggle, disabled by default)
@@ -795,12 +800,13 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Post-review hardening** — Replaced mock toast (console.log/alert) with sonner in all 4 new admin managers. Fixed social posts reorder bug (now uses post ID instead of filtered-list index). Added error states with retry buttons to all mobile admin screens. Logout no longer re-throws on backend 500. Field whitelisting on `updateMerchDrop` and `updateSocialPost` prevents accidental overwrites of createdBy/createdAt/counters. Sign-up button disabled when password < 8 chars. Mobile admin mutations have onError handlers.
 - **Strategic audit implementation** (migration 0016, 12 features) — Family/household accounts with parent dashboard page (`/family`) viewing child metrics/attendance/schedules. Waitlist & capacity management with auto-notify when spots open. Onboarding flow (`/onboarding`) — 4-step guided first-login (role → sport → goals → complete). Automated billing & dunning via Stripe webhook (`invoice.payment_failed` triggers email + reminder record). Referral program (`/referrals`) — invite by email, referral codes, 100-point rewards, conversion tracking. RBAC with 7 roles (owner, admin, head_coach, assistant_coach, front_desk, parent, athlete) — `extendedRole` column on users table. Recurring schedule templates — admin creates weekly templates, auto-generates sessions. AI weekly progress reports — LLM-generated via Gemini, emailed to parents. Sibling/family discounts — auto 10%/15% based on enrolled children count. CI/CD pipeline (`.github/workflows/ci.yml`) with 3 jobs (portal build+test, marketing build+validate, mobile typecheck). Sentry error monitoring (`server/_core/sentry.ts`) — optional activation via `SENTRY_DSN` env var, integrated into Express error handler. All changes purely additive — no existing routes or signatures modified.
 - **v1.7.1 enhancements** (build 29) — Marketing: App Store/Google Play download badges on homepage hero, footer, and dedicated "Get the App" section; Performance Lab cohort urgency messaging with pulsing enrollment badges. Mobile: app name updated for ASO ("The Academy - Youth Sports"); calendar sync via `expo-calendar` with 1hr + 15min reminder alarms on schedule screen; athlete progress card on dashboard showing recent metrics. Server: feed query optimized to raw SQL `UNION ALL` for better performance.
+- **v1.8.0 automation + AI content engine** (migration 0019, 6 new tables) — 9 Vercel Cron Jobs: nurture campaigns, auto-generate sessions from templates, session reminders, merch drop notifications, metrics prompts, bi-weekly AI progress reports, reengagement campaigns, parent weekly digests, post-session AI content generation. AI content engine uses Gemini 2.5 Flash to auto-generate session recaps, social captions, and parent push notifications. Content queue admin manager with approve/reject/edit workflow. Feed extended with session recap type. `api/cron/` entry points with `CRON_SECRET` auth. `server/cron/` orchestration functions with unit tests. Dedup indexes prevent notification spam.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~3,400 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~3,550 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
