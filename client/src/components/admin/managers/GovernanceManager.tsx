@@ -204,7 +204,7 @@ function EvidenceTrailTab() {
         <p className="text-gray-500 text-sm py-8 text-center">
           {statusFilter !== "all"
             ? `No ${statusFilter} decisions found.`
-            : "No governance decisions recorded yet. Activate governance to start collecting evidence."}
+            : "No governance decisions recorded yet. Execute an admin action to start collecting evidence."}
         </p>
       ) : (
         <div className="space-y-2">
@@ -213,8 +213,8 @@ function EvidenceTrailTab() {
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={entry.action === "deny" ? "border-red-300 text-red-700" : "border-green-300 text-green-700"}>
-                      {entry.action}
+                    <Badge variant="outline" className={entry.action === "deny" ? "border-red-300 text-red-700" : entry.action === "escalate" ? "border-yellow-300 text-yellow-700" : "border-green-300 text-green-700"}>
+                      {entry.action === "allow" ? "allowed" : entry.action === "deny" ? "denied" : entry.action}
                     </Badge>
                     <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{entry.capabilityId}</code>
                     <CopyButton text={entry.capabilityId} />

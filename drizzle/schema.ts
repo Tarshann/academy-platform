@@ -1310,3 +1310,30 @@ export const visionCaptures = pgTable("vision_captures", {
 
 export type VisionCapture = typeof visionCaptures.$inferSelect;
 export type InsertVisionCapture = typeof visionCaptures.$inferInsert;
+
+// ============================================================================
+// GOVERNANCE EVIDENCE (Local Audit Trail)
+// ============================================================================
+
+/**
+ * Local governance evidence trail. Every governed mutation and cron job
+ * execution is recorded here, regardless of whether the external Strix SDK
+ * is configured. This is the platform's own audit log — the canonical
+ * record of "who did what, when, and what the system decided."
+ */
+export const governanceEvidence = pgTable("governance_evidence", {
+  id: serial("id").primaryKey(),
+  capabilityId: varchar("capability_id", { length: 120 }).notNull(),
+  actorId: varchar("actor_id", { length: 100 }).notNull(),
+  actorRole: varchar("actor_role", { length: 50 }).notNull(),
+  actorEmail: varchar("actor_email", { length: 255 }),
+  action: varchar("action", { length: 20 }).notNull(), // allow, deny, escalate, error
+  reason: text("reason"),
+  source: varchar("source", { length: 20 }).notNull(), // trpc, cron
+  externalDecisionId: varchar("external_decision_id", { length: 200 }),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type GovernanceEvidenceRow = typeof governanceEvidence.$inferSelect;
+export type InsertGovernanceEvidence = typeof governanceEvidence.$inferInsert;

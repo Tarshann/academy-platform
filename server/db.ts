@@ -66,6 +66,8 @@ import {
   type InsertScheduleTemplate,
   type InsertBillingReminder,
   type InsertOnboardingStep,
+  governanceEvidence,
+  type InsertGovernanceEvidence,
 } from "../drizzle/schema";
 
 // ============================================================================
@@ -3265,5 +3267,51 @@ export async function getAthleteReportData(athleteId: number) {
     attendance,
     showcases,
     points: points[0] ?? null,
+  };
+}
+
+// ============================================================================
+// GOVERNANCE EVIDENCE
+// ============================================================================
+
+export async function insertGovernanceEvidence(evidence: InsertGovernanceEvidence) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.insert(governanceEvidence).values(evidence).returning();
+  return row;
+}
+
+export async function getGovernanceEvidenceTrail(opts: {
+  capabilityId?: string;
+  action?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [];
+  if (opts.capabilityId) conditions.push(eq(governanceEvidence.capabilityId, opts.capabilityId));
+  if (opts.action) conditions.push(eq(governanceEvidence.action, opts.action));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  return db
+    .select()
+    .from(governanceEvidence)
+    .where(where)
+    .orderBy(desc(governanceEvidence.createdAt))
+    .limit(opts.limit ?? 50)
+    .offset(opts.offset ?? 0);
+}
+
+export async function getGovernanceStats() {
+  const db = await getDb();
+  if (!db) return { totalDecisions: 0, totalDenied: 0 };
+  const [total] = await db.select({ count: count() }).from(governanceEvidence);
+  const [denied] = await db
+    .select({ count: count() })
+    .from(governanceEvidence)
+    .where(eq(governanceEvidence.action, "deny"));
+  return {
+    totalDecisions: total?.count ?? 0,
+    totalDenied: denied?.count ?? 0,
   };
 }
