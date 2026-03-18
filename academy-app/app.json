@@ -20,13 +20,17 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "30",
+      "buildNumber": "31",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "The Academy uses your camera to take photos and videos for chat messages and to update your profile picture.",
+        "NSPhotoLibraryUsageDescription": "The Academy accesses your photo library so you can share photos and videos in chat and set your profile picture.",
+        "NSCalendarsUsageDescription": "The Academy adds your upcoming training sessions to your calendar with reminder alerts so you never miss a workout.",
+        "NSMicrophoneUsageDescription": "The Academy uses your microphone to record video with audio for chat messages."
       }
     },
     "android": {
@@ -35,7 +39,7 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 30
+      "versionCode": 31
     },
     "plugins": [
       "expo-router",
