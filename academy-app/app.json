@@ -20,17 +20,17 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "31",
+      "buildNumber": "32",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
         ],
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "The Academy uses your camera to take photos and videos for chat messages and to update your profile picture.",
-        "NSPhotoLibraryUsageDescription": "The Academy accesses your photo library so you can share photos and videos in chat and set your profile picture.",
+        "NSCameraUsageDescription": "The Academy needs access to your camera to take photos and videos for chat messages, such as sharing training highlights, and to update your profile picture.",
+        "NSPhotoLibraryUsageDescription": "The Academy needs access to your photo library so you can share photos and videos in chat messages, such as sharing training highlights, and update your profile picture.",
         "NSCalendarsUsageDescription": "The Academy adds your upcoming training sessions to your calendar with reminder alerts so you never miss a workout.",
-        "NSMicrophoneUsageDescription": "The Academy uses your microphone to record video with audio for chat messages."
+        "NSMicrophoneUsageDescription": "The Academy needs access to your microphone to record audio when capturing video for chat messages."
       }
     },
     "android": {
@@ -39,11 +39,25 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 31
+      "versionCode": 32
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The Academy needs access to your photo library so you can share photos and videos in chat messages and update your profile picture.",
+          "cameraPermission": "The Academy needs access to your camera to take photos and videos for chat messages, such as sharing training highlights, and to update your profile picture.",
+          "microphonePermission": "The Academy needs access to your microphone to record audio when capturing video for chat messages."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "The Academy adds your upcoming training sessions to your calendar with reminder alerts so you never miss a workout."
+        }
+      ],
       [
         "expo-build-properties",
         {
