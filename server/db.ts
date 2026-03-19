@@ -55,6 +55,7 @@ import {
   type InsertUserPoint,
   type InsertGameEntry,
   type InsertTriviaQuestion,
+  type TriviaQuestion,
   type InsertSocialPost,
   waitlist,
   referrals,
@@ -2600,7 +2601,7 @@ export async function getPointsLeaderboard(limit = 20) {
 }
 
 // Trivia
-export async function getRandomTriviaQuestions(count = 5, category?: string) {
+export async function getRandomTriviaQuestions(count = 5, category?: string): Promise<TriviaQuestion[]> {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(triviaQuestions.isActive, true)];
@@ -2615,7 +2616,7 @@ export async function getRandomTriviaQuestions(count = 5, category?: string) {
     .limit(count);
 }
 
-export async function getTriviaByIds(ids: number[]) {
+export async function getTriviaByIds(ids: number[]): Promise<TriviaQuestion[]> {
   const db = await getDb();
   if (!db) return [];
   if (ids.length === 0) return [];

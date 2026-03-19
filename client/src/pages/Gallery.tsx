@@ -32,7 +32,7 @@ export default function Gallery() {
   const filteredPhotos = useMemo(() => {
     if (!photos) return [];
     if (selectedCategory === "all") return photos;
-    return photos.filter((photo) => photo.category === selectedCategory);
+    return photos.filter((photo: (typeof photos)[number]) => photo.category === selectedCategory);
   }, [photos, selectedCategory]);
 
   const openLightbox = (index: number) => {
@@ -140,7 +140,7 @@ export default function Gallery() {
                 {filteredPhotos.length} photo{filteredPhotos.length !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPhotos.map((photo, index) => (
+                {filteredPhotos.map((photo: (typeof filteredPhotos)[number], index: number) => (
                   <div
                     key={photo.id}
                     className="group relative overflow-hidden rounded-xl bg-muted cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"

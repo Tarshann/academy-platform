@@ -318,7 +318,7 @@ export default function Videos() {
   // Use database videos if available, otherwise use defaults
   const allVideos = useMemo(() => {
     if (dbVideos && dbVideos.length > 0) {
-      return dbVideos.map((v) => ({
+      return dbVideos.map((v: (typeof dbVideos)[number]) => ({
         id: v.id.toString(),
         numericId: v.id,
         url: v.url,
