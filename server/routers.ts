@@ -830,73 +830,91 @@ export const appRouter = router({
       assignProgram: governedProcedure("admin.members.assignProgram")
         .input(z.object({ userId: z.number(), programId: z.number() }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { userPrograms } = await import("../drizzle/schema");
-          const { eq, and } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { userPrograms } = await import("../drizzle/schema");
+            const { eq, and } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          // Check for existing active enrollment
-          const existing = await db
-            .select()
-            .from(userPrograms)
-            .where(
-              and(
-                eq(userPrograms.userId, input.userId),
-                eq(userPrograms.programId, input.programId),
-                eq(userPrograms.status, "active")
+            // Check for existing active enrollment
+            const existing = await db
+              .select()
+              .from(userPrograms)
+              .where(
+                and(
+                  eq(userPrograms.userId, input.userId),
+                  eq(userPrograms.programId, input.programId),
+                  eq(userPrograms.status, "active")
+                )
               )
-            )
-            .limit(1);
+              .limit(1);
 
-          if (existing.length > 0) {
-            throw new TRPCError({ code: "CONFLICT", message: "User already enrolled in this program" });
+            if (existing.length > 0) {
+              throw new TRPCError({ code: "CONFLICT", message: "User already enrolled in this program" });
+            }
+
+            await db.insert(userPrograms).values({
+              userId: input.userId,
+              programId: input.programId,
+              status: "active",
+            });
+
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.assignProgram] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
           }
-
-          await db.insert(userPrograms).values({
-            userId: input.userId,
-            programId: input.programId,
-            status: "active",
-          });
-
-          return { success: true };
         }),
 
       removeProgram: governedProcedure("admin.members.removeProgram")
         .input(z.object({ enrollmentId: z.number() }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { userPrograms } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { userPrograms } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          await db
-            .update(userPrograms)
-            .set({ status: "cancelled", cancelledAt: new Date() })
-            .where(eq(userPrograms.id, input.enrollmentId));
+            await db
+              .update(userPrograms)
+              .set({ status: "cancelled", cancelledAt: new Date() })
+              .where(eq(userPrograms.id, input.enrollmentId));
 
-          return { success: true };
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.removeProgram] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       updateRole: governedProcedure("admin.members.updateRole")
         .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { users } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { users } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          await db
-            .update(users)
-            .set({ role: input.role, updatedAt: new Date() })
-            .where(eq(users.id, input.userId));
+            await db
+              .update(users)
+              .set({ role: input.role, updatedAt: new Date() })
+              .where(eq(users.id, input.userId));
 
-          return { success: true };
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.updateRole] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       create: governedProcedure("contacts.create")
@@ -946,16 +964,28 @@ export const appRouter = router({
       markRead: governedProcedure("contacts.markRead")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { markContactAsRead } = await import("./db");
-          await markContactAsRead(input.id);
-          return { success: true };
+          try {
+            const { markContactAsRead } = await import("./db");
+            await markContactAsRead(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[contacts.markRead] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
       markResponded: governedProcedure("contacts.markResponded")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { markContactAsResponded } = await import("./db");
-          await markContactAsResponded(input.id);
-          return { success: true };
+          try {
+            const { markContactAsResponded } = await import("./db");
+            await markContactAsResponded(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[contacts.markResponded] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
     }),
 
@@ -992,16 +1022,23 @@ export const appRouter = router({
     clearAll: governedProcedure("chatAdmin.clearAll")
       .input(z.object({ room: z.string().optional() }))
       .mutation(async ({ input }) => {
-        const { chatMessages } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        const { getDb } = await import("./db");
-        const db = await getDb();
-        if (input.room) {
-          await db.delete(chatMessages).where(eq(chatMessages.room, input.room));
-        } else {
-          await db.delete(chatMessages);
+        try {
+          const { chatMessages } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const { getDb } = await import("./db");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+          if (input.room) {
+            await db.delete(chatMessages).where(eq(chatMessages.room, input.room));
+          } else {
+            await db.delete(chatMessages);
+          }
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatAdmin.clearAll] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
         }
-        return { success: true };
       }),
   }),
 
@@ -1045,14 +1082,20 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { galleryPhotos } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new Error("Database not available");
-          const { id, ...updates } = input;
-          await db.update(galleryPhotos).set(updates).where(eq(galleryPhotos.id, id));
-          return { success: true };
+          try {
+            const { getDb } = await import("./db");
+            const { galleryPhotos } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const { id, ...updates } = input;
+            await db.update(galleryPhotos).set(updates).where(eq(galleryPhotos.id, id));
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[gallery.admin.update] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       upload: governedProcedure("gallery.admin.upload")
@@ -1077,9 +1120,15 @@ export const appRouter = router({
       delete: governedProcedure("gallery.admin.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { deleteGalleryPhoto } = await import("./db");
-          await deleteGalleryPhoto(input.id);
-          return { success: true };
+          try {
+            const { deleteGalleryPhoto } = await import("./db");
+            await deleteGalleryPhoto(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[gallery.admin.delete] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       toggleVisibility: governedProcedure("gallery.admin.toggleVisibility")
