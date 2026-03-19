@@ -68,7 +68,7 @@ export default function Navigation() {
     };
   }, [mobileMenuOpen]);
 
-  // Prefer Clerk user when enabled; otherwise fall back to database user
+  // Prefer Clerk user for display info; always use DB role (authoritative source)
   const user =
     clerkPublishableKey && clerkUser
       ? {
@@ -80,7 +80,7 @@ export default function Navigation() {
             clerkUser.emailAddresses[0]?.emailAddress ||
             null,
           email: clerkUser.emailAddresses[0]?.emailAddress || null,
-          role: (clerkUser.publicMetadata?.role as "user" | "admin") || "user",
+          role: dbUser?.role ?? "user",
         }
       : dbUser;
 
