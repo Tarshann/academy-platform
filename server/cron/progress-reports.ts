@@ -25,7 +25,7 @@ export async function run() {
 
   const { getDb, getAthleteReportData, getParentsForChild } = await import("../db");
   const { athleteMetrics, progressReports, users } = await import("../../drizzle/schema");
-  const { sql, gte, eq, or, inArray } = await import("drizzle-orm");
+  const { sql, gte, eq, or, inArray, and } = await import("drizzle-orm");
 
   const db = await getDb();
   if (!db) return { reportsGenerated: 0, emailsSent: 0, athletesSkipped: 0 };
