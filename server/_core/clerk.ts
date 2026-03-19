@@ -166,12 +166,30 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
       }
     }
 
-    // Update last signed in
+    // Re-check admin role on every login (env vars may have changed)
     if (user) {
+      const email = user.email;
+      let expectedRole: "user" | "admin" = "user";
+      if (ENV.clerkAdminEmail && email === ENV.clerkAdminEmail) {
+        expectedRole = "admin";
+      } else if (ENV.ownerOpenId && user.openId === ENV.ownerOpenId) {
+        expectedRole = "admin";
+      } else if (ENV.adminEmails && email) {
+        const additionalAdmins = ENV.adminEmails.split(",").map((e) => e.trim().toLowerCase());
+        if (additionalAdmins.includes(email.toLowerCase())) {
+          expectedRole = "admin";
+        }
+      }
+      if (user.role !== expectedRole) {
+        logger.info(`[Clerk] Updating role for ${email}: ${user.role} → ${expectedRole}`);
+      }
+
       await db.upsertUser({
         openId: user.openId,
         lastSignedIn: signedInAt,
+        role: expectedRole,
       });
+      user = { ...user, role: expectedRole };
     }
 
     return user;
