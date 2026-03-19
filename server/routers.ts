@@ -118,6 +118,7 @@ import { sendEmail } from "./email";
 
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
+const RATE_STORE_MAX_SIZE = 10_000;
 
 // Periodically clean up expired entries to prevent unbounded memory growth
 setInterval(() => {
@@ -133,6 +134,15 @@ function checkPublicMutationRate(key: string, maxPerWindow = 5, windowMs = 15 * 
   const now = Date.now();
   const entry = publicMutationRateStore[key];
   if (!entry || entry.resetTime < now) {
+    // Evict oldest entries if store exceeds max size
+    const keys = Object.keys(publicMutationRateStore);
+    if (keys.length >= RATE_STORE_MAX_SIZE) {
+      const sorted = keys.sort((a, b) => publicMutationRateStore[a].resetTime - publicMutationRateStore[b].resetTime);
+      const evictCount = Math.max(1, Math.floor(RATE_STORE_MAX_SIZE * 0.1));
+      for (let i = 0; i < evictCount && i < sorted.length; i++) {
+        delete publicMutationRateStore[sorted[i]];
+      }
+    }
     publicMutationRateStore[key] = { count: 1, resetTime: now + windowMs };
     return;
   }
