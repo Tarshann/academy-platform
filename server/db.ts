@@ -3277,8 +3277,13 @@ export async function getAthleteReportData(athleteId: number) {
 export async function insertGovernanceEvidence(evidence: InsertGovernanceEvidence) {
   const db = await getDb();
   if (!db) return null;
-  const [row] = await db.insert(governanceEvidence).values(evidence).returning();
-  return row;
+  try {
+    const [row] = await db.insert(governanceEvidence).values(evidence).returning();
+    return row;
+  } catch (err) {
+    logger.error("[governance-evidence] Failed to write evidence:", err);
+    return null;
+  }
 }
 
 export async function getGovernanceEvidenceTrail(opts: {
@@ -3304,14 +3309,17 @@ export async function getGovernanceEvidenceTrail(opts: {
 
 export async function getGovernanceStats() {
   const db = await getDb();
-  if (!db) return { totalDecisions: 0, totalDenied: 0 };
+  if (!db) return { totalDecisions: 0, totalDenied: 0, totalAllowed: 0, totalEscalated: 0, totalErrors: 0 };
   const [total] = await db.select({ count: count() }).from(governanceEvidence);
-  const [denied] = await db
-    .select({ count: count() })
-    .from(governanceEvidence)
-    .where(eq(governanceEvidence.action, "deny"));
+  const [denied] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "deny"));
+  const [allowed] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "allow"));
+  const [escalated] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "escalate"));
+  const [errors] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "error"));
   return {
     totalDecisions: total?.count ?? 0,
     totalDenied: denied?.count ?? 0,
+    totalAllowed: allowed?.count ?? 0,
+    totalEscalated: escalated?.count ?? 0,
+    totalErrors: errors?.count ?? 0,
   };
 }

@@ -1,5 +1,5 @@
 /**
- * Strix Governance — Admin API Router
+ * Strix Governance — Admin API Router (Embedded Kernel)
  *
  * Provides governance dashboard data to the admin UI.
  * Stats and evidence trail are ALWAYS sourced from the local
@@ -12,11 +12,8 @@
 import { z } from "zod";
 import { adminProcedure, router } from "./_core/trpc";
 import { CAPABILITIES, CAPABILITY_MAP } from "./_core/strix-capabilities";
+import { getGovernanceEvidenceTrail, getGovernanceStats } from "./db";
 import { logger } from "./_core/logger";
-import {
-  getGovernanceStats,
-  getGovernanceEvidenceTrail,
-} from "./db";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 
@@ -35,6 +32,9 @@ export const governanceRouter = router({
         cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
         totalDecisions: dbStats.totalDecisions,
         totalDenied: dbStats.totalDenied,
+        totalAllowed: dbStats.totalAllowed,
+        totalEscalated: dbStats.totalEscalated,
+        totalErrors: dbStats.totalErrors,
         recentBlocked: [],
       };
     } catch (err) {
@@ -49,6 +49,9 @@ export const governanceRouter = router({
         cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
         totalDecisions: 0,
         totalDenied: 0,
+        totalAllowed: 0,
+        totalEscalated: 0,
+        totalErrors: 0,
         recentBlocked: [],
       };
     }
@@ -62,7 +65,7 @@ export const governanceRouter = router({
         status: z.string().optional(),
         limit: z.number().int().min(1).max(100).default(50),
         offset: z.number().int().min(0).default(0),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
       try {

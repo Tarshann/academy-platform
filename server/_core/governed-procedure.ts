@@ -1,38 +1,26 @@
 /**
- * Strix Governance — Feature-Flagged Procedure Wrapper
+ * Strix Governance — Embedded Kernel with Local Evidence Persistence
  *
  * NON-BYPASSABLE ENFORCEMENT:
  *   All admin mutations execute through governedProcedure(), which replaces
  *   adminProcedure as the procedure builder in routers.ts. Mutation handlers
  *   are defined inside .mutation() closures — there is no alternate execution
- *   path. Direct handler invocation without a valid governance context fails
- *   at runtime because the handler is only reachable through the tRPC
- *   procedure chain, and governance middleware sits in that chain.
- *
- * SYSTEM ACTORS (CRON JOBS):
- *   System actors (cron jobs) still require capability validation and produce
- *   evidence records. Auto-approve is a policy setting (approvalsRequired: 0),
- *   not an implicit bypass. Every cron execution is recorded with actor ID
- *   "system:cron", capability ID, and timestamp — creating a complete audit
- *   trail even for automated actions.
- *
- * FEATURE FLAG BEHAVIOR:
- *   When STRIX_GOVERNANCE_ENABLED=true:
- *     governedProcedure("capability.id") → adminProcedure + governance middleware
- *     evaluateCronGovernance("capability.id") → checks cron jobs before execution
- *
- *   When STRIX_GOVERNANCE_ENABLED is falsy (default):
- *     governedProcedure() → plain adminProcedure (zero behavioral change)
- *     evaluateCronGovernance() → { allowed: true } (cron runs normally)
- *
- *   This ensures the live site is completely unaffected until governance is
- *   explicitly activated.
+ *   path.
  *
  * EVIDENCE PERSISTENCE:
- *   Evidence is persisted to immutable append-only storage (PostgreSQL via Neon)
- *   before the enforcement phase (Phase 3). This is a prerequisite, not optional.
- *   The Strix SDK handles evidence recording; the Academy platform does not
- *   write evidence to the local filesystem.
+ *   Evidence is ALWAYS written locally to the governance_evidence table in
+ *   PostgreSQL (Neon) — for every governed action, regardless of whether the
+ *   external Strix SDK is configured. This is the durable source of truth.
+ *
+ * STRIX SDK (OPTIONAL):
+ *   When STRIX_GOVERNANCE_ENABLED=true AND STRIX_API_KEY is set, the SDK is
+ *   also consulted for policy decisions (allow/deny/escalate). External
+ *   decisions are recorded locally with externalDecisionId.
+ *
+ * FAIL BEHAVIOR:
+ *   - Evidence write failure: logged, action still proceeds (fail-open on write)
+ *   - Strix API failure: logged, action proceeds, evidence recorded as allow (fail-open on policy)
+ *   - Strix API deny: evidence recorded as deny, TRPCError FORBIDDEN thrown (fail-closed on deny)
  */
 
 import { adminProcedure } from "./trpc";
@@ -174,7 +162,8 @@ export function governedProcedure(capabilityId?: string) {
 
 /**
  * Evaluates governance for a cron job before execution.
- * When governance is OFF, always returns { allowed: true }.
+ * Always records evidence locally. When Strix is enabled and available,
+ * also consults the external SDK for policy decisions.
  *
  * Usage in cron orchestration functions:
  *   const guard = await evaluateCronGovernance("cron.nurture", "nurture");
