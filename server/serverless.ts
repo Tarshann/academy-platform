@@ -312,6 +312,56 @@ app.post("/api/capture/upload", async (req, res) => {
   }
 });
 
+// Gallery / general file upload (admin, Clerk auth)
+app.post("/api/upload", async (req, res) => {
+  try {
+    const multer = (await import("multer")).default;
+    const ALLOWED_TYPES = [
+      "image/jpeg", "image/png", "image/webp", "image/gif",
+      "video/mp4", "video/quicktime", "video/webm",
+    ];
+    const MAX_SIZE = 50 * 1024 * 1024; // 50MB (video support)
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: MAX_SIZE },
+      fileFilter: (_req, file, cb) => {
+        if (ALLOWED_TYPES.includes(file.mimetype)) cb(null, true);
+        else cb(new Error("Unsupported file type. Allowed: JPEG, PNG, WebP, GIF, MP4, MOV, WebM."));
+      },
+    }).single("file");
+
+    upload(req, res, async (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error
+          ? err.message.includes("limit") ? "File too large (max 50MB)" : err.message
+          : "Upload failed";
+        return res.status(400).json({ error: msg });
+      }
+      const file = (req as any).file;
+      if (!file) return res.status(400).json({ error: "No file provided" });
+
+      try {
+        const { authenticateClerkRequest } = await import("./_core/clerk");
+        const user = await authenticateClerkRequest(req);
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+        const { storagePut } = await import("./storage");
+        const ext = file.originalname.split(".").pop() || "bin";
+        const folder = file.mimetype.startsWith("video/") ? "gallery-videos" : "gallery-images";
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const key = `${folder}/${user.id}-${timestamp}-${randomSuffix}.${ext}`;
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        res.json({ url, key, mimeType: file.mimetype });
+      } catch (error) {
+        res.status(500).json({ error: "Upload failed" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
 // Profile picture upload
 app.post("/api/profile/upload-picture", async (req, res) => {
   try {

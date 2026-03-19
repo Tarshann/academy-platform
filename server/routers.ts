@@ -1115,6 +1115,7 @@ export const appRouter = router({
             description: z.string().max(2000).optional(),
             imageUrl: z.string().max(500),
             imageKey: z.string().max(500),
+            mediaType: z.enum(["image", "video"]).default("image"),
             category: z.enum(["training", "highlights"]),
           })
         )
