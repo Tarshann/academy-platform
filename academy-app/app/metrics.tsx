@@ -4,6 +4,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Pressable,
   RefreshControl,
   TextInput,
   Alert,
@@ -16,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { colors, shadows } from '../lib/theme';
 
 type MetricCategory = 'speed' | 'power' | 'agility' | 'endurance' | 'strength' | 'flexibility';
@@ -150,7 +152,7 @@ function RecordMetricForm({
       <View style={styles.formContainer}>
         <View style={styles.formHeader}>
           <Text style={styles.formTitle}>Record Metric</Text>
-          <TouchableOpacity onPress={onCancel}>
+          <TouchableOpacity onPress={onCancel} accessibilityLabel="Close form">
             <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -160,6 +162,7 @@ function RecordMetricForm({
           <TouchableOpacity
             style={styles.customToggle}
             onPress={() => setIsCustom(!isCustom)}
+            accessibilityLabel={isCustom ? 'Use Preset Metric' : 'Create Custom Metric'}
           >
             <Text style={styles.customToggleText}>
               {isCustom ? 'Use Preset Metric' : 'Create Custom Metric'}
@@ -182,6 +185,7 @@ function RecordMetricForm({
                     selectedPreset?.name === preset.name && styles.presetChipActive,
                   ]}
                   onPress={() => setSelectedPreset(preset)}
+                  accessibilityLabel={`${preset.name} (${preset.unit})`}
                 >
                   <Ionicons
                     name={preset.icon}
@@ -235,6 +239,7 @@ function RecordMetricForm({
                       },
                     ]}
                     onPress={() => setCustomCategory(cat)}
+                    accessibilityLabel={`${cat} category`}
                   >
                     <Text
                       style={[
@@ -259,6 +264,7 @@ function RecordMetricForm({
               value={value}
               onChangeText={setValue}
               keyboardType="decimal-pad"
+              accessibilityLabel="Metric value"
             />
             <View style={styles.unitLabel}>
               <Text style={styles.unitLabelText}>
@@ -275,6 +281,7 @@ function RecordMetricForm({
             value={notes}
             onChangeText={setNotes}
             multiline
+            accessibilityLabel="Notes"
           />
 
           {/* Submit */}
@@ -285,6 +292,7 @@ function RecordMetricForm({
             ]}
             onPress={handleSubmit}
             disabled={recordMutation.isPending}
+            accessibilityLabel={recordMutation.isPending ? 'Saving metric' : 'Record new metric'}
           >
             <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
             <Text style={styles.submitBtnText}>
@@ -347,25 +355,24 @@ export default function MetricsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Athlete Metrics</Text>
-        {isAdmin && (
-          <TouchableOpacity
-            onPress={() => {
-              setSelectedAthleteId(me.data?.id ?? null);
-              setShowForm(true);
-            }}
-            style={styles.addBtn}
-          >
-            <Ionicons name="add" size={24} color={colors.gold} />
-          </TouchableOpacity>
-        )}
-        {!isAdmin && <View style={{ width: 40 }} />}
-      </View>
+      <ScreenHeader
+        title="Athlete Metrics"
+        rightAction={
+          isAdmin ? (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedAthleteId(me.data?.id ?? null);
+                setShowForm(true);
+              }}
+              style={styles.addBtn}
+              accessibilityLabel="Record new metric"
+              accessibilityRole="button"
+            >
+              <Ionicons name="add" size={24} color={colors.gold} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       {/* Search (admin) */}
       {isAdmin && (
@@ -377,6 +384,7 @@ export default function MetricsScreen() {
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            accessibilityLabel="Search athlete or metric"
           />
         </View>
       )}
@@ -399,8 +407,20 @@ export default function MetricsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListHeaderComponent={
+          metrics.isError ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+              <Text style={styles.emptyTitle}>Failed to load metrics</Text>
+              <Text style={styles.emptySubtitle}>Something went wrong. Please try again.</Text>
+              <Pressable style={styles.retryButton} onPress={() => metrics.refetch()} accessibilityLabel="Try again">
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </Pressable>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
-          !metrics.isLoading ? (
+          !metrics.isLoading && !metrics.isError ? (
             <View style={styles.emptyState}>
               <Ionicons name="analytics-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No metrics recorded</Text>
@@ -631,4 +651,18 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 40 },
   skeletonBlock: { backgroundColor: colors.skeletonBase, borderRadius: 6 },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: colors.cardElevated,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  retryButtonText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
