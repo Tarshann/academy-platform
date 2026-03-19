@@ -458,6 +458,39 @@ export default function ProfileScreen() {
       <View style={styles.section}>
         <TouchableOpacity
           style={styles.linkRow}
+          onPress={() => router.push('/family' as any)}
+        >
+          <Ionicons name="people-outline" size={18} color={colors.textSecondary} />
+          <Text style={styles.linkText}>Family & Household</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/referrals' as any)}
+        >
+          <Ionicons name="gift-outline" size={18} color={colors.textSecondary} />
+          <Text style={styles.linkText}>Referral Program</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
+          onPress={() => router.push('/progress-reports' as any)}
+        >
+          <Ionicons name="document-text-outline" size={18} color={colors.textSecondary} />
+          <Text style={styles.linkText}>Progress Reports</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <TouchableOpacity
+          style={styles.linkRow}
           onPress={() => router.push('/metrics' as any)}
         >
           <Ionicons name="analytics-outline" size={18} color={colors.textSecondary} />
