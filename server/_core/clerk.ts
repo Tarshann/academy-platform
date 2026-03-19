@@ -161,8 +161,33 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
       try {
         user = await syncClerkUserToDatabase(clerkUserId);
       } catch (error) {
-        logger.error("[Clerk] Failed to sync user:", error);
-        if (!user) return null;
+        logger.error("[Clerk] Failed to sync user (attempt 1):", error);
+        if (!user) {
+          // Retry once after a short delay — handles Clerk propagation lag
+          // that commonly occurs right after signup
+          await new Promise((r) => setTimeout(r, 1000));
+          try {
+            user = await syncClerkUserToDatabase(clerkUserId);
+          } catch (retryError) {
+            logger.error("[Clerk] Failed to sync user (attempt 2):", retryError);
+            // Last resort: create a minimal user record so the session isn't lost.
+            // Name/email will be populated on the next successful sync.
+            try {
+              await db.upsertUser({
+                openId: clerkUserId,
+                name: null,
+                email: null,
+                loginMethod: "clerk",
+                lastSignedIn: new Date(),
+                role: "user",
+              });
+              user = await db.getUserByOpenId(clerkUserId);
+            } catch (fallbackError) {
+              logger.error("[Clerk] Fallback user creation failed:", fallbackError);
+              return null;
+            }
+          }
+        }
       }
     }
 
