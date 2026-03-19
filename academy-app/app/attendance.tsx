@@ -146,6 +146,9 @@ export default function AttendanceScreen() {
     });
   }, [records.data, currentMonth]);
 
+  // Check if there is truly no data at all
+  const hasNoData = (records.data?.length ?? 0) === 0 && stats.data?.total === 0;
+
   return (
     <>
       <Stack.Screen
@@ -166,10 +169,29 @@ export default function AttendanceScreen() {
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load attendance</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={onRefresh}>
+          <TouchableOpacity
+            style={styles.retryBtn}
+            onPress={onRefresh}
+            accessibilityLabel="Retry loading attendance"
+            accessibilityRole="button"
+          >
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
+      ) : hasNoData ? (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.overallEmptyContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
+          <Text style={styles.overallEmptyTitle}>No attendance records yet</Text>
+          <Text style={styles.overallEmptySubtitle}>
+            Attendance records will appear here as you attend sessions
+          </Text>
+        </ScrollView>
       ) : (
         <ScrollView
           style={styles.scroll}
@@ -213,13 +235,23 @@ export default function AttendanceScreen() {
           {/* Calendar */}
           <View style={styles.calendarCard}>
             <View style={styles.calendarHeader}>
-              <TouchableOpacity onPress={onPrevMonth} style={styles.calendarNav}>
+              <TouchableOpacity
+                onPress={onPrevMonth}
+                style={styles.calendarNav}
+                accessibilityLabel="Previous month"
+                accessibilityRole="button"
+              >
                 <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
               </TouchableOpacity>
               <Text style={styles.calendarMonth}>
                 {format(currentMonth, 'MMMM yyyy')}
               </Text>
-              <TouchableOpacity onPress={onNextMonth} style={styles.calendarNav}>
+              <TouchableOpacity
+                onPress={onNextMonth}
+                style={styles.calendarNav}
+                accessibilityLabel="Next month"
+                accessibilityRole="button"
+              >
                 <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
               </TouchableOpacity>
             </View>
@@ -551,7 +583,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.card,
   },
-  // Empty
+  // Empty (per-month)
   emptyWrapper: {
     padding: 40,
     alignItems: 'center',
@@ -565,6 +597,25 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  // Overall empty state
+  overallEmptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    gap: 8,
+  },
+  overallEmptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: 8,
+  },
+  overallEmptySubtitle: {
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
   },
