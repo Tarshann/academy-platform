@@ -18,6 +18,8 @@ build/
 **/service-account*.json
 **/*-4e5d817d1e05.json
 **/academytn-app-*.json
+academy-app/credentials.json
+academy-app/credentials/
 
 # IDE and editor files
 .vscode/
