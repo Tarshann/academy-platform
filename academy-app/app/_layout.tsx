@@ -15,6 +15,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { initPostHog, identifyUser, resetUser, trackEvent } from '../lib/analytics';
 import { closeAbly } from '../lib/realtime';
 import { colors } from '../lib/theme';
+import { OfflineBanner } from '../components/OfflineBanner';
 
 const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
@@ -132,11 +133,18 @@ function AuthGuard() {
   const segments = useSegments();
   const router = useRouter();
   const hasNavigated = useRef(false);
+  const onboardingChecked = useRef(false);
+
+  // Check onboarding progress for signed-in users
+  const onboardingProgress = trpc.onboarding.getProgress.useQuery(undefined, {
+    enabled: isLoaded && !!isSignedIn,
+  });
 
   useEffect(() => {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isOnboarding = segments[0] === 'onboarding';
 
     if (!isSignedIn && !inAuthGroup) {
       hasNavigated.current = true;
@@ -144,13 +152,29 @@ function AuthGuard() {
     } else if (isSignedIn && inAuthGroup) {
       hasNavigated.current = true;
       router.replace('/(tabs)');
+    } else if (
+      isSignedIn &&
+      !inAuthGroup &&
+      !isOnboarding &&
+      !onboardingChecked.current &&
+      onboardingProgress.data &&
+      !onboardingProgress.data.completed
+    ) {
+      onboardingChecked.current = true;
+      router.replace('/onboarding');
+    } else if (
+      isSignedIn &&
+      onboardingProgress.data?.completed
+    ) {
+      onboardingChecked.current = true;
     }
-  }, [isLoaded, isSignedIn, segments, router]);
+  }, [isLoaded, isSignedIn, segments, router, onboardingProgress.data]);
 
   if (!isLoaded) return <Loading />;
 
   return (
     <>
+      <OfflineBanner />
       <PushRegistration />
       <NotificationHandler />
       <ScreenTracker />
@@ -174,6 +198,10 @@ function AuthGuard() {
           <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="notifications-settings" options={{ headerShown: true, presentation: 'card', title: 'Notifications', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="family" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="referrals" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="progress-reports" options={{ headerShown: false, presentation: 'card' }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false, presentation: 'card' }} />
         </Stack>
       </ErrorBoundary>
     </>
