@@ -26,8 +26,49 @@
 import { adminProcedure } from "./trpc";
 import { TRPCError } from "@trpc/server";
 import { logger } from "./logger";
+import { getCapability } from "./strix-capabilities";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
+
+/**
+ * Local policy evaluation — deterministic rules based on capability registry.
+ * Provides real enforcement without external SDK dependency.
+ *
+ * Policy rules:
+ *   CRITICAL (approvalsRequired >= 2) → deny unless actor is owner
+ *   HIGH     (approvalsRequired >= 1) → escalate (soft: recorded, action proceeds)
+ *   MEDIUM/LOW                        → allow with local_policy attribution
+ *
+ * Escalate is "soft" until an approval workflow UI exists —
+ * the action proceeds but evidence records the escalation for audit.
+ */
+function evaluateLocalPolicy(
+  capabilityId: string,
+  actor: { id: string; role: string; email?: string }
+): { action: "allow" | "deny" | "escalate"; reason: string } {
+  const capability = getCapability(capabilityId);
+  if (!capability) {
+    return { action: "allow", reason: "unregistered_capability" };
+  }
+
+  const ownerEmail = process.env.CLERK_ADMIN_EMAIL;
+
+  // CRITICAL capabilities: only the owner can execute
+  if (capability.risk === "critical" && capability.approvalsRequired >= 2) {
+    if (actor.email !== ownerEmail) {
+      return { action: "deny", reason: "critical_requires_owner" };
+    }
+    // Owner executing critical action — allow but note it
+    return { action: "allow", reason: "owner_authorized" };
+  }
+
+  // HIGH capabilities with approval requirements: escalate (soft)
+  if (capability.risk === "high" && capability.approvalsRequired >= 1) {
+    return { action: "escalate", reason: "high_risk_audit" };
+  }
+
+  return { action: "allow", reason: "local_policy" };
+}
 
 /**
  * Records a governance decision to the local database.
@@ -137,23 +178,40 @@ export function governedProcedure(capabilityId?: string) {
       }
     }
 
-    // Always record locally — even when Strix is off or unavailable
+    // Evaluate local policy when SDK is unavailable or governance is off
+    const localDecision = GOVERNANCE_ENABLED
+      ? evaluateLocalPolicy(capabilityId, actor)
+      : { action: "allow" as const, reason: "governance_disabled" };
+
+    // Record evidence with local policy decision
     recordEvidence({
       capabilityId,
       actorId: actor.id,
       actorRole: actor.role,
       actorEmail: actor.email,
-      action: "allow",
-      reason: GOVERNANCE_ENABLED ? "sdk_unavailable" : undefined,
+      action: localDecision.action,
+      reason: localDecision.reason,
       source: "trpc",
     });
 
+    // Hard deny — block the mutation
+    if (localDecision.action === "deny") {
+      logger.warn(
+        `[governance] Local policy denied ${capabilityId} for actor ${actor.id}: ${localDecision.reason}`
+      );
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `Action denied by governance policy: ${localDecision.reason}`,
+      });
+    }
+
+    // Escalate (soft) or allow — proceed with evidence attached
     return next({
       ctx: {
         ...ctx,
         governanceEvidence: {
           capabilityId,
-          action: "allow",
+          action: localDecision.action,
         },
       },
     });
@@ -218,12 +276,19 @@ export async function evaluateCronGovernance(
     }
   }
 
-  // Always record locally — even when Strix is off
+  // Local policy for cron: all cron jobs have approvalsRequired: 0,
+  // so they pass local policy as "allow" with local_policy attribution
+  const cronCapability = getCapability(capabilityId);
+  const cronReason = GOVERNANCE_ENABLED
+    ? (cronCapability ? "local_policy" : "unregistered_capability")
+    : "governance_disabled";
+
   recordEvidence({
     capabilityId,
     actorId: "system:cron",
     actorRole: "automation",
     action: "allow",
+    reason: cronReason,
     source: "cron",
     metadata: { cronName },
   });
