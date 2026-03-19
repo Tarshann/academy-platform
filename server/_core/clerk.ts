@@ -102,11 +102,18 @@ export async function syncClerkUserToDatabase(clerkUserId: string) {
       : user.firstName || user.lastName || email?.split("@")[0] || null;
 
     // Check if this user should be admin
+    // Owner (CLERK_ADMIN_EMAIL) and additional admins (ADMIN_EMAILS) both get admin role.
+    // Governance layer distinguishes owner from other admins for CRITICAL actions.
     let role: "user" | "admin" = "user";
     if (ENV.clerkAdminEmail && email === ENV.clerkAdminEmail) {
       role = "admin";
     } else if (ENV.ownerOpenId && openId === ENV.ownerOpenId) {
       role = "admin";
+    } else if (ENV.adminEmails && email) {
+      const additionalAdmins = ENV.adminEmails.split(",").map((e) => e.trim().toLowerCase());
+      if (additionalAdmins.includes(email.toLowerCase())) {
+        role = "admin";
+      }
     }
 
     await db.upsertUser({

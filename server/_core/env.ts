@@ -23,6 +23,9 @@ export const ENV = {
                         "",
   clerkSecretKey: process.env.CLERK_SECRET_KEY ?? "",
   clerkAdminEmail: process.env.CLERK_ADMIN_EMAIL ?? "",
+  // Additional admin emails (comma-separated). These users get admin role
+  // but are NOT the owner — governance CRITICAL actions will be denied.
+  adminEmails: process.env.ADMIN_EMAILS ?? "",
   // Web Push VAPID keys
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
