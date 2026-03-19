@@ -23,8 +23,13 @@ if (ENV.clerkSecretKey) {
   );
 }
 
-// JSON body parser
-app.use(express.json());
+// JSON body parser — skip multipart upload routes to avoid consuming
+// the raw body before multer can parse it.
+app.use((req, res, next) => {
+  const multipartRoutes = ["/api/chat/upload-image", "/api/capture/upload", "/api/upload", "/api/profile/upload-picture"];
+  if (multipartRoutes.some(r => req.path === r)) return next();
+  express.json()(req, res, next);
+});
 
 // Extract chat token from query param or Authorization header
 function extractToken(req: express.Request): string | undefined {
