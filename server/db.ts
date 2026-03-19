@@ -1904,13 +1904,15 @@ export async function searchDmMessages(userId: number, query: string, opts?: { l
   const effectiveLimit = Math.min(opts?.limit ?? 20, 100);
 
   // Search messages in those conversations
+  // Parameterized query with escaped LIKE wildcards to prevent SQL injection
+  const escapedQuery = query.replace(/[%_\\]/g, "\\$&");
   let dbQuery = db
     .select()
     .from(dmMessages)
     .where(
       and(
         inArray(dmMessages.conversationId, conversationIds),
-        sql`${dmMessages.content} LIKE ${`%${query.replace(/[%_\\]/g, "\\$&")}%`}`
+        sql`${dmMessages.content} ILIKE ${"%" + escapedQuery + "%"}`
       )
     )
     .orderBy(desc(dmMessages.createdAt))
