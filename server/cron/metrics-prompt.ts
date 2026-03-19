@@ -18,8 +18,11 @@ export async function run() {
   const db = await getDb();
   if (!db) return { promptsSent: 0, sessionsProcessed: 0 };
 
+  const { notificationLogs } = await import("../../drizzle/schema");
+
   const now = new Date();
   const threeHoursAgo = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
   // Sessions that ended in the last 3 hours
   const recentSessions = await db
@@ -29,7 +32,7 @@ export async function run() {
 
   if (recentSessions.length === 0) {
     logger.info("[cron/metrics-prompt] No recent sessions found");
-    return { promptsSent: 0, sessionsProcessed: 0 };
+    return { promptsSent: 0, sessionsProcessed: 0, skippedDuplicates: 0 };
   }
 
   // Get admin/coach users
@@ -46,12 +49,32 @@ export async function run() {
   const adminIds = adminUsers.map((u: any) => u.id as number);
   if (adminIds.length === 0) {
     logger.info("[cron/metrics-prompt] No admin users found");
-    return { promptsSent: 0, sessionsProcessed: recentSessions.length };
+    return { promptsSent: 0, sessionsProcessed: recentSessions.length, skippedDuplicates: 0 };
   }
 
   let promptsSent = 0;
+  let skippedDuplicates = 0;
 
   for (const session of recentSessions) {
+    // Dedup: check if we already sent a metrics-prompt notification for this session in the last 24h
+    const alreadySent = await db
+      .select({ id: notificationLogs.id })
+      .from(notificationLogs)
+      .where(
+        and(
+          eq(notificationLogs.type, "push"),
+          sql`${notificationLogs.title} = 'Session Complete'`,
+          sql`${notificationLogs.body} LIKE ${"%" + session.id + "%"}`,
+          gte(notificationLogs.createdAt, twentyFourHoursAgo)
+        )
+      )
+      .limit(1);
+
+    if (alreadySent.length > 0) {
+      skippedDuplicates++;
+      continue;
+    }
+
     // Count attendance
     const [attendanceCount] = await db
       .select({ count: count() })
@@ -72,7 +95,7 @@ export async function run() {
     }
   }
 
-  const result = { promptsSent, sessionsProcessed: recentSessions.length };
+  const result = { promptsSent, sessionsProcessed: recentSessions.length, skippedDuplicates };
   logger.info("[cron/metrics-prompt] Complete", result);
   return result;
 }

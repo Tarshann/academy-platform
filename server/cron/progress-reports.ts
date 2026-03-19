@@ -44,8 +44,27 @@ export async function run() {
   let emailsSent = 0;
   let athletesSkipped = 0;
 
+  let skippedDuplicates = 0;
+
   for (const { athleteId } of athleteRows) {
     try {
+      // Dedup: skip if a report was already generated for this athlete in the last 14 days
+      const existingReport = await db
+        .select({ id: progressReports.id })
+        .from(progressReports)
+        .where(
+          and(
+            eq(progressReports.athleteId, athleteId),
+            gte(progressReports.generatedAt, fourteenDaysAgo)
+          )
+        )
+        .limit(1);
+
+      if (existingReport.length > 0) {
+        skippedDuplicates++;
+        continue;
+      }
+
       const reportData = await getAthleteReportData(athleteId);
       if (!reportData || !reportData.athlete || !reportData.metrics || reportData.metrics.length === 0) {
         athletesSkipped++;
@@ -160,7 +179,7 @@ export async function run() {
     }
   }
 
-  const result = { reportsGenerated, emailsSent, athletesSkipped };
+  const result = { reportsGenerated, emailsSent, athletesSkipped, skippedDuplicates };
   logger.info("[cron/progress-reports] Complete", result);
   return result;
 }
