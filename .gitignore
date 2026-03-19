@@ -117,3 +117,5 @@ temp/
 .claude/worktrees/loving-mendeleev/
 .claude/worktrees/serene-ellis/
 .claude/worktrees/nice-sinoussi/
+academy-app/credentials.json
+academy-app/credentials/
