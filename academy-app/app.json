@@ -3,7 +3,7 @@
     "name": "The Academy - Youth Sports",
     "slug": "academy-app",
     "scheme": "academy",
-    "version": "1.8.0",
+    "version": "1.8.1",
     "description": "Youth athletic training in Gallatin, TN. Basketball, SAQ, multi-sport development. Schedule sessions, track progress, chat with coaches.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,13 +20,17 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "30",
+      "buildNumber": "32",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "remote-notification"
         ],
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "The Academy needs access to your camera to take photos and videos for chat messages, such as sharing training highlights, and to update your profile picture.",
+        "NSPhotoLibraryUsageDescription": "The Academy needs access to your photo library so you can share photos and videos in chat messages, such as sharing training highlights, and update your profile picture.",
+        "NSCalendarsUsageDescription": "The Academy adds your upcoming training sessions to your calendar with reminder alerts so you never miss a workout.",
+        "NSMicrophoneUsageDescription": "The Academy needs access to your microphone to record audio when capturing video for chat messages."
       }
     },
     "android": {
@@ -35,11 +39,25 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 30
+      "versionCode": 32
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The Academy needs access to your photo library so you can share photos and videos in chat messages and update your profile picture.",
+          "cameraPermission": "The Academy needs access to your camera to take photos and videos for chat messages, such as sharing training highlights, and to update your profile picture.",
+          "microphonePermission": "The Academy needs access to your microphone to record audio when capturing video for chat messages."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "The Academy adds your upcoming training sessions to your calendar with reminder alerts so you never miss a workout."
+        }
+      ],
       [
         "expo-build-properties",
         {

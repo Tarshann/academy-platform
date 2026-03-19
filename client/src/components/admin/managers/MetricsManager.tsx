@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Pencil, Activity, TrendingUp, TrendingDown, Search, User, Filter, ChevronRight, Loader2, Trophy, Sparkles, ExternalLink } from "lucide-react";
 
-type MetricCategory = "speed" | "power" | "agility" | "endurance" | "strength" | "flexibility";
+type MetricCategory = "speed" | "power" | "agility" | "endurance" | "strength" | "flexibility" | "skill";
 
 interface MetricForm {
   athleteId: string;
@@ -46,6 +46,16 @@ const METRIC_PRESETS: Record<string, { category: MetricCategory; unit: string }>
   "Beep Test": { category: "endurance", unit: "level" },
   "Sit & Reach": { category: "flexibility", unit: "inches" },
   "Sprint Speed": { category: "speed", unit: "mph" },
+  "Layup Accuracy": { category: "skill", unit: "%" },
+  "Jumpshot Accuracy": { category: "skill", unit: "%" },
+  "3-Point Accuracy": { category: "skill", unit: "%" },
+  "Free Throw Accuracy": { category: "skill", unit: "%" },
+  "Shooting Drill Score": { category: "skill", unit: "makes" },
+  "Ball Handling Grade": { category: "skill", unit: "/10" },
+  "Defensive Reads": { category: "skill", unit: "/10" },
+  "Box Jump Height": { category: "power", unit: "inches" },
+  "Box Jump Reps": { category: "power", unit: "reps" },
+  "Jump Rope Count": { category: "endurance", unit: "reps" },
 };
 
 const CATEGORY_CONFIG: Record<MetricCategory, { label: string; colorClass: string; barColor: string }> = {
@@ -55,6 +65,7 @@ const CATEGORY_CONFIG: Record<MetricCategory, { label: string; colorClass: strin
   endurance: { label: "Endurance", colorClass: "bg-purple-100 text-purple-700", barColor: "#a855f7" },
   strength: { label: "Strength", colorClass: "bg-orange-100 text-orange-700", barColor: "#f97316" },
   flexibility: { label: "Flexibility", colorClass: "bg-teal-100 text-teal-700", barColor: "#14b8a6" },
+  skill: { label: "Skill", colorClass: "bg-rose-100 text-rose-700", barColor: "#f43f5e" },
 };
 
 // For metrics where lower = better (times)

@@ -2,10 +2,11 @@
  * Strix Governance — Admin API Router (Embedded Kernel)
  *
  * Provides governance dashboard data to the admin UI.
- * All endpoints are admin-only and feature-flagged.
+ * Stats and evidence trail are ALWAYS sourced from the local
+ * governance_evidence table — this works regardless of whether
+ * the external Strix SDK is configured.
  *
- * v1.8.2: Reads evidence from LOCAL PostgreSQL table (governance_evidence),
- * not from the external Strix API. This is the embedded kernel model.
+ * The capability registry is always available.
  */
 
 import { z } from "zod";
@@ -17,43 +18,35 @@ import { logger } from "./_core/logger";
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 
 export const governanceRouter = router({
-  /** Dashboard overview stats — reads from local DB */
+  /** Dashboard overview stats — always reads from local DB */
   stats: adminProcedure.query(async () => {
-    const base = {
-      totalCapabilities: CAPABILITIES.length,
-      critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-      high: CAPABILITIES.filter((c) => c.risk === "high").length,
-      medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-      low: CAPABILITIES.filter((c) => c.risk === "low").length,
-      cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
-    };
-
-    if (!GOVERNANCE_ENABLED) {
-      return {
-        enabled: false,
-        ...base,
-        totalDecisions: 0,
-        totalDenied: 0,
-        totalAllowed: 0,
-        totalEscalated: 0,
-        totalErrors: 0,
-        recentBlocked: [],
-      };
-    }
-
     try {
-      const stats = await getGovernanceStats();
+      const dbStats = await getGovernanceStats();
       return {
-        enabled: true,
-        ...base,
-        ...stats,
+        enabled: GOVERNANCE_ENABLED,
+        totalCapabilities: CAPABILITIES.length,
+        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
+        high: CAPABILITIES.filter((c) => c.risk === "high").length,
+        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
+        low: CAPABILITIES.filter((c) => c.risk === "low").length,
+        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
+        totalDecisions: dbStats.totalDecisions,
+        totalDenied: dbStats.totalDenied,
+        totalAllowed: dbStats.totalAllowed,
+        totalEscalated: dbStats.totalEscalated,
+        totalErrors: dbStats.totalErrors,
         recentBlocked: [],
       };
     } catch (err) {
       logger.error("[governance-router] stats error:", err);
       return {
-        enabled: true,
-        ...base,
+        enabled: GOVERNANCE_ENABLED,
+        totalCapabilities: CAPABILITIES.length,
+        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
+        high: CAPABILITIES.filter((c) => c.risk === "high").length,
+        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
+        low: CAPABILITIES.filter((c) => c.risk === "low").length,
+        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
         totalDecisions: 0,
         totalDenied: 0,
         totalAllowed: 0,
@@ -64,7 +57,7 @@ export const governanceRouter = router({
     }
   }),
 
-  /** Evidence trail with pagination and filtering — reads from local DB */
+  /** Evidence trail — always reads from local governance_evidence table */
   evidenceTrail: adminProcedure
     .input(
       z.object({
@@ -75,21 +68,30 @@ export const governanceRouter = router({
       })
     )
     .query(async ({ input }) => {
-      if (!GOVERNANCE_ENABLED) return [];
-
       try {
-        if (input.capabilityId && !CAPABILITY_MAP.has(input.capabilityId)) {
+        const opts = input ?? {};
+
+        // Validate capability ID if provided
+        if (opts.capabilityId && !CAPABILITY_MAP.has(opts.capabilityId)) {
           return [];
         }
 
+        // UI sends "allowed"/"denied"/"escalated" — DB stores "allow"/"deny"/"escalate"
+        const statusToAction: Record<string, string> = {
+          allowed: "allow",
+          denied: "deny",
+          escalated: "escalate",
+        };
+        const action = opts.status ? statusToAction[opts.status] ?? opts.status : undefined;
+
         const rows = await getGovernanceEvidenceTrail({
-          capabilityId: input.capabilityId,
-          action: input.status,
-          limit: input.limit,
-          offset: input.offset,
+          capabilityId: opts.capabilityId,
+          action,
+          limit: opts.limit ?? 50,
+          offset: opts.offset ?? 0,
         });
 
-        // Map DB rows to the shape the frontend expects
+        // Map DB rows to the shape the UI expects
         return rows.map((row: any) => ({
           id: row.id,
           capabilityId: row.capabilityId,
@@ -99,11 +101,12 @@ export const governanceRouter = router({
             role: row.actorRole,
             email: row.actorEmail,
           },
-          timestamp: row.createdAt?.toISOString(),
           reason: row.reason,
-          evidence: row.evidenceHash ? { hash: row.evidenceHash } : undefined,
           source: row.source,
-          decisionId: row.decisionId,
+          timestamp: row.createdAt?.toISOString?.() ?? row.createdAt,
+          evidence: row.externalDecisionId
+            ? { hash: row.externalDecisionId }
+            : undefined,
         }));
       } catch (err) {
         logger.error("[governance-router] evidenceTrail error:", err);
@@ -111,7 +114,7 @@ export const governanceRouter = router({
       }
     }),
 
-  /** Full capability registry — always available */
+  /** Full capability registry — always available (shows what IS or WOULD BE governed) */
   listCapabilities: adminProcedure.query(async () => {
     return CAPABILITIES.map((c) => ({
       id: c.id,

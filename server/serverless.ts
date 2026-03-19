@@ -268,6 +268,50 @@ app.post("/api/chat/upload-image", async (req, res) => {
   }
 });
 
+// Vision Capture media upload (images + audio)
+app.post("/api/capture/upload", async (req, res) => {
+  try {
+    const multer = (await import("multer")).default;
+    const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "audio/webm", "audio/mp4", "audio/mpeg", "audio/wav", "audio/m4a"];
+    const upload = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: 10 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (ALLOWED_TYPES.includes(file.mimetype)) cb(null, true);
+        else cb(new Error("Unsupported file type"));
+      },
+    }).single("file");
+
+    upload(req, res, async (err: unknown) => {
+      if (err) {
+        const msg = err instanceof Error && err.message.includes("limit") ? "File too large (max 10MB)" : "Upload failed";
+        return res.status(400).json({ error: msg });
+      }
+      const file = (req as any).file;
+      const token = req.body.token;
+      if (!file) return res.status(400).json({ error: "No file provided" });
+      if (!token) return res.status(401).json({ error: "No token provided" });
+
+      const user = await verifyChatToken(token);
+      if (!user) return res.status(401).json({ error: "Invalid token" });
+
+      try {
+        const { storagePut } = await import("./storage");
+        const ext = file.originalname.split(".").pop() || "bin";
+        const timestamp = Date.now();
+        const randomSuffix = Math.random().toString(36).substring(2, 8);
+        const key = `captures/${user.id}-${timestamp}-${randomSuffix}.${ext}`;
+        const { url } = await storagePut(key, file.buffer, file.mimetype);
+        res.json({ url, key, mimeType: file.mimetype });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to upload media" });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to upload media" });
+  }
+});
+
 // Profile picture upload
 app.post("/api/profile/upload-picture", async (req, res) => {
   try {

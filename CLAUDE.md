@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.8.0 (mobile app v1.8.0, build 30). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. Post-v1.8.0: Strix governance SDK integration — 84 capabilities (75 tRPC mutations + 9 cron jobs) with risk classification, approval workflows, and evidence trail.
+**Current release**: v1.8.1 (mobile app v1.8.1, build 32). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. v1.8.1 adds: App Store compliance fixes (iOS permission purpose strings for camera, photo library, calendar, microphone), expo-image-picker and expo-calendar plugin configurations. Post-v1.8.0: Strix governance SDK integration — 84 capabilities (75 tRPC mutations + 9 cron jobs) with risk classification, approval workflows, and evidence trail.
 
 ---
 
@@ -463,7 +463,7 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.8.0 / **Build**: 30 (iOS + Android synchronized)
+- **Version**: 1.8.1 / **Build**: 32 (iOS + Android synchronized)
 
 ### Key Features
 
@@ -817,6 +817,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **v1.8.0 automation + AI content engine** (migration 0019, 6 new tables) — 9 Vercel Cron Jobs: nurture campaigns, auto-generate sessions from templates, session reminders, merch drop notifications, metrics prompts, bi-weekly AI progress reports, reengagement campaigns, parent weekly digests, post-session AI content generation. AI content engine uses Gemini 2.5 Flash to auto-generate session recaps, social captions, and parent push notifications. Content queue admin manager with approve/reject/edit workflow. Feed extended with session recap type. `api/cron/` entry points with `CRON_SECRET` auth. `server/cron/` orchestration functions with unit tests. Dedup indexes prevent notification spam.
 - **Milestone celebration engine** — Direction-aware personal record detection in `metrics.record` mutation. Celebration pipeline: milestone DB record → SVG→PNG card generation (via `sharp`) → parent push notification → feed post. New `milestones` tRPC router and `milestones` table (migration 0019 extended). MetricsManager confetti dialog on PR detection. Feed `UNION ALL` extended with milestone type.
 - **Strix governance integration (v4)** — Feature-flagged governance layer wrapping all 75 admin tRPC mutations and 9 cron jobs (84 total capabilities). `governedProcedure()` replaces `adminProcedure` in `routers.ts` — when `STRIX_GOVERNANCE_ENABLED=false` (default), identical to plain adminProcedure. When enabled, evaluates each action against Strix SDK for allow/deny/escalate decisions. 4 risk levels (critical, high, medium, low) with configurable approval requirements. Cron jobs governed with auto-approve (approvalsRequired: 0) and evidence recording. New files: `server/_core/strix.ts` (SDK client), `server/_core/strix-capabilities.ts` (84 capability definitions), `server/_core/governed-procedure.ts` (middleware), `server/governance-router.ts` (admin API). New admin GovernanceManager panel with stats dashboard, capability registry browser, and evidence trail viewer. Cutover checklist in `docs/STRIX_GOVERNANCE_CUTOVER.md`. Admin sidebar restructured with new "Platform" group.
+- **v1.8.1 App Store compliance** (build 32) — iOS permission purpose strings added to `infoPlist` for camera, photo library, calendar, and microphone (App Store review guideline 5.1.1). `expo-image-picker` and `expo-calendar` plugin configurations added with descriptive permission strings. Build number incremented to 32 (iOS + Android).
 
 ---
 
