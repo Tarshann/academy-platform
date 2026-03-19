@@ -1,72 +1,70 @@
 /**
- * Strix Governance — Admin API Router
+ * Strix Governance — Admin API Router (Embedded Kernel)
  *
  * Provides governance dashboard data to the admin UI.
  * All endpoints are admin-only and feature-flagged.
- * When STRIX_GOVERNANCE_ENABLED is false, returns safe defaults.
+ *
+ * v1.8.2: Reads evidence from LOCAL PostgreSQL table (governance_evidence),
+ * not from the external Strix API. This is the embedded kernel model.
  */
 
 import { z } from "zod";
 import { adminProcedure, router } from "./_core/trpc";
 import { CAPABILITIES, CAPABILITY_MAP } from "./_core/strix-capabilities";
+import { getGovernanceEvidenceTrail, getGovernanceStats } from "./db";
 import { logger } from "./_core/logger";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 
 export const governanceRouter = router({
-  /** Dashboard overview stats */
+  /** Dashboard overview stats — reads from local DB */
   stats: adminProcedure.query(async () => {
+    const base = {
+      totalCapabilities: CAPABILITIES.length,
+      critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
+      high: CAPABILITIES.filter((c) => c.risk === "high").length,
+      medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
+      low: CAPABILITIES.filter((c) => c.risk === "low").length,
+      cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
+    };
+
     if (!GOVERNANCE_ENABLED) {
       return {
         enabled: false,
-        totalCapabilities: CAPABILITIES.length,
-        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-        high: CAPABILITIES.filter((c) => c.risk === "high").length,
-        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-        low: CAPABILITIES.filter((c) => c.risk === "low").length,
-        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
+        ...base,
         totalDecisions: 0,
         totalDenied: 0,
+        totalAllowed: 0,
+        totalEscalated: 0,
+        totalErrors: 0,
         recentBlocked: [],
       };
     }
 
     try {
-      const { getStrixClient } = await import("./_core/strix");
-      const strix = getStrixClient();
-      if (!strix) throw new Error("SDK not configured");
-
-      const stats = await strix.getStats();
+      const stats = await getGovernanceStats();
       return {
         enabled: true,
-        totalCapabilities: CAPABILITIES.length,
-        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-        high: CAPABILITIES.filter((c) => c.risk === "high").length,
-        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-        low: CAPABILITIES.filter((c) => c.risk === "low").length,
-        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
-        totalDecisions: stats.totalDecisions ?? 0,
-        totalDenied: stats.totalDenied ?? 0,
-        recentBlocked: stats.recentBlocked ?? [],
+        ...base,
+        ...stats,
+        recentBlocked: [],
       };
     } catch (err) {
       logger.error("[governance-router] stats error:", err);
       return {
         enabled: true,
-        totalCapabilities: CAPABILITIES.length,
-        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-        high: CAPABILITIES.filter((c) => c.risk === "high").length,
-        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-        low: CAPABILITIES.filter((c) => c.risk === "low").length,
-        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
+        ...base,
         totalDecisions: 0,
         totalDenied: 0,
+        totalAllowed: 0,
+        totalEscalated: 0,
+        totalErrors: 0,
         recentBlocked: [],
       };
     }
   }),
 
-  /** Evidence trail with pagination and filtering */
+  /** Evidence trail with pagination and filtering — reads from local DB */
   evidenceTrail: adminProcedure
     .input(
       z.object({
@@ -74,34 +72,46 @@ export const governanceRouter = router({
         status: z.string().optional(),
         limit: z.number().int().min(1).max(100).default(50),
         offset: z.number().int().min(0).default(0),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
       if (!GOVERNANCE_ENABLED) return [];
 
       try {
-        const { getStrixClient } = await import("./_core/strix");
-        const strix = getStrixClient();
-        if (!strix) return [];
-
-        const opts = input ?? {};
-        if (opts.capabilityId && !CAPABILITY_MAP.has(opts.capabilityId)) {
+        if (input.capabilityId && !CAPABILITY_MAP.has(input.capabilityId)) {
           return [];
         }
 
-        return await strix.getEvidenceTrail({
-          capabilityId: opts.capabilityId,
-          status: opts.status,
-          limit: opts.limit ?? 50,
-          offset: opts.offset ?? 0,
+        const rows = await getGovernanceEvidenceTrail({
+          capabilityId: input.capabilityId,
+          action: input.status,
+          limit: input.limit,
+          offset: input.offset,
         });
+
+        // Map DB rows to the shape the frontend expects
+        return rows.map((row: any) => ({
+          id: row.id,
+          capabilityId: row.capabilityId,
+          action: row.action,
+          actor: {
+            id: row.actorId,
+            role: row.actorRole,
+            email: row.actorEmail,
+          },
+          timestamp: row.createdAt?.toISOString(),
+          reason: row.reason,
+          evidence: row.evidenceHash ? { hash: row.evidenceHash } : undefined,
+          source: row.source,
+          decisionId: row.decisionId,
+        }));
       } catch (err) {
         logger.error("[governance-router] evidenceTrail error:", err);
         return [];
       }
     }),
 
-  /** Full capability registry — always available (shows what WOULD be governed) */
+  /** Full capability registry — always available */
   listCapabilities: adminProcedure.query(async () => {
     return CAPABILITIES.map((c) => ({
       id: c.id,

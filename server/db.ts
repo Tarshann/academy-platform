@@ -66,6 +66,8 @@ import {
   type InsertScheduleTemplate,
   type InsertBillingReminder,
   type InsertOnboardingStep,
+  governanceEvidence,
+  type InsertGovernanceEvidence,
 } from "../drizzle/schema";
 
 // ============================================================================
@@ -3265,5 +3267,59 @@ export async function getAthleteReportData(athleteId: number) {
     attendance,
     showcases,
     points: points[0] ?? null,
+  };
+}
+
+// ============================================================================
+// GOVERNANCE EVIDENCE (Embedded Kernel)
+// ============================================================================
+
+export async function insertGovernanceEvidence(entry: InsertGovernanceEvidence) {
+  const db = await getDb();
+  if (!db) return null;
+  try {
+    const [row] = await db.insert(governanceEvidence).values(entry).returning();
+    return row;
+  } catch (err) {
+    logger.error("[governance-evidence] Failed to write evidence:", err);
+    return null;
+  }
+}
+
+export async function getGovernanceEvidenceTrail(opts: {
+  capabilityId?: string;
+  action?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [];
+  if (opts.capabilityId) conditions.push(eq(governanceEvidence.capabilityId, opts.capabilityId));
+  if (opts.action) conditions.push(eq(governanceEvidence.action, opts.action));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  return await db
+    .select()
+    .from(governanceEvidence)
+    .where(where)
+    .orderBy(desc(governanceEvidence.createdAt))
+    .limit(opts.limit ?? 50)
+    .offset(opts.offset ?? 0);
+}
+
+export async function getGovernanceStats() {
+  const db = await getDb();
+  if (!db) return { totalDecisions: 0, totalDenied: 0, totalAllowed: 0, totalEscalated: 0, totalErrors: 0 };
+  const [total] = await db.select({ count: count() }).from(governanceEvidence);
+  const [denied] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "deny"));
+  const [allowed] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "allow"));
+  const [escalated] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "escalate"));
+  const [errors] = await db.select({ count: count() }).from(governanceEvidence).where(eq(governanceEvidence.action, "error"));
+  return {
+    totalDecisions: total.count,
+    totalDenied: denied.count,
+    totalAllowed: allowed.count,
+    totalEscalated: escalated.count,
+    totalErrors: errors.count,
   };
 }

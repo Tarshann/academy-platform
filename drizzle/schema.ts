@@ -1279,3 +1279,30 @@ export const milestones = pgTable("milestones", {
 
 export type Milestone = typeof milestones.$inferSelect;
 export type InsertMilestone = typeof milestones.$inferInsert;
+
+// ============================================================================
+// GOVERNANCE EVIDENCE (Embedded Kernel — Append-Only Audit Trail)
+// ============================================================================
+
+/**
+ * Local durable evidence sink for all governance decisions.
+ * Every governed mutation and cron job writes a row here BEFORE execution.
+ * This is the source of truth for the governance audit trail — not an external API.
+ */
+export const governanceEvidence = pgTable("governance_evidence", {
+  id: serial("id").primaryKey(),
+  decisionId: varchar("decision_id", { length: 255 }),
+  capabilityId: varchar("capability_id", { length: 255 }).notNull(),
+  action: varchar("action", { length: 20 }).notNull(),       // allow | deny | escalate | error
+  actorId: varchar("actor_id", { length: 255 }).notNull(),    // user ID or "system:cron"
+  actorRole: varchar("actor_role", { length: 50 }),
+  actorEmail: varchar("actor_email", { length: 255 }),
+  source: varchar("source", { length: 20 }).notNull(),        // "trpc" | "cron"
+  reason: text("reason"),
+  evidenceHash: varchar("evidence_hash", { length: 255 }),
+  metadata: text("metadata"),                                  // JSON-stringified context
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type GovernanceEvidenceEntry = typeof governanceEvidence.$inferSelect;
+export type InsertGovernanceEvidence = typeof governanceEvidence.$inferInsert;
