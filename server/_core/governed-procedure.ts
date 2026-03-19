@@ -25,6 +25,7 @@
 
 import { adminProcedure } from "./trpc";
 import { TRPCError } from "@trpc/server";
+import { createHash } from "crypto";
 import { logger } from "./logger";
 import { getCapability } from "./strix-capabilities";
 
@@ -71,8 +72,37 @@ function evaluateLocalPolicy(
 }
 
 /**
+ * Computes a SHA-256 hash of the decision payload for tamper-proof evidence.
+ * The hash covers all decision-relevant fields in a deterministic order.
+ */
+function computeEvidenceHash(params: {
+  capabilityId: string;
+  actorId: string;
+  actorRole: string;
+  actorEmail?: string;
+  action: string;
+  reason?: string;
+  source: string;
+  timestamp: string;
+}): string {
+  const payload = JSON.stringify({
+    capabilityId: params.capabilityId,
+    actorId: params.actorId,
+    actorRole: params.actorRole,
+    actorEmail: params.actorEmail ?? null,
+    action: params.action,
+    reason: params.reason ?? null,
+    source: params.source,
+    timestamp: params.timestamp,
+  });
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+/**
  * Records a governance decision to the local database.
  * Fire-and-forget — never blocks the mutation.
+ * Each evidence record includes a SHA-256 hash of the decision payload
+ * for tamper detection and audit integrity.
  */
 async function recordEvidence(params: {
   capabilityId: string;
@@ -86,6 +116,18 @@ async function recordEvidence(params: {
   metadata?: Record<string, unknown>;
 }) {
   try {
+    const timestamp = new Date().toISOString();
+    const evidenceHash = computeEvidenceHash({
+      capabilityId: params.capabilityId,
+      actorId: params.actorId,
+      actorRole: params.actorRole,
+      actorEmail: params.actorEmail,
+      action: params.action,
+      reason: params.reason,
+      source: params.source,
+      timestamp,
+    });
+
     const { insertGovernanceEvidence } = await import("../db");
     await insertGovernanceEvidence({
       capabilityId: params.capabilityId,
@@ -96,6 +138,7 @@ async function recordEvidence(params: {
       reason: params.reason ?? null,
       source: params.source,
       externalDecisionId: params.externalDecisionId ?? null,
+      evidenceHash,
       metadata: params.metadata ?? null,
     });
   } catch (err) {
@@ -196,12 +239,13 @@ export function governedProcedure(capabilityId?: string) {
 
     // Hard deny — block the mutation
     if (localDecision.action === "deny") {
+      const capability = getCapability(capabilityId);
       logger.warn(
         `[governance] Local policy denied ${capabilityId} for actor ${actor.id}: ${localDecision.reason}`
       );
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: `Action denied by governance policy: ${localDecision.reason}`,
+        message: `Action denied by governance policy: ${localDecision.reason}. "${capability?.label ?? capabilityId}" is a critical capability that requires owner authorization.`,
       });
     }
 

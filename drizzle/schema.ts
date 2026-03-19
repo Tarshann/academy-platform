@@ -1331,6 +1331,7 @@ export const governanceEvidence = pgTable("governance_evidence", {
   reason: text("reason"),
   source: varchar("source", { length: 20 }).notNull(), // trpc, cron
   externalDecisionId: varchar("external_decision_id", { length: 200 }),
+  evidenceHash: varchar("evidence_hash", { length: 64 }), // SHA-256 hex digest of decision payload
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
 });

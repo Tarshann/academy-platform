@@ -104,9 +104,10 @@ export const governanceRouter = router({
           reason: row.reason,
           source: row.source,
           timestamp: row.createdAt?.toISOString?.() ?? row.createdAt,
-          evidence: row.externalDecisionId
-            ? { hash: row.externalDecisionId }
-            : undefined,
+          evidence: {
+            hash: row.evidenceHash ?? null,
+            externalId: row.externalDecisionId ?? null,
+          },
         }));
       } catch (err) {
         logger.error("[governance-router] evidenceTrail error:", err);
