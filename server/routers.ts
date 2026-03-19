@@ -1508,9 +1508,9 @@ export const appRouter = router({
       return getAllProducts();
     }),
 
-    getCheckoutSessionDetails: publicProcedure
+    getCheckoutSessionDetails: protectedProcedure
       .input(z.object({ sessionId: z.string() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const { ENV } = await import("./_core/env");
         const Stripe = (await import("stripe")).default;
         const stripe = new Stripe(ENV.stripeSecretKey);
@@ -1520,6 +1520,18 @@ export const appRouter = router({
           const session = await stripe.checkout.sessions.retrieve(input.sessionId, {
             expand: ["line_items", "payment_intent"],
           });
+
+          // Verify the requesting user owns this checkout session
+          if (
+            session.customer_email &&
+            ctx.user.email &&
+            session.customer_email.toLowerCase() !== ctx.user.email.toLowerCase()
+          ) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You do not have access to this checkout session",
+            });
+          }
 
           // Extract product details from line items
           const items = (session.line_items?.data || []).map((item) => {
@@ -1542,11 +1554,12 @@ export const appRouter = router({
             customerEmail: session.customer_email || "",
             items,
             createdAt: new Date(session.created * 1000),
-            paymentIntentId: typeof session.payment_intent === "string" 
-              ? session.payment_intent 
+            paymentIntentId: typeof session.payment_intent === "string"
+              ? session.payment_intent
               : session.payment_intent?.id,
           };
         } catch (error) {
+          if (error instanceof TRPCError) throw error;
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Checkout session not found",
