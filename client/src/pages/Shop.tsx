@@ -88,7 +88,7 @@ export default function Shop() {
               <>
                 <h2 className="text-2xl font-bold text-center mb-8">Shop Products</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
+                  {products.map((product: (typeof products)[number]) => (
                     <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       {product.imageUrl ? (
                         <div className="aspect-square overflow-hidden">

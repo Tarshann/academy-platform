@@ -68,7 +68,7 @@ export default function PrivateSessionBooking() {
     setIsSubmitting(true);
 
     try {
-      const selectedCoachData = coaches.find((c) => String(c.id) === selectedCoach);
+      const selectedCoachData = coaches.find((c: (typeof coaches)[number]) => String(c.id) === selectedCoach);
 
       const bookingData = {
         customerName: formData.name,
@@ -239,7 +239,7 @@ export default function PrivateSessionBooking() {
               {coachesQuery.isSuccess && coaches.length > 0 && (
               <RadioGroup value={selectedCoach} onValueChange={setSelectedCoach}>
                 <div className="space-y-4">
-                  {coaches.map((coach) => {
+                  {coaches.map((coach: (typeof coaches)[number]) => {
                     const coachKey = String(coach.id);
                     return (
                     <div key={coach.id} className="relative">
