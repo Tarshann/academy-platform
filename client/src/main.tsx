@@ -17,6 +17,7 @@ import {
   ClerkStateFallbackProvider,
   ClerkStateProvider,
 } from "@/contexts/ClerkStateContext";
+import { toast } from "sonner";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,19 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
+
+    // Surface governance denials as user-visible toasts
+    if (error instanceof TRPCClientError && error.data?.code === "FORBIDDEN") {
+      const message = error.message || "Action denied by governance policy";
+      const isGovernance = message.includes("governance") || message.includes("critical_requires_owner");
+      toast.error(isGovernance ? "Action Blocked" : "Access Denied", {
+        description: isGovernance
+          ? "This action requires owner authorization. Contact the platform owner to proceed."
+          : message,
+        duration: 6000,
+      });
+    }
+
     logger.error("[API Mutation Error]", error);
   }
 });

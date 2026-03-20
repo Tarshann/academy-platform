@@ -23,6 +23,7 @@ import {
   Shield,
   ShieldAlert,
   ShieldCheck,
+  ShieldX,
   Activity,
   Clock,
   Copy,
@@ -31,6 +32,8 @@ import {
   ChevronRight,
   AlertTriangle,
   Timer,
+  Lock,
+  Hash,
 } from "lucide-react";
 
 const riskColor: Record<string, string> = {
@@ -209,27 +212,57 @@ function EvidenceTrailTab() {
       ) : (
         <div className="space-y-2">
           {trail.map((entry: any, i: number) => (
-            <Card key={entry.id ?? i} className="p-3">
+            <Card key={entry.id ?? i} className={`p-3 ${entry.action === "deny" ? "border-red-200 bg-red-50/30" : entry.action === "escalate" ? "border-yellow-200 bg-yellow-50/30" : ""}`}>
               <div className="flex items-start justify-between">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={entry.action === "deny" ? "border-red-300 text-red-700" : entry.action === "escalate" ? "border-yellow-300 text-yellow-700" : "border-green-300 text-green-700"}>
+                    <Badge variant="outline" className={entry.action === "deny" ? "border-red-300 text-red-700 bg-red-50" : entry.action === "escalate" ? "border-yellow-300 text-yellow-700 bg-yellow-50" : "border-green-300 text-green-700 bg-green-50"}>
+                      {entry.action === "deny" && <ShieldX className="h-3 w-3 mr-1" />}
+                      {entry.action === "escalate" && <ShieldAlert className="h-3 w-3 mr-1" />}
+                      {entry.action === "allow" && <ShieldCheck className="h-3 w-3 mr-1" />}
                       {entry.action === "allow" ? "allowed" : entry.action === "deny" ? "denied" : entry.action}
                     </Badge>
                     <code className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{entry.capabilityId}</code>
                     <CopyButton text={entry.capabilityId} />
                   </div>
+                  {entry.action === "deny" && (
+                    <div className="flex items-center gap-1.5 text-xs text-red-700 font-medium">
+                      <Lock className="h-3 w-3" />
+                      Action blocked — {entry.reason === "critical_requires_owner" ? "critical capability requires owner authorization" : entry.reason ?? "policy denied"}
+                    </div>
+                  )}
+                  {entry.action === "escalate" && (
+                    <div className="flex items-center gap-1.5 text-xs text-yellow-700 font-medium">
+                      <AlertTriangle className="h-3 w-3" />
+                      Executed with audit escalation — flagged for review
+                    </div>
+                  )}
+                  {entry.action === "allow" && entry.reason === "owner_authorized" && (
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                      <ShieldCheck className="h-3 w-3" />
+                      Owner-authorized critical action
+                    </div>
+                  )}
                   <div className="text-xs text-gray-500">
-                    Actor: {entry.actor?.id ?? "unknown"} &middot; {entry.timestamp ? formatTimestamp(entry.timestamp) : ""}
+                    Actor: {entry.actor?.email ?? entry.actor?.id ?? "unknown"} &middot; {entry.timestamp ? formatTimestamp(entry.timestamp) : ""}
                   </div>
-                  {entry.reason && <div className="text-xs text-gray-600">{entry.reason}</div>}
+                  {entry.reason && <div className="text-xs text-gray-500">{entry.reason}</div>}
                 </div>
-                {entry.evidence?.hash && (
-                  <div className="flex items-center gap-1 text-xs text-gray-400">
-                    <code className="truncate max-w-[100px]">{entry.evidence.hash.slice(0, 12)}...</code>
-                    <CopyButton text={entry.evidence.hash} />
-                  </div>
-                )}
+                <div className="flex flex-col items-end gap-1">
+                  {entry.evidence?.hash && (
+                    <div className="flex items-center gap-1 text-xs text-gray-400" title="SHA-256 evidence hash">
+                      <Hash className="h-3 w-3" />
+                      <code className="truncate max-w-[100px] font-mono">{entry.evidence.hash.slice(0, 12)}...</code>
+                      <CopyButton text={entry.evidence.hash} />
+                    </div>
+                  )}
+                  {entry.evidence?.externalId && (
+                    <div className="flex items-center gap-1 text-xs text-indigo-400" title="Strix decision ID">
+                      <code className="truncate max-w-[80px]">{entry.evidence.externalId.slice(0, 8)}...</code>
+                      <CopyButton text={entry.evidence.externalId} />
+                    </div>
+                  )}
+                </div>
               </div>
             </Card>
           ))}
