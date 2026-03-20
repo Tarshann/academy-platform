@@ -109,7 +109,8 @@
       "Bash(npx eas:*)",
       "Bash(ls -1 api/cron/*.ts)",
       "Bash(ls -la C:UsersuserTarshannacademy-platformservermilestone*)",
-      "Bash(find /c/Users/user/Tarshann/academy-platform -name *.md -path */ops/* -newer /c/Users/user/Tarshann/academy-platform/drizzle/0023_gallery_media_type.sql)"
+      "Bash(find /c/Users/user/Tarshann/academy-platform -name *.md -path */ops/* -newer /c/Users/user/Tarshann/academy-platform/drizzle/0023_gallery_media_type.sql)",
+      "Bash(pnpm test:*)"
     ]
   }
 }
