@@ -122,6 +122,21 @@ export default function AdminScreen() {
       ],
     },
     {
+      title: 'Platform',
+      actions: [
+        {
+          key: 'governance',
+          icon: 'shield-checkmark-outline',
+          label: 'Governance',
+          description: 'Evidence trail & decision stats',
+          onPress: () => {
+            trackEvent('admin_action_tapped', { action: 'governance' });
+            router.push('/admin-governance');
+          },
+        },
+      ],
+    },
+    {
       title: 'Content',
       actions: [
         {

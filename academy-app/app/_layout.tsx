@@ -195,6 +195,7 @@ function AuthGuard() {
           <Stack.Screen name="admin-contacts" options={{ headerShown: true, presentation: 'card', title: 'Contacts', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="admin-announcements" options={{ headerShown: true, presentation: 'card', title: 'Announcements', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="admin-schedules" options={{ headerShown: true, presentation: 'card', title: 'Schedules', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
+          <Stack.Screen name="admin-governance" options={{ headerShown: true, presentation: 'card', title: 'Governance', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="shop" options={{ headerShown: true, presentation: 'card', title: 'Shop', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="payments" options={{ headerShown: true, presentation: 'card', title: 'Payments & Subscriptions', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
           <Stack.Screen name="notifications-settings" options={{ headerShown: true, presentation: 'card', title: 'Notifications', headerStyle: { backgroundColor: colors.card }, headerTintColor: colors.textPrimary }} />
