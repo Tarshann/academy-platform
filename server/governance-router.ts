@@ -74,7 +74,7 @@ export const governanceRouter = router({
         status: z.string().optional(),
         limit: z.number().int().min(1).max(100).default(50),
         offset: z.number().int().min(0).default(0),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
       if (!GOVERNANCE_ENABLED) return [];
@@ -84,16 +84,15 @@ export const governanceRouter = router({
         const strix = getStrixClient();
         if (!strix) return [];
 
-        const opts = input ?? {};
-        if (opts.capabilityId && !CAPABILITY_MAP.has(opts.capabilityId)) {
+        if (input.capabilityId && !CAPABILITY_MAP.has(input.capabilityId)) {
           return [];
         }
 
         return await strix.getEvidenceTrail({
-          capabilityId: opts.capabilityId,
-          status: opts.status,
-          limit: opts.limit ?? 50,
-          offset: opts.offset ?? 0,
+          capabilityId: input.capabilityId,
+          status: input.status,
+          limit: input.limit,
+          offset: input.offset,
         });
       } catch (err) {
         logger.error("[governance-router] evidenceTrail error:", err);
