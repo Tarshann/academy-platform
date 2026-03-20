@@ -260,7 +260,10 @@ export default function VisionCaptureScreen() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        throw new Error(`Upload failed (${response.status}): ${errBody}`);
+      }
       const { url } = await response.json();
 
       trackEvent('vision_capture_uploaded', {
@@ -276,8 +279,9 @@ export default function VisionCaptureScreen() {
         mode: 'photo',
         drillContext: drillContext || undefined,
       });
-    } catch {
-      Alert.alert('Error', 'Failed to upload photo.');
+    } catch (err: any) {
+      const msg = err?.message || 'Unknown error';
+      Alert.alert('Upload Error', msg);
       setMode('idle');
     }
   }, [drillContext, chatTokenQuery.data?.token]);
