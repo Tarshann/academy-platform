@@ -37,7 +37,7 @@ export const governanceRouter = router({
         totalErrors: dbStats.totalErrors,
         recentBlocked: [],
       };
-    } catch (err) {
+    } catch (err: any) {
       logger.error("[governance-router] stats error:", err);
       return {
         enabled: GOVERNANCE_ENABLED,
@@ -53,6 +53,7 @@ export const governanceRouter = router({
         totalEscalated: 0,
         totalErrors: 0,
         recentBlocked: [],
+        debugError: err?.message ?? String(err),
       };
     }
   }),
@@ -109,9 +110,19 @@ export const governanceRouter = router({
             externalId: row.externalDecisionId ?? null,
           },
         }));
-      } catch (err) {
+      } catch (err: any) {
         logger.error("[governance-router] evidenceTrail error:", err);
-        return [];
+        // Surface the error for debugging instead of silently returning empty
+        return [{
+          id: -1,
+          capabilityId: "DEBUG_ERROR",
+          action: "error",
+          actor: { id: "system", role: "debug", email: null },
+          reason: `Query failed: ${err?.message ?? String(err)}`,
+          source: "debug",
+          timestamp: new Date().toISOString(),
+          evidence: { hash: null, externalId: null },
+        }];
       }
     }),
 
