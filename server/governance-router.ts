@@ -69,26 +69,19 @@ export const governanceRouter = router({
     )
     .query(async ({ input }) => {
       try {
-        const opts = input ?? {};
+        const { getStrixClient } = await import("./_core/strix");
+        const strix = getStrixClient();
+        if (!strix) return [];
 
-        // Validate capability ID if provided
-        if (opts.capabilityId && !CAPABILITY_MAP.has(opts.capabilityId)) {
+        if (input.capabilityId && !CAPABILITY_MAP.has(input.capabilityId)) {
           return [];
         }
 
-        // UI sends "allowed"/"denied"/"escalated" — DB stores "allow"/"deny"/"escalate"
-        const statusToAction: Record<string, string> = {
-          allowed: "allow",
-          denied: "deny",
-          escalated: "escalate",
-        };
-        const action = opts.status ? statusToAction[opts.status] ?? opts.status : undefined;
-
-        const rows = await getGovernanceEvidenceTrail({
-          capabilityId: opts.capabilityId,
-          action,
-          limit: opts.limit ?? 50,
-          offset: opts.offset ?? 0,
+        return await strix.getEvidenceTrail({
+          capabilityId: input.capabilityId,
+          status: input.status,
+          limit: input.limit,
+          offset: input.offset,
         });
 
         // Map DB rows to the shape the UI expects
