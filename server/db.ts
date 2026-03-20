@@ -3280,7 +3280,22 @@ export async function insertGovernanceEvidence(evidence: InsertGovernanceEvidenc
   try {
     const [row] = await db.insert(governanceEvidence).values(evidence).returning();
     return row;
-  } catch (err) {
+  } catch (err: any) {
+    // If evidence_hash column doesn't exist yet (migration 0022 pending), retry with raw SQL
+    if (err?.message?.includes("evidence_hash") || err?.code === "42703") {
+      logger.warn("[governance-evidence] evidence_hash column not found, inserting without hash");
+      try {
+        const result = await db.execute(sql`
+          INSERT INTO governance_evidence (capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata)
+          VALUES (${evidence.capabilityId}, ${evidence.actorId}, ${evidence.actorRole}, ${evidence.actorEmail ?? null}, ${evidence.action}, ${evidence.reason ?? null}, ${evidence.source}, ${evidence.externalDecisionId ?? null}, ${evidence.metadata ? JSON.stringify(evidence.metadata) : null}::jsonb)
+          RETURNING *
+        `);
+        return result.rows?.[0] ?? null;
+      } catch (retryErr) {
+        logger.error("[governance-evidence] Retry without hash also failed:", retryErr);
+        return null;
+      }
+    }
     logger.error("[governance-evidence] Failed to write evidence:", err);
     return null;
   }
@@ -3298,13 +3313,41 @@ export async function getGovernanceEvidenceTrail(opts: {
   if (opts.capabilityId) conditions.push(eq(governanceEvidence.capabilityId, opts.capabilityId));
   if (opts.action) conditions.push(eq(governanceEvidence.action, opts.action));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
-  return db
-    .select()
-    .from(governanceEvidence)
-    .where(where)
-    .orderBy(desc(governanceEvidence.createdAt))
-    .limit(opts.limit ?? 50)
-    .offset(opts.offset ?? 0);
+  try {
+    return await db
+      .select()
+      .from(governanceEvidence)
+      .where(where)
+      .orderBy(desc(governanceEvidence.createdAt))
+      .limit(opts.limit ?? 50)
+      .offset(opts.offset ?? 0);
+  } catch (err: any) {
+    // Fallback: if evidence_hash column doesn't exist yet (migration 0022 pending),
+    // query only the columns that existed before
+    if (err?.message?.includes("evidence_hash") || err?.code === "42703") {
+      logger.warn("[governance-evidence] evidence_hash column not found, using fallback query");
+      return await db
+        .select({
+          id: governanceEvidence.id,
+          capabilityId: governanceEvidence.capabilityId,
+          actorId: governanceEvidence.actorId,
+          actorRole: governanceEvidence.actorRole,
+          actorEmail: governanceEvidence.actorEmail,
+          action: governanceEvidence.action,
+          reason: governanceEvidence.reason,
+          source: governanceEvidence.source,
+          externalDecisionId: governanceEvidence.externalDecisionId,
+          metadata: governanceEvidence.metadata,
+          createdAt: governanceEvidence.createdAt,
+        })
+        .from(governanceEvidence)
+        .where(where)
+        .orderBy(desc(governanceEvidence.createdAt))
+        .limit(opts.limit ?? 50)
+        .offset(opts.offset ?? 0);
+    }
+    throw err;
+  }
 }
 
 export async function getGovernanceStats() {
