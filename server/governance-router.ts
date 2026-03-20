@@ -12,7 +12,6 @@
 import { z } from "zod";
 import { adminProcedure, router } from "./_core/trpc";
 import { CAPABILITIES, CAPABILITY_MAP } from "./_core/strix-capabilities";
-import { getGovernanceEvidenceTrail, getGovernanceStats } from "./db";
 import { logger } from "./_core/logger";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
@@ -20,41 +19,45 @@ const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 export const governanceRouter = router({
   /** Dashboard overview stats — always reads from local DB */
   stats: adminProcedure.query(async () => {
+    const base = {
+      enabled: GOVERNANCE_ENABLED,
+      totalCapabilities: CAPABILITIES.length,
+      critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
+      high: CAPABILITIES.filter((c) => c.risk === "high").length,
+      medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
+      low: CAPABILITIES.filter((c) => c.risk === "low").length,
+      cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
+    };
+
     try {
-      const dbStats = await getGovernanceStats();
+      const { getDb } = await import("./db");
+      const { sql } = await import("drizzle-orm");
+      const db = await getDb();
+      if (!db) return { ...base, totalDecisions: 0, totalDenied: 0, totalAllowed: 0, totalEscalated: 0, totalErrors: 0, recentBlocked: [] };
+
+      const result = await db.execute(sql`
+        SELECT
+          COUNT(*)::int AS total,
+          COUNT(*) FILTER (WHERE action = 'deny')::int AS denied,
+          COUNT(*) FILTER (WHERE action = 'allow')::int AS allowed,
+          COUNT(*) FILTER (WHERE action = 'escalate')::int AS escalated,
+          COUNT(*) FILTER (WHERE action = 'error')::int AS errors
+        FROM governance_evidence
+      `);
+      const row = (result.rows ?? result)?.[0] as any;
+
       return {
-        enabled: GOVERNANCE_ENABLED,
-        totalCapabilities: CAPABILITIES.length,
-        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-        high: CAPABILITIES.filter((c) => c.risk === "high").length,
-        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-        low: CAPABILITIES.filter((c) => c.risk === "low").length,
-        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
-        totalDecisions: dbStats.totalDecisions,
-        totalDenied: dbStats.totalDenied,
-        totalAllowed: dbStats.totalAllowed,
-        totalEscalated: dbStats.totalEscalated,
-        totalErrors: dbStats.totalErrors,
+        ...base,
+        totalDecisions: row?.total ?? 0,
+        totalDenied: row?.denied ?? 0,
+        totalAllowed: row?.allowed ?? 0,
+        totalEscalated: row?.escalated ?? 0,
+        totalErrors: row?.errors ?? 0,
         recentBlocked: [],
       };
     } catch (err: any) {
       logger.error("[governance-router] stats error:", err);
-      return {
-        enabled: GOVERNANCE_ENABLED,
-        totalCapabilities: CAPABILITIES.length,
-        critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
-        high: CAPABILITIES.filter((c) => c.risk === "high").length,
-        medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
-        low: CAPABILITIES.filter((c) => c.risk === "low").length,
-        cronJobs: CAPABILITIES.filter((c) => c.domain === "cron").length,
-        totalDecisions: 0,
-        totalDenied: 0,
-        totalAllowed: 0,
-        totalEscalated: 0,
-        totalErrors: 0,
-        recentBlocked: [],
-        debugError: err?.message ?? String(err),
-      };
+      return { ...base, totalDecisions: 0, totalDenied: 0, totalAllowed: 0, totalEscalated: 0, totalErrors: 0, recentBlocked: [] };
     }
   }),
 
@@ -69,49 +72,72 @@ export const governanceRouter = router({
       })
     )
     .query(async ({ input }) => {
-      try {
-        const { getStrixClient } = await import("./_core/strix");
-        const strix = getStrixClient();
-        if (!strix) return [];
+      const opts = input ?? {};
 
-        if (input.capabilityId && !CAPABILITY_MAP.has(input.capabilityId)) {
-          return [];
+      // Validate capability ID if provided
+      if (opts.capabilityId && !CAPABILITY_MAP.has(opts.capabilityId)) {
+        return [];
+      }
+
+      // UI sends "allowed"/"denied"/"escalated" — DB stores "allow"/"deny"/"escalate"
+      const statusToAction: Record<string, string> = {
+        allowed: "allow",
+        denied: "deny",
+        escalated: "escalate",
+      };
+      const action = opts.status ? statusToAction[opts.status] ?? opts.status : undefined;
+
+      // Use raw SQL to avoid Drizzle schema mismatch issues (evidence_hash column may not exist)
+      try {
+        const { getDb } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const db = await getDb();
+        if (!db) return [];
+
+        const limit = opts.limit ?? 50;
+        const offset = opts.offset ?? 0;
+
+        let query;
+        if (opts.capabilityId && action) {
+          query = sql`SELECT id, capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata, created_at FROM governance_evidence WHERE capability_id = ${opts.capabilityId} AND action = ${action} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+        } else if (opts.capabilityId) {
+          query = sql`SELECT id, capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata, created_at FROM governance_evidence WHERE capability_id = ${opts.capabilityId} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+        } else if (action) {
+          query = sql`SELECT id, capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata, created_at FROM governance_evidence WHERE action = ${action} ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+        } else {
+          query = sql`SELECT id, capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata, created_at FROM governance_evidence ORDER BY created_at DESC LIMIT ${limit} OFFSET ${offset}`;
         }
 
-        return await strix.getEvidenceTrail({
-          capabilityId: input.capabilityId,
-          status: input.status,
-          limit: input.limit,
-          offset: input.offset,
-        });
+        const result = await db.execute(query);
+        const rows = result.rows ?? result ?? [];
 
-        // Map DB rows to the shape the UI expects
-        return rows.map((row: any) => ({
+        return (rows as any[]).map((row: any) => ({
           id: row.id,
-          capabilityId: row.capabilityId,
+          capabilityId: row.capability_id,
           action: row.action,
           actor: {
-            id: row.actorId,
-            role: row.actorRole,
-            email: row.actorEmail,
+            id: row.actor_id,
+            role: row.actor_role,
+            email: row.actor_email,
           },
           reason: row.reason,
           source: row.source,
-          timestamp: row.createdAt?.toISOString?.() ?? row.createdAt,
+          timestamp: row.created_at instanceof Date
+            ? row.created_at.toISOString()
+            : row.created_at,
           evidence: {
-            hash: row.evidenceHash ?? null,
-            externalId: row.externalDecisionId ?? null,
+            hash: row.evidence_hash ?? null,
+            externalId: row.external_decision_id ?? null,
           },
         }));
       } catch (err: any) {
-        logger.error("[governance-router] evidenceTrail error:", err);
-        // Surface the error for debugging instead of silently returning empty
+        logger.error("[governance-router] evidenceTrail raw SQL error:", err);
         return [{
           id: -1,
           capabilityId: "DEBUG_ERROR",
           action: "error",
           actor: { id: "system", role: "debug", email: null },
-          reason: `Query failed: ${err?.message ?? String(err)}`,
+          reason: `Raw SQL failed: ${err?.name}: ${err?.message}${err?.code ? ` (code: ${err.code})` : ""}`,
           source: "debug",
           timestamp: new Date().toISOString(),
           evidence: { hash: null, externalId: null },
