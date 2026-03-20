@@ -11,8 +11,8 @@ import {
 import { useState, useCallback, useMemo } from 'react';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { trackEvent } from '../lib/analytics';
 import { colors, shadows } from '../lib/theme';
 
@@ -51,7 +51,6 @@ function PostCardSkeleton() {
 }
 
 export default function GalleryScreen() {
-  const router = useRouter();
   const [platform, setPlatform] = useState<PlatformFilter>('all');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -75,14 +74,7 @@ export default function GalleryScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Social Gallery</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title="Social Gallery" />
 
       <FlatList
         data={filteredPosts}
@@ -109,6 +101,8 @@ export default function GalleryScreen() {
                     platform === plat.key && styles.filterChipActive,
                   ]}
                   onPress={() => setPlatform(plat.key)}
+                  accessibilityLabel={`Filter by ${plat.label}`}
+                  accessibilityRole="button"
                 >
                   <Ionicons
                     name={plat.icon}
@@ -146,6 +140,8 @@ export default function GalleryScreen() {
                 <TouchableOpacity
                   style={styles.retryButton}
                   onPress={() => posts.refetch()}
+                  accessibilityLabel="Try again"
+                  accessibilityRole="button"
                 >
                   <Text style={styles.retryButtonText}>Try Again</Text>
                 </TouchableOpacity>
@@ -169,6 +165,8 @@ export default function GalleryScreen() {
             style={styles.gridCard}
             activeOpacity={0.8}
             onPress={() => handlePostPress(item)}
+            accessibilityLabel={`Open ${item.platform} post${item.caption ? `: ${item.caption}` : ''}`}
+            accessibilityRole="button"
           >
             {item.thumbnailUrl ? (
               <Image

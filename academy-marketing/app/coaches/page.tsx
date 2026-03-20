@@ -1,7 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
-import { BreadcrumbJsonLd } from "@/lib/structured-data";
+import { BreadcrumbJsonLd, CoachPersonJsonLd } from "@/lib/structured-data";
 import { COACHES, FOUNDERS, CONTACT, CONTACTS } from "@/lib/config";
 
 export const metadata = generatePageMetadata({
@@ -20,6 +21,7 @@ export default function CoachesPage() {
           { name: "Coaches", href: "/coaches" },
         ]}
       />
+      <CoachPersonJsonLd />
 
       {/* Hero */}
       <section className="py-24 md:py-32 section-dark">
@@ -44,6 +46,7 @@ export default function CoachesPage() {
       {/* Coach Cards */}
       <section className="py-24 md:py-32 section-light">
         <div className="container">
+          <h2 className="sr-only">Our Coaches</h2>
           <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
             {COACHES.map((coach) => (
               <div
@@ -51,17 +54,18 @@ export default function CoachesPage() {
                 className="bg-white rounded-xl border border-[var(--color-brand-gray-light)] overflow-hidden hover:shadow-lg transition-shadow duration-150"
               >
                 <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative overflow-hidden">
-                  <img
+                  <Image
                     src={coach.photo}
                     alt={`${coach.name} coaching athletes`}
-                    loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-brand-black)]/80 via-transparent to-transparent" />
                   <div className="absolute bottom-6 left-6">
-                    <h2 className="text-3xl font-bold text-white">
+                    <h3 className="text-3xl font-bold text-white">
                       {coach.name}
-                    </h2>
+                    </h3>
                     <p className="text-white/80 text-lg">{coach.title}</p>
                   </div>
                 </div>

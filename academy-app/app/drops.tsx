@@ -4,6 +4,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Pressable,
   RefreshControl,
   TextInput,
   Alert,
@@ -16,6 +17,7 @@ import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
 import { colors, shadows } from '../lib/theme';
+import { ScreenHeader } from '../components/ScreenHeader';
 
 type DropType = 'product' | 'program' | 'content' | 'event';
 
@@ -98,7 +100,7 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
       <View style={styles.formContainer}>
         <View style={styles.formHeader}>
           <Text style={styles.formTitle}>New Drop Alert</Text>
-          <TouchableOpacity onPress={onCancel}>
+          <TouchableOpacity onPress={onCancel} accessibilityLabel="Close form" accessibilityRole="button">
             <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
@@ -116,6 +118,8 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
                     dropType === type && { backgroundColor: config.color },
                   ]}
                   onPress={() => setDropType(type)}
+                  accessibilityLabel={`${config.label} type${dropType === type ? ', selected' : ''}`}
+                  accessibilityRole="button"
                 >
                   <Ionicons
                     name={config.icon}
@@ -168,11 +172,22 @@ function CreateDropForm({ onSuccess, onCancel }: { onSuccess: () => void; onCanc
             style={[styles.submitBtn, createMutation.isPending && { opacity: 0.6 }]}
             onPress={handleSubmit}
             disabled={createMutation.isPending}
+            accessibilityLabel={createMutation.isPending ? 'Sending drop alert' : 'Send drop alert'}
+            accessibilityRole="button"
           >
             <Ionicons name="megaphone-outline" size={20} color="#fff" />
             <Text style={styles.submitBtnText}>
               {createMutation.isPending ? 'Sending...' : 'Send Drop Alert'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onCancel}
+            style={{ alignItems: 'center', paddingVertical: 10 }}
+            accessibilityLabel="Cancel"
+            accessibilityRole="button"
+          >
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>Cancel</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -207,20 +222,16 @@ export default function DropsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Drops</Text>
-        {isAdmin ? (
-          <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn}>
-            <Ionicons name="add" size={24} color={colors.gold} />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
-      </View>
+      <ScreenHeader
+        title="Drops"
+        rightAction={
+          isAdmin ? (
+            <TouchableOpacity onPress={() => setShowForm(true)} style={styles.addBtn} accessibilityLabel="Create new drop" accessibilityRole="button">
+              <Ionicons name="add" size={24} color={colors.gold} />
+            </TouchableOpacity>
+          ) : undefined
+        }
+      />
 
       <FlatList
         data={displayDrops}
@@ -229,8 +240,30 @@ export default function DropsScreen() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListHeaderComponent={
+          drops.isError ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+              <Text style={styles.emptyTitle}>Failed to load drops</Text>
+              <Text style={styles.emptySubtitle}>Something went wrong. Please try again.</Text>
+              <Pressable
+                style={styles.retryButton}
+                onPress={() => {
+                  drops.refetch();
+                  if (isAdmin) {
+                    allDrops.refetch();
+                  }
+                }}
+                accessibilityLabel="Retry loading drops"
+                accessibilityRole="button"
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
-          !drops.isLoading ? (
+          !drops.isLoading && !drops.isError ? (
             <View style={styles.emptyState}>
               <Ionicons name="notifications-outline" size={48} color={colors.textMuted} />
               <Text style={styles.emptyTitle}>No upcoming drops</Text>
@@ -303,6 +336,8 @@ export default function DropsScreen() {
                         ]
                       );
                     }}
+                    accessibilityLabel={`Send ${item.title} now`}
+                    accessibilityRole="button"
                   >
                     <Ionicons name="send-outline" size={14} color="#fff" />
                     <Text style={styles.sendNowText}>Send Now</Text>
@@ -471,4 +506,18 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: colors.cardElevated,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  retryButtonText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

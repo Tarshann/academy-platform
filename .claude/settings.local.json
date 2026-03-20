@@ -102,7 +102,15 @@
       "Bash(GITHUB_TOKEN=\"\" gh auth setup-git)",
       "Bash(GITHUB_TOKEN=\"\" git push origin main)",
       "Bash(GITHUB_TOKEN=\"\" git pull --rebase origin main)",
-      "Bash(eas build:view ac32ccc1-bbc5-4e8b-8fd2-f7d958b379b4)"
+      "Bash(eas build:view ac32ccc1-bbc5-4e8b-8fd2-f7d958b379b4)",
+      "Bash(grep -r from.*['']next/image /c/Users/user/Tarshann/academy-platform/academy-marketing --include=*.tsx --include=*.ts)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(npx eas:*)",
+      "Bash(ls -1 api/cron/*.ts)",
+      "Bash(ls -la C:UsersuserTarshannacademy-platformservermilestone*)",
+      "Bash(find /c/Users/user/Tarshann/academy-platform -name *.md -path */ops/* -newer /c/Users/user/Tarshann/academy-platform/drizzle/0023_gallery_media_type.sql)",
+      "Bash(pnpm test:*)"
     ]
   }
 }

@@ -55,6 +55,7 @@ import {
   type InsertUserPoint,
   type InsertGameEntry,
   type InsertTriviaQuestion,
+  type TriviaQuestion,
   type InsertSocialPost,
   waitlist,
   referrals,
@@ -1904,13 +1905,15 @@ export async function searchDmMessages(userId: number, query: string, opts?: { l
   const effectiveLimit = Math.min(opts?.limit ?? 20, 100);
 
   // Search messages in those conversations
+  // Parameterized query with escaped LIKE wildcards to prevent SQL injection
+  const escapedQuery = query.replace(/[%_\\]/g, "\\$&");
   let dbQuery = db
     .select()
     .from(dmMessages)
     .where(
       and(
         inArray(dmMessages.conversationId, conversationIds),
-        sql`${dmMessages.content} LIKE ${`%${query.replace(/[%_\\]/g, "\\$&")}%`}`
+        sql`${dmMessages.content} ILIKE ${"%" + escapedQuery + "%"}`
       )
     )
     .orderBy(desc(dmMessages.createdAt))
@@ -2598,7 +2601,7 @@ export async function getPointsLeaderboard(limit = 20) {
 }
 
 // Trivia
-export async function getRandomTriviaQuestions(count = 5, category?: string) {
+export async function getRandomTriviaQuestions(count = 5, category?: string): Promise<TriviaQuestion[]> {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(triviaQuestions.isActive, true)];
@@ -2613,7 +2616,7 @@ export async function getRandomTriviaQuestions(count = 5, category?: string) {
     .limit(count);
 }
 
-export async function getTriviaByIds(ids: number[]) {
+export async function getTriviaByIds(ids: number[]): Promise<TriviaQuestion[]> {
   const db = await getDb();
   if (!db) return [];
   if (ids.length === 0) return [];

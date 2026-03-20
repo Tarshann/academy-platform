@@ -18,6 +18,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Dashboard',
+          tabBarAccessibilityLabel: 'Dashboard tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home-outline" size={size} color={color} />
           ),
@@ -27,6 +28,7 @@ export default function TabLayout() {
         name="chat"
         options={{
           title: 'Chat',
+          tabBarAccessibilityLabel: 'Chat tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles-outline" size={size} color={color} />
           ),
@@ -37,6 +39,7 @@ export default function TabLayout() {
         options={{
           href: null,
           title: 'Messages',
+          tabBarAccessibilityLabel: 'Messages tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="mail-outline" size={size} color={color} />
           ),
@@ -46,6 +49,7 @@ export default function TabLayout() {
         name="media"
         options={{
           title: 'Media',
+          tabBarAccessibilityLabel: 'Media tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="play-circle-outline" size={size} color={color} />
           ),
@@ -56,6 +60,7 @@ export default function TabLayout() {
         options={{
           href: null,
           title: 'Games',
+          tabBarAccessibilityLabel: 'Games tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="game-controller-outline" size={size} color={color} />
           ),
@@ -66,6 +71,7 @@ export default function TabLayout() {
         options={{
           href: null,
           title: 'Schedule',
+          tabBarAccessibilityLabel: 'Schedule tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
           ),
@@ -75,6 +81,7 @@ export default function TabLayout() {
         name="programs"
         options={{
           title: 'Programs',
+          tabBarAccessibilityLabel: 'Programs tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="grid-outline" size={size} color={color} />
           ),
@@ -84,6 +91,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Profile',
+          tabBarAccessibilityLabel: 'Profile tab',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),

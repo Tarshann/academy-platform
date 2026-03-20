@@ -16,7 +16,7 @@ import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { trpc } from '../lib/trpc';
 import { trackEvent } from '../lib/analytics';
-import { colors, shadows, spacing, radius } from '../lib/theme';
+import { colors, shadows, spacing, radii } from '../lib/theme';
 import { pickImage } from '../lib/chat-images';
 
 type CaptureMode = 'idle' | 'recording' | 'uploading' | 'processing' | 'review';
@@ -260,7 +260,10 @@ export default function VisionCaptureScreen() {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Upload failed');
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => '');
+        throw new Error(`Upload failed (${response.status}): ${errBody}`);
+      }
       const { url } = await response.json();
 
       trackEvent('vision_capture_uploaded', {
@@ -276,8 +279,9 @@ export default function VisionCaptureScreen() {
         mode: 'photo',
         drillContext: drillContext || undefined,
       });
-    } catch {
-      Alert.alert('Error', 'Failed to upload photo.');
+    } catch (err: any) {
+      const msg = err?.message || 'Unknown error';
+      Alert.alert('Upload Error', msg);
       setMode('idle');
     }
   }, [drillContext, chatTokenQuery.data?.token]);
@@ -709,11 +713,11 @@ const styles = StyleSheet.create({
   },
   captureCard: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radii.lg,
     padding: spacing.xl,
     marginBottom: spacing.md,
     alignItems: 'center',
-    ...shadows.small,
+    ...shadows.subtle,
   },
   cardTitle: {
     fontSize: 18,
@@ -732,7 +736,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gold,
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -785,7 +789,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 20,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     gap: 4,
     minHeight: 44,
   },
@@ -795,11 +799,11 @@ const styles = StyleSheet.create({
   },
   processingCard: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radii.lg,
     padding: spacing.xl,
     alignItems: 'center',
     gap: spacing.sm,
-    ...shadows.small,
+    ...shadows.subtle,
   },
   processingText: {
     fontSize: 15,
@@ -820,7 +824,7 @@ const styles = StyleSheet.create({
   },
   contextInput: {
     backgroundColor: colors.card,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.textPrimary,
     fontSize: 14,
@@ -830,10 +834,10 @@ const styles = StyleSheet.create({
 
   athleteCard: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radii.lg,
     padding: spacing.md,
     marginBottom: spacing.md,
-    ...shadows.small,
+    ...shadows.subtle,
   },
   athleteHeader: {
     flexDirection: 'row',
@@ -850,7 +854,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: colors.gold,
     minHeight: 28,
@@ -876,7 +880,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
     backgroundColor: colors.surface,
   },
   dateValue: {
@@ -897,7 +901,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     backgroundColor: colors.surface,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
     marginBottom: 4,
   },
   checkButton: {
@@ -939,7 +943,7 @@ const styles = StyleSheet.create({
   },
   transcriptCard: {
     backgroundColor: colors.card,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -950,7 +954,7 @@ const styles = StyleSheet.create({
   },
   notesCard: {
     backgroundColor: colors.card,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     padding: spacing.md,
     marginBottom: spacing.md,
   },
@@ -975,7 +979,7 @@ const styles = StyleSheet.create({
     flex: 2,
     backgroundColor: colors.gold,
     paddingVertical: 14,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
@@ -989,7 +993,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
     paddingVertical: 14,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 48,
@@ -1007,7 +1011,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: radii.lg,
     padding: spacing.xl,
     width: '80%',
     maxWidth: 320,
@@ -1025,7 +1029,7 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
+    borderRadius: radii.md,
     padding: spacing.md,
     color: colors.textPrimary,
     fontSize: 16,
@@ -1040,7 +1044,7 @@ const styles = StyleSheet.create({
   modalButton: {
     paddingVertical: 8,
     paddingHorizontal: 14,
-    borderRadius: radius.sm,
+    borderRadius: radii.sm,
     minHeight: 36,
     justifyContent: 'center',
   },

@@ -139,7 +139,7 @@ export default function ShopScreen() {
             headerStyle: { backgroundColor: colors.card },
             headerTintColor: colors.textPrimary,
             headerLeft: () => (
-              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }} accessibilityLabel="Go back" accessibilityRole="button">
                 <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
               </TouchableOpacity>
             ),
@@ -162,7 +162,7 @@ export default function ShopScreen() {
             headerStyle: { backgroundColor: colors.card },
             headerTintColor: colors.textPrimary,
             headerLeft: () => (
-              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+              <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }} accessibilityLabel="Go back" accessibilityRole="button">
                 <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
               </TouchableOpacity>
             ),
@@ -172,7 +172,7 @@ export default function ShopScreen() {
           <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
           <Text style={styles.errorTitle}>Could not load products</Text>
           <Text style={styles.errorSubtitle}>Check your connection and try again</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => products.refetch()}>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => products.refetch()} accessibilityLabel="Retry loading products" accessibilityRole="button">
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -270,6 +270,8 @@ export default function ShopScreen() {
                     onPress={() => onBuy(item)}
                     disabled={isLoadingThis || outOfStock}
                     activeOpacity={0.7}
+                    accessibilityLabel={outOfStock ? `${item.name} sold out` : `Buy ${item.name}`}
+                    accessibilityRole="button"
                   >
                     {isLoadingThis ? (
                       <ActivityIndicator size="small" color={colors.card} />

@@ -6,6 +6,7 @@ import {
   OPENING_HOURS,
   PROGRAMS,
   TESTIMONIALS,
+  COACHES,
 } from "./config";
 
 export function LocalBusinessJsonLd() {
@@ -207,5 +208,34 @@ export function BreadcrumbJsonLd({
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
+  );
+}
+
+export function CoachPersonJsonLd() {
+  const data = COACHES.map((coach) => ({
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: coach.name,
+    jobTitle: coach.title,
+    description: coach.bio,
+    image: `${SITE.url}${coach.photo}`,
+    affiliation: {
+      "@type": "Organization",
+      name: SITE.name,
+      url: SITE.url,
+    },
+    knowsAbout: coach.focus,
+  }));
+
+  return (
+    <>
+      {data.map((person, i) => (
+        <script
+          key={i}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(person) }}
+        />
+      ))}
+    </>
   );
 }

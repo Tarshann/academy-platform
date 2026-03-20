@@ -14,6 +14,30 @@
       "destination": "/api/[...path]"
     },
     {
+      "source": "/api/capture/:path*",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/upload",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/profile/:path*",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/health",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/skills-lab-register",
+      "destination": "/api/[...path]"
+    },
+    {
+      "source": "/api/performance-lab-apply",
+      "destination": "/api/[...path]"
+    },
+    {
       "source": "/api/stripe/:path*",
       "destination": "/api/stripe/webhook"
     },

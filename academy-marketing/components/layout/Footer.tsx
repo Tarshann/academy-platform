@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { SITE, CONTACT, CONTACTS, ADDRESS, SOCIAL, APP_LINKS } from "@/lib/config";
 import { Facebook, Instagram, MapPin, Clock, Mail, Phone } from "lucide-react";
 
@@ -57,10 +58,10 @@ export default function Footer() {
             </div>
             <div className="flex gap-3">
               <a href={APP_LINKS.ios} target="_blank" rel="noopener noreferrer" aria-label="Download on the App Store">
-                <img src="/images/badge-app-store.svg" alt="App Store" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                <Image src="/images/badge-app-store.svg" alt="App Store" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
               </a>
               <a href={APP_LINKS.android} target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play">
-                <img src="/images/badge-google-play.svg" alt="Google Play" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                <Image src="/images/badge-google-play.svg" alt="Google Play" width={120} height={36} className="h-9 w-auto opacity-80 hover:opacity-100 transition-opacity" />
               </a>
             </div>
           </div>

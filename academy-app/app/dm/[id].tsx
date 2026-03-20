@@ -279,7 +279,7 @@ export default function DmConversationScreen() {
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.textPrimary,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }} accessibilityLabel="Go back" accessibilityRole="button">
               <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),
@@ -299,7 +299,7 @@ export default function DmConversationScreen() {
           headerStyle: { backgroundColor: colors.card },
           headerTintColor: colors.textPrimary,
           headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }} accessibilityLabel="Go back" accessibilityRole="button">
               <Text style={{ color: colors.textPrimary, fontSize: 16 }}>← Back</Text>
             </TouchableOpacity>
           ),

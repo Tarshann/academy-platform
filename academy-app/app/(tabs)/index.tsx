@@ -138,6 +138,8 @@ export default function DashboardScreen() {
   ];
 
   const featureLinks = [
+    { key: 'family', icon: 'people-outline' as const, label: 'Family', route: '/family' },
+    { key: 'referrals', icon: 'gift-outline' as const, label: 'Referrals', route: '/referrals' },
     { key: 'gallery', icon: 'images-outline' as const, label: 'Social Gallery', route: '/gallery' },
     { key: 'drops', icon: 'megaphone-outline' as const, label: 'Drops', route: '/drops' },
     { key: 'metrics', icon: 'analytics-outline' as const, label: 'Metrics', route: '/metrics' },

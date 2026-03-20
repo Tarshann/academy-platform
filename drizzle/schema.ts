@@ -333,6 +333,7 @@ export const galleryPhotos = pgTable("galleryPhotos", {
   description: text("description"),
   imageUrl: varchar("imageUrl", { length: 500 }).notNull(),
   imageKey: varchar("imageKey", { length: 500 }),
+  mediaType: varchar("mediaType", { length: 20 }).notNull().default("image"),
   category: galleryCategoryEnum("category").notNull().default("training"),
   uploadedBy: integer("uploadedBy").notNull(),
   isVisible: boolean("isVisible").notNull().default(true),

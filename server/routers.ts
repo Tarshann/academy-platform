@@ -118,6 +118,7 @@ import { sendEmail } from "./email";
 
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
+const RATE_STORE_MAX_SIZE = 10_000;
 
 // Periodically clean up expired entries to prevent unbounded memory growth
 setInterval(() => {
@@ -133,6 +134,15 @@ function checkPublicMutationRate(key: string, maxPerWindow = 5, windowMs = 15 * 
   const now = Date.now();
   const entry = publicMutationRateStore[key];
   if (!entry || entry.resetTime < now) {
+    // Evict oldest entries if store exceeds max size
+    const keys = Object.keys(publicMutationRateStore);
+    if (keys.length >= RATE_STORE_MAX_SIZE) {
+      const sorted = keys.sort((a, b) => publicMutationRateStore[a].resetTime - publicMutationRateStore[b].resetTime);
+      const evictCount = Math.max(1, Math.floor(RATE_STORE_MAX_SIZE * 0.1));
+      for (let i = 0; i < evictCount && i < sorted.length; i++) {
+        delete publicMutationRateStore[sorted[i]];
+      }
+    }
     publicMutationRateStore[key] = { count: 1, resetTime: now + windowMs };
     return;
   }
@@ -830,73 +840,91 @@ export const appRouter = router({
       assignProgram: governedProcedure("admin.members.assignProgram")
         .input(z.object({ userId: z.number(), programId: z.number() }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { userPrograms } = await import("../drizzle/schema");
-          const { eq, and } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { userPrograms } = await import("../drizzle/schema");
+            const { eq, and } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          // Check for existing active enrollment
-          const existing = await db
-            .select()
-            .from(userPrograms)
-            .where(
-              and(
-                eq(userPrograms.userId, input.userId),
-                eq(userPrograms.programId, input.programId),
-                eq(userPrograms.status, "active")
+            // Check for existing active enrollment
+            const existing = await db
+              .select()
+              .from(userPrograms)
+              .where(
+                and(
+                  eq(userPrograms.userId, input.userId),
+                  eq(userPrograms.programId, input.programId),
+                  eq(userPrograms.status, "active")
+                )
               )
-            )
-            .limit(1);
+              .limit(1);
 
-          if (existing.length > 0) {
-            throw new TRPCError({ code: "CONFLICT", message: "User already enrolled in this program" });
+            if (existing.length > 0) {
+              throw new TRPCError({ code: "CONFLICT", message: "User already enrolled in this program" });
+            }
+
+            await db.insert(userPrograms).values({
+              userId: input.userId,
+              programId: input.programId,
+              status: "active",
+            });
+
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.assignProgram] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
           }
-
-          await db.insert(userPrograms).values({
-            userId: input.userId,
-            programId: input.programId,
-            status: "active",
-          });
-
-          return { success: true };
         }),
 
       removeProgram: governedProcedure("admin.members.removeProgram")
         .input(z.object({ enrollmentId: z.number() }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { userPrograms } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { userPrograms } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          await db
-            .update(userPrograms)
-            .set({ status: "cancelled", cancelledAt: new Date() })
-            .where(eq(userPrograms.id, input.enrollmentId));
+            await db
+              .update(userPrograms)
+              .set({ status: "cancelled", cancelledAt: new Date() })
+              .where(eq(userPrograms.id, input.enrollmentId));
 
-          return { success: true };
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.removeProgram] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       updateRole: governedProcedure("admin.members.updateRole")
         .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { users } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
+          try {
+            const { getDb } = await import("./db");
+            const { users } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
 
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
 
-          await db
-            .update(users)
-            .set({ role: input.role, updatedAt: new Date() })
-            .where(eq(users.id, input.userId));
+            await db
+              .update(users)
+              .set({ role: input.role, updatedAt: new Date() })
+              .where(eq(users.id, input.userId));
 
-          return { success: true };
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[admin.members.updateRole] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       create: governedProcedure("contacts.create")
@@ -946,16 +974,28 @@ export const appRouter = router({
       markRead: governedProcedure("contacts.markRead")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { markContactAsRead } = await import("./db");
-          await markContactAsRead(input.id);
-          return { success: true };
+          try {
+            const { markContactAsRead } = await import("./db");
+            await markContactAsRead(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[contacts.markRead] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
       markResponded: governedProcedure("contacts.markResponded")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { markContactAsResponded } = await import("./db");
-          await markContactAsResponded(input.id);
-          return { success: true };
+          try {
+            const { markContactAsResponded } = await import("./db");
+            await markContactAsResponded(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[contacts.markResponded] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
     }),
 
@@ -992,16 +1032,23 @@ export const appRouter = router({
     clearAll: governedProcedure("chatAdmin.clearAll")
       .input(z.object({ room: z.string().optional() }))
       .mutation(async ({ input }) => {
-        const { chatMessages } = await import("../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        const { getDb } = await import("./db");
-        const db = await getDb();
-        if (input.room) {
-          await db.delete(chatMessages).where(eq(chatMessages.room, input.room));
-        } else {
-          await db.delete(chatMessages);
+        try {
+          const { chatMessages } = await import("../drizzle/schema");
+          const { eq } = await import("drizzle-orm");
+          const { getDb } = await import("./db");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+          if (input.room) {
+            await db.delete(chatMessages).where(eq(chatMessages.room, input.room));
+          } else {
+            await db.delete(chatMessages);
+          }
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatAdmin.clearAll] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
         }
-        return { success: true };
       }),
   }),
 
@@ -1045,14 +1092,20 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ input }) => {
-          const { getDb } = await import("./db");
-          const { galleryPhotos } = await import("../drizzle/schema");
-          const { eq } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new Error("Database not available");
-          const { id, ...updates } = input;
-          await db.update(galleryPhotos).set(updates).where(eq(galleryPhotos.id, id));
-          return { success: true };
+          try {
+            const { getDb } = await import("./db");
+            const { galleryPhotos } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+            const { id, ...updates } = input;
+            await db.update(galleryPhotos).set(updates).where(eq(galleryPhotos.id, id));
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[gallery.admin.update] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       upload: governedProcedure("gallery.admin.upload")
@@ -1062,6 +1115,7 @@ export const appRouter = router({
             description: z.string().max(2000).optional(),
             imageUrl: z.string().max(500),
             imageKey: z.string().max(500),
+            mediaType: z.enum(["image", "video"]).default("image"),
             category: z.enum(["training", "highlights"]),
           })
         )
@@ -1077,9 +1131,15 @@ export const appRouter = router({
       delete: governedProcedure("gallery.admin.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          const { deleteGalleryPhoto } = await import("./db");
-          await deleteGalleryPhoto(input.id);
-          return { success: true };
+          try {
+            const { deleteGalleryPhoto } = await import("./db");
+            await deleteGalleryPhoto(input.id);
+            return { success: true };
+          } catch (error) {
+            if (error instanceof TRPCError) throw error;
+            logger.error("[gallery.admin.delete] Error:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+          }
         }),
 
       toggleVisibility: governedProcedure("gallery.admin.toggleVisibility")
@@ -1508,9 +1568,9 @@ export const appRouter = router({
       return getAllProducts();
     }),
 
-    getCheckoutSessionDetails: publicProcedure
+    getCheckoutSessionDetails: protectedProcedure
       .input(z.object({ sessionId: z.string() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
         const { ENV } = await import("./_core/env");
         const Stripe = (await import("stripe")).default;
         const stripe = new Stripe(ENV.stripeSecretKey);
@@ -1520,6 +1580,18 @@ export const appRouter = router({
           const session = await stripe.checkout.sessions.retrieve(input.sessionId, {
             expand: ["line_items", "payment_intent"],
           });
+
+          // Verify the requesting user owns this checkout session
+          if (
+            session.customer_email &&
+            ctx.user.email &&
+            session.customer_email.toLowerCase() !== ctx.user.email.toLowerCase()
+          ) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You do not have access to this checkout session",
+            });
+          }
 
           // Extract product details from line items
           const items = (session.line_items?.data || []).map((item) => {
@@ -1542,11 +1614,12 @@ export const appRouter = router({
             customerEmail: session.customer_email || "",
             items,
             createdAt: new Date(session.created * 1000),
-            paymentIntentId: typeof session.payment_intent === "string" 
-              ? session.payment_intent 
+            paymentIntentId: typeof session.payment_intent === "string"
+              ? session.payment_intent
               : session.payment_intent?.id,
           };
         } catch (error) {
+          if (error instanceof TRPCError) throw error;
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Checkout session not found",
@@ -2458,8 +2531,8 @@ export const appRouter = router({
                 "title",
                 "description",
                 "imageUrl" AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
                 "category"::text,
                 COALESCE("viewCount", 0) AS "viewCount",
                 "createdAt"
@@ -2473,10 +2546,10 @@ export const appRouter = router({
                 'recap' AS "type",
                 s."title" AS "title",
                 sr."content" AS "description",
-                NULL AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
-                'training' AS "category",
+                NULL::text AS "mediaUrl",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'training'::text AS "category",
                 0 AS "viewCount",
                 sr."generated_at" AS "createdAt"
               FROM "session_recaps" sr
@@ -2491,9 +2564,9 @@ export const appRouter = router({
                 u."name" AS "title",
                 m."improvement_display" AS "description",
                 m."card_image_url" AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
-                'highlights' AS "category",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'highlights'::text AS "category",
                 0 AS "viewCount",
                 m."created_at" AS "createdAt"
               FROM "milestones" m

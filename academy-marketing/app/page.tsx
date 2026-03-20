@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Zap, Users, Target, Shield, Heart } from "lucide-react";
 import { generatePageMetadata } from "@/lib/metadata";
 import { OrganizationJsonLd } from "@/lib/structured-data";
@@ -53,10 +54,12 @@ export default function HomePage() {
       {/* Hero */}
       <section className="relative min-h-[90vh] flex items-center justify-center section-dark clip-diagonal">
         <div className="absolute inset-0 overflow-hidden">
-          <img
+          <Image
             src="/images/training-photo-1.jpeg"
             alt="Academy basketball training session"
-            className="absolute w-full h-full object-cover opacity-40"
+            fill
+            priority
+            className="object-cover opacity-40"
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-black)]/90 via-[var(--color-brand-black)]/80 to-[var(--color-brand-gold)]/10" />
@@ -98,7 +101,7 @@ export default function HomePage() {
               className="inline-block transition-transform hover:scale-105"
               aria-label="Download on the App Store"
             >
-              <img
+              <Image
                 src="/images/badge-app-store.svg"
                 alt="Download on the App Store"
                 width={135}
@@ -113,7 +116,7 @@ export default function HomePage() {
               className="inline-block transition-transform hover:scale-105"
               aria-label="Get it on Google Play"
             >
-              <img
+              <Image
                 src="/images/badge-google-play.svg"
                 alt="Get it on Google Play"
                 width={135}
@@ -235,11 +238,11 @@ export default function HomePage() {
       {/* Differentiator — Outdoor Training */}
       <section className="relative py-24 md:py-32 section-dark clip-diagonal-reverse">
         <div className="absolute inset-0 overflow-hidden">
-          <img
+          <Image
             src="/images/training-photo-2.jpeg"
             alt="Athletes training outdoors"
-            loading="lazy"
-            className="absolute w-full h-full object-cover opacity-20"
+            fill
+            className="object-cover opacity-20"
           />
         </div>
         <div className="container relative z-10">
@@ -280,11 +283,12 @@ export default function HomePage() {
               <RevealSection key={coach.name} delay={i + 1}>
                 <div className="bg-white rounded-xl border border-[var(--color-brand-gray-light)] overflow-hidden h-full">
                   <div className="aspect-[4/3] bg-[var(--color-brand-gray-light)] relative overflow-hidden">
-                    <img
+                    <Image
                       src={coach.photo}
                       alt={`${coach.name} instructing athletes`}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-brand-black)]/80 via-transparent to-transparent" />
                     <div className="absolute bottom-4 left-6">
@@ -442,7 +446,7 @@ export default function HomePage() {
                     rel="noopener noreferrer"
                     className="inline-block transition-transform hover:scale-105"
                   >
-                    <img src="/images/badge-app-store.svg" alt="Download on the App Store" width={150} height={44} className="h-11 w-auto" />
+                    <Image src="/images/badge-app-store.svg" alt="Download on the App Store" width={150} height={44} className="h-11 w-auto" />
                   </a>
                   <a
                     href={APP_LINKS.android}
@@ -450,7 +454,7 @@ export default function HomePage() {
                     rel="noopener noreferrer"
                     className="inline-block transition-transform hover:scale-105"
                   >
-                    <img src="/images/badge-google-play.svg" alt="Get it on Google Play" width={150} height={44} className="h-11 w-auto" />
+                    <Image src="/images/badge-google-play.svg" alt="Get it on Google Play" width={150} height={44} className="h-11 w-auto" />
                   </a>
                 </div>
               </RevealSection>

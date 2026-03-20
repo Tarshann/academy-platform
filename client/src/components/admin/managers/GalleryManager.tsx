@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Plus, Pencil, Trash2, Image, Eye, EyeOff, Upload, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Eye, EyeOff, Upload, Loader2, Video } from "lucide-react";
 
 type PhotoCategory = "training" | "highlights";
 
@@ -24,8 +24,11 @@ const defaultForm: PhotoForm = {
   category: "training",
 };
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/quicktime", "video/webm"];
+const ACCEPTED_TYPES = [...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_VIDEO_TYPES];
 
 export function GalleryManager() {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -85,21 +88,29 @@ export function GalleryManager() {
     if (!file) return;
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      toast.error("Invalid file type", { description: "Please upload a JPEG, PNG, WebP, or GIF image." });
+      toast.error("Invalid file type", { description: "Please upload a JPEG, PNG, WebP, GIF image or MP4, MOV, WebM video." });
       return;
     }
 
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error("File too large", { description: `Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` });
+    const isVideo = file.type.startsWith("video/");
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+    const maxLabel = isVideo ? "50MB" : "10MB";
+
+    if (file.size > maxSize) {
+      toast.error("File too large", { description: `Maximum size is ${maxLabel}. Your file is ${(file.size / 1024 / 1024).toFixed(1)}MB.` });
       return;
     }
 
     setSelectedFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    if (isVideo) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async () => {
@@ -124,12 +135,14 @@ export function GalleryManager() {
       }
 
       const { url, key } = await response.json();
+      const isVideo = selectedFile.type.startsWith("video/");
 
       uploadMutation.mutate({
         title: form.title,
         description: form.description || undefined,
         imageUrl: url,
         imageKey: key,
+        mediaType: isVideo ? "video" : "image",
         category: form.category,
       });
     } catch (error) {
@@ -193,7 +206,7 @@ export function GalleryManager() {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <Image className="h-5 w-5" />
-          Photo Gallery
+          Media Gallery
         </CardTitle>
         <Dialog open={isAddOpen} onOpenChange={(open) => {
           setIsAddOpen(open);
@@ -206,7 +219,7 @@ export function GalleryManager() {
           <DialogTrigger asChild>
             <Button onClick={() => setForm(defaultForm)}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Photo
+              Add Media
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
@@ -223,21 +236,25 @@ export function GalleryManager() {
                 >
                   {previewUrl ? (
                     <div className="relative">
-                      <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded" />
-                      <p className="text-sm text-muted-foreground mt-2">Click to change image</p>
+                      {selectedFile?.type.startsWith("video/") ? (
+                        <video src={previewUrl} className="max-h-48 mx-auto rounded" controls muted />
+                      ) : (
+                        <img src={previewUrl} alt="Preview" className="max-h-48 mx-auto rounded" />
+                      )}
+                      <p className="text-sm text-muted-foreground mt-2">Click to change file</p>
                     </div>
                   ) : (
                     <>
                       <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Click to upload an image</p>
-                      <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP, or GIF up to 10MB</p>
+                      <p className="text-sm text-muted-foreground">Click to upload an image or video</p>
+                      <p className="text-xs text-muted-foreground mt-1">JPEG, PNG, WebP, GIF up to 10MB · MP4, MOV, WebM up to 50MB</p>
                     </>
                   )}
                 </div>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
                   className="hidden"
                   onChange={handleFileSelect}
                 />
@@ -313,14 +330,23 @@ export function GalleryManager() {
                     !photo.isVisible ? "opacity-60" : ""
                   }`}
                 >
-                  {/* Image */}
+                  {/* Media */}
                   <div className="aspect-square bg-muted">
                     {photo.imageUrl ? (
-                      <img
-                        src={photo.imageUrl}
-                        alt={photo.title}
-                        className="w-full h-full object-cover"
-                      />
+                      photo.mediaType === "video" ? (
+                        <div className="relative w-full h-full">
+                          <video src={photo.imageUrl} className="w-full h-full object-cover" muted />
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <Video className="h-8 w-8 text-white drop-shadow-lg" />
+                          </div>
+                        </div>
+                      ) : (
+                        <img
+                          src={photo.imageUrl}
+                          alt={photo.title}
+                          className="w-full h-full object-cover"
+                        />
+                      )
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Image className="h-8 w-8 text-muted-foreground" />

@@ -18,6 +18,8 @@ build/
 **/service-account*.json
 **/*-4e5d817d1e05.json
 **/academytn-app-*.json
+academy-app/credentials.json
+academy-app/credentials/
 
 # IDE and editor files
 .vscode/
@@ -117,3 +119,5 @@ temp/
 .claude/worktrees/loving-mendeleev/
 .claude/worktrees/serene-ellis/
 .claude/worktrees/nice-sinoussi/
+academy-app/credentials.json
+academy-app/credentials/
