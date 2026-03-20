@@ -428,4 +428,17 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   res.status(status).json({ error: message });
 });
 
+// Re-export cron job run functions so they are included in the compiled
+// serverless bundle (dist/serverless.js).  The api/cron/*.ts entry points
+// import these named exports instead of reaching into raw TypeScript source.
+export { run as cronNurture } from "./cron/nurture";
+export { run as cronGenerateSessions } from "./cron/generate-sessions";
+export { run as cronSessionReminders } from "./cron/session-reminders";
+export { run as cronMerchDrops } from "./cron/merch-drops";
+export { run as cronMetricsPrompt } from "./cron/metrics-prompt";
+export { run as cronProgressReports } from "./cron/progress-reports";
+export { run as cronReengagement } from "./cron/reengagement";
+export { run as cronParentDigest } from "./cron/parent-digest";
+export { run as cronPostSessionContent } from "./cron/post-session-content";
+
 export default app;

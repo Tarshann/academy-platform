@@ -2531,8 +2531,8 @@ export const appRouter = router({
                 "title",
                 "description",
                 "imageUrl" AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
                 "category"::text,
                 COALESCE("viewCount", 0) AS "viewCount",
                 "createdAt"
@@ -2546,10 +2546,10 @@ export const appRouter = router({
                 'recap' AS "type",
                 s."title" AS "title",
                 sr."content" AS "description",
-                NULL AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
-                'training' AS "category",
+                NULL::text AS "mediaUrl",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'training'::text AS "category",
                 0 AS "viewCount",
                 sr."generated_at" AS "createdAt"
               FROM "session_recaps" sr
@@ -2564,9 +2564,9 @@ export const appRouter = router({
                 u."name" AS "title",
                 m."improvement_display" AS "description",
                 m."card_image_url" AS "mediaUrl",
-                NULL AS "thumbnail",
-                NULL AS "platform",
-                'highlights' AS "category",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'highlights'::text AS "category",
                 0 AS "viewCount",
                 m."created_at" AS "createdAt"
               FROM "milestones" m
