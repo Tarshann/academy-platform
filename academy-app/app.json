@@ -3,7 +3,7 @@
     "name": "The Academy - Youth Sports",
     "slug": "academy-app",
     "scheme": "academy",
-    "version": "1.8.1",
+    "version": "1.8.3",
     "description": "Youth athletic training in Gallatin, TN. Basketball, SAQ, multi-sport development. Schedule sessions, track progress, chat with coaches.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,7 +20,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "32",
+      "buildNumber": "35",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -39,7 +39,7 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 32
+      "versionCode": 35
     },
     "plugins": [
       "expo-router",

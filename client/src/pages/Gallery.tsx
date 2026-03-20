@@ -32,7 +32,7 @@ export default function Gallery() {
   const filteredPhotos = useMemo(() => {
     if (!photos) return [];
     if (selectedCategory === "all") return photos;
-    return photos.filter((photo) => photo.category === selectedCategory);
+    return photos.filter((photo: (typeof photos)[number]) => photo.category === selectedCategory);
   }, [photos, selectedCategory]);
 
   const openLightbox = (index: number) => {
@@ -140,7 +140,7 @@ export default function Gallery() {
                 {filteredPhotos.length} photo{filteredPhotos.length !== 1 ? "s" : ""}
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPhotos.map((photo, index) => (
+                {filteredPhotos.map((photo: (typeof filteredPhotos)[number], index: number) => (
                   <div
                     key={photo.id}
                     className="group relative overflow-hidden rounded-xl bg-muted cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"
@@ -148,12 +148,21 @@ export default function Gallery() {
                   >
                     <div className="aspect-[4/3] overflow-hidden">
                       {photo.imageUrl ? (
-                        <img
-                          src={photo.imageUrl}
-                          alt={photo.title}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
+                        photo.mediaType === "video" ? (
+                          <video
+                            src={photo.imageUrl}
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <img
+                            src={photo.imageUrl}
+                            alt={photo.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        )
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
                           <ImageIcon className="w-16 h-16 text-muted-foreground/30" />
@@ -241,11 +250,20 @@ export default function Gallery() {
 
             <div className="flex items-center justify-center min-h-[60vh] p-8">
               {filteredPhotos[currentPhotoIndex]?.imageUrl ? (
-                <img
-                  src={filteredPhotos[currentPhotoIndex].imageUrl}
-                  alt={filteredPhotos[currentPhotoIndex]?.title}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                />
+                filteredPhotos[currentPhotoIndex]?.mediaType === "video" ? (
+                  <video
+                    src={filteredPhotos[currentPhotoIndex].imageUrl}
+                    controls
+                    autoPlay
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  />
+                ) : (
+                  <img
+                    src={filteredPhotos[currentPhotoIndex].imageUrl}
+                    alt={filteredPhotos[currentPhotoIndex]?.title}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  />
+                )
               ) : (
                 <div className="flex items-center justify-center w-full h-[50vh]">
                   <ImageIcon className="w-24 h-24 text-white/20" />

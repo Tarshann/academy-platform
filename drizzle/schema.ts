@@ -8,6 +8,7 @@ import {
   varchar,
   decimal,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // ============================================================================
@@ -332,6 +333,7 @@ export const galleryPhotos = pgTable("galleryPhotos", {
   description: text("description"),
   imageUrl: varchar("imageUrl", { length: 500 }).notNull(),
   imageKey: varchar("imageKey", { length: 500 }),
+  mediaType: varchar("mediaType", { length: 20 }).notNull().default("image"),
   category: galleryCategoryEnum("category").notNull().default("training"),
   uploadedBy: integer("uploadedBy").notNull(),
   isVisible: boolean("isVisible").notNull().default(true),
@@ -841,6 +843,7 @@ export const metricCategoryEnum = pgEnum("metric_category", [
   "endurance",
   "strength",
   "flexibility",
+  "skill",
 ]);
 
 /**
@@ -1279,3 +1282,60 @@ export const milestones = pgTable("milestones", {
 
 export type Milestone = typeof milestones.$inferSelect;
 export type InsertMilestone = typeof milestones.$inferInsert;
+
+// ============================================================================
+// VISION CAPTURES TABLE
+// ============================================================================
+
+/**
+ * Vision Captures — AI-assisted metric extraction from voice memos and photos.
+ * Tracks capture sessions, extraction results, and confirmation status.
+ */
+export const visionCaptures = pgTable("vision_captures", {
+  id: serial("id").primaryKey(),
+  scheduleId: integer("schedule_id"),
+  capturedBy: integer("captured_by").notNull(),
+  mode: varchar("mode", { length: 20 }).notNull(),
+  mediaUrl: text("media_url").notNull(),
+  mediaType: varchar("media_type", { length: 30 }).notNull(),
+  extractionJson: jsonb("extraction_json"),
+  status: varchar("status", { length: 20 }).default("processing").notNull(),
+  athleteCount: integer("athlete_count").default(0),
+  metricCount: integer("metric_count").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  aiObservations: text("ai_observations"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+  confirmedAt: timestamp("confirmed_at", { mode: 'date' }),
+});
+
+export type VisionCapture = typeof visionCaptures.$inferSelect;
+export type InsertVisionCapture = typeof visionCaptures.$inferInsert;
+
+// ============================================================================
+// GOVERNANCE EVIDENCE (Local Audit Trail)
+// ============================================================================
+
+/**
+ * Local governance evidence trail. Every governed mutation and cron job
+ * execution is recorded here, regardless of whether the external Strix SDK
+ * is configured. This is the platform's own audit log — the canonical
+ * record of "who did what, when, and what the system decided."
+ */
+export const governanceEvidence = pgTable("governance_evidence", {
+  id: serial("id").primaryKey(),
+  capabilityId: varchar("capability_id", { length: 120 }).notNull(),
+  actorId: varchar("actor_id", { length: 100 }).notNull(),
+  actorRole: varchar("actor_role", { length: 50 }).notNull(),
+  actorEmail: varchar("actor_email", { length: 255 }),
+  action: varchar("action", { length: 20 }).notNull(), // allow, deny, escalate, error
+  reason: text("reason"),
+  source: varchar("source", { length: 20 }).notNull(), // trpc, cron
+  externalDecisionId: varchar("external_decision_id", { length: 200 }),
+  evidenceHash: varchar("evidence_hash", { length: 64 }), // SHA-256 hex digest of decision payload
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
+});
+
+export type GovernanceEvidenceRow = typeof governanceEvidence.$inferSelect;
+export type InsertGovernanceEvidence = typeof governanceEvidence.$inferInsert;

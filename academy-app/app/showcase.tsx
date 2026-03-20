@@ -5,12 +5,13 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  Pressable,
 } from 'react-native';
 import { useState } from 'react';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { trpc } from '../lib/trpc';
+import { ScreenHeader } from '../components/ScreenHeader';
 import { trackEvent } from '../lib/analytics';
 import { colors, shadows } from '../lib/theme';
 
@@ -39,7 +40,6 @@ function SportBadge({ sport }: { sport: string | null }) {
 }
 
 export default function ShowcaseScreen() {
-  const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
 
   const showcases = trpc.showcases.active.useQuery();
@@ -52,14 +52,7 @@ export default function ShowcaseScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Athlete Showcase</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <ScreenHeader title="Athlete Showcase" />
 
       <FlatList
         data={showcases.data ?? []}
@@ -86,7 +79,25 @@ export default function ShowcaseScreen() {
               </View>
             )}
 
-            {!showcases.isLoading && (showcases.data?.length ?? 0) === 0 && (
+            {showcases.isError && (
+              <View style={styles.emptyState}>
+                <Ionicons name="alert-circle-outline" size={48} color={colors.error} />
+                <Text style={styles.emptyTitle}>Failed to load showcases</Text>
+                <Text style={styles.emptySubtitle}>
+                  Something went wrong. Please try again.
+                </Text>
+                <Pressable
+                  onPress={() => showcases.refetch()}
+                  style={styles.retryButton}
+                  accessibilityLabel="Try again"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.retryButtonText}>Try Again</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {!showcases.isLoading && !showcases.isError && (showcases.data?.length ?? 0) === 0 && (
               <View style={styles.emptyState}>
                 <Ionicons name="people-outline" size={48} color={colors.textMuted} />
                 <Text style={styles.emptyTitle}>No showcases yet</Text>
@@ -113,6 +124,8 @@ export default function ShowcaseScreen() {
               style={styles.card}
               activeOpacity={0.9}
               onPress={() => trackEvent('showcase_tapped', { id: item.id })}
+              accessibilityLabel={`View showcase: ${item.title}`}
+              accessibilityRole="button"
             >
               {/* Spotlight Number */}
               {index === 0 && (
@@ -129,6 +142,7 @@ export default function ShowcaseScreen() {
                   style={styles.cardImage}
                   contentFit="cover"
                   transition={200}
+                  accessibilityLabel={`Photo of ${item.title}`}
                 />
               ) : (
                 <View style={[styles.cardImage, styles.placeholderImage]}>
@@ -294,4 +308,18 @@ const styles = StyleSheet.create({
   emptyState: { alignItems: 'center', paddingVertical: 60, gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.textPrimary },
   emptySubtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
+  retryButton: {
+    marginTop: 8,
+    backgroundColor: colors.cardElevated,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  retryButtonText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });

@@ -90,6 +90,15 @@ export default function DashboardScreen() {
   const activeSub = (subscriptions.data ?? []).find((s: any) => s.status === 'active');
 
   const quickActions = [
+    ...(isAdmin ? [{
+      key: 'quick-capture',
+      icon: 'camera-outline' as const,
+      label: 'Quick Capture',
+      onPress: () => {
+        trackEvent('dashboard_quick_action_tapped', { action: 'quick-capture' });
+        router.push('/vision-capture');
+      },
+    }] : []),
     {
       key: 'schedule',
       icon: 'calendar-outline' as const,
@@ -129,6 +138,8 @@ export default function DashboardScreen() {
   ];
 
   const featureLinks = [
+    { key: 'family', icon: 'people-outline' as const, label: 'Family', route: '/family' },
+    { key: 'referrals', icon: 'gift-outline' as const, label: 'Referrals', route: '/referrals' },
     { key: 'gallery', icon: 'images-outline' as const, label: 'Social Gallery', route: '/gallery' },
     { key: 'drops', icon: 'megaphone-outline' as const, label: 'Drops', route: '/drops' },
     { key: 'metrics', icon: 'analytics-outline' as const, label: 'Metrics', route: '/metrics' },

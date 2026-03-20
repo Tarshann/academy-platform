@@ -17,9 +17,19 @@ import {
   ClerkStateFallbackProvider,
   ClerkStateProvider,
 } from "@/contexts/ClerkStateContext";
+import { toast } from "sonner";
 import "./index.css";
 
 const queryClient = new QueryClient();
+
+// Tracks whether Clerk reports the user as signed in. When true, we skip
+// automatic redirects to the login page for UNAUTHORIZED errors — the backend
+// sync may simply be lagging after a fresh signup. The flag is updated by
+// the ClerkAuthSyncGuard component rendered inside ClerkProvider.
+let clerkReportsSignedIn = false;
+export function setClerkSignedInFlag(signedIn: boolean) {
+  clerkReportsSignedIn = signedIn;
+}
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -28,6 +38,13 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
+
+  // If Clerk says the user IS signed in, the backend likely hasn't synced
+  // the new user yet. Don't redirect — let the retry/refetch handle it.
+  if (clerkReportsSignedIn) {
+    logger.warn("[Auth] Backend returned UNAUTHORIZED but Clerk session is active. Skipping redirect (likely post-signup sync delay).");
+    return;
+  }
 
   const loginUrl = getLoginUrl();
   if (loginUrl === "#") {
@@ -50,6 +67,19 @@ queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
+
+    // Surface governance denials as user-visible toasts
+    if (error instanceof TRPCClientError && error.data?.code === "FORBIDDEN") {
+      const message = error.message || "Action denied by governance policy";
+      const isGovernance = message.includes("governance") || message.includes("critical_requires_owner");
+      toast.error(isGovernance ? "Action Blocked" : "Access Denied", {
+        description: isGovernance
+          ? "This action requires owner authorization. Contact the platform owner to proceed."
+          : message,
+        duration: 6000,
+      });
+    }
+
     logger.error("[API Mutation Error]", error);
   }
 });
@@ -110,8 +140,15 @@ injectAnalyticsScript();
 
 // Component to create tRPC client with Clerk token access
 function TrpcProviderWithClerk({ children }: { children: React.ReactNode }) {
-  const { getToken } = useClerkAuth();
-  
+  const { getToken, isSignedIn } = useClerkAuth();
+
+  // Keep the global flag in sync so the error handler knows whether
+  // Clerk considers the user authenticated (prevents false logout on
+  // post-signup backend sync delays).
+  React.useEffect(() => {
+    setClerkSignedInFlag(Boolean(isSignedIn));
+  }, [isSignedIn]);
+
   const trpcClient = React.useMemo(() => {
     return createTrpcClient(() => getToken());
   }, [getToken]);

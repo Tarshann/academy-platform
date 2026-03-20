@@ -41,7 +41,21 @@ export async function run() {
   let socialDraftsQueued = 0;
   let parentPushSent = 0;
 
+  let skippedDuplicates = 0;
+
   for (const session of recentSessions) {
+    // Dedup: skip if a recap already exists for this session
+    const existingRecap = await db
+      .select({ id: sessionRecaps.id })
+      .from(sessionRecaps)
+      .where(eq(sessionRecaps.scheduleId, session.id))
+      .limit(1);
+
+    if (existingRecap.length > 0) {
+      skippedDuplicates++;
+      continue;
+    }
+
     // Count attendance
     const [attendanceResult] = await db
       .select({ count: count() })
@@ -198,7 +212,7 @@ Output ONLY valid JSON with no markdown formatting, no backticks, no preamble:
     sessionsProcessed++;
   }
 
-  const result = { sessionsProcessed, recapsGenerated, socialDraftsQueued, parentPushSent };
+  const result = { sessionsProcessed, recapsGenerated, socialDraftsQueued, parentPushSent, skippedDuplicates };
   logger.info("[cron/post-session-content] Complete", result);
   return result;
 }

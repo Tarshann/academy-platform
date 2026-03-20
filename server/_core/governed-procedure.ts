@@ -1,108 +1,271 @@
 /**
- * Strix Governance — Feature-Flagged Procedure Wrapper
+ * Strix Governance — Embedded Kernel with Local Evidence Persistence
  *
  * NON-BYPASSABLE ENFORCEMENT:
  *   All admin mutations execute through governedProcedure(), which replaces
  *   adminProcedure as the procedure builder in routers.ts. Mutation handlers
  *   are defined inside .mutation() closures — there is no alternate execution
- *   path. Direct handler invocation without a valid governance context fails
- *   at runtime because the handler is only reachable through the tRPC
- *   procedure chain, and governance middleware sits in that chain.
- *
- * SYSTEM ACTORS (CRON JOBS):
- *   System actors (cron jobs) still require capability validation and produce
- *   evidence records. Auto-approve is a policy setting (approvalsRequired: 0),
- *   not an implicit bypass. Every cron execution is recorded with actor ID
- *   "system:cron", capability ID, and timestamp — creating a complete audit
- *   trail even for automated actions.
- *
- * FEATURE FLAG BEHAVIOR:
- *   When STRIX_GOVERNANCE_ENABLED=true:
- *     governedProcedure("capability.id") → adminProcedure + governance middleware
- *     evaluateCronGovernance("capability.id") → checks cron jobs before execution
- *
- *   When STRIX_GOVERNANCE_ENABLED is falsy (default):
- *     governedProcedure() → plain adminProcedure (zero behavioral change)
- *     evaluateCronGovernance() → { allowed: true } (cron runs normally)
- *
- *   This ensures the live site is completely unaffected until governance is
- *   explicitly activated.
+ *   path.
  *
  * EVIDENCE PERSISTENCE:
- *   Evidence is persisted to immutable append-only storage (PostgreSQL via Neon)
- *   before the enforcement phase (Phase 3). This is a prerequisite, not optional.
- *   The Strix SDK handles evidence recording; the Academy platform does not
- *   write evidence to the local filesystem.
+ *   Evidence is ALWAYS written locally to the governance_evidence table in
+ *   PostgreSQL (Neon) — for every governed action, regardless of whether the
+ *   external Strix SDK is configured. This is the durable source of truth.
+ *
+ * STRIX SDK (OPTIONAL):
+ *   When STRIX_GOVERNANCE_ENABLED=true AND STRIX_API_KEY is set, the SDK is
+ *   also consulted for policy decisions (allow/deny/escalate). External
+ *   decisions are recorded locally with externalDecisionId.
+ *
+ * FAIL BEHAVIOR:
+ *   - Evidence write failure: logged, action still proceeds (fail-open on write)
+ *   - Strix API failure: logged, action proceeds, evidence recorded as allow (fail-open on policy)
+ *   - Strix API deny: evidence recorded as deny, TRPCError FORBIDDEN thrown (fail-closed on deny)
  */
 
 import { adminProcedure } from "./trpc";
 import { TRPCError } from "@trpc/server";
+import { createHash } from "crypto";
 import { logger } from "./logger";
+import { getCapability } from "./strix-capabilities";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 
 /**
+ * Local policy evaluation — deterministic rules based on capability registry.
+ * Provides real enforcement without external SDK dependency.
+ *
+ * Policy rules:
+ *   CRITICAL (approvalsRequired >= 2) → deny unless actor is owner
+ *   HIGH     (approvalsRequired >= 1) → escalate (soft: recorded, action proceeds)
+ *   MEDIUM/LOW                        → allow with local_policy attribution
+ *
+ * Escalate is "soft" until an approval workflow UI exists —
+ * the action proceeds but evidence records the escalation for audit.
+ */
+function evaluateLocalPolicy(
+  capabilityId: string,
+  actor: { id: string; role: string; email?: string }
+): { action: "allow" | "deny" | "escalate"; reason: string } {
+  const capability = getCapability(capabilityId);
+  if (!capability) {
+    return { action: "allow", reason: "unregistered_capability" };
+  }
+
+  const ownerEmail = process.env.CLERK_ADMIN_EMAIL;
+
+  // CRITICAL capabilities: only the owner can execute
+  if (capability.risk === "critical" && capability.approvalsRequired >= 2) {
+    if (actor.email !== ownerEmail) {
+      return { action: "deny", reason: "critical_requires_owner" };
+    }
+    // Owner executing critical action — allow but note it
+    return { action: "allow", reason: "owner_authorized" };
+  }
+
+  // HIGH capabilities with approval requirements: escalate (soft)
+  if (capability.risk === "high" && capability.approvalsRequired >= 1) {
+    return { action: "escalate", reason: "high_risk_audit" };
+  }
+
+  return { action: "allow", reason: "local_policy" };
+}
+
+/**
+ * Computes a SHA-256 hash of the decision payload for tamper-proof evidence.
+ * The hash covers all decision-relevant fields in a deterministic order.
+ */
+function computeEvidenceHash(params: {
+  capabilityId: string;
+  actorId: string;
+  actorRole: string;
+  actorEmail?: string;
+  action: string;
+  reason?: string;
+  source: string;
+  timestamp: string;
+}): string {
+  const payload = JSON.stringify({
+    capabilityId: params.capabilityId,
+    actorId: params.actorId,
+    actorRole: params.actorRole,
+    actorEmail: params.actorEmail ?? null,
+    action: params.action,
+    reason: params.reason ?? null,
+    source: params.source,
+    timestamp: params.timestamp,
+  });
+  return createHash("sha256").update(payload).digest("hex");
+}
+
+/**
+ * Records a governance decision to the local database.
+ * Fire-and-forget — never blocks the mutation.
+ * Each evidence record includes a SHA-256 hash of the decision payload
+ * for tamper detection and audit integrity.
+ */
+async function recordEvidence(params: {
+  capabilityId: string;
+  actorId: string;
+  actorRole: string;
+  actorEmail?: string;
+  action: string;
+  reason?: string;
+  source: string;
+  externalDecisionId?: string;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const timestamp = new Date().toISOString();
+    const evidenceHash = computeEvidenceHash({
+      capabilityId: params.capabilityId,
+      actorId: params.actorId,
+      actorRole: params.actorRole,
+      actorEmail: params.actorEmail,
+      action: params.action,
+      reason: params.reason,
+      source: params.source,
+      timestamp,
+    });
+
+    const { insertGovernanceEvidence } = await import("../db");
+    await insertGovernanceEvidence({
+      capabilityId: params.capabilityId,
+      actorId: params.actorId,
+      actorRole: params.actorRole,
+      actorEmail: params.actorEmail ?? null,
+      action: params.action,
+      reason: params.reason ?? null,
+      source: params.source,
+      externalDecisionId: params.externalDecisionId ?? null,
+      evidenceHash,
+      metadata: params.metadata ?? null,
+    });
+  } catch (err) {
+    // Evidence write must never block the mutation
+    logger.error(`[governance] Evidence write failed for ${params.capabilityId}:`, err);
+  }
+}
+
+/**
  * Returns a governed tRPC procedure for admin mutations.
- * When governance is OFF, this is identical to adminProcedure.
+ *
+ * ALWAYS records evidence locally for every mutation that passes through.
+ * When Strix SDK is configured AND STRIX_GOVERNANCE_ENABLED=true,
+ * also evaluates against Strix for deny/escalate decisions.
+ * When Strix is off, all mutations are allowed but still recorded.
  */
 export function governedProcedure(capabilityId?: string) {
-  if (!GOVERNANCE_ENABLED || !capabilityId) {
+  if (!capabilityId) {
     return adminProcedure;
   }
 
   return adminProcedure.use(async (opts) => {
     const { ctx, next } = opts;
-    try {
-      const { getStrixClient } = await import("./strix");
-      const strix = getStrixClient();
+    const actor = {
+      id: String(ctx.user.id),
+      role: ctx.user.role ?? "unknown",
+      email: ctx.user.email ?? undefined,
+    };
 
-      if (!strix) {
-        logger.warn(`[governance] Strix SDK not available, allowing ${capabilityId}`);
-        return next({ ctx });
-      }
+    // If Strix enforcement is enabled, evaluate against external SDK
+    if (GOVERNANCE_ENABLED) {
+      try {
+        const { getStrixClient } = await import("./strix");
+        const strix = getStrixClient();
 
-      const decision = await strix.evaluate({
-        capabilityId,
-        actor: {
-          id: String(ctx.user.id),
-          role: ctx.user.role ?? "unknown",
-          email: ctx.user.email ?? undefined,
-        },
-        context: {
-          source: "trpc",
-          timestamp: new Date().toISOString(),
-        },
-      });
-
-      if (decision.action === "deny") {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: decision.reason ?? "Action requires governance approval",
-        });
-      }
-
-      return next({
-        ctx: {
-          ...ctx,
-          governanceEvidence: {
+        if (strix) {
+          const decision = await strix.evaluate({
             capabilityId,
-            decisionId: decision.id,
+            actor,
+            context: {
+              source: "trpc",
+              timestamp: new Date().toISOString(),
+            },
+          });
+
+          // Record the external decision locally
+          recordEvidence({
+            capabilityId,
+            actorId: actor.id,
+            actorRole: actor.role,
+            actorEmail: actor.email,
             action: decision.action,
-          },
-        },
-      });
-    } catch (err) {
-      if (err instanceof TRPCError) throw err;
-      // Fail open — allow action, log error
-      logger.error(`[governance] SDK error for ${capabilityId}:`, err);
-      return next({ ctx });
+            reason: decision.reason,
+            source: "trpc",
+            externalDecisionId: decision.id,
+          });
+
+          if (decision.action === "deny") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: decision.reason ?? "Action requires governance approval",
+            });
+          }
+
+          return next({
+            ctx: {
+              ...ctx,
+              governanceEvidence: {
+                capabilityId,
+                decisionId: decision.id,
+                action: decision.action,
+              },
+            },
+          });
+        }
+      } catch (err) {
+        if (err instanceof TRPCError) throw err;
+        // Fail open — allow action, log SDK error, still record locally
+        logger.error(`[governance] SDK error for ${capabilityId}:`, err);
+      }
     }
+
+    // Evaluate local policy when SDK is unavailable or governance is off
+    const localDecision = GOVERNANCE_ENABLED
+      ? evaluateLocalPolicy(capabilityId, actor)
+      : { action: "allow" as const, reason: "governance_disabled" };
+
+    // Record evidence with local policy decision
+    recordEvidence({
+      capabilityId,
+      actorId: actor.id,
+      actorRole: actor.role,
+      actorEmail: actor.email,
+      action: localDecision.action,
+      reason: localDecision.reason,
+      source: "trpc",
+    });
+
+    // Hard deny — block the mutation
+    if (localDecision.action === "deny") {
+      const capability = getCapability(capabilityId);
+      logger.warn(
+        `[governance] Local policy denied ${capabilityId} for actor ${actor.id}: ${localDecision.reason}`
+      );
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `Action denied by governance policy: ${localDecision.reason}. "${capability?.label ?? capabilityId}" is a critical capability that requires owner authorization.`,
+      });
+    }
+
+    // Escalate (soft) or allow — proceed with evidence attached
+    return next({
+      ctx: {
+        ...ctx,
+        governanceEvidence: {
+          capabilityId,
+          action: localDecision.action,
+        },
+      },
+    });
   });
 }
 
 /**
  * Evaluates governance for a cron job before execution.
- * When governance is OFF, always returns { allowed: true }.
+ * Always records evidence locally. When Strix is enabled and available,
+ * also consults the external SDK for policy decisions.
  *
  * Usage in cron orchestration functions:
  *   const guard = await evaluateCronGovernance("cron.nurture", "nurture");
@@ -112,41 +275,67 @@ export async function evaluateCronGovernance(
   capabilityId: string,
   cronName: string
 ): Promise<{ allowed: boolean; reason?: string; decisionId?: string }> {
-  if (!GOVERNANCE_ENABLED) {
-    return { allowed: true };
+  // If Strix enforcement is enabled, check SDK
+  if (GOVERNANCE_ENABLED) {
+    try {
+      const { getStrixClient } = await import("./strix");
+      const strix = getStrixClient();
+
+      if (strix) {
+        const decision = await strix.evaluate({
+          capabilityId,
+          actor: {
+            id: "system:cron",
+            role: "automation",
+          },
+          context: {
+            source: "cron",
+            cronName,
+            timestamp: new Date().toISOString(),
+          },
+        });
+
+        // Record the external decision locally
+        recordEvidence({
+          capabilityId,
+          actorId: "system:cron",
+          actorRole: "automation",
+          action: decision.action,
+          source: "cron",
+          reason: decision.reason,
+          externalDecisionId: decision.id,
+          metadata: { cronName },
+        });
+
+        if (decision.action === "deny") {
+          logger.warn(`[governance] Cron ${cronName} denied: ${decision.reason}`);
+          return { allowed: false, reason: decision.reason, decisionId: decision.id };
+        }
+
+        return { allowed: true, decisionId: decision.id };
+      }
+    } catch (err) {
+      // Fail open for cron — don't break scheduled jobs
+      logger.error(`[governance] SDK error for cron ${cronName}:`, err);
+    }
   }
 
-  try {
-    const { getStrixClient } = await import("./strix");
-    const strix = getStrixClient();
+  // Local policy for cron: all cron jobs have approvalsRequired: 0,
+  // so they pass local policy as "allow" with local_policy attribution
+  const cronCapability = getCapability(capabilityId);
+  const cronReason = GOVERNANCE_ENABLED
+    ? (cronCapability ? "local_policy" : "unregistered_capability")
+    : "governance_disabled";
 
-    if (!strix) {
-      logger.warn(`[governance] Strix SDK not available for cron ${cronName}, allowing`);
-      return { allowed: true };
-    }
+  recordEvidence({
+    capabilityId,
+    actorId: "system:cron",
+    actorRole: "automation",
+    action: "allow",
+    reason: cronReason,
+    source: "cron",
+    metadata: { cronName },
+  });
 
-    const decision = await strix.evaluate({
-      capabilityId,
-      actor: {
-        id: "system:cron",
-        role: "automation",
-      },
-      context: {
-        source: "cron",
-        cronName,
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    if (decision.action === "deny") {
-      logger.warn(`[governance] Cron ${cronName} denied: ${decision.reason}`);
-      return { allowed: false, reason: decision.reason, decisionId: decision.id };
-    }
-
-    return { allowed: true, decisionId: decision.id };
-  } catch (err) {
-    // Fail open for cron — don't break scheduled jobs
-    logger.error(`[governance] SDK error for cron ${cronName}:`, err);
-    return { allowed: true };
-  }
+  return { allowed: true };
 }

@@ -5,12 +5,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: "Unauthorized" });
   }
   try {
-    const { run } = await import("../../server/cron/parent-digest");
+    const { cronParentDigest: run } = await import("../../dist/serverless.js");
     const result = await run();
     return res.json({ ok: true, ...result });
   } catch (err: any) {
-    const { logger } = await import("../../server/_core/logger");
-    logger.error("[cron/parent-digest]", err);
+    console.error("[cron/parent-digest]", err);
     return res.json({ ok: false, error: err.message || String(err) });
   }
 }

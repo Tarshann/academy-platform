@@ -102,11 +102,18 @@ export async function syncClerkUserToDatabase(clerkUserId: string) {
       : user.firstName || user.lastName || email?.split("@")[0] || null;
 
     // Check if this user should be admin
+    // Owner (CLERK_ADMIN_EMAIL) and additional admins (ADMIN_EMAILS) both get admin role.
+    // Governance layer distinguishes owner from other admins for CRITICAL actions.
     let role: "user" | "admin" = "user";
     if (ENV.clerkAdminEmail && email === ENV.clerkAdminEmail) {
       role = "admin";
     } else if (ENV.ownerOpenId && openId === ENV.ownerOpenId) {
       role = "admin";
+    } else if (ENV.adminEmails && email) {
+      const additionalAdmins = ENV.adminEmails.split(",").map((e) => e.trim().toLowerCase());
+      if (additionalAdmins.includes(email.toLowerCase())) {
+        role = "admin";
+      }
     }
 
     await db.upsertUser({
@@ -154,17 +161,60 @@ export async function authenticateClerkRequest(req: Request & { auth?: any }) {
       try {
         user = await syncClerkUserToDatabase(clerkUserId);
       } catch (error) {
-        logger.error("[Clerk] Failed to sync user:", error);
-        if (!user) return null;
+        logger.error("[Clerk] Failed to sync user (attempt 1):", error);
+        if (!user) {
+          // Retry once after a short delay — handles Clerk propagation lag
+          // that commonly occurs right after signup
+          await new Promise((r) => setTimeout(r, 1000));
+          try {
+            user = await syncClerkUserToDatabase(clerkUserId);
+          } catch (retryError) {
+            logger.error("[Clerk] Failed to sync user (attempt 2):", retryError);
+            // Last resort: create a minimal user record so the session isn't lost.
+            // Name/email will be populated on the next successful sync.
+            try {
+              await db.upsertUser({
+                openId: clerkUserId,
+                name: null,
+                email: null,
+                loginMethod: "clerk",
+                lastSignedIn: new Date(),
+                role: "user",
+              });
+              user = await db.getUserByOpenId(clerkUserId);
+            } catch (fallbackError) {
+              logger.error("[Clerk] Fallback user creation failed:", fallbackError);
+              return null;
+            }
+          }
+        }
       }
     }
 
-    // Update last signed in
+    // Re-check admin role on every login (env vars may have changed)
     if (user) {
+      const email = user.email;
+      let expectedRole: "user" | "admin" = "user";
+      if (ENV.clerkAdminEmail && email === ENV.clerkAdminEmail) {
+        expectedRole = "admin";
+      } else if (ENV.ownerOpenId && user.openId === ENV.ownerOpenId) {
+        expectedRole = "admin";
+      } else if (ENV.adminEmails && email) {
+        const additionalAdmins = ENV.adminEmails.split(",").map((e) => e.trim().toLowerCase());
+        if (additionalAdmins.includes(email.toLowerCase())) {
+          expectedRole = "admin";
+        }
+      }
+      if (user.role !== expectedRole) {
+        logger.info(`[Clerk] Updating role for ${email}: ${user.role} → ${expectedRole}`);
+      }
+
       await db.upsertUser({
         openId: user.openId,
         lastSignedIn: signedInAt,
+        role: expectedRole,
       });
+      user = { ...user, role: expectedRole };
     }
 
     return user;

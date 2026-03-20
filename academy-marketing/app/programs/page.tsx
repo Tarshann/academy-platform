@@ -47,6 +47,7 @@ export default function ProgramsPage() {
       {/* Programs Grid */}
       <section className="py-24 md:py-32 section-light">
         <div className="container">
+          <h2 className="sr-only">Available Programs</h2>
           <div className="grid gap-10 max-w-5xl mx-auto md:grid-cols-3">
             {PROGRAMS.map((program, i) => {
               const Icon = ICONS[i] || Zap;
@@ -78,7 +79,7 @@ export default function ProgramsPage() {
                     {program.label}
                   </p>
 
-                  <h2 className="text-xl font-bold mb-2">{program.shortName}</h2>
+                  <h3 className="text-xl font-bold mb-2">{program.shortName}</h3>
 
                   <p className="text-[var(--color-brand-gray)] text-sm leading-relaxed mb-4">
                     {program.description}

@@ -73,13 +73,43 @@ function ProgramsSkeleton() {
 export default function ProgramsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [waitlistJoining, setWaitlistJoining] = useState<number | null>(null);
   const programs = trpc.programs.list.useQuery();
   const createCheckout = trpc.payment.createCheckout.useMutation();
+  const waitlistEntries = trpc.waitlist.myEntries.useQuery();
+  const joinWaitlist = trpc.waitlist.join.useMutation({
+    onSuccess: () => {
+      waitlistEntries.refetch();
+      setWaitlistJoining(null);
+      trackEvent('waitlist_joined');
+    },
+    onError: (err) => {
+      Alert.alert('Waitlist Error', err.message || 'Could not join waitlist.');
+      setWaitlistJoining(null);
+    },
+  });
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await programs.refetch();
+    await Promise.all([programs.refetch(), waitlistEntries.refetch()]);
     setRefreshing(false);
+  };
+
+  const onJoinWaitlist = (programId: number, programName: string) => {
+    Alert.alert(
+      'Join Waitlist',
+      `This program is currently full. Would you like to join the waitlist for ${programName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Join Waitlist',
+          onPress: () => {
+            setWaitlistJoining(programId);
+            joinWaitlist.mutate({ programId });
+          },
+        },
+      ]
+    );
   };
 
   const onInquire = (programName: string) => {
@@ -215,6 +245,14 @@ export default function ProgramsScreen() {
         const isPrivate = item.category === 'individual';
         const isLoadingThis = checkoutLoading === item.slug;
 
+        // Check if program is full (maxParticipants defined and enrolledCount >= max)
+        const isFull = item.maxParticipants && item.enrolledCount != null && item.enrolledCount >= item.maxParticipants;
+        const myWaitlistEntry = (waitlistEntries.data ?? []).find(
+          (e: any) => e.programId === item.id
+        );
+        const isOnWaitlist = !!myWaitlistEntry;
+        const isJoiningThis = waitlistJoining === item.id;
+
         let priceDisplay = `${formatPrice(item.price)}`;
         let priceDetail = '';
 
@@ -237,6 +275,11 @@ export default function ProgramsScreen() {
                   </Text>
                 </View>
                 {sport && <Text style={styles.sportLabel}>{sport}</Text>}
+                {isFull && !isOnWaitlist && (
+                  <View style={styles.fullBadge}>
+                    <Text style={styles.fullBadgeText}>FULL</Text>
+                  </View>
+                )}
               </View>
 
               <Text style={styles.programName}>{item.name}</Text>
@@ -259,6 +302,16 @@ export default function ProgramsScreen() {
                 )}
               </View>
 
+              {/* Waitlist position indicator */}
+              {isOnWaitlist && (
+                <View style={styles.waitlistBanner}>
+                  <Ionicons name="time-outline" size={14} color={colors.gold} />
+                  <Text style={styles.waitlistText}>
+                    You're #{myWaitlistEntry.position ?? '—'} on the waitlist
+                  </Text>
+                </View>
+              )}
+
               <View style={styles.priceRow}>
                 <View>
                   {priceDetail ? (
@@ -266,27 +319,51 @@ export default function ProgramsScreen() {
                   ) : null}
                   <Text style={styles.price}>{priceDisplay}</Text>
                 </View>
-                <TouchableOpacity
-                  style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
-                  onPress={() => {
-                    if (isPrivate) {
-                      onInquire(item.name);
-                    } else if (item.slug) {
-                      onEnroll(item.slug, item.name, item.price);
-                    }
-                  }}
-                  disabled={isLoadingThis || (!isPrivate && !item.slug)}
-                  activeOpacity={0.7}
-                >
-                  {isLoadingThis ? (
-                    <ActivityIndicator size="small" color={colors.card} />
-                  ) : (
-                    <>
-                      <Text style={styles.ctaText}>{ctaLabel}</Text>
-                      <Ionicons name="arrow-forward" size={14} color={colors.card} />
-                    </>
-                  )}
-                </TouchableOpacity>
+
+                {isFull && !isOnWaitlist ? (
+                  <TouchableOpacity
+                    style={[styles.waitlistButton, isJoiningThis && styles.ctaButtonLoading]}
+                    onPress={() => onJoinWaitlist(item.id, item.name)}
+                    disabled={isJoiningThis}
+                    activeOpacity={0.7}
+                  >
+                    {isJoiningThis ? (
+                      <ActivityIndicator size="small" color={colors.gold} />
+                    ) : (
+                      <>
+                        <Text style={styles.waitlistBtnText}>Join Waitlist</Text>
+                        <Ionicons name="time-outline" size={14} color={colors.gold} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                ) : isOnWaitlist ? (
+                  <View style={styles.waitlistBadge}>
+                    <Ionicons name="checkmark-circle-outline" size={14} color={colors.gold} />
+                    <Text style={styles.waitlistBadgeText}>On Waitlist</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.ctaButton, isLoadingThis && styles.ctaButtonLoading]}
+                    onPress={() => {
+                      if (isPrivate) {
+                        onInquire(item.name);
+                      } else if (item.slug) {
+                        onEnroll(item.slug, item.name, item.price);
+                      }
+                    }}
+                    disabled={isLoadingThis || (!isPrivate && !item.slug)}
+                    activeOpacity={0.7}
+                  >
+                    {isLoadingThis ? (
+                      <ActivityIndicator size="small" color={colors.card} />
+                    ) : (
+                      <>
+                        <Text style={styles.ctaText}>{ctaLabel}</Text>
+                        <Ionicons name="arrow-forward" size={14} color={colors.card} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </AnimatedCard>
@@ -456,5 +533,64 @@ const styles = StyleSheet.create({
     color: colors.card,
     fontSize: 14,
     fontWeight: '600',
+  },
+  // Waitlist styles
+  fullBadge: {
+    backgroundColor: 'rgba(231, 76, 60, 0.15)',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  fullBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#e74c3c',
+    letterSpacing: 0.5,
+  },
+  waitlistBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.goldMuted,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  waitlistText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  waitlistButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 6,
+    minHeight: 44,
+    minWidth: 90,
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.gold,
+  },
+  waitlistBtnText: {
+    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  waitlistBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minHeight: 44,
+  },
+  waitlistBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.gold,
   },
 });

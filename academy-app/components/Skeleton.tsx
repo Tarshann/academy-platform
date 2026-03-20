@@ -6,6 +6,7 @@ import Animated, {
   withRepeat,
   withTiming,
   Easing,
+  interpolate,
 } from 'react-native-reanimated';
 import { colors } from '../lib/theme';
 
@@ -18,36 +19,52 @@ interface SkeletonProps {
 
 /**
  * Animated skeleton placeholder with shimmer effect.
- * Uses Reanimated for smooth 60fps opacity pulse.
+ * Uses Reanimated for smooth 60fps shimmer sweep animation.
  */
 export function Skeleton({ width, height, borderRadius = 6, style }: SkeletonProps) {
-  const opacity = useSharedValue(1);
+  const shimmer = useSharedValue(0);
 
   useEffect(() => {
-    opacity.value = withRepeat(
-      withTiming(0.4, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+    shimmer.value = withRepeat(
+      withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
       -1,
-      true
+      false
     );
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      shimmer.value,
+      [0, 0.5, 1],
+      [0.4, 1, 0.4]
+    );
+    return { opacity };
+  });
 
   return (
-    <Animated.View
+    <View
       style={[
         {
           width,
           height,
           borderRadius,
           backgroundColor: colors.skeletonBase,
+          overflow: 'hidden',
         },
-        animatedStyle,
         style,
       ]}
-    />
+    >
+      <Animated.View
+        style={[
+          {
+            width: '100%',
+            height: '100%',
+            backgroundColor: colors.skeletonHighlight,
+          },
+          animatedStyle,
+        ]}
+      />
+    </View>
   );
 }
 
