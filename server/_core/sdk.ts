@@ -30,12 +30,23 @@ const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
 const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
 
 class OAuthService {
+  private static _warnedOnce = false;
+
   constructor(private client: ReturnType<typeof axios.create>) {
-    logger.info("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
-    if (!ENV.oAuthServerUrl) {
-      logger.error(
-        "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
-      );
+    // Only log OAuth status once per cold start to reduce log noise.
+    // When Clerk is the primary auth provider, missing OAUTH_SERVER_URL
+    // is expected and should not emit error-level logs repeatedly.
+    if (!OAuthService._warnedOnce) {
+      OAuthService._warnedOnce = true;
+      if (ENV.oAuthServerUrl) {
+        logger.info("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
+      } else if (ENV.clerkSecretKey) {
+        logger.info("[OAuth] OAUTH_SERVER_URL not set — Clerk is primary auth. OAuth fallback disabled.");
+      } else {
+        logger.error(
+          "[OAuth] ERROR: OAUTH_SERVER_URL is not configured! Set OAUTH_SERVER_URL environment variable."
+        );
+      }
     }
   }
 

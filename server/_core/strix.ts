@@ -4,9 +4,58 @@
  * Lazy-loaded singleton. Returns null when not configured.
  * The SDK is only initialized when STRIX_GOVERNANCE_ENABLED=true
  * AND STRIX_API_KEY is set.
+ *
+ * CIRCUIT BREAKER (added 2026-03-21):
+ *   After CIRCUIT_BREAKER_THRESHOLD consecutive failures, the SDK
+ *   short-circuits to null for CIRCUIT_BREAKER_COOLDOWN_MS, preventing
+ *   log spam and unnecessary network calls. Resets automatically after cooldown.
+ *
+ * FETCH TIMEOUT:
+ *   All SDK calls have a 3-second AbortController timeout to prevent
+ *   slow DNS / unreachable hosts from blocking serverless functions.
  */
 
 import { logger } from "./logger";
+
+// ---- Circuit breaker state ----
+const CIRCUIT_BREAKER_THRESHOLD = 5;
+const CIRCUIT_BREAKER_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const FETCH_TIMEOUT_MS = 3_000; // 3 seconds
+
+let consecutiveFailures = 0;
+let circuitOpenUntil = 0;
+
+function isCircuitOpen(): boolean {
+  if (consecutiveFailures < CIRCUIT_BREAKER_THRESHOLD) return false;
+  if (Date.now() > circuitOpenUntil) {
+    // Cooldown expired — half-open: allow one attempt
+    consecutiveFailures = CIRCUIT_BREAKER_THRESHOLD - 1;
+    return false;
+  }
+  return true;
+}
+
+function recordSuccess() {
+  consecutiveFailures = 0;
+}
+
+function recordFailure() {
+  consecutiveFailures++;
+  if (consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+    circuitOpenUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
+    logger.warn(
+      `[strix] Circuit breaker OPEN — ${consecutiveFailures} consecutive failures. ` +
+      `SDK calls suppressed for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s.`
+    );
+  }
+}
+
+/** Export for governance-procedure to check before even importing the client */
+export function isStrixCircuitOpen(): boolean {
+  return isCircuitOpen();
+}
+
+// ---- Types ----
 
 interface StrixEvaluateParams {
   capabilityId: string;
@@ -40,10 +89,25 @@ interface StrixClient {
   listCapabilities(): Promise<any[]>;
 }
 
+// ---- Timeout helper ----
+
+function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetch(url, { ...init, signal: controller.signal }).finally(() =>
+    clearTimeout(timeout)
+  );
+}
+
+// ---- Singleton client ----
+
 let client: StrixClient | null = null;
 let initialized = false;
 
 export function getStrixClient(): StrixClient | null {
+  // Circuit breaker — short-circuit without even trying
+  if (isCircuitOpen()) return null;
+
   if (initialized) return client;
   initialized = true;
 
@@ -64,38 +128,59 @@ export function getStrixClient(): StrixClient | null {
 
   client = {
     async evaluate(params: StrixEvaluateParams): Promise<StrixDecision> {
-      const res = await fetch(`${apiUrl}/evaluate`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(params),
-      });
-      if (!res.ok) {
-        throw new Error(`Strix API error: ${res.status} ${res.statusText}`);
+      if (isCircuitOpen()) throw new Error("Strix circuit breaker open");
+      try {
+        const res = await fetchWithTimeout(`${apiUrl}/evaluate`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(params),
+        });
+        if (!res.ok) {
+          recordFailure();
+          throw new Error(`Strix API error: ${res.status} ${res.statusText}`);
+        }
+        const result = await res.json() as StrixDecision;
+        recordSuccess();
+        return result;
+      } catch (err) {
+        recordFailure();
+        throw err;
       }
-      return await res.json() as StrixDecision;
     },
 
     async getEvidenceTrail(options = {}): Promise<any[]> {
+      if (isCircuitOpen()) return [];
       const params = new URLSearchParams();
       if (options.capabilityId) params.set("capabilityId", options.capabilityId);
       if (options.limit) params.set("limit", String(options.limit));
       if (options.offset) params.set("offset", String(options.offset));
       if (options.status) params.set("status", options.status);
-      const res = await fetch(`${apiUrl}/evidence?${params}`, { headers });
-      if (!res.ok) return [];
-      return await res.json() as any[];
+      try {
+        const res = await fetchWithTimeout(`${apiUrl}/evidence?${params}`, { headers });
+        if (!res.ok) { recordFailure(); return []; }
+        recordSuccess();
+        return await res.json() as any[];
+      } catch { recordFailure(); return []; }
     },
 
     async getStats(): Promise<Record<string, number>> {
-      const res = await fetch(`${apiUrl}/stats`, { headers });
-      if (!res.ok) return {};
-      return await res.json() as Record<string, number>;
+      if (isCircuitOpen()) return {};
+      try {
+        const res = await fetchWithTimeout(`${apiUrl}/stats`, { headers });
+        if (!res.ok) { recordFailure(); return {}; }
+        recordSuccess();
+        return await res.json() as Record<string, number>;
+      } catch { recordFailure(); return {}; }
     },
 
     async listCapabilities(): Promise<any[]> {
-      const res = await fetch(`${apiUrl}/capabilities`, { headers });
-      if (!res.ok) return [];
-      return await res.json() as any[];
+      if (isCircuitOpen()) return [];
+      try {
+        const res = await fetchWithTimeout(`${apiUrl}/capabilities`, { headers });
+        if (!res.ok) { recordFailure(); return []; }
+        recordSuccess();
+        return await res.json() as any[];
+      } catch { recordFailure(); return []; }
     },
   };
 

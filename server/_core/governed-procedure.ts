@@ -171,48 +171,52 @@ export function governedProcedure(capabilityId?: string) {
     // If Strix enforcement is enabled, evaluate against external SDK
     if (GOVERNANCE_ENABLED) {
       try {
-        const { getStrixClient } = await import("./strix");
-        const strix = getStrixClient();
+        const { getStrixClient, isStrixCircuitOpen } = await import("./strix");
 
-        if (strix) {
-          const decision = await strix.evaluate({
-            capabilityId,
-            actor,
-            context: {
+        // Skip SDK call entirely when circuit breaker is open (reduces log spam)
+        if (!isStrixCircuitOpen()) {
+          const strix = getStrixClient();
+
+          if (strix) {
+            const decision = await strix.evaluate({
+              capabilityId,
+              actor,
+              context: {
+                source: "trpc",
+                timestamp: new Date().toISOString(),
+              },
+            });
+
+            // Record the external decision locally
+            recordEvidence({
+              capabilityId,
+              actorId: actor.id,
+              actorRole: actor.role,
+              actorEmail: actor.email,
+              action: decision.action,
+              reason: decision.reason,
               source: "trpc",
-              timestamp: new Date().toISOString(),
-            },
-          });
+              externalDecisionId: decision.id,
+            });
 
-          // Record the external decision locally
-          recordEvidence({
-            capabilityId,
-            actorId: actor.id,
-            actorRole: actor.role,
-            actorEmail: actor.email,
-            action: decision.action,
-            reason: decision.reason,
-            source: "trpc",
-            externalDecisionId: decision.id,
-          });
+            if (decision.action === "deny") {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: decision.reason ?? "Action requires governance approval",
+              });
+            }
 
-          if (decision.action === "deny") {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: decision.reason ?? "Action requires governance approval",
+            return next({
+              ctx: {
+                ...ctx,
+                governanceEvidence: {
+                  capabilityId,
+                  decisionId: decision.id,
+                  action: decision.action,
+                },
+              },
             });
           }
-
-          return next({
-            ctx: {
-              ...ctx,
-              governanceEvidence: {
-                capabilityId,
-                decisionId: decision.id,
-                action: decision.action,
-              },
-            },
-          });
         }
       } catch (err) {
         if (err instanceof TRPCError) throw err;
@@ -278,41 +282,45 @@ export async function evaluateCronGovernance(
   // If Strix enforcement is enabled, check SDK
   if (GOVERNANCE_ENABLED) {
     try {
-      const { getStrixClient } = await import("./strix");
-      const strix = getStrixClient();
+      const { getStrixClient, isStrixCircuitOpen } = await import("./strix");
 
-      if (strix) {
-        const decision = await strix.evaluate({
-          capabilityId,
-          actor: {
-            id: "system:cron",
-            role: "automation",
-          },
-          context: {
+      // Skip SDK call entirely when circuit breaker is open
+      if (!isStrixCircuitOpen()) {
+        const strix = getStrixClient();
+
+        if (strix) {
+          const decision = await strix.evaluate({
+            capabilityId,
+            actor: {
+              id: "system:cron",
+              role: "automation",
+            },
+            context: {
+              source: "cron",
+              cronName,
+              timestamp: new Date().toISOString(),
+            },
+          });
+
+          // Record the external decision locally
+          recordEvidence({
+            capabilityId,
+            actorId: "system:cron",
+            actorRole: "automation",
+            action: decision.action,
             source: "cron",
-            cronName,
-            timestamp: new Date().toISOString(),
-          },
-        });
+            reason: decision.reason,
+            externalDecisionId: decision.id,
+            metadata: { cronName },
+          });
 
-        // Record the external decision locally
-        recordEvidence({
-          capabilityId,
-          actorId: "system:cron",
-          actorRole: "automation",
-          action: decision.action,
-          source: "cron",
-          reason: decision.reason,
-          externalDecisionId: decision.id,
-          metadata: { cronName },
-        });
+          if (decision.action === "deny") {
+            logger.warn(`[governance] Cron ${cronName} denied: ${decision.reason}`);
+            return { allowed: false, reason: decision.reason, decisionId: decision.id };
+          }
 
-        if (decision.action === "deny") {
-          logger.warn(`[governance] Cron ${cronName} denied: ${decision.reason}`);
-          return { allowed: false, reason: decision.reason, decisionId: decision.id };
+          return { allowed: true, decisionId: decision.id };
         }
-
-        return { allowed: true, decisionId: decision.id };
       }
     } catch (err) {
       // Fail open for cron — don't break scheduled jobs
