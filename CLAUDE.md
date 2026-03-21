@@ -125,7 +125,7 @@ academy-platform/
 │   ├── map.ts               #   Map/geocoding utilities
 │   ├── sdk.ts               #   SDK authentication helpers
 │   ├── sentry.ts            #   Sentry error monitoring (optional, activated via SENTRY_DSN)
-│   ├── strix.ts             #   Strix governance SDK client (lazy singleton, null when unconfigured)
+│   ├── strix.ts             #   Strix governance SDK client (lazy singleton, circuit breaker, 3s timeout)
 │   ├── strix-capabilities.ts #  84 capability definitions (risk levels, approval requirements)
 │   ├── governed-procedure.ts #  governedProcedure() embedded kernel — local evidence, policy eval, optional Strix SDK
 │   ├── systemRouter.ts      #   System-level tRPC routes (health, version)
@@ -308,7 +308,7 @@ npm test              # Playwright E2E tests (tests/e2e/)
 7. **PWA support** — Client registers a service worker; the portal can be installed as a Progressive Web App.
 8. **Web Push notifications** — VAPID keys configured for browser push notifications (`server/push.ts`).
 9. **Input sanitization** — REST endpoints sanitize user inputs to prevent HTML injection in email templates. Chat history limits are capped (1-200) to prevent abuse.
-10. **Strix governance layer** — All 75 admin tRPC mutations use `governedProcedure()` instead of raw `adminProcedure`. Embedded kernel always records evidence locally to `governance_evidence` table (SHA-256 hashed). Local policy evaluation enforces risk-based rules (critical capabilities require owner). When `STRIX_GOVERNANCE_ENABLED=true`, also consults external Strix SDK for policy decisions. 9 cron jobs also governed (auto-approve with evidence recording). Fails open on SDK/write errors, fails closed on deny.
+10. **Strix governance layer** — All 75 admin tRPC mutations use `governedProcedure()` instead of raw `adminProcedure`. Embedded kernel always records evidence locally to `governance_evidence` table (SHA-256 hashed). Local policy evaluation enforces risk-based rules (critical capabilities require owner). When `STRIX_GOVERNANCE_ENABLED=true`, also consults external Strix SDK for policy decisions. 9 cron jobs also governed (auto-approve with evidence recording). Fails open on SDK/write errors, fails closed on deny. Circuit breaker (5 failures → 5min cooldown) and 3s fetch timeout prevent SDK outages from degrading API latency.
 
 ### Server Module Breakdown
 
@@ -825,6 +825,7 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Gallery video support** (migration 0023) — Added `mediaType` column (varchar(20), default 'image') to `galleryPhotos` table, enabling video content alongside photos in the gallery.
 - **Performance indexes** (migration 0022) — 14 database indexes added across high-query tables: chatMessages, dmMessages, attendanceRecords, athleteMetrics, sessionRegistrations, notificationLogs, leads, pushSubscriptions, gameEntries. Improves query performance for paginated lookups and user-scoped data retrieval.
 - **Mobile governance screen** (build 36) — New `admin-governance.tsx` stack screen accessible from the mobile admin hub. Displays governance stats (total decisions, allow/deny/escalate counts), searchable capability registry with risk-level badges, and evidence trail with action/decision visualization. Uses raw SQL queries in `governance-router.ts` to bypass Drizzle schema dependencies for the `governance_evidence` table. Linked from admin hub under "Platform" section.
+- **Governance resilience hardening** — Strix SDK client (`strix.ts`) upgraded with circuit breaker pattern (5 consecutive failures → 5-minute cooldown, half-open recovery) and 3-second `AbortController` fetch timeout. `governed-procedure.ts` checks `isStrixCircuitOpen()` before attempting SDK calls, eliminating log spam during outages. OAuth service (`sdk.ts`) now logs status only once per cold start to reduce noise when Clerk is primary auth.
 
 ---
 
