@@ -15,7 +15,7 @@
  *   LOW      — Reordering, read-heavy admin ops, non-destructive toggles
  *
  * v1.8.0 — 84 capabilities (75 tRPC mutations + 9 cron jobs)
- * v1.9.0 — 105 capabilities (+13 AI agent capabilities + 5 AI cron jobs)
+ * v1.9.0 — 104 capabilities (+13 AI agent capabilities + 7 AI cron jobs)
  * 
  * CRON / SYSTEM ACTORS:
  *   All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until a

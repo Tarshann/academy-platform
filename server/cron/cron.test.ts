@@ -405,6 +405,79 @@ describe("milestones/isPR", () => {
   });
 });
 
+// ============================================================================
+// Cron Governance Integration Tests
+// ============================================================================
+
+describe("Cron Governance Integration", () => {
+  /**
+   * Structural test: Every cron file calls evaluateCronGovernance with the
+   * correct capability ID. Uses source file reading (not runtime mocking)
+   * for speed and reliability.
+   */
+  const fs = require("fs");
+  const path = require("path");
+  const CRON_DIR = path.resolve(__dirname);
+
+  const cronGovernanceMap: Record<string, string> = {
+    "nurture.ts": "cron.nurture",
+    "generate-sessions.ts": "cron.generateSessions",
+    "session-reminders.ts": "cron.sessionReminders",
+    "merch-drops.ts": "cron.merchDrops",
+    "metrics-prompt.ts": "cron.metricsPrompt",
+    "progress-reports.ts": "cron.progressReports",
+    "reengagement.ts": "cron.reengagement",
+    "parent-digest.ts": "cron.parentDigest",
+    "post-session-content.ts": "cron.postSessionContent",
+    "ai-smart-notifications.ts": "cron.aiSmartNotifications",
+    "ai-gallery-capture.ts": "cron.aiGalleryCapture",
+    "ai-showcase-generator.ts": "cron.aiShowcaseGenerator",
+    "ai-content-autopublish.ts": "cron.aiContentAutopublish",
+    "ai-announcement-drafter.ts": "cron.aiAnnouncementDrafter",
+  };
+
+  for (const [file, capabilityId] of Object.entries(cronGovernanceMap)) {
+    it(`${file} calls evaluateCronGovernance with '${capabilityId}'`, () => {
+      const content = fs.readFileSync(path.join(CRON_DIR, file), "utf-8");
+      expect(content).toContain("evaluateCronGovernance");
+      expect(content).toContain(`"${capabilityId}"`);
+    });
+  }
+
+  it("every cron file imports evaluateCronGovernance", () => {
+    const cronFiles = fs
+      .readdirSync(CRON_DIR)
+      .filter((f: string) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+
+    for (const file of cronFiles) {
+      const content = fs.readFileSync(path.join(CRON_DIR, file), "utf-8");
+      expect(
+        content.includes("evaluateCronGovernance"),
+        `Cron file "${file}" does not import evaluateCronGovernance`
+      ).toBe(true);
+    }
+  });
+
+  it("every cron file has an early return on guard.allowed === false", () => {
+    const cronFiles = fs
+      .readdirSync(CRON_DIR)
+      .filter((f: string) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+
+    for (const file of cronFiles) {
+      const content = fs.readFileSync(path.join(CRON_DIR, file), "utf-8");
+      // Check that the guard pattern exists (guard.allowed check)
+      const hasGuardCheck =
+        content.includes("!guard.allowed") ||
+        content.includes("guard.allowed === false") ||
+        content.includes("guard.allowed !==");
+      expect(
+        hasGuardCheck,
+        `Cron file "${file}" does not check guard.allowed`
+      ).toBe(true);
+    }
+  });
+});
+
 describe("milestone-card/generateMilestoneCardSvg", () => {
   it("generates valid SVG with correct content", async () => {
     const { generateMilestoneCardSvg } = await import("../milestone-card");
