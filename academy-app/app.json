@@ -20,7 +20,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "buildNumber": "35",
+      "buildNumber": "36",
       "bundleIdentifier": "com.academytn.app",
       "infoPlist": {
         "UIBackgroundModes": [
@@ -39,7 +39,7 @@
         "backgroundColor": "#1a1a2e"
       },
       "package": "com.academytn.app",
-      "versionCode": 35
+      "versionCode": 36
     },
     "plugins": [
       "expo-router",

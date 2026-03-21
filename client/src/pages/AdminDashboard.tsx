@@ -244,17 +244,19 @@ export default function AdminDashboard() {
                     <span className="sr-only">Open admin menu</span>
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-64 p-0">
-                  <div className="px-4 py-4 border-b border-border">
+                <SheetContent side="left" className="w-64 p-0 flex flex-col h-full">
+                  <div className="px-4 py-4 border-b border-border shrink-0">
                     <div className="flex items-center gap-2">
                       <LayoutDashboard className="h-5 w-5 text-primary" />
                       <h2 className="font-semibold">Admin</h2>
                     </div>
                   </div>
-                  <SidebarNav
-                    active={activeSection}
-                    onSelect={handleSelect}
-                  />
+                  <div className="flex-1 min-h-0 overflow-auto">
+                    <SidebarNav
+                      active={activeSection}
+                      onSelect={handleSelect}
+                    />
+                  </div>
                 </SheetContent>
               </Sheet>
 
