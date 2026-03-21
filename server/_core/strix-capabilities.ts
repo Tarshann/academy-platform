@@ -15,6 +15,7 @@
  *   LOW      — Reordering, read-heavy admin ops, non-destructive toggles
  *
  * v1.8.0 — 84 capabilities (75 tRPC mutations + 9 cron jobs)
+ * v1.9.0 — 93 capabilities (+9 AI agent capabilities)
  * 
  * CRON / SYSTEM ACTORS:
  *   All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until a
@@ -181,6 +182,17 @@ export const CAPABILITIES: Capability[] = [
   { id: "cron.reengagement", label: "Cron: Re-engagement Campaign", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Weekly re-engagement emails to inactive members (Monday 3 PM) — auto-approve until pre-auth UI built" },
   { id: "cron.parentDigest", label: "Cron: Parent Weekly Digest", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Weekly digest email to parents with child activity summary (Friday 6 PM) — auto-approve until pre-auth UI built" },
   { id: "cron.postSessionContent", label: "Cron: Post-Session AI Content", domain: "cron", risk: "high", approvalsRequired: 0, description: "AI-generated session recaps, social captions, parent push (Tue/Thu/Sun 1 AM) — auto-approve until pre-auth UI built" },
+  { id: "cron.aiSmartNotifications", label: "Cron: AI Smart Notifications", domain: "cron", risk: "high", approvalsRequired: 0, description: "AI-driven personalized push notifications based on member behavior signals (daily 5 PM CT) — auto-approve until pre-auth UI built" },
+
+  // ---- AI AGENT ACTIONS ----
+  { id: "ai.generateNotification", label: "AI: Generate Notification", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a personalized push notification for a member based on behavior signals" },
+  { id: "ai.sendBulkNotifications", label: "AI: Send Bulk Notifications", domain: "ai", risk: "critical", approvalsRequired: 2, description: "AI sends batch push notifications to multiple members — requires owner authorization" },
+  { id: "ai.generateSessionRecap", label: "AI: Generate Session Recap", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a session recap from attendance and session data" },
+  { id: "ai.generateSocialCaption", label: "AI: Generate Social Caption", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates social media caption for session photos" },
+  { id: "ai.generateProgressInsight", label: "AI: Generate Progress Insight", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI analyzes athlete metrics trends and generates insight text" },
+  { id: "ai.publishContent", label: "AI: Auto-Publish Content", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI publishes generated content to feed without manual review" },
+  { id: "ai.personalizeRecommendation", label: "AI: Personalize Recommendation", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI generates personalized training or program recommendation for a member" },
+  { id: "ai.flagMetricAnomaly", label: "AI: Flag Metric Anomaly", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI detects concerning metric trend and flags for coach/parent review" },
 ];
 
 // Lookup helpers

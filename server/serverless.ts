@@ -440,5 +440,6 @@ export { run as cronProgressReports } from "./cron/progress-reports";
 export { run as cronReengagement } from "./cron/reengagement";
 export { run as cronParentDigest } from "./cron/parent-digest";
 export { run as cronPostSessionContent } from "./cron/post-session-content";
+export { run as cronAiSmartNotifications } from "./cron/ai-smart-notifications";
 
 export default app;

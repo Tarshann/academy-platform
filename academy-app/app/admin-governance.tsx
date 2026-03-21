@@ -34,6 +34,13 @@ const actionIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
   error: 'warning',
 };
 
+// Detect if an evidence entry is from the AI agent
+function isAIAction(entry: any): boolean {
+  return entry?.actor?.role === 'ai_agent'
+    || entry?.source === 'ai'
+    || entry?.capabilityId?.startsWith('ai.');
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────
 function timeAgo(dateStr: string): string {
   const now = Date.now();
@@ -131,6 +138,20 @@ export default function AdminGovernanceScreen() {
         <StatCard label="Escalated" value={s?.totalEscalated ?? 0} color={colors.warning} />
       </View>
 
+      {/* AI Actions Count */}
+      {(() => {
+        const aiCount = trail.filter((e: any) => isAIAction(e)).length;
+        const aiCaps = caps.filter((c: any) => c.domain === 'ai').length;
+        return aiCount > 0 || aiCaps > 0 ? (
+          <View style={styles.aiBanner}>
+            <Ionicons name="sparkles" size={16} color={colors.gold} />
+            <Text style={styles.aiBannerText}>
+              {aiCaps} AI capabilities governed{aiCount > 0 ? ` · ${aiCount} AI actions recorded` : ''}
+            </Text>
+          </View>
+        ) : null;
+      })()}
+
       {/* Capability Risk Breakdown */}
       <Text style={styles.sectionTitle}>CAPABILITIES BY RISK</Text>
       <View style={styles.riskRow}>
@@ -178,6 +199,12 @@ export default function AdminGovernanceScreen() {
                 <Text style={[styles.trailAction, { color: actionColors[entry.action] ?? colors.textMuted }]}>
                   {entry.action?.toUpperCase()}
                 </Text>
+                {isAIAction(entry) && (
+                  <View style={styles.aiBadge}>
+                    <Ionicons name="sparkles" size={9} color={colors.gold} />
+                    <Text style={styles.aiBadgeText}>AI</Text>
+                  </View>
+                )}
                 <Text style={styles.trailSource}>{entry.source}</Text>
                 {entry.actor?.email && (
                   <Text style={styles.trailActor} numberOfLines={1}>
@@ -451,6 +478,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     lineHeight: 17,
+  },
+
+  // AI Banner
+  aiBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.goldMuted,
+    borderRadius: radii.sm,
+    padding: 12,
+    marginBottom: spacing.lg,
+  },
+  aiBannerText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.gold,
+  },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.goldMuted,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  aiBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.gold,
+    letterSpacing: 0.5,
   },
 
   // Footer
