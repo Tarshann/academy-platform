@@ -441,5 +441,11 @@ export { run as cronReengagement } from "./cron/reengagement";
 export { run as cronParentDigest } from "./cron/parent-digest";
 export { run as cronPostSessionContent } from "./cron/post-session-content";
 export { run as cronAiSmartNotifications } from "./cron/ai-smart-notifications";
+export { run as cronAiGalleryCapture } from "./cron/ai-gallery-capture";
+export { run as cronAiShowcaseGenerator } from "./cron/ai-showcase-generator";
+export { run as cronAiContentAutopublish } from "./cron/ai-content-autopublish";
+export { run as cronAiAnnouncementDrafter } from "./cron/ai-announcement-drafter";
+export { run as cronAiBlogGenerator } from "./cron/ai-blog-generator";
+export { run as cronAiFeedEngagement } from "./cron/ai-feed-engagement";
 
 export default app;

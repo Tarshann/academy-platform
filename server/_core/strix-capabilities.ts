@@ -15,7 +15,7 @@
  *   LOW      — Reordering, read-heavy admin ops, non-destructive toggles
  *
  * v1.8.0 — 84 capabilities (75 tRPC mutations + 9 cron jobs)
- * v1.9.0 — 93 capabilities (+9 AI agent capabilities)
+ * v1.9.0 — 105 capabilities (+13 AI agent capabilities + 5 AI cron jobs)
  * 
  * CRON / SYSTEM ACTORS:
  *   All 9 cron jobs are set to approvalsRequired: 0 (auto-approve) until a
@@ -183,6 +183,12 @@ export const CAPABILITIES: Capability[] = [
   { id: "cron.parentDigest", label: "Cron: Parent Weekly Digest", domain: "cron", risk: "critical", approvalsRequired: 0, description: "Weekly digest email to parents with child activity summary (Friday 6 PM) — auto-approve until pre-auth UI built" },
   { id: "cron.postSessionContent", label: "Cron: Post-Session AI Content", domain: "cron", risk: "high", approvalsRequired: 0, description: "AI-generated session recaps, social captions, parent push (Tue/Thu/Sun 1 AM) — auto-approve until pre-auth UI built" },
   { id: "cron.aiSmartNotifications", label: "Cron: AI Smart Notifications", domain: "cron", risk: "high", approvalsRequired: 0, description: "AI-driven personalized push notifications based on member behavior signals (daily 5 PM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.aiGalleryCapture", label: "Cron: AI Gallery Capture", domain: "cron", risk: "high", approvalsRequired: 0, description: "Auto-promote training photos from chat to gallery (daily 10 PM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.aiShowcaseGenerator", label: "Cron: AI Showcase Generator", domain: "cron", risk: "high", approvalsRequired: 0, description: "Auto-select and create Athlete of the Week showcase (Sunday 8 PM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.aiContentAutopublish", label: "Cron: AI Content Autopublish", domain: "cron", risk: "high", approvalsRequired: 0, description: "Auto-approve aged AI-generated content queue items (daily 9 AM CT) — auto-approve until pre-auth UI built" },
+  { id: "cron.aiAnnouncementDrafter", label: "Cron: AI Announcement Drafter", domain: "cron", risk: "medium", approvalsRequired: 0, description: "Draft announcements from platform events (daily 8 AM CT) — drafts only, never auto-publishes" },
+  { id: "cron.aiBlogGenerator", label: "Cron: AI Blog Generator", domain: "cron", risk: "medium", approvalsRequired: 0, description: "Generate weekly blog post drafts (Saturday 10 AM CT) — drafts only, admin publishes" },
+  { id: "cron.aiFeedEngagement", label: "Cron: AI Feed Engagement", domain: "cron", risk: "high", approvalsRequired: 0, description: "Fill feed gaps with AI-generated tips and motivation (7 AM + 3 PM CT) — auto-approve until pre-auth UI built" },
 
   // ---- AI AGENT ACTIONS ----
   { id: "ai.generateNotification", label: "AI: Generate Notification", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a personalized push notification for a member based on behavior signals" },
@@ -193,6 +199,11 @@ export const CAPABILITIES: Capability[] = [
   { id: "ai.publishContent", label: "AI: Auto-Publish Content", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI publishes generated content to feed without manual review" },
   { id: "ai.personalizeRecommendation", label: "AI: Personalize Recommendation", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI generates personalized training or program recommendation for a member" },
   { id: "ai.flagMetricAnomaly", label: "AI: Flag Metric Anomaly", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI detects concerning metric trend and flags for coach/parent review" },
+  { id: "ai.classifyMedia", label: "AI: Classify Media", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI evaluates whether a chat image is gallery-worthy" },
+  { id: "ai.generateShowcase", label: "AI: Generate Showcase", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates athlete of the week showcase content from metrics and attendance data" },
+  { id: "ai.generateAnnouncement", label: "AI: Generate Announcement Draft", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI drafts an announcement from a platform event (not auto-published)" },
+  { id: "ai.generateBlogPost", label: "AI: Generate Blog Post", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI generates a blog post draft from weekly training data (not auto-published)" },
+  { id: "ai.generateFeedContent", label: "AI: Generate Feed Content", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates engagement content (tips, motivation) to fill feed gaps" },
 ];
 
 // Lookup helpers
