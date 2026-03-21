@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.8.1 (mobile app v1.8.1, build 32). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. v1.8.1 adds: App Store compliance fixes (iOS permission purpose strings for camera, photo library, calendar, microphone), expo-image-picker and expo-calendar plugin configurations. Post-v1.8.0: Strix governance SDK integration — 84 capabilities (75 tRPC mutations + 9 cron jobs) with risk classification, approval workflows, and evidence trail.
+**Current release**: v1.8.3 (mobile app v1.8.3, build 35). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. v1.8.1 adds: App Store compliance fixes (iOS permission purpose strings for camera, photo library, calendar, microphone), expo-image-picker and expo-calendar plugin configurations. v1.8.2–v1.8.3 adds: AI Vision Capture (voice/photo metric extraction with PR detection), gallery video support (mediaType column), 14 performance indexes, governance evidence persistence. Post-v1.8.0: Strix governance SDK integration — 84 capabilities (75 tRPC mutations + 9 cron jobs) with risk classification, approval workflows, and evidence trail.
 
 ---
 
@@ -81,8 +81,8 @@ academy-platform/
 ├── server/                  # Portal backend (Express + tRPC v11)
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
 │   ├── cron/                #   Scheduled automation functions (9 cron jobs + tests)
-│   ├── routers.ts           #   All tRPC routes (~3,728 lines)
-│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,280 lines)
+│   ├── routers.ts           #   All tRPC routes (~4,067 lines)
+│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,328 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
 │   ├── chat-sse.ts          #   SSE-based real-time chat (primary)
@@ -153,8 +153,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (55 tables, enums, relations)
-│   └── 0000-0019_*.sql      #   Sequential migrations (latest: automation infrastructure)
+│   ├── schema.ts            #   Full PostgreSQL schema (57 tables, enums, relations)
+│   └── 0000-0023_*.sql      #   Sequential migrations (latest: gallery media type + performance indexes)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -363,6 +363,7 @@ appRouter
 ├── onboarding.*      # 4-step guided first-login flow (role → sport → goals → complete)
 ├── progressReports.* # AI-generated weekly athlete progress reports (LLM via Gemini)
 ├── milestones.*      # Personal record detection, celebration cards, feed integration
+├── visionCapture.*   # AI-powered metric extraction from voice/photo (admin-only)
 └── governance.*      # Strix governance dashboard (stats, evidence trail, capability registry)
 ```
 
@@ -389,26 +390,26 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~3,710 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, milestones, etc.) |
-| `server/db.ts` | ~3,280 | Drizzle connection + all DB query functions |
-| `drizzle/schema.ts` | ~1,281 | Full database schema (55 tables) |
+| `server/routers.ts` | ~4,067 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, milestones, visionCapture, etc.) |
+| `server/db.ts` | ~3,328 | Drizzle connection + all DB query functions |
+| `drizzle/schema.ts` | ~1,313 | Full database schema (57 tables) |
 | `server/chat-sse.ts` | ~416 | SSE real-time chat system |
-| `server/_core/index.ts` | ~173 | Express app setup + middleware + Vite dev integration |
+| `server/_core/index.ts` | ~218 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~222 | wouter SPA routing (~40+ routes, all lazy-loaded) |
-| `client/src/main.tsx` | ~175 | React entry: providers, auth, service worker, analytics |
+| `client/src/main.tsx` | ~212 | React entry: providers, auth, service worker, analytics |
 | `client/src/index.css` | — | Portal theme (oklch colors) |
 | `client/src/contexts/ClerkStateContext.tsx` | — | Clerk auth state wrapper with fallback provider |
 
 ### Admin Manager Components
 
-The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 17 manager panels in `client/src/components/admin/managers/`:
+The admin dashboard (`client/src/pages/AdminDashboard.tsx`) uses a grouped sidebar navigation with 19 manager panels in `client/src/components/admin/managers/`:
 
 | Group | Managers |
 |-------|---------|
 | **Operations** | Schedules, Attendance, Locations |
 | **People** | Members, Coaches, Contacts |
 | **Content** | Announcements, Blog, Videos, Gallery, Social, Content Queue |
-| **Programs & Athletes** | Programs, Metrics, Showcases |
+| **Programs & Athletes** | Programs, Quick Capture (Vision), Metrics, Showcases |
 | **Engagement** | Merch Drops |
 | **Platform** | Governance |
 
@@ -463,7 +464,7 @@ The root layout (`app/_layout.tsx`) sets up:
 
 ### Current Version
 
-- **Version**: 1.8.1 / **Build**: 32 (iOS + Android synchronized)
+- **Version**: 1.8.3 / **Build**: 35 (iOS + Android synchronized)
 
 ### Key Features
 
@@ -819,12 +820,15 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **Strix governance integration (v4 → embedded kernel)** — Feature-flagged governance layer wrapping all 75 admin tRPC mutations and 9 cron jobs (84 total capabilities). `governedProcedure()` replaces `adminProcedure` in `routers.ts`. Upgraded from SDK-only to embedded kernel: local evidence persistence to `governance_evidence` table (PostgreSQL/Neon) for every governed action regardless of Strix SDK availability. Local policy evaluation with risk-based rules (critical → owner-only deny, high → soft escalate, medium/low → allow). SHA-256 evidence hashing for tamper detection. When `STRIX_GOVERNANCE_ENABLED=true` AND Strix SDK configured, also consults external SDK for policy decisions with external decision IDs recorded locally. Fail-open on SDK errors, fail-closed on deny. New schema: `governance_evidence` table (migration), `insertGovernanceEvidence()` in db.ts, `getCapability()` in strix-capabilities.ts. New files: `server/_core/strix.ts` (SDK client), `server/_core/strix-capabilities.ts` (84 capability definitions + lookup), `server/_core/governed-procedure.ts` (embedded kernel middleware), `server/governance-router.ts` (admin API). Admin GovernanceManager panel with stats dashboard, capability registry browser, and evidence trail viewer. Cutover checklist in `docs/STRIX_GOVERNANCE_CUTOVER.md`. Admin sidebar restructured with new "Platform" group.
 - **v1.8.1 App Store compliance** (build 32) — iOS permission purpose strings added to `infoPlist` for camera, photo library, calendar, and microphone (App Store review guideline 5.1.1). `expo-image-picker` and `expo-calendar` plugin configurations added with descriptive permission strings. Build number incremented to 32 (iOS + Android).
 - **Governance panel fix** — Fixed GovernanceManager importing from non-existent `@/_core/trpc-client` (corrected to `@/lib/trpc` matching all other admin managers). Fixed TypeScript errors in `governance-router.ts` where `.optional()` on the `evidenceTrail` input schema caused property access on `{}` type — removed outer `.optional()` since all fields already have individual defaults.
+- **AI Vision Capture** (v1.8.2–v1.8.3, build 35, migration 0020) — Admin tool for AI-powered metric extraction from voice memos and photos during training sessions. New `visionCapture` tRPC router with 3 admin procedures: `extract` (sends media to AI for athlete/metric extraction), `confirm` (creates athleteMetrics records with PR detection + milestone celebration), `listRecent` (paginated capture history). New `visionCaptures` table tracks capture lifecycle (processing → ready → confirmed/failed) with extraction JSON, athlete/metric counts, processing time, and AI observations. Admin "Quick Capture" panel added to "Programs & Athletes" group in AdminDashboard. Supports image (jpeg/png/webp) and audio (mp4/wav/mpeg/webm/m4a) media types. Confidence-colored metric review UI with bulk confirm.
+- **Gallery video support** (migration 0023) — Added `mediaType` column (varchar(20), default 'image') to `galleryPhotos` table, enabling video content alongside photos in the gallery.
+- **Performance indexes** (migration 0022) — 14 database indexes added across high-query tables: chatMessages, dmMessages, attendanceRecords, athleteMetrics, sessionRegistrations, notificationLogs, leads, pushSubscriptions, gameEntries. Improves query performance for paginated lookups and user-scoped data retrieval.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~3,728 lines) and `server/db.ts` (~3,280 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~4,067 lines) and `server/db.ts` (~3,328 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
