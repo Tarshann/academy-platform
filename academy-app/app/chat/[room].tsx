@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
@@ -45,6 +46,11 @@ interface ChatMessage {
   createdAt: string;
 }
 
+interface Reaction {
+  userId: number;
+  emoji: string;
+}
+
 export default function ChatRoomScreen() {
   const { room } = useLocalSearchParams<{ room: string }>();
   const router = useRouter();
@@ -55,6 +61,7 @@ export default function ChatRoomScreen() {
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<{ userId: number; name: string }[]>([]);
+  const [messageReactions, setMessageReactions] = useState<Record<number, Reaction[]>>({});
   const flatListRef = useRef<FlatList>(null);
   const typingRef = useRef<{ enter: (data: any) => void; leave: () => void; unsubscribe: () => void } | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -66,7 +73,23 @@ export default function ChatRoomScreen() {
   // Get user info for identifying own messages
   const meQuery = trpc.auth.me.useQuery();
 
+  // Reactions mutations
+  const addReactionMutation = trpc.chatEnhanced.addReaction.useMutation();
+  const removeReactionMutation = trpc.chatEnhanced.removeReaction.useMutation();
+  const getReactionsMutation = trpc.chatEnhanced.getReactions.useQuery(
+    { messageIds: messages.filter((m) => m.id).map((m) => m.id!) },
+    { enabled: messages.length > 0 }
+  );
+
+  // Mark room as read mutation
+  const markRoomReadMutation = trpc.chatEnhanced.markRoomRead.useMutation();
+
+  // Room notification preferences
+  const getRoomNotifPrefQuery = trpc.chatEnhanced.getRoomNotifPrefs.useQuery({ room: room! }, { enabled: !!room });
+  const setRoomNotifPrefMutation = trpc.chatEnhanced.setRoomNotifPref.useMutation();
+
   const myUserId = meQuery.data?.id;
+  const currentNotifPref = getRoomNotifPrefQuery.data?.[room!] || 'all';
 
   // Load message history using the chat token (same token type the server expects)
   const loadHistory = useCallback(async (token?: string) => {
@@ -79,13 +102,31 @@ export default function ChatRoomScreen() {
       if (response.ok) {
         const history = await response.json();
         setMessages(history);
+
+        // Mark room as read with the last message ID
+        if (history.length > 0) {
+          const lastMessage = history[history.length - 1];
+          if (lastMessage.id) {
+            markRoomReadMutation.mutate(
+              { room: room!, lastMessageId: lastMessage.id },
+              { onError: (err) => console.error('[Chat] Failed to mark read:', err) }
+            );
+          }
+        }
       }
     } catch (error) {
       console.error('[Chat] Failed to load history:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [room, chatTokenQuery.data?.token]);
+  }, [room, chatTokenQuery.data?.token, markRoomReadMutation]);
+
+  // Update reactions when getReactionsMutation data changes
+  useEffect(() => {
+    if (getReactionsMutation.data) {
+      setMessageReactions(getReactionsMutation.data);
+    }
+  }, [getReactionsMutation.data]);
 
   // Initialize: load history + connect Ably
   useEffect(() => {
@@ -108,7 +149,15 @@ export default function ChatRoomScreen() {
         setMessages((prev) => {
           // Deduplicate
           if (msg.id && prev.some((m) => m.id === msg.id)) return prev;
-          return [...prev, msg];
+          const updated = [...prev, msg];
+          // Mark room as read with the new message ID
+          if (msg.id) {
+            markRoomReadMutation.mutate(
+              { room: room!, lastMessageId: msg.id },
+              { onError: (err) => console.error('[Chat] Failed to mark read:', err) }
+            );
+          }
+          return updated;
         });
       });
 
@@ -128,7 +177,7 @@ export default function ChatRoomScreen() {
         // Just unsubscribe from this room's channel.
       };
     }
-  }, [room, ablyTokenQuery.data, chatTokenQuery.data?.token, loadHistory]);
+  }, [room, ablyTokenQuery.data, chatTokenQuery.data?.token, loadHistory, markRoomReadMutation]);
 
   // Send text message via REST (server will publish to Ably)
   const handleSend = async (text: string) => {
@@ -234,6 +283,45 @@ export default function ChatRoomScreen() {
     }
   };
 
+  const handleNotificationPrefPress = () => {
+    Alert.alert(
+      'Notifications',
+      'Choose notification preference for this channel',
+      [
+        {
+          text: 'All messages',
+          onPress: () => {
+            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'all' });
+          },
+        },
+        {
+          text: 'Mentions only',
+          onPress: () => {
+            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'mentions' });
+          },
+        },
+        {
+          text: 'None',
+          onPress: () => {
+            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'none' });
+          },
+        },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
+  const getBellIcon = (): keyof typeof Ionicons.glyphMap => {
+    switch (currentNotifPref) {
+      case 'none':
+        return 'bell-off-outline';
+      case 'mentions':
+        return 'notifications-outline';
+      default:
+        return 'bell-outline';
+    }
+  };
+
   if (isLoading) {
     return (
       <>
@@ -267,7 +355,21 @@ export default function ChatRoomScreen() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <View style={[styles.statusDot, connected && styles.statusDotConnected]} />
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={handleNotificationPrefPress}
+                style={styles.bellButton}
+                accessibilityLabel="Notification preferences"
+                accessibilityRole="button"
+              >
+                <Ionicons
+                  name={getBellIcon()}
+                  size={20}
+                  color={colors.gold}
+                />
+              </TouchableOpacity>
+              <View style={[styles.statusDot, connected && styles.statusDotConnected]} />
+            </View>
           ),
         }}
       />
@@ -293,6 +395,7 @@ export default function ChatRoomScreen() {
           renderItem={({ item, index }) => {
             const isOwn = item.userId === myUserId;
             const showSender = index === 0 || messages[index - 1]?.userId !== item.userId;
+            const reactions = item.id ? messageReactions[item.id] || [] : [];
             return (
               <MessageBubble
                 message={item.message}
@@ -301,6 +404,43 @@ export default function ChatRoomScreen() {
                 isOwn={isOwn}
                 showSender={showSender}
                 imageUrl={item.imageUrl}
+                reactions={reactions}
+                currentUserId={myUserId}
+                onReact={(emoji) => {
+                  if (!item.id || !myUserId) return;
+                  addReactionMutation.mutate(
+                    { messageId: item.id, emoji },
+                    {
+                      onSuccess: () => {
+                        // Optimistic update
+                        setMessageReactions((prev) => ({
+                          ...prev,
+                          [item.id!]: [
+                            ...(prev[item.id!] || []),
+                            { userId: myUserId, emoji },
+                          ],
+                        }));
+                      },
+                    }
+                  );
+                }}
+                onRemoveReact={(emoji) => {
+                  if (!item.id || !myUserId) return;
+                  removeReactionMutation.mutate(
+                    { messageId: item.id, emoji },
+                    {
+                      onSuccess: () => {
+                        // Optimistic update
+                        setMessageReactions((prev) => ({
+                          ...prev,
+                          [item.id!]: (prev[item.id!] || []).filter(
+                            (r) => !(r.userId === myUserId && r.emoji === emoji)
+                          ),
+                        }));
+                      },
+                    }
+                  );
+                }}
               />
             );
           }}
@@ -360,12 +500,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginRight: 8,
+  },
+  bellButton: {
+    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statusDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     backgroundColor: '#ff6b6b',
-    marginRight: 12,
   },
   statusDotConnected: {
     backgroundColor: '#51cf66',

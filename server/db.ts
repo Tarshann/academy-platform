@@ -77,6 +77,8 @@ import {
 
 let _db: any = null;
 let _client: any = null;
+let _lastHealthCheck = 0;
+const HEALTH_CHECK_INTERVAL_MS = 60_000; // Re-verify connection every 60s
 
 export async function getDb() {
   if (!ENV.databaseUrl) {
@@ -85,15 +87,31 @@ export async function getDb() {
   }
 
   if (_db && _client) {
-    return _db;
+    // Periodically verify the cached connection is still alive
+    const now = Date.now();
+    if (now - _lastHealthCheck > HEALTH_CHECK_INTERVAL_MS) {
+      try {
+        await _client`SELECT 1`;
+        _lastHealthCheck = now;
+      } catch {
+        logger.warn("[DB] Stale connection detected, reconnecting...");
+        _db = null;
+        _client = null;
+        // Fall through to reconnect below
+      }
+    }
+    if (_db) return _db;
   }
 
   try {
     _client = postgres(ENV.databaseUrl, {
       ssl: ENV.isProduction ? "require" : undefined,
       max: ENV.isProduction ? 10 : 5,
+      idle_timeout: 20,
+      connect_timeout: 10,
     });
     _db = drizzle(_client);
+    _lastHealthCheck = Date.now();
     return _db;
   } catch (error) {
     logger.error("[DB] Failed to connect:", error);
@@ -2684,22 +2702,32 @@ export async function deleteTriviaQuestion(id: number) {
 // ============================================================================
 
 export async function getVisibleSocialPosts() {
-  const db = await getDb();
-  if (!db) return [];
-  return await db
-    .select()
-    .from(socialPosts)
-    .where(eq(socialPosts.isVisible, true))
-    .orderBy(desc(socialPosts.createdAt));
+  try {
+    const db = await getDb();
+    if (!db) return [];
+    return await db
+      .select()
+      .from(socialPosts)
+      .where(eq(socialPosts.isVisible, true))
+      .orderBy(desc(socialPosts.createdAt));
+  } catch (err) {
+    logger.error("[socialPosts] getVisibleSocialPosts failed:", err);
+    return [];
+  }
 }
 
 export async function getAllSocialPostsAdmin() {
-  const db = await getDb();
-  if (!db) return [];
-  return await db
-    .select()
-    .from(socialPosts)
-    .orderBy(asc(socialPosts.sortOrder), desc(socialPosts.createdAt));
+  try {
+    const db = await getDb();
+    if (!db) return [];
+    return await db
+      .select()
+      .from(socialPosts)
+      .orderBy(asc(socialPosts.sortOrder), desc(socialPosts.createdAt));
+  } catch (err) {
+    logger.error("[socialPosts] getAllSocialPostsAdmin failed:", err);
+    return [];
+  }
 }
 
 export async function reorderSocialPosts(orderedIds: number[]) {
@@ -3298,30 +3326,48 @@ export async function getAthleteReportData(athleteId: number) {
 // ============================================================================
 
 export async function insertGovernanceEvidence(evidence: InsertGovernanceEvidence) {
-  const db = await getDb();
-  if (!db) return null;
-  try {
-    const [row] = await db.insert(governanceEvidence).values(evidence).returning();
-    return row;
-  } catch (err: any) {
-    // If evidence_hash column doesn't exist yet (migration 0022 pending), retry with raw SQL
-    if (err?.message?.includes("evidence_hash") || err?.code === "42703") {
-      logger.warn("[governance-evidence] evidence_hash column not found, inserting without hash");
-      try {
-        const result = await db.execute(sql`
-          INSERT INTO governance_evidence (capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata)
-          VALUES (${evidence.capabilityId}, ${evidence.actorId}, ${evidence.actorRole}, ${evidence.actorEmail ?? null}, ${evidence.action}, ${evidence.reason ?? null}, ${evidence.source}, ${evidence.externalDecisionId ?? null}, ${evidence.metadata ? JSON.stringify(evidence.metadata) : null}::jsonb)
-          RETURNING *
-        `);
-        return result.rows?.[0] ?? null;
-      } catch (retryErr) {
-        logger.error("[governance-evidence] Retry without hash also failed:", retryErr);
-        return null;
+  const MAX_RETRIES = 2;
+  const RETRY_DELAY_MS = 200;
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const db = await getDb();
+    if (!db) return null;
+    try {
+      const [row] = await db.insert(governanceEvidence).values(evidence).returning();
+      return row;
+    } catch (err: any) {
+      // If evidence_hash column doesn't exist yet (migration 0022 pending), retry with raw SQL
+      if (err?.message?.includes("evidence_hash") || err?.code === "42703") {
+        logger.warn("[governance-evidence] evidence_hash column not found, inserting without hash");
+        try {
+          const result = await db.execute(sql`
+            INSERT INTO governance_evidence (capability_id, actor_id, actor_role, actor_email, action, reason, source, external_decision_id, metadata)
+            VALUES (${evidence.capabilityId}, ${evidence.actorId}, ${evidence.actorRole}, ${evidence.actorEmail ?? null}, ${evidence.action}, ${evidence.reason ?? null}, ${evidence.source}, ${evidence.externalDecisionId ?? null}, ${evidence.metadata ? JSON.stringify(evidence.metadata) : null}::jsonb)
+            RETURNING *
+          `);
+          return result.rows?.[0] ?? null;
+        } catch (retryErr) {
+          logger.error("[governance-evidence] Retry without hash also failed:", retryErr);
+          return null;
+        }
       }
+
+      // Transient errors (connection reset, timeout) — retry with backoff
+      const isTransient = err?.code === "ECONNRESET" || err?.code === "ETIMEDOUT" ||
+        err?.code === "57P01" /* admin_shutdown */ || err?.code === "08006" /* connection_failure */ ||
+        err?.message?.includes("Connection terminated") || err?.message?.includes("fetch failed");
+
+      if (isTransient && attempt < MAX_RETRIES) {
+        logger.warn(`[governance-evidence] Transient failure (attempt ${attempt + 1}/${MAX_RETRIES + 1}), retrying...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * (attempt + 1)));
+        continue;
+      }
+
+      logger.error("[governance-evidence] Failed to write evidence:", err);
+      return null;
     }
-    logger.error("[governance-evidence] Failed to write evidence:", err);
-    return null;
   }
+  return null;
 }
 
 export async function getGovernanceEvidenceTrail(opts: {

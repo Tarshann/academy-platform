@@ -7,7 +7,7 @@ import { logger } from "./_core/logger";
 import { sdk } from "./_core/sdk";
 import { chatSendRateLimiter } from "./_core/rateLimiter";
 
-const ALLOWED_ROOMS = new Set(["general", "announcements", "parents", "coaches"]);
+export const ALLOWED_ROOMS = new Set(["general", "announcements", "parents", "coaches"]);
 const MAX_MESSAGE_LENGTH = 5000;
 
 // Store active SSE connections
@@ -293,6 +293,12 @@ export function setupSSEChat(app: Express) {
         });
       }
 
+      // Push notifications for room messages (fire-and-forget)
+      // Respects per-room notification preferences and quiet hours
+      notifyRoomMessage(user!.id, user!.name, room, message, mentions || []).catch((err) => {
+        logger.error("[Chat] Room push notification failed:", err);
+      });
+
       res.json({ success: true, message: savedMessage });
     } catch (error) {
       logger.error("[Chat] Failed to send message:", error);
@@ -470,4 +476,74 @@ export function setupSSEChat(app: Express) {
   });
 
   logger.info("[SSE] Chat endpoints registered");
+}
+
+/**
+ * Send push notifications for a room chat message.
+ * Respects per-room notification preferences:
+ *   - "all" (default): notify on every message
+ *   - "mentions": notify only if user is @mentioned
+ *   - "none": never notify
+ * Falls back to notifyChatMessage for users without per-room preferences.
+ */
+async function notifyRoomMessage(
+  senderId: number,
+  senderName: string,
+  room: string,
+  messageText: string,
+  mentions: number[]
+) {
+  try {
+    const { getDb } = await import("./db");
+    const { users, chatRoomNotificationPrefs } = await import("../drizzle/schema");
+    const { eq, ne } = await import("drizzle-orm");
+
+    const db = await getDb();
+    if (!db) return;
+
+    // Get all users except sender
+    const allUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(ne(users.id, senderId));
+
+    if (allUsers.length === 0) return;
+
+    // Get per-room notification preferences for this room
+    const prefs = await db
+      .select()
+      .from(chatRoomNotificationPrefs)
+      .where(eq(chatRoomNotificationPrefs.room, room));
+
+    const prefsMap = new Map<number, string>(
+      prefs.map((p: { userId: number; mode: string }) => [p.userId, p.mode])
+    );
+
+    const mentionSet = new Set(mentions);
+
+    // Filter recipients based on their per-room preference
+    const recipientIds = allUsers
+      .map((u: { id: number }) => u.id)
+      .filter((userId: number) => {
+        const mode = prefsMap.get(userId) || "all"; // Default: all notifications
+        if (mode === "none") return false;
+        if (mode === "mentions") return mentionSet.has(userId);
+        return true; // "all"
+      });
+
+    if (recipientIds.length === 0) return;
+
+    const { sendPushToUsers } = await import("./push");
+    const preview = messageText.length > 100
+      ? messageText.substring(0, 100) + "..."
+      : messageText;
+
+    await sendPushToUsers(recipientIds, {
+      title: `#${room} — ${senderName}`,
+      body: preview,
+      data: { type: "chat", room },
+    });
+  } catch (error) {
+    logger.error("[Chat] notifyRoomMessage failed:", error);
+  }
 }

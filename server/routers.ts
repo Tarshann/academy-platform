@@ -116,6 +116,9 @@ import { governanceRouter } from "./governance-router";
 import { invokeLLM } from "./_core/llm";
 import { sendEmail } from "./email";
 
+// Feed table existence cache — probed once per cold start, avoids per-request queries
+const _feedTableCache = { hasRecaps: false, hasMilestones: false, checkedAt: 0 };
+
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
 const RATE_STORE_MAX_SIZE = 10_000;
@@ -1048,6 +1051,291 @@ export const appRouter = router({
           if (error instanceof TRPCError) throw error;
           logger.error("[chatAdmin.clearAll] Error:", error);
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Operation failed" });
+        }
+      }),
+  }),
+
+  // ========================================================================
+  // CHAT ENHANCEMENTS (P1 Bundle — Reactions, Unread, Room Prefs, Search)
+  // ========================================================================
+  chatEnhanced: router({
+    // --- Emoji Reactions ---
+    addReaction: protectedProcedure
+      .input(z.object({
+        messageId: z.number().int().positive(),
+        emoji: z.string().min(1).max(32),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { chatMessageReactions } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { and, eq } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Upsert: insert or ignore if duplicate (unique index handles this)
+          await db.insert(chatMessageReactions).values({
+            messageId: input.messageId,
+            userId: ctx.user.id,
+            emoji: input.emoji,
+          }).onConflictDoNothing();
+
+          // Get updated reactions for this message
+          const reactions = await db.select().from(chatMessageReactions)
+            .where(eq(chatMessageReactions.messageId, input.messageId));
+
+          // Broadcast reaction update via SSE + Ably
+          const reactionData = { messageId: input.messageId, reactions, userId: ctx.user.id, emoji: input.emoji, action: "add" };
+          try {
+            const { broadcastToRoom } = await import("./chat-sse");
+            // We need the room — get it from the message
+            const { chatMessages } = await import("../drizzle/schema");
+            const [msg] = await db.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
+            if (msg?.room) {
+              broadcastToRoom(msg.room, "reaction_update", reactionData);
+              try {
+                const { publishChatMessage } = await import("./ably");
+                // Publish reaction event to Ably for mobile
+                const ably = await import("./ably");
+                if ((ably as any).publishToChannel) {
+                  await (ably as any).publishToChannel(`chat:${msg.room}`, "reaction_update", reactionData);
+                }
+              } catch { /* Ably not configured */ }
+            }
+          } catch (e) { logger.error("[Chat] Reaction broadcast failed:", e); }
+
+          return { success: true, reactions };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.addReaction] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add reaction" });
+        }
+      }),
+
+    removeReaction: protectedProcedure
+      .input(z.object({
+        messageId: z.number().int().positive(),
+        emoji: z.string().min(1).max(32),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { chatMessageReactions } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { and, eq } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          await db.delete(chatMessageReactions).where(
+            and(
+              eq(chatMessageReactions.messageId, input.messageId),
+              eq(chatMessageReactions.userId, ctx.user.id),
+              eq(chatMessageReactions.emoji, input.emoji),
+            )
+          );
+
+          const reactions = await db.select().from(chatMessageReactions)
+            .where(eq(chatMessageReactions.messageId, input.messageId));
+
+          // Broadcast reaction removal
+          try {
+            const { broadcastToRoom } = await import("./chat-sse");
+            const { chatMessages } = await import("../drizzle/schema");
+            const [msg] = await db.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
+            if (msg?.room) {
+              broadcastToRoom(msg.room, "reaction_update", { messageId: input.messageId, reactions, userId: ctx.user.id, emoji: input.emoji, action: "remove" });
+            }
+          } catch (e) { logger.error("[Chat] Reaction broadcast failed:", e); }
+
+          return { success: true, reactions };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.removeReaction] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to remove reaction" });
+        }
+      }),
+
+    getReactions: protectedProcedure
+      .input(z.object({
+        messageIds: z.array(z.number().int().positive()).max(100),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { chatMessageReactions } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { inArray } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          if (input.messageIds.length === 0) return {};
+
+          const reactions = await db.select().from(chatMessageReactions)
+            .where(inArray(chatMessageReactions.messageId, input.messageIds));
+
+          // Group by messageId
+          const grouped: Record<number, Array<{ userId: number; emoji: string; createdAt: Date }>> = {};
+          for (const r of reactions) {
+            if (!grouped[r.messageId]) grouped[r.messageId] = [];
+            grouped[r.messageId].push({ userId: r.userId, emoji: r.emoji, createdAt: r.createdAt });
+          }
+          return grouped;
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.getReactions] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get reactions" });
+        }
+      }),
+
+    // --- Unread Badge Tracking ---
+    markRoomRead: protectedProcedure
+      .input(z.object({
+        room: z.string().min(1).max(100),
+        lastReadMessageId: z.number().int().nonnegative(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { chatRoomReadStatus } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { sql } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Upsert: insert or update the last-read message ID
+          await db.execute(sql`
+            INSERT INTO chat_room_read_status (user_id, room, last_read_message_id, last_read_at)
+            VALUES (${ctx.user.id}, ${input.room}, ${input.lastReadMessageId}, NOW())
+            ON CONFLICT (user_id, room)
+            DO UPDATE SET last_read_message_id = GREATEST(chat_room_read_status.last_read_message_id, ${input.lastReadMessageId}),
+                         last_read_at = NOW()
+          `);
+
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.markRoomRead] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to mark room as read" });
+        }
+      }),
+
+    getUnreadCounts: protectedProcedure
+      .query(async ({ ctx }) => {
+        try {
+          const { getDb } = await import("./db");
+          const { sql } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Get unread count per room: messages with id > last_read_message_id
+          const result = await db.execute(sql`
+            SELECT r.room, COUNT(cm.id)::int AS unread_count
+            FROM (VALUES ('general'), ('announcements'), ('parents'), ('coaches')) AS r(room)
+            LEFT JOIN chat_room_read_status crs
+              ON crs.room = r.room AND crs.user_id = ${ctx.user.id}
+            LEFT JOIN "chatMessages" cm
+              ON cm.room = r.room AND cm.id > COALESCE(crs.last_read_message_id, 0)
+            GROUP BY r.room
+          `);
+
+          const counts: Record<string, number> = {};
+          for (const row of result.rows as any[]) {
+            counts[row.room] = row.unread_count || 0;
+          }
+          return counts;
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.getUnreadCounts] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get unread counts" });
+        }
+      }),
+
+    // --- Per-Room Notification Preferences ---
+    getRoomNotifPrefs: protectedProcedure
+      .query(async ({ ctx }) => {
+        try {
+          const { chatRoomNotificationPrefs } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { eq } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          const prefs = await db.select().from(chatRoomNotificationPrefs)
+            .where(eq(chatRoomNotificationPrefs.userId, ctx.user.id));
+
+          const prefsMap: Record<string, string> = {};
+          for (const p of prefs) {
+            prefsMap[p.room] = p.mode;
+          }
+          // Fill defaults
+          for (const room of ["general", "announcements", "parents", "coaches"]) {
+            if (!prefsMap[room]) prefsMap[room] = "all";
+          }
+          return prefsMap;
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.getRoomNotifPrefs] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get notification preferences" });
+        }
+      }),
+
+    setRoomNotifPref: protectedProcedure
+      .input(z.object({
+        room: z.string().min(1).max(100),
+        mode: z.enum(["all", "mentions", "none"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { getDb } = await import("./db");
+          const { sql } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          await db.execute(sql`
+            INSERT INTO chat_room_notification_prefs (user_id, room, mode, updated_at)
+            VALUES (${ctx.user.id}, ${input.room}, ${input.mode}, NOW())
+            ON CONFLICT (user_id, room)
+            DO UPDATE SET mode = ${input.mode}, updated_at = NOW()
+          `);
+
+          return { success: true };
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.setRoomNotifPref] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to set notification preference" });
+        }
+      }),
+
+    // --- Room Message Search ---
+    searchMessages: protectedProcedure
+      .input(z.object({
+        room: z.string().min(1).max(100).optional(),
+        query: z.string().min(1).max(200),
+        limit: z.number().int().min(1).max(50).default(20),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { chatMessages } = await import("../drizzle/schema");
+          const { getDb } = await import("./db");
+          const { desc, eq, and, ilike } = await import("drizzle-orm");
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
+
+          // Escape LIKE wildcards to prevent injection
+          const escaped = input.query.replace(/[%_\\]/g, "\\$&");
+
+          const conditions = [ilike(chatMessages.message, `%${escaped}%`)];
+          if (input.room) {
+            conditions.push(eq(chatMessages.room, input.room));
+          }
+
+          const results = await db.select().from(chatMessages)
+            .where(and(...conditions))
+            .orderBy(desc(chatMessages.createdAt))
+            .limit(input.limit);
+
+          return results;
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          logger.error("[chatEnhanced.searchMessages] Error:", error);
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to search messages" });
         }
       }),
   }),
@@ -2527,17 +2815,21 @@ export const appRouter = router({
             ? sql`AND "category" = ${category}`
             : sql``;
 
-          // Check which optional tables exist (session_recaps, milestones may not be migrated yet)
-          let hasRecaps = false;
-          let hasMilestones = false;
-          try {
-            await db.execute(sql`SELECT 1 FROM "session_recaps" LIMIT 0`);
-            hasRecaps = true;
-          } catch { /* table doesn't exist yet */ }
-          try {
-            await db.execute(sql`SELECT 1 FROM "milestones" LIMIT 0`);
-            hasMilestones = true;
-          } catch { /* table doesn't exist yet */ }
+          // Check which optional tables exist — cached after first probe per cold start
+          // (tables don't appear/disappear at runtime, so one check is sufficient)
+          if (_feedTableCache.checkedAt === 0) {
+            try {
+              await db.execute(sql`SELECT 1 FROM "session_recaps" LIMIT 0`);
+              _feedTableCache.hasRecaps = true;
+            } catch { /* table doesn't exist yet */ }
+            try {
+              await db.execute(sql`SELECT 1 FROM "milestones" LIMIT 0`);
+              _feedTableCache.hasMilestones = true;
+            } catch { /* table doesn't exist yet */ }
+            _feedTableCache.checkedAt = Date.now();
+          }
+          const hasRecaps = _feedTableCache.hasRecaps;
+          const hasMilestones = _feedTableCache.hasMilestones;
 
           // Build UNION ALL query — core tables always included, optional tables only if they exist
           const recapUnion = hasRecaps ? sql`
@@ -3776,7 +4068,12 @@ export const appRouter = router({
 
   socialPosts: router({
     list: publicQueryProcedure.query(async () => {
-      return await getVisibleSocialPosts();
+      try {
+        return await getVisibleSocialPosts();
+      } catch (err) {
+        logger.error("[socialPosts.list] Unhandled error:", err);
+        return [];
+      }
     }),
 
     admin: router({

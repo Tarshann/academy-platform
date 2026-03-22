@@ -19,9 +19,12 @@ const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 export const governanceRouter = router({
   /** Dashboard overview stats — always reads from local DB */
   stats: adminProcedure.query(async () => {
+    const active = CAPABILITIES.filter((c) => !c.preRegistered);
     const base = {
       enabled: GOVERNANCE_ENABLED,
       totalCapabilities: CAPABILITIES.length,
+      activeCapabilities: active.length,
+      preRegistered: CAPABILITIES.length - active.length,
       critical: CAPABILITIES.filter((c) => c.risk === "critical").length,
       high: CAPABILITIES.filter((c) => c.risk === "high").length,
       medium: CAPABILITIES.filter((c) => c.risk === "medium").length,
@@ -155,6 +158,7 @@ export const governanceRouter = router({
       approvalsRequired: c.approvalsRequired,
       description: c.description,
       governed: GOVERNANCE_ENABLED,
+      preRegistered: c.preRegistered ?? false,
     }));
   }),
 });

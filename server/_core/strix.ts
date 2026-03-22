@@ -19,17 +19,22 @@ import { logger } from "./logger";
 
 // ---- Circuit breaker state ----
 const CIRCUIT_BREAKER_THRESHOLD = 5;
-const CIRCUIT_BREAKER_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const CIRCUIT_BREAKER_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes (was 5min — reduced log noise)
 const FETCH_TIMEOUT_MS = 3_000; // 3 seconds
 
 let consecutiveFailures = 0;
 let circuitOpenUntil = 0;
+let lastCircuitOpenLogAt = 0; // Dedup: only log circuit-open once per period
 
 function isCircuitOpen(): boolean {
   if (consecutiveFailures < CIRCUIT_BREAKER_THRESHOLD) return false;
   if (Date.now() > circuitOpenUntil) {
     // Cooldown expired — half-open: allow one attempt
     consecutiveFailures = CIRCUIT_BREAKER_THRESHOLD - 1;
+    // Reset the singleton so the next getStrixClient() re-initializes
+    // a fresh client instead of reusing the stale one
+    client = null;
+    initialized = false;
     return false;
   }
   return true;
@@ -37,16 +42,21 @@ function isCircuitOpen(): boolean {
 
 function recordSuccess() {
   consecutiveFailures = 0;
+  lastCircuitOpenLogAt = 0;
 }
 
 function recordFailure() {
   consecutiveFailures++;
   if (consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
     circuitOpenUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
-    logger.warn(
-      `[strix] Circuit breaker OPEN — ${consecutiveFailures} consecutive failures. ` +
-      `SDK calls suppressed for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s.`
-    );
+    // Only log the circuit-open warning once per open period to reduce noise
+    if (Date.now() - lastCircuitOpenLogAt > CIRCUIT_BREAKER_COOLDOWN_MS) {
+      logger.warn(
+        `[strix] Circuit breaker OPEN — ${consecutiveFailures} consecutive failures. ` +
+        `SDK calls suppressed for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s.`
+      );
+      lastCircuitOpenLogAt = Date.now();
+    }
   }
 }
 
@@ -142,8 +152,15 @@ export function getStrixClient(): StrixClient | null {
         const result = await res.json() as StrixDecision;
         recordSuccess();
         return result;
-      } catch (err) {
+      } catch (err: any) {
         recordFailure();
+        // Provide actionable context for common failure modes
+        if (err?.name === "AbortError") {
+          throw new Error(`Strix SDK timeout (${FETCH_TIMEOUT_MS}ms) — API may be unreachable`);
+        }
+        if (err?.cause?.code === "ENOTFOUND" || err?.cause?.code === "ECONNREFUSED") {
+          throw new Error(`Strix SDK DNS/connection failure — ${apiUrl} unreachable`);
+        }
         throw err;
       }
     },

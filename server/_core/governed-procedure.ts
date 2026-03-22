@@ -236,10 +236,12 @@ export function governedProcedure(capabilityId?: string) {
             });
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         if (err instanceof TRPCError) throw err;
-        // Fail open — allow action, log SDK error, still record locally
-        logger.error(`[governance] SDK error for ${capabilityId}:`, err);
+        // Fail open — allow action, log SDK error with context, still record locally
+        // (circuit breaker in strix.ts suppresses further calls after threshold)
+        const reason = err?.message ?? "unknown";
+        logger.warn(`[governance] SDK unavailable for ${capabilityId}: ${reason}. Proceeding with local policy.`);
       }
     }
 
@@ -340,9 +342,10 @@ export async function evaluateCronGovernance(
           return { allowed: true, decisionId: decision.id };
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       // Fail open for cron — don't break scheduled jobs
-      logger.error(`[governance] SDK error for cron ${cronName}:`, err);
+      const reason = err?.message ?? "unknown";
+      logger.warn(`[governance] SDK unavailable for cron ${cronName}: ${reason}. Proceeding with local policy.`);
     }
   }
 
