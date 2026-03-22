@@ -30,9 +30,9 @@ const WHEEL_SEGMENTS = [
   { label: '10 pts', color: '#E74C3C', accent: '#C0392B', icon: 'star' as const },
   { label: '25 pts', color: '#3498DB', accent: '#2980B9', icon: 'star' as const },
   { label: '50 pts', color: '#2ECC71', accent: '#27AE60', icon: 'diamond' as const },
-  { label: '10% Off', color: '#F39C12', accent: '#E67E22', icon: 'pricetag' as const },
+  { label: 'Free Spin', color: '#F39C12', accent: '#E67E22', icon: 'refresh' as const },
   { label: '100 pts', color: '#9B59B6', accent: '#8E44AD', icon: 'trophy' as const },
-  { label: '25% Off', color: '#1ABC9C', accent: '#16A085', icon: 'pricetag' as const },
+  { label: '2x Spins', color: '#1ABC9C', accent: '#16A085', icon: 'refresh' as const },
   { label: 'Badge', color: '#E67E22', accent: '#D35400', icon: 'medal' as const },
   { label: 'Spin Again', color: '#607D8B', accent: '#455A64', icon: 'refresh' as const },
 ];
@@ -211,8 +211,7 @@ function SpinWheelGame({ onClose }: { onClose: () => void }) {
                 {result.type === 'none' ? 'Try Again!' : 'You Won!'}
               </Text>
               <Text style={[styles.resultValue, result.type !== 'none' && { color: colors.gold }]}>
-                {result.type === 'points' && `${result.value} Points`}
-                {result.type === 'discount' && `${result.value} Discount`}
+                {result.type === 'points' && (result.value.includes('Free Spin') ? result.value : `${result.value} Points`)}
                 {result.type === 'badge' && result.value}
                 {result.type === 'none' && 'Better luck next time'}
               </Text>
@@ -601,19 +600,19 @@ function ScratchCardGame({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const getRewardIcon = (type: string): keyof typeof Ionicons.glyphMap => {
+  const getRewardIcon = (type: string, value?: string): keyof typeof Ionicons.glyphMap => {
+    if (value?.includes('Free Spin')) return 'refresh';
     switch (type) {
       case 'points': return 'star';
-      case 'discount': return 'pricetag';
       case 'badge': return 'medal';
       default: return 'refresh';
     }
   };
 
-  const getRewardColor = (type: string) => {
+  const getRewardColor = (type: string, value?: string) => {
+    if (value?.includes('Free Spin')) return '#1ABC9C';
     switch (type) {
       case 'points': return colors.gold;
-      case 'discount': return '#2ECC71';
       case 'badge': return '#9B59B6';
       default: return colors.textMuted;
     }
@@ -663,16 +662,15 @@ function ScratchCardGame({ onClose }: { onClose: () => void }) {
                         : ['rgba(207,184,124,0.15)', 'rgba(207,184,124,0.05)']}
                       style={[styles.scratchCard, styles.scratchCardRevealed]}
                     >
-                      <View style={[styles.revealedIconCircle, { borderColor: getRewardColor(card.result.type) }]}>
+                      <View style={[styles.revealedIconCircle, { borderColor: getRewardColor(card.result.type, card.result.value) }]}>
                         <Ionicons
-                          name={getRewardIcon(card.result.type)}
+                          name={getRewardIcon(card.result.type, card.result.value)}
                           size={28}
-                          color={getRewardColor(card.result.type)}
+                          color={getRewardColor(card.result.type, card.result.value)}
                         />
                       </View>
-                      <Text style={[styles.revealedValue, { color: getRewardColor(card.result.type) }]}>
-                        {card.result.type === 'points' && `${card.result.value} pts`}
-                        {card.result.type === 'discount' && `${card.result.value} Off`}
+                      <Text style={[styles.revealedValue, { color: getRewardColor(card.result.type, card.result.value) }]}>
+                        {card.result.type === 'points' && (card.result.value.includes('Free Spin') ? card.result.value : `${card.result.value} pts`)}
                         {card.result.type === 'badge' && card.result.value}
                         {card.result.type === 'none' && 'Try Again'}
                       </Text>
