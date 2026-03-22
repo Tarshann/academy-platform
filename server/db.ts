@@ -2196,11 +2196,16 @@ export async function getUsersByMessagingRole(role: string) {
 export async function getAthleteMetrics(athleteId: number) {
   const db = await getDb();
   if (!db) return [];
-  return await db
-    .select()
-    .from(athleteMetrics)
-    .where(eq(athleteMetrics.athleteId, athleteId))
-    .orderBy(desc(athleteMetrics.sessionDate));
+  try {
+    return await db
+      .select()
+      .from(athleteMetrics)
+      .where(eq(athleteMetrics.athleteId, athleteId))
+      .orderBy(desc(athleteMetrics.sessionDate));
+  } catch (err) {
+    logger.error("[metrics] getAthleteMetrics failed:", err);
+    return [];
+  }
 }
 
 export async function getAthleteMetricsByName(athleteId: number, metricName: string) {
@@ -2221,10 +2226,15 @@ export async function getAthleteMetricsByName(athleteId: number, metricName: str
 export async function getAllMetricsAdmin() {
   const db = await getDb();
   if (!db) return [];
-  return await db
-    .select()
-    .from(athleteMetrics)
-    .orderBy(desc(athleteMetrics.createdAt));
+  try {
+    return await db
+      .select()
+      .from(athleteMetrics)
+      .orderBy(desc(athleteMetrics.createdAt));
+  } catch (err) {
+    logger.error("[metrics] getAllMetricsAdmin failed:", err);
+    return [];
+  }
 }
 
 export async function createAthleteMetric(data: InsertAthleteMetric) {
@@ -2254,22 +2264,27 @@ export async function deleteAthleteMetric(id: number) {
 export async function getActiveShowcases() {
   const db = await getDb();
   if (!db) return [];
-  const now = new Date();
-  return await db
-    .select()
-    .from(athleteShowcases)
-    .where(
-      and(
-        eq(athleteShowcases.isActive, true),
-        lte(athleteShowcases.featuredFrom, now),
-        // Exclude expired showcases — null featuredUntil means no expiry
-        or(
-          sql`${athleteShowcases.featuredUntil} IS NULL`,
-          gte(athleteShowcases.featuredUntil, now)
+  try {
+    const now = new Date();
+    return await db
+      .select()
+      .from(athleteShowcases)
+      .where(
+        and(
+          eq(athleteShowcases.isActive, true),
+          lte(athleteShowcases.featuredFrom, now),
+          // Exclude expired showcases — null featuredUntil means no expiry
+          or(
+            sql`${athleteShowcases.featuredUntil} IS NULL`,
+            gte(athleteShowcases.featuredUntil, now)
+          )
         )
       )
-    )
-    .orderBy(desc(athleteShowcases.featuredFrom));
+      .orderBy(desc(athleteShowcases.featuredFrom));
+  } catch (err) {
+    logger.error("[showcases] getActiveShowcases failed:", err);
+    return [];
+  }
 }
 
 export async function getAllShowcasesAdmin() {
@@ -2312,11 +2327,16 @@ export async function deleteShowcase(id: number) {
 export async function getUpcomingDrops() {
   const db = await getDb();
   if (!db) return [];
-  return await db
-    .select()
-    .from(merchDrops)
-    .where(eq(merchDrops.isSent, false))
-    .orderBy(asc(merchDrops.scheduledAt));
+  try {
+    return await db
+      .select()
+      .from(merchDrops)
+      .where(eq(merchDrops.isSent, false))
+      .orderBy(asc(merchDrops.scheduledAt));
+  } catch (err) {
+    logger.error("[merchDrops] getUpcomingDrops failed:", err);
+    return [];
+  }
 }
 
 export async function getAllDropsAdmin() {

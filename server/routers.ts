@@ -2350,29 +2350,50 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Atomic upsert by (userId, deviceId) using unique index
-        await db
-          .insert(pushSubscriptions)
-          .values({
-            userId: ctx.user.id,
-            deviceId: input.deviceId,
-            platform: input.platform,
-            expoPushToken: input.expoPushToken,
-            isActive: true,
-          })
-          .onConflictDoUpdate({
-            target: [pushSubscriptions.userId, pushSubscriptions.deviceId],
-            set: {
-              expoPushToken: sql`excluded."expoPushToken"`,
-              platform: sql`excluded."platform"`,
-              isActive: sql`true`,
-              updatedAt: sql`now()`,
-            },
-          });
+        try {
+          // Atomic upsert by (userId, deviceId) using unique index
+          await db
+            .insert(pushSubscriptions)
+            .values({
+              userId: ctx.user.id,
+              deviceId: input.deviceId,
+              platform: input.platform,
+              expoPushToken: input.expoPushToken,
+              isActive: true,
+            })
+            .onConflictDoUpdate({
+              target: [pushSubscriptions.userId, pushSubscriptions.deviceId],
+              set: {
+                expoPushToken: sql`excluded."expoPushToken"`,
+                platform: sql`excluded."platform"`,
+                isActive: sql`true`,
+                updatedAt: sql`now()`,
+              },
+            });
+        } catch (err) {
+          // Fallback: if upsert fails (missing unique index), try simple insert
+          logger.error("[push] registerExpoToken upsert failed, trying insert:", err);
+          try {
+            await db.insert(pushSubscriptions).values({
+              userId: ctx.user.id,
+              deviceId: input.deviceId,
+              platform: input.platform,
+              expoPushToken: input.expoPushToken,
+              isActive: true,
+            });
+          } catch {
+            // Already exists — not critical
+            logger.error("[push] registerExpoToken insert also failed — token may already exist");
+          }
+        }
 
         // Enable push in notification settings
-        const { updateNotificationSettings } = await import("./db");
-        await updateNotificationSettings(ctx.user.id, { pushEnabled: true });
+        try {
+          const { updateNotificationSettings } = await import("./db");
+          await updateNotificationSettings(ctx.user.id, { pushEnabled: true });
+        } catch (err) {
+          logger.error("[push] updateNotificationSettings failed:", err);
+        }
 
         return { success: true };
       }),
@@ -2506,6 +2527,56 @@ export const appRouter = router({
             ? sql`AND "category" = ${category}`
             : sql``;
 
+          // Check which optional tables exist (session_recaps, milestones may not be migrated yet)
+          let hasRecaps = false;
+          let hasMilestones = false;
+          try {
+            await db.execute(sql`SELECT 1 FROM "session_recaps" LIMIT 0`);
+            hasRecaps = true;
+          } catch { /* table doesn't exist yet */ }
+          try {
+            await db.execute(sql`SELECT 1 FROM "milestones" LIMIT 0`);
+            hasMilestones = true;
+          } catch { /* table doesn't exist yet */ }
+
+          // Build UNION ALL query — core tables always included, optional tables only if they exist
+          const recapUnion = hasRecaps ? sql`
+              UNION ALL
+
+              SELECT
+                'recap-' || sr."id" AS "id",
+                'recap' AS "type",
+                s."title" AS "title",
+                sr."content" AS "description",
+                NULL::text AS "mediaUrl",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'training'::text AS "category",
+                0 AS "viewCount",
+                sr."generated_at" AS "createdAt"
+              FROM "session_recaps" sr
+              INNER JOIN "schedules" s ON sr."schedule_id" = s."id"
+              WHERE sr."type" = 'recap'
+          ` : sql``;
+
+          const milestoneUnion = hasMilestones ? sql`
+              UNION ALL
+
+              SELECT
+                'milestone-' || m."id" AS "id",
+                'milestone' AS "type",
+                u."name" AS "title",
+                m."improvement_display" AS "description",
+                m."card_image_url" AS "mediaUrl",
+                NULL::text AS "thumbnail",
+                NULL::text AS "platform",
+                'highlights'::text AS "category",
+                0 AS "viewCount",
+                m."created_at" AS "createdAt"
+              FROM "milestones" m
+              LEFT JOIN "users" u ON m."athlete_id" = u."id"
+          ` : sql``;
+
           // Single UNION ALL query with DB-level sort + pagination
           const unionQuery = sql`
             SELECT * FROM (
@@ -2539,38 +2610,8 @@ export const appRouter = router({
               FROM "galleryPhotos"
               WHERE "isVisible" = true ${photoCategoryFilter}
 
-              UNION ALL
-
-              SELECT
-                'recap-' || sr."id" AS "id",
-                'recap' AS "type",
-                s."title" AS "title",
-                sr."content" AS "description",
-                NULL::text AS "mediaUrl",
-                NULL::text AS "thumbnail",
-                NULL::text AS "platform",
-                'training'::text AS "category",
-                0 AS "viewCount",
-                sr."generated_at" AS "createdAt"
-              FROM "session_recaps" sr
-              INNER JOIN "schedules" s ON sr."schedule_id" = s."id"
-              WHERE sr."type" = 'recap'
-
-              UNION ALL
-
-              SELECT
-                'milestone-' || m."id" AS "id",
-                'milestone' AS "type",
-                u."name" AS "title",
-                m."improvement_display" AS "description",
-                m."card_image_url" AS "mediaUrl",
-                NULL::text AS "thumbnail",
-                NULL::text AS "platform",
-                'highlights'::text AS "category",
-                0 AS "viewCount",
-                m."created_at" AS "createdAt"
-              FROM "milestones" m
-              LEFT JOIN "users" u ON m."athlete_id" = u."id"
+              ${recapUnion}
+              ${milestoneUnion}
             ) AS feed
             ORDER BY "createdAt" DESC
             LIMIT ${limit}
@@ -2580,12 +2621,14 @@ export const appRouter = router({
           const items = await db.execute(unionQuery);
 
           // Get total count for pagination
+          const recapCount = hasRecaps ? sql`(SELECT COUNT(*) FROM "session_recaps" WHERE "type" = 'recap') +` : sql``;
+          const milestoneCount = hasMilestones ? sql`(SELECT COUNT(*) FROM "milestones") +` : sql``;
           const countQuery = sql`
             SELECT (
+              ${recapCount}
+              ${milestoneCount}
               (SELECT COUNT(*) FROM "videos" WHERE "isPublished" = true ${videoCategoryFilter}) +
-              (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter}) +
-              (SELECT COUNT(*) FROM "session_recaps" WHERE "type" = 'recap') +
-              (SELECT COUNT(*) FROM "milestones")
+              (SELECT COUNT(*) FROM "galleryPhotos" WHERE "isVisible" = true ${photoCategoryFilter})
             )::int AS "total"
           `;
           const countResult = await db.execute(countQuery);
