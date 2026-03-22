@@ -3776,12 +3776,22 @@ export const appRouter = router({
 
   socialPosts: router({
     list: publicProcedure.query(async () => {
-      return await getVisibleSocialPosts();
+      try {
+        return await getVisibleSocialPosts();
+      } catch (error) {
+        logger.error("[socialPosts] list query failed:", error);
+        return [];
+      }
     }),
 
     admin: router({
       list: adminProcedure.query(async () => {
-        return await getAllSocialPostsAdmin();
+        try {
+          return await getAllSocialPostsAdmin();
+        } catch (error) {
+          logger.error("[socialPosts] admin list query failed:", error);
+          return [];
+        }
       }),
 
       create: governedProcedure("socialPosts.admin.create")
@@ -3796,10 +3806,15 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ ctx, input }) => {
-          return await createSocialPost({
-            ...input,
-            addedBy: ctx.user.id,
-          });
+          try {
+            return await createSocialPost({
+              ...input,
+              addedBy: ctx.user.id,
+            });
+          } catch (error) {
+            logger.error("[socialPosts] create failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create social post" });
+          }
         }),
 
       update: governedProcedure("socialPosts.admin.update")
@@ -3814,28 +3829,48 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ input }) => {
-          const { id, ...data } = input;
-          return await updateSocialPost(id, data);
+          try {
+            const { id, ...data } = input;
+            return await updateSocialPost(id, data);
+          } catch (error) {
+            logger.error("[socialPosts] update failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update social post" });
+          }
         }),
 
       toggleVisibility: governedProcedure("socialPosts.admin.toggleVisibility")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          return await toggleSocialPostVisibility(input.id);
+          try {
+            return await toggleSocialPostVisibility(input.id);
+          } catch (error) {
+            logger.error("[socialPosts] toggleVisibility failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to toggle visibility" });
+          }
         }),
 
       reorder: governedProcedure("socialPosts.admin.reorder")
         .input(z.object({ orderedIds: z.array(z.number()) }))
         .mutation(async ({ input }) => {
-          await reorderSocialPosts(input.orderedIds);
-          return { success: true };
+          try {
+            await reorderSocialPosts(input.orderedIds);
+            return { success: true };
+          } catch (error) {
+            logger.error("[socialPosts] reorder failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to reorder social posts" });
+          }
         }),
 
       delete: governedProcedure("socialPosts.admin.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          await deleteSocialPost(input.id);
-          return { success: true };
+          try {
+            await deleteSocialPost(input.id);
+            return { success: true };
+          } catch (error) {
+            logger.error("[socialPosts] delete failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete social post" });
+          }
         }),
     }),
   }),
