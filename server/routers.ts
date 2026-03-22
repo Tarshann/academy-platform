@@ -2993,8 +2993,8 @@ export const appRouter = router({
         { rewardType: "points" as const, value: "25", points: 25, weight: 25 },
         { rewardType: "points" as const, value: "50", points: 50, weight: 15 },
         { rewardType: "points" as const, value: "100", points: 100, weight: 8 },
-        { rewardType: "discount" as const, value: "10%", points: 0, weight: 10 },
-        { rewardType: "discount" as const, value: "25%", points: 0, weight: 5 },
+        { rewardType: "points" as const, value: "Free Spin", points: 0, weight: 10, freeSpin: true },
+        { rewardType: "points" as const, value: "2 Free Spins", points: 0, weight: 5, freeSpin: true, freeSpinCount: 2 },
         { rewardType: "badge" as const, value: "Lucky Spinner", points: 15, weight: 5 },
         { rewardType: "none" as const, value: "", points: 0, weight: 2 },
       ];
@@ -3144,8 +3144,8 @@ export const appRouter = router({
         { rewardType: "points" as const, value: "15", points: 15, weight: 25 },
         { rewardType: "points" as const, value: "30", points: 30, weight: 15 },
         { rewardType: "points" as const, value: "75", points: 75, weight: 8 },
-        { rewardType: "discount" as const, value: "5%", points: 0, weight: 8 },
-        { rewardType: "discount" as const, value: "15%", points: 0, weight: 4 },
+        { rewardType: "points" as const, value: "Free Spin", points: 0, weight: 8, freeSpin: true },
+        { rewardType: "points" as const, value: "2 Free Spins", points: 0, weight: 4, freeSpin: true, freeSpinCount: 2 },
         { rewardType: "badge" as const, value: "Scratch Master", points: 10, weight: 3 },
         { rewardType: "none" as const, value: "Try Again", points: 0, weight: 2 },
       ];
