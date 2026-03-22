@@ -155,11 +155,17 @@ export default function Chat() {
   const removeReactionMutation = trpc.chatEnhanced.removeReaction.useMutation();
   const setRoomNotifPrefMutation = trpc.chatEnhanced.setRoomNotifPref.useMutation();
 
+  // Debounced search query
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const { data: searchData } = trpc.chatEnhanced.searchMessages.useQuery(
-    { room: currentRoom, query: searchQuery },
+    { room: currentRoom, query: debouncedSearch },
     {
-      enabled: isAuthenticated && showSearch && searchQuery.length > 0,
-      debounceMs: 300,
+      enabled: isAuthenticated && showSearch && debouncedSearch.length > 0,
     }
   );
 
@@ -899,7 +905,7 @@ export default function Chat() {
                         const closeInTime = sameUser && prev &&
                           Math.abs(new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()) < 5 * 60 * 1000;
                         const showAvatar = !sameUser || !closeInTime;
-                        const messageReactions = msg.id ? reactions[msg.id] || [] : [];
+                        const messageReactions = msg.id ? groupReactions(rawReactions[msg.id] || []) : [];
 
                         return (
                           <div
