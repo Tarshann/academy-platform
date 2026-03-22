@@ -28,6 +28,7 @@ import { TRPCError } from "@trpc/server";
 import { createHash } from "crypto";
 import { logger } from "./logger";
 import { getCapability } from "./strix-capabilities";
+import { pushEvidenceToStrix } from "./strix";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
 
@@ -141,6 +142,23 @@ async function recordEvidence(params: {
       evidenceHash,
       metadata: params.metadata ?? null,
     });
+
+    // Push evidence to Strix Platform API for Console visibility (fire-and-forget)
+    const capability = getCapability(params.capabilityId);
+    pushEvidenceToStrix([{
+      capabilityId: params.capabilityId,
+      actorId: params.actorId,
+      actorRole: params.actorRole,
+      actorEmail: params.actorEmail,
+      action: params.action,
+      reason: params.reason,
+      source: params.source,
+      riskLevel: capability?.riskLevel,
+      externalDecisionId: params.externalDecisionId,
+      evidenceHash,
+      metadata: params.metadata,
+      occurredAt: timestamp,
+    }]).catch(() => {}); // Fire-and-forget — local is source of truth
   } catch (err) {
     // Evidence write must never block the mutation
     logger.error(`[governance] Evidence write failed for ${params.capabilityId}:`, err);

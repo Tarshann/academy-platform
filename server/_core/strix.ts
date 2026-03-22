@@ -187,3 +187,77 @@ export function getStrixClient(): StrixClient | null {
   logger.info(`[strix] SDK initialized for tenant ${tenantId}`);
   return client;
 }
+
+// =============================================================================
+// Evidence Push — Sends evidence to Strix Platform API for Console visibility
+//
+// Fire-and-forget: local evidence is the source of truth.
+// This push makes evidence visible in Console /proof and /api/evidence/verify.
+// Uses the same circuit breaker and timeout patterns as the SDK client.
+// =============================================================================
+
+interface EvidencePushRecord {
+  capabilityId: string;
+  actorId: string;
+  actorRole: string;
+  actorEmail?: string;
+  action: string;
+  reason?: string;
+  source: string;
+  riskLevel?: string;
+  externalDecisionId?: string;
+  evidenceHash: string;
+  metadata?: Record<string, unknown>;
+  occurredAt: string; // ISO 8601
+}
+
+/**
+ * Push governance evidence to Strix Platform API.
+ *
+ * - Non-blocking (fire-and-forget in caller)
+ * - Fail-open (catch silently — local evidence is source of truth)
+ * - 3s timeout via AbortController
+ * - HMAC-SHA256 signature for payload integrity
+ */
+export async function pushEvidenceToStrix(records: EvidencePushRecord[]): Promise<void> {
+  const platformUrl = process.env.STRIX_PLATFORM_API_URL;
+  const apiKey = process.env.STRIX_API_KEY;
+  const tenantId = process.env.STRIX_TENANT_ID;
+
+  if (!platformUrl || !apiKey || !tenantId) return;
+
+  // Don't push if circuit breaker is open (avoid piling onto a dead endpoint)
+  if (isCircuitOpen()) return;
+
+  const body = JSON.stringify({
+    tenantId,
+    sourceApp: 'academy-platform',
+    records,
+  });
+
+  const timestamp = String(Date.now());
+
+  // HMAC signature: HMAC-SHA256(timestamp.body, secret)
+  const { createHmac } = await import('crypto');
+  const internalToken = process.env.STRIX_INTERNAL_TOKEN ?? apiKey;
+  const signature = createHmac('sha256', internalToken)
+    .update(`${timestamp}.${body}`)
+    .digest('hex');
+
+  try {
+    await fetchWithTimeout(`${platformUrl}/api/evidence/ingest`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Strix-Auth': apiKey,
+        'X-Strix-Signature': signature,
+        'X-Strix-Timestamp': timestamp,
+      },
+      body,
+    });
+    // Don't call recordSuccess() — this is a different endpoint than the SDK
+  } catch {
+    // Fire-and-forget — local evidence is the source of truth
+    logger.warn('[strix] Evidence push to Platform API failed (non-blocking)');
+  }
+}

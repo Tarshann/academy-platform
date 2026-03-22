@@ -5,7 +5,7 @@ import { ENV } from "./_core/env";
 import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, publicQueryProcedure, publicMutationProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -328,7 +328,7 @@ export const appRouter = router({
   governance: governanceRouter,
 
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicQueryProcedure.query(opts => opts.ctx.user),
     chatToken: protectedProcedure.query(async ({ ctx }) => {
       const appId = ctx.user.loginMethod || ENV.appId || "app";
       const token = await sdk.signSession(
@@ -377,10 +377,10 @@ export const appRouter = router({
   }),
 
   programs: router({
-    list: publicProcedure.query(async () => {
+    list: publicQueryProcedure.query(async () => {
       return await getAllPrograms();
     }),
-    getBySlug: publicProcedure
+    getBySlug: publicQueryProcedure
       .input(z.object({ slug: z.string() }))
       .query(async ({ input }) => {
         return await getProgramBySlug(input.slug);
@@ -458,7 +458,7 @@ export const appRouter = router({
   }),
   // Lead capture — public endpoint for the marketing site (academytn.com)
   leads: router({
-    submit: publicProcedure
+    submit: publicMutationProcedure
       .input(
         z.object({
           name: z.string().max(200).optional(),
@@ -530,7 +530,7 @@ export const appRouter = router({
     }),
 
     // Unsubscribe a lead from nurture emails
-    unsubscribe: publicProcedure
+    unsubscribe: publicMutationProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const { getDb } = await import("./db");
@@ -556,7 +556,7 @@ export const appRouter = router({
   }),
 
   contact: router({
-    submit: publicProcedure
+    submit: publicMutationProcedure
       .input(
         z.object({
           name: z.string().min(1).max(200),
@@ -1053,14 +1053,14 @@ export const appRouter = router({
   }),
 
   gallery: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllGalleryPhotos } = await import("./db");
         return await getAllGalleryPhotos(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    byCategory: publicProcedure
+    byCategory: publicQueryProcedure
       .input(z.object({
         category: z.string(),
         limit: z.number().int().min(1).max(100).optional(),
@@ -1154,21 +1154,21 @@ export const appRouter = router({
 
   shop: router({
     // Public shop endpoints
-    products: publicProcedure
+    products: publicQueryProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllProducts } = await import("./db");
         return await getAllProducts(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    productById: publicProcedure
+    productById: publicQueryProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const { getProductById } = await import("./db");
         return await getProductById(input.id);
       }),
 
-    campaigns: publicProcedure.query(async () => {
+    campaigns: publicQueryProcedure.query(async () => {
       const { getActiveCampaigns } = await import("./db");
       return await getActiveCampaigns();
     }),
@@ -1381,21 +1381,21 @@ export const appRouter = router({
   }),
 
   videos: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllVideos } = await import("./db");
         return await getAllVideos(true, input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    byId: publicProcedure
+    byId: publicQueryProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const { getVideoById } = await import("./db");
         return await getVideoById(input.id);
       }),
 
-    byCategory: publicProcedure
+    byCategory: publicQueryProcedure
       .input(z.object({
         category: z.string(),
         limit: z.number().int().min(1).max(100).optional(),
@@ -1406,7 +1406,7 @@ export const appRouter = router({
         return await getVideosByCategory(input.category, true, { limit: input.limit, offset: input.offset });
       }),
 
-    trackView: publicProcedure
+    trackView: publicMutationProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const { incrementVideoViewCount } = await import("./db");
@@ -1493,7 +1493,7 @@ export const appRouter = router({
         return { url: session.url };
       }),
 
-    createGuestCheckout: publicProcedure
+    createGuestCheckout: publicMutationProcedure
       .input(
         z.object({
           productIds: z.array(z.string()).min(1),
@@ -1563,7 +1563,7 @@ export const appRouter = router({
       return { url: session.url };
     }),
 
-    catalog: publicProcedure.query(async () => {
+    catalog: publicQueryProcedure.query(async () => {
       const { getAllProducts } = await import("./products");
       return getAllProducts();
     }),
@@ -1693,7 +1693,7 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    submitPrivateSessionBooking: publicProcedure
+    submitPrivateSessionBooking: publicMutationProcedure
       .input(
         z.object({
           customerName: z.string().min(1),
@@ -1825,7 +1825,7 @@ export const appRouter = router({
 
   // Location management
   locations: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllLocations } = await import("./db");
@@ -1895,7 +1895,7 @@ export const appRouter = router({
 
   // Coach management
   coaches: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllCoaches } = await import("./db");
@@ -2328,7 +2328,7 @@ export const appRouter = router({
       }),
 
     // Get VAPID public key for push subscription
-    getVapidPublicKey: publicProcedure.query(async () => {
+    getVapidPublicKey: publicQueryProcedure.query(async () => {
       // Return the VAPID public key from environment
       return { publicKey: ENV.vapidPublicKey || null };
     }),
@@ -2401,7 +2401,7 @@ export const appRouter = router({
 
   // Blog routes (public)
   blog: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(
         z
           .object({
@@ -2414,7 +2414,7 @@ export const appRouter = router({
         const { getAllPublishedBlogPosts } = await import("./db");
         return await getAllPublishedBlogPosts(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
-    getBySlug: publicProcedure
+    getBySlug: publicQueryProcedure
       .input(z.object({ slug: z.string() }))
       .query(async ({ input }) => {
         const { getBlogPostBySlug } = await import("./db");
@@ -2499,7 +2499,7 @@ export const appRouter = router({
   }),
 
   feed: router({
-    list: publicProcedure
+    list: publicQueryProcedure
       .input(
         z.object({
           limit: z.number().int().min(1).max(50).optional(),
@@ -3386,7 +3386,7 @@ export const appRouter = router({
         return referral;
       }),
 
-    validateCode: publicProcedure
+    validateCode: publicQueryProcedure
       .input(z.object({ code: z.string().max(20) }))
       .query(async ({ input }) => {
         const referral = await getReferralByCode(input.code);
@@ -3722,7 +3722,7 @@ export const appRouter = router({
           .orderBy(desc(milestones.createdAt));
       }),
 
-    recent: publicProcedure
+    recent: publicQueryProcedure
       .input(z.object({ limit: z.number().int().min(1).max(20).optional() }).optional())
       .query(async ({ input }) => {
         const limit = input?.limit ?? 10;
@@ -3775,7 +3775,7 @@ export const appRouter = router({
   // ============================================================================
 
   socialPosts: router({
-    list: publicProcedure.query(async () => {
+    list: publicQueryProcedure.query(async () => {
       return await getVisibleSocialPosts();
     }),
 

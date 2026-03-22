@@ -31,6 +31,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Audit dependencies
+        run: pnpm audit --audit-level=high || true
+
       - name: TypeScript check
         run: pnpm check
 
@@ -59,6 +62,9 @@ jobs:
           cache-dependency-path: academy-marketing/package-lock.json
 
       - run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high || true
 
       - name: TypeScript check
         run: npm run typecheck || true  # Known module resolution errors
@@ -89,5 +95,34 @@ jobs:
 
       - run: npm ci
 
+      - name: Audit dependencies
+        run: npm audit --audit-level=high || true
+
       - name: TypeScript check
         run: npx tsc --noEmit || true  # May have missing native module types
+
+  # ============================================
+  # Security scanning
+  # ============================================
+  security:
+    name: Security — secrets & code scanning
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
