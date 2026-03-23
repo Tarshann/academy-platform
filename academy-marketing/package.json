@@ -21,7 +21,7 @@
     "test:all": "bash scripts/test-all.sh"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.4.1",
+    "@vercel/analytics": "^2.0.1",
     "lucide-react": "^0.577.0",
     "next": "^15.1.0",
     "react": "^19.0.0",
