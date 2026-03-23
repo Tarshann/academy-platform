@@ -154,6 +154,22 @@ async function recordEvidence(params: {
       evidenceHash,
       metadata: params.metadata ?? null,
     });
+
+    // Fire-and-forget push to Strix Platform API (for Console visibility)
+    import("./strix").then(({ pushEvidenceToStrix }) =>
+      pushEvidenceToStrix({
+        capabilityId: params.capabilityId,
+        actorId: params.actorId,
+        actorRole: params.actorRole,
+        actorEmail: params.actorEmail ?? null,
+        action: params.action,
+        reason: params.reason ?? null,
+        source: params.source,
+        evidenceHash,
+        externalDecisionId: params.externalDecisionId ?? null,
+        metadata: params.metadata ?? null,
+      })
+    ).catch(() => {}); // Swallow — push is best-effort
   } catch (err) {
     // Evidence write must never block the mutation
     logger.error(`[governance] Evidence write failed for ${params.capabilityId}:`, err);

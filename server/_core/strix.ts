@@ -229,3 +229,74 @@ export function getStrixClient(): StrixClient | null {
   logger.info(`[strix] SDK initialized for tenant ${tenantId}`);
   return client;
 }
+
+// ---- Evidence Push to Strix Platform API ----
+
+const PLATFORM_API_URL = process.env.STRIX_PLATFORM_API_URL; // e.g. https://strix-platform-api.vercel.app
+const INTERNAL_TOKEN = process.env.STRIX_INTERNAL_TOKEN;
+
+/**
+ * Pushes a governance evidence record to the Strix Platform API.
+ * Fire-and-forget — never blocks the calling mutation or cron job.
+ *
+ * Signs the payload with HMAC-SHA256 using STRIX_INTERNAL_TOKEN for
+ * tamper-proof ingestion. The Platform API verifies this signature
+ * before accepting evidence.
+ *
+ * Skips silently when STRIX_PLATFORM_API_URL or STRIX_INTERNAL_TOKEN
+ * are not configured.
+ */
+export async function pushEvidenceToStrix(evidence: {
+  capabilityId: string;
+  actorId: string;
+  actorRole: string;
+  actorEmail?: string | null;
+  action: string;
+  reason?: string | null;
+  source: string;
+  evidenceHash: string;
+  externalDecisionId?: string | null;
+  metadata?: Record<string, unknown> | null;
+}): Promise<void> {
+  if (!PLATFORM_API_URL || !INTERNAL_TOKEN) return;
+
+  try {
+    const { createHmac } = await import("crypto");
+
+    const payload = JSON.stringify({
+      records: [
+        {
+          tenantId: process.env.STRIX_TENANT_ID ?? "academy",
+          capabilityId: evidence.capabilityId,
+          actorId: evidence.actorId,
+          actorRole: evidence.actorRole,
+          actorEmail: evidence.actorEmail ?? undefined,
+          decision: evidence.action,
+          reason: evidence.reason ?? undefined,
+          source: evidence.source,
+          evidenceHash: evidence.evidenceHash,
+          externalDecisionId: evidence.externalDecisionId ?? undefined,
+          metadata: evidence.metadata ?? undefined,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    });
+
+    const signature = createHmac("sha256", INTERNAL_TOKEN)
+      .update(payload)
+      .digest("hex");
+
+    await fetchWithTimeout(`${PLATFORM_API_URL}/api/evidence/ingest`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${INTERNAL_TOKEN}`,
+        "X-Signature": signature,
+      },
+      body: payload,
+    });
+  } catch (err) {
+    // Fire-and-forget — never block the mutation
+    logger.warn("[strix] Evidence push to Platform API failed:", err);
+  }
+}

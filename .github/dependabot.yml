@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Root directory — pnpm
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  # Marketing site — npm
+  - package-ecosystem: npm
+    directory: /academy-marketing
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  # Mobile app — npm
+  - package-ecosystem: npm
+    directory: /academy-app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10

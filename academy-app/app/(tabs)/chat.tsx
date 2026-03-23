@@ -1,11 +1,14 @@
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { trackEvent } from '../../lib/analytics';
 import { colors, shadows, typography } from '../../lib/theme';
 import { AnimatedCard } from '../../components/AnimatedCard';
 import { GlassCard } from '../../components/GradientCard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { trpc } from '../../lib/trpc';
 
 interface ChatChannel {
   id: string;
@@ -43,6 +46,17 @@ const CHANNELS: ChatChannel[] = [
 
 export default function ChatScreen() {
   const router = useRouter();
+  const { data: unreadCounts, refetch: refetchUnreadCounts } = trpc.chatEnhanced.getUnreadCounts.useQuery(
+    undefined,
+    { refetchInterval: 30000 } // Refetch every 30s
+  );
+
+  // Refetch unread counts when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetchUnreadCounts();
+    }, [refetchUnreadCounts])
+  );
 
   const onRoomPress = (channel: ChatChannel) => {
     trackEvent('chat_room_opened', { room: channel.id, room_name: channel.name });
@@ -55,31 +69,42 @@ export default function ChatScreen() {
         data={CHANNELS}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item, index }) => (
-          <AnimatedCard index={index}>
-            <TouchableOpacity
-              style={styles.channelCard}
-              onPress={() => onRoomPress(item)}
-              activeOpacity={0.7}
-            >
-              <View style={[
-                styles.iconContainer,
-                item.id === 'announcements' && styles.iconContainerAnnouncement,
-              ]}>
-                <Ionicons
-                  name={item.icon}
-                  size={24}
-                  color={item.id === 'announcements' ? colors.card : colors.gold}
-                />
+        renderItem={({ item, index }) => {
+          const unreadCount = unreadCounts?.[item.id as keyof typeof unreadCounts] || 0;
+          return (
+            <AnimatedCard index={index} style={styles.animatedCardWrapper}>
+              <View style={styles.cardContainer}>
+                <TouchableOpacity
+                  style={styles.channelCard}
+                  onPress={() => onRoomPress(item)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[
+                    styles.iconContainer,
+                    item.id === 'announcements' && styles.iconContainerAnnouncement,
+                  ]}>
+                    <Ionicons
+                      name={item.icon}
+                      size={24}
+                      color={item.id === 'announcements' ? colors.card : colors.gold}
+                    />
+                  </View>
+                  <View style={styles.channelInfo}>
+                    <Text style={styles.channelName}>#{item.name}</Text>
+                    <Text style={styles.channelDescription}>{item.description}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+                {/* Unread badge */}
+                {unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
+                  </View>
+                )}
               </View>
-              <View style={styles.channelInfo}>
-                <Text style={styles.channelName}>#{item.name}</Text>
-                <Text style={styles.channelDescription}>{item.description}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-          </AnimatedCard>
-        )}
+            </AnimatedCard>
+          );
+        }}
       />
     </View>
   );
@@ -93,13 +118,18 @@ const styles = StyleSheet.create({
   list: {
     padding: 16,
   },
+  animatedCardWrapper: {
+    marginBottom: 10,
+  },
+  cardContainer: {
+    position: 'relative',
+  },
   channelCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: 14,
     padding: 16,
-    marginBottom: 10,
     borderLeftWidth: 3,
     borderLeftColor: colors.gold,
     ...shadows.card,
@@ -129,5 +159,22 @@ const styles = StyleSheet.create({
   channelDescription: {
     fontSize: 13,
     color: colors.textSecondary,
+  },
+  unreadBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: colors.gold,
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+  unreadBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.background,
   },
 });
