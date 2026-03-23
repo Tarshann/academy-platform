@@ -55,6 +55,45 @@ export function isStrixCircuitOpen(): boolean {
   return isCircuitOpen();
 }
 
+/**
+ * Returns true if the Strix SDK has the minimum configuration required to
+ * make API calls (API key + tenant ID). This is a pure env-var check —
+ * it does NOT initialize the client or make any network calls.
+ *
+ * Use this in governed-procedure.ts to skip SDK attempts entirely when
+ * credentials are missing, avoiding unnecessary error logs in serverless
+ * environments where the circuit breaker state resets per invocation.
+ */
+export function isStrixConfigured(): boolean {
+  return !!(process.env.STRIX_API_KEY && process.env.STRIX_TENANT_ID);
+}
+
+// ---- Startup validation (runs once per cold start) ----
+let _startupValidated = false;
+
+/**
+ * Logs a one-time warning if STRIX_GOVERNANCE_ENABLED=true but the SDK
+ * is missing required configuration. Called lazily on first SDK access.
+ */
+function validateStrixConfig(): void {
+  if (_startupValidated) return;
+  _startupValidated = true;
+
+  const governanceEnabled = process.env.STRIX_GOVERNANCE_ENABLED === "true";
+  if (!governanceEnabled) return;
+
+  const apiKey = process.env.STRIX_API_KEY;
+  const tenantId = process.env.STRIX_TENANT_ID;
+
+  if (!apiKey || !tenantId) {
+    logger.error(
+      "[strix] STRIX_GOVERNANCE_ENABLED=true but SDK credentials are missing " +
+      `(STRIX_API_KEY=${apiKey ? "set" : "MISSING"}, STRIX_TENANT_ID=${tenantId ? "set" : "MISSING"}). ` +
+      "External SDK calls will be skipped. Set credentials or disable governance to silence this warning."
+    );
+  }
+}
+
 // ---- Types ----
 
 interface StrixEvaluateParams {
@@ -105,6 +144,9 @@ let client: StrixClient | null = null;
 let initialized = false;
 
 export function getStrixClient(): StrixClient | null {
+  // One-time startup validation (logs warning if misconfigured)
+  validateStrixConfig();
+
   // Circuit breaker — short-circuit without even trying
   if (isCircuitOpen()) return null;
 
