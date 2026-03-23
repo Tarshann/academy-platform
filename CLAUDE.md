@@ -11,7 +11,7 @@
 
 **Problem domain**: Youth sports training businesses rely on fragmented tools (paper sign-ups, separate payment systems, generic scheduling apps). This platform unifies the entire member lifecycle — discovery → enrollment → payment → scheduling → communication — into one cohesive experience.
 
-**Current release**: v1.8.3 (mobile app v1.8.3, build 36). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. v1.8.1 adds: App Store compliance fixes (iOS permission purpose strings for camera, photo library, calendar, microphone), expo-image-picker and expo-calendar plugin configurations. v1.8.2–v1.8.3 adds: AI Vision Capture (voice/photo metric extraction with PR detection), gallery video support (mediaType column), 14 performance indexes, governance evidence persistence. Post-v1.8.0: Strix governance SDK integration — 104 capabilities (75 tRPC mutations + 16 cron jobs + 13 AI agent actions) with risk classification (13 critical, 37 high, 49 medium, 6 low), approval workflows, and evidence trail. Autonomous AI content engine (7 AI cron jobs) with full governance evidence recording. Mobile governance dashboard (build 36).
+**Current release**: v1.8.3 (mobile app v1.8.3, build 36). Previous v1.6 delivered: athlete metrics, showcases, games hub, social gallery, merch drops, video in chat. v1.7 adds: shared theme system, reusable animated components, platform-wide security hardening. Post-v1.7: strategic audit implementation — family accounts, waitlist, referrals, onboarding, RBAC, billing reminders, schedule templates, AI progress reports, Sentry, CI/CD. v1.7.1 adds: app store badges, calendar sync, athlete progress dashboard card, feed query optimization. v1.8.0 adds: automation layer (9 Vercel Cron Jobs), AI content engine (session recaps, parent digests, progress reports), content queue admin workflow. v1.8.1 adds: App Store compliance fixes (iOS permission purpose strings for camera, photo library, calendar, microphone), expo-image-picker and expo-calendar plugin configurations. v1.8.2–v1.8.3 adds: AI Vision Capture (voice/photo metric extraction with PR detection), gallery video support (mediaType column), 14 performance indexes, governance evidence persistence. Post-v1.8.0: Strix governance SDK integration — 104 capabilities (75 tRPC mutations + 16 cron jobs + 13 AI agent actions) with risk classification (13 critical, 37 high, 49 medium, 6 low), approval workflows, and evidence trail. Autonomous AI content engine (7 AI cron jobs) with full governance evidence recording. Mobile governance dashboard (build 36). Chat P1: emoji reactions, per-room unread counts, notification preferences (all/mentions/none).
 
 ---
 
@@ -82,7 +82,7 @@ academy-platform/
 │   ├── _core/               #   Server infrastructure (see detailed breakdown below)
 │   ├── cron/                #   Scheduled automation functions (16 cron jobs: 9 operational + 7 AI autonomous + tests)
 │   ├── routers.ts           #   All tRPC routes (~4,067 lines)
-│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,391 lines)
+│   ├── db.ts                #   Drizzle ORM connection + all DB functions (~3,454 lines)
 │   ├── serverless.ts        #   Vercel serverless entry point
 │   ├── serverless-stripe.ts #   Isolated Stripe webhook handler
 │   ├── chat-sse.ts          #   SSE-based real-time chat (primary)
@@ -153,8 +153,8 @@ academy-platform/
 │   └── _core/errors.ts      #   HttpError hierarchy with domain-specific subclasses
 │
 ├── drizzle/                 # Database schema + SQL migrations
-│   ├── schema.ts            #   Full PostgreSQL schema (57 tables, enums, relations)
-│   └── 0000-0024_*.sql      #   Sequential migrations (latest: NCAA March Madness 2026 trivia seed)
+│   ├── schema.ts            #   Full PostgreSQL schema (60 tables, enums, relations)
+│   └── 0000-0026_*.sql      #   Sequential migrations (latest: chat P1 reactions/unread/prefs + core table safety net)
 │
 ├── api/                     # Vercel serverless function entry points (thin wrappers)
 │   ├── [...path].ts         #   → dist/serverless.js (tRPC + chat + registrations)
@@ -170,8 +170,9 @@ academy-platform/
 │   ├── 50_REPORTS/          #   Status reports, audit findings, competitor snapshots
 │   └── 60_AGENT_PROMPTS/    #   Specialized agent prompt templates
 │
-├── .github/workflows/       # CI/CD pipeline (GitHub Actions)
-│   └── ci.yml               #   3 jobs: portal (build+test), marketing (build+validate), mobile (typecheck)
+├── .github/
+│   ├── workflows/ci.yml     #   CI/CD: 3 jobs (portal build+test, marketing build+validate, mobile typecheck)
+│   └── dependabot.yml       #   Automated dependency PRs (root, marketing, mobile — weekly, max 10 each)
 ├── .agents/                 # Legacy agent planning files (MASTER_PLAN, per-agent plans)
 ├── docs/                    # Strategy docs, ship-readiness checklists, investor materials
 ├── dist/                    # Build output (compiled server + SPA)
@@ -343,6 +344,7 @@ appRouter
 ├── shop.*            # Merchandise store
 ├── admin.*           # Admin-only operations
 ├── chat.*            # Chat rooms, messages
+├── chatEnhanced.*    # Reactions, unread counts, room notification preferences
 ├── blog.*            # Blog posts
 ├── videos.*          # Video content
 ├── gallery.*         # Photo gallery
@@ -391,10 +393,10 @@ pnpm test:e2e         # playwright (e2e/ directory)
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `server/routers.ts` | ~4,110 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, milestones, visionCapture, etc.) |
-| `server/db.ts` | ~3,391 | Drizzle connection + all DB query functions |
+| `server/routers.ts` | ~4,437 | All tRPC routes (programs, shop, admin, chat, metrics, games, family, waitlist, referrals, milestones, visionCapture, etc.) |
+| `server/db.ts` | ~3,454 | Drizzle connection + all DB query functions |
 | `drizzle/schema.ts` | ~1,313 | Full database schema (57 tables) |
-| `server/chat-sse.ts` | ~416 | SSE real-time chat system |
+| `server/chat-sse.ts` | ~549 | SSE real-time chat + reaction broadcast + notification prefs |
 | `server/_core/index.ts` | ~218 | Express app setup + middleware + Vite dev integration |
 | `client/src/App.tsx` | ~222 | wouter SPA routing (~40+ routes, all lazy-loaded) |
 | `client/src/main.tsx` | ~212 | React entry: providers, auth, service worker, analytics |
@@ -832,12 +834,14 @@ A comprehensive audit is documented in `docs/FULL_PLATFORM_AUDIT.md`. All 8 high
 - **NCAA March Madness trivia + games refresh** (migration 0024) — 25 NCAA March Madness 2026 trivia questions seeded across easy/medium/hard difficulty. Gold Rush wheel rewards changed from discounts to free spins (Free Spin, Spin Again, 2x Spins). Idempotent seed via `ON CONFLICT DO NOTHING`.
 - **Production query hardening** — `governance-router.ts` and `db.ts` queries hardened against missing tables and unhandled errors to prevent 500s in environments where governance migration hasn't run.
 - **Governance test suite** — 103 assertions across 6 test files: `strix-capabilities.test.ts` (23 tests: registry integrity, risk distribution, unique IDs), `structural-invariants.test.ts` (11 tests: zero governance bypasses, cron coverage), `governed-procedure.test.ts` (35 tests: middleware behavior), `strix.test.ts` (14 tests: SDK client), `governance-router.test.ts` (4 tests: API endpoints), `cron.test.ts` (16 tests: all 16 cron jobs export `run()`). All passing.
+- **Chat P1: Reactions, Unread, Notification Prefs** (migrations 0025-0026) — 3 new tables: `chat_message_reactions` (emoji reactions per user/message), `chat_room_read_status` (per-user last-read tracking), `chat_room_notification_prefs` (per-room mode: all/mentions/none). New `chatEnhanced` tRPC sub-router with 7 procedures: `addReaction`, `removeReaction`, `getReactions`, `markRoomRead`, `getUnreadCounts`, `getRoomNotifPrefs`, `setRoomNotifPref`. Real-time broadcast of reactions via SSE + Ably. Web portal chat updated with emoji picker (SmilePlus), unread badges, notification pref controls. Mobile `MessageBubble` component extended with reaction display and interaction. Chat SSE push notifications now respect per-room notification preferences. Migration 0026 is a core table safety net (idempotent re-creation of v1.6 enums/tables for fresh environments).
+- **Dependabot** — GitHub Dependabot configured (`.github/dependabot.yml`) for 3 ecosystems: root (pnpm), marketing (npm), mobile (npm). Weekly schedule, max 10 open PRs each.
 
 ---
 
 ## Known Improvement Opportunities (Not Yet Implemented)
 
-- **Router/DB monolith split** — `server/routers.ts` (~4,110 lines) and `server/db.ts` (~3,391 lines) could be split into domain modules
+- **Router/DB monolith split** — `server/routers.ts` (~4,437 lines) and `server/db.ts` (~3,454 lines) could be split into domain modules
 - **Structured data consolidation** — Single canonical testimonials source instead of two
 - **Observability gaps** — Sentry is wired but no request log correlation IDs yet
 - **Service layer** — Business logic is mixed into tRPC procedures; no dedicated service layer
