@@ -28,9 +28,21 @@ import { TRPCError } from "@trpc/server";
 import { createHash } from "crypto";
 import { logger } from "./logger";
 import { getCapability } from "./strix-capabilities";
-import { pushEvidenceToStrix } from "./strix";
 
 const GOVERNANCE_ENABLED = process.env.STRIX_GOVERNANCE_ENABLED === "true";
+
+/**
+ * Per-process SDK error dedup flag.
+ *
+ * In Vercel serverless, each invocation is a fresh process so the circuit
+ * breaker state in strix.ts resets every time. Without dedup, every governed
+ * action that hits an unreachable SDK logs a separate error — producing 100+
+ * error entries/day from cron jobs alone.
+ *
+ * This flag ensures we log the FIRST SDK error per process (as a warning),
+ * then silently fall through on subsequent calls within the same invocation.
+ */
+let _sdkErrorLoggedThisProcess = false;
 
 /**
  * Local policy evaluation — deterministic rules based on capability registry.
@@ -143,22 +155,21 @@ async function recordEvidence(params: {
       metadata: params.metadata ?? null,
     });
 
-    // Push evidence to Strix Platform API for Console visibility (fire-and-forget)
-    const capability = getCapability(params.capabilityId);
-    pushEvidenceToStrix([{
-      capabilityId: params.capabilityId,
-      actorId: params.actorId,
-      actorRole: params.actorRole,
-      actorEmail: params.actorEmail,
-      action: params.action,
-      reason: params.reason,
-      source: params.source,
-      riskLevel: capability?.riskLevel,
-      externalDecisionId: params.externalDecisionId,
-      evidenceHash,
-      metadata: params.metadata,
-      occurredAt: timestamp,
-    }]).catch(() => {}); // Fire-and-forget — local is source of truth
+    // Fire-and-forget push to Strix Platform API (for Console visibility)
+    import("./strix").then(({ pushEvidenceToStrix }) =>
+      pushEvidenceToStrix({
+        capabilityId: params.capabilityId,
+        actorId: params.actorId,
+        actorRole: params.actorRole,
+        actorEmail: params.actorEmail ?? null,
+        action: params.action,
+        reason: params.reason ?? null,
+        source: params.source,
+        evidenceHash,
+        externalDecisionId: params.externalDecisionId ?? null,
+        metadata: params.metadata ?? null,
+      })
+    ).catch(() => {}); // Swallow — push is best-effort
   } catch (err) {
     // Evidence write must never block the mutation
     logger.error(`[governance] Evidence write failed for ${params.capabilityId}:`, err);
@@ -189,10 +200,10 @@ export function governedProcedure(capabilityId?: string) {
     // If Strix enforcement is enabled, evaluate against external SDK
     if (GOVERNANCE_ENABLED) {
       try {
-        const { getStrixClient, isStrixCircuitOpen } = await import("./strix");
+        const { getStrixClient, isStrixCircuitOpen, isStrixConfigured } = await import("./strix");
 
-        // Skip SDK call entirely when circuit breaker is open (reduces log spam)
-        if (!isStrixCircuitOpen()) {
+        // Skip SDK call entirely when circuit breaker is open or SDK not configured
+        if (isStrixConfigured() && !isStrixCircuitOpen()) {
           const strix = getStrixClient();
 
           if (strix) {
@@ -204,6 +215,9 @@ export function governedProcedure(capabilityId?: string) {
                 timestamp: new Date().toISOString(),
               },
             });
+
+            // Reset dedup flag on success — SDK is reachable again
+            _sdkErrorLoggedThisProcess = false;
 
             // Record the external decision locally
             recordEvidence({
@@ -236,12 +250,14 @@ export function governedProcedure(capabilityId?: string) {
             });
           }
         }
-      } catch (err: any) {
+      } catch (err) {
         if (err instanceof TRPCError) throw err;
-        // Fail open — allow action, log SDK error with context, still record locally
-        // (circuit breaker in strix.ts suppresses further calls after threshold)
-        const reason = err?.message ?? "unknown";
-        logger.warn(`[governance] SDK unavailable for ${capabilityId}: ${reason}. Proceeding with local policy.`);
+        // Fail open — allow action, still record locally.
+        // Log only the first SDK error per process to avoid log spam in serverless.
+        if (!_sdkErrorLoggedThisProcess) {
+          _sdkErrorLoggedThisProcess = true;
+          logger.warn(`[governance] SDK unreachable for ${capabilityId}, falling back to local policy:`, err);
+        }
       }
     }
 
@@ -302,10 +318,10 @@ export async function evaluateCronGovernance(
   // If Strix enforcement is enabled, check SDK
   if (GOVERNANCE_ENABLED) {
     try {
-      const { getStrixClient, isStrixCircuitOpen } = await import("./strix");
+      const { getStrixClient, isStrixCircuitOpen, isStrixConfigured } = await import("./strix");
 
-      // Skip SDK call entirely when circuit breaker is open
-      if (!isStrixCircuitOpen()) {
+      // Skip SDK call entirely when circuit breaker is open or SDK not configured
+      if (isStrixConfigured() && !isStrixCircuitOpen()) {
         const strix = getStrixClient();
 
         if (strix) {
@@ -321,6 +337,9 @@ export async function evaluateCronGovernance(
               timestamp: new Date().toISOString(),
             },
           });
+
+          // Reset dedup flag on success — SDK is reachable again
+          _sdkErrorLoggedThisProcess = false;
 
           // Record the external decision locally
           recordEvidence({
@@ -342,10 +361,13 @@ export async function evaluateCronGovernance(
           return { allowed: true, decisionId: decision.id };
         }
       }
-    } catch (err: any) {
-      // Fail open for cron — don't break scheduled jobs
-      const reason = err?.message ?? "unknown";
-      logger.warn(`[governance] SDK unavailable for cron ${cronName}: ${reason}. Proceeding with local policy.`);
+    } catch (err) {
+      // Fail open for cron — don't break scheduled jobs.
+      // Log only the first SDK error per process to avoid log spam in serverless.
+      if (!_sdkErrorLoggedThisProcess) {
+        _sdkErrorLoggedThisProcess = true;
+        logger.warn(`[governance] SDK unreachable for cron ${cronName}, falling back to local policy:`, err);
+      }
     }
   }
 

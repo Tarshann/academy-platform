@@ -19,22 +19,17 @@ import { logger } from "./logger";
 
 // ---- Circuit breaker state ----
 const CIRCUIT_BREAKER_THRESHOLD = 5;
-const CIRCUIT_BREAKER_COOLDOWN_MS = 30 * 60 * 1000; // 30 minutes (was 5min — reduced log noise)
+const CIRCUIT_BREAKER_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 const FETCH_TIMEOUT_MS = 3_000; // 3 seconds
 
 let consecutiveFailures = 0;
 let circuitOpenUntil = 0;
-let lastCircuitOpenLogAt = 0; // Dedup: only log circuit-open once per period
 
 function isCircuitOpen(): boolean {
   if (consecutiveFailures < CIRCUIT_BREAKER_THRESHOLD) return false;
   if (Date.now() > circuitOpenUntil) {
     // Cooldown expired — half-open: allow one attempt
     consecutiveFailures = CIRCUIT_BREAKER_THRESHOLD - 1;
-    // Reset the singleton so the next getStrixClient() re-initializes
-    // a fresh client instead of reusing the stale one
-    client = null;
-    initialized = false;
     return false;
   }
   return true;
@@ -42,27 +37,61 @@ function isCircuitOpen(): boolean {
 
 function recordSuccess() {
   consecutiveFailures = 0;
-  lastCircuitOpenLogAt = 0;
 }
 
 function recordFailure() {
   consecutiveFailures++;
   if (consecutiveFailures >= CIRCUIT_BREAKER_THRESHOLD) {
     circuitOpenUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
-    // Only log the circuit-open warning once per open period to reduce noise
-    if (Date.now() - lastCircuitOpenLogAt > CIRCUIT_BREAKER_COOLDOWN_MS) {
-      logger.warn(
-        `[strix] Circuit breaker OPEN — ${consecutiveFailures} consecutive failures. ` +
-        `SDK calls suppressed for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s.`
-      );
-      lastCircuitOpenLogAt = Date.now();
-    }
+    logger.warn(
+      `[strix] Circuit breaker OPEN — ${consecutiveFailures} consecutive failures. ` +
+      `SDK calls suppressed for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s.`
+    );
   }
 }
 
 /** Export for governance-procedure to check before even importing the client */
 export function isStrixCircuitOpen(): boolean {
   return isCircuitOpen();
+}
+
+/**
+ * Returns true if the Strix SDK has the minimum configuration required to
+ * make API calls (API key + tenant ID). This is a pure env-var check —
+ * it does NOT initialize the client or make any network calls.
+ *
+ * Use this in governed-procedure.ts to skip SDK attempts entirely when
+ * credentials are missing, avoiding unnecessary error logs in serverless
+ * environments where the circuit breaker state resets per invocation.
+ */
+export function isStrixConfigured(): boolean {
+  return !!(process.env.STRIX_API_KEY && process.env.STRIX_TENANT_ID);
+}
+
+// ---- Startup validation (runs once per cold start) ----
+let _startupValidated = false;
+
+/**
+ * Logs a one-time warning if STRIX_GOVERNANCE_ENABLED=true but the SDK
+ * is missing required configuration. Called lazily on first SDK access.
+ */
+function validateStrixConfig(): void {
+  if (_startupValidated) return;
+  _startupValidated = true;
+
+  const governanceEnabled = process.env.STRIX_GOVERNANCE_ENABLED === "true";
+  if (!governanceEnabled) return;
+
+  const apiKey = process.env.STRIX_API_KEY;
+  const tenantId = process.env.STRIX_TENANT_ID;
+
+  if (!apiKey || !tenantId) {
+    logger.error(
+      "[strix] STRIX_GOVERNANCE_ENABLED=true but SDK credentials are missing " +
+      `(STRIX_API_KEY=${apiKey ? "set" : "MISSING"}, STRIX_TENANT_ID=${tenantId ? "set" : "MISSING"}). ` +
+      "External SDK calls will be skipped. Set credentials or disable governance to silence this warning."
+    );
+  }
 }
 
 // ---- Types ----
@@ -115,6 +144,9 @@ let client: StrixClient | null = null;
 let initialized = false;
 
 export function getStrixClient(): StrixClient | null {
+  // One-time startup validation (logs warning if misconfigured)
+  validateStrixConfig();
+
   // Circuit breaker — short-circuit without even trying
   if (isCircuitOpen()) return null;
 
@@ -152,15 +184,8 @@ export function getStrixClient(): StrixClient | null {
         const result = await res.json() as StrixDecision;
         recordSuccess();
         return result;
-      } catch (err: any) {
+      } catch (err) {
         recordFailure();
-        // Provide actionable context for common failure modes
-        if (err?.name === "AbortError") {
-          throw new Error(`Strix SDK timeout (${FETCH_TIMEOUT_MS}ms) — API may be unreachable`);
-        }
-        if (err?.cause?.code === "ENOTFOUND" || err?.cause?.code === "ECONNREFUSED") {
-          throw new Error(`Strix SDK DNS/connection failure — ${apiUrl} unreachable`);
-        }
         throw err;
       }
     },
@@ -205,76 +230,73 @@ export function getStrixClient(): StrixClient | null {
   return client;
 }
 
-// =============================================================================
-// Evidence Push — Sends evidence to Strix Platform API for Console visibility
-//
-// Fire-and-forget: local evidence is the source of truth.
-// This push makes evidence visible in Console /proof and /api/evidence/verify.
-// Uses the same circuit breaker and timeout patterns as the SDK client.
-// =============================================================================
+// ---- Evidence Push to Strix Platform API ----
 
-interface EvidencePushRecord {
+const PLATFORM_API_URL = process.env.STRIX_PLATFORM_API_URL; // e.g. https://strix-platform-api.vercel.app
+const INTERNAL_TOKEN = process.env.STRIX_INTERNAL_TOKEN;
+
+/**
+ * Pushes a governance evidence record to the Strix Platform API.
+ * Fire-and-forget — never blocks the calling mutation or cron job.
+ *
+ * Signs the payload with HMAC-SHA256 using STRIX_INTERNAL_TOKEN for
+ * tamper-proof ingestion. The Platform API verifies this signature
+ * before accepting evidence.
+ *
+ * Skips silently when STRIX_PLATFORM_API_URL or STRIX_INTERNAL_TOKEN
+ * are not configured.
+ */
+export async function pushEvidenceToStrix(evidence: {
   capabilityId: string;
   actorId: string;
   actorRole: string;
-  actorEmail?: string;
+  actorEmail?: string | null;
   action: string;
-  reason?: string;
+  reason?: string | null;
   source: string;
-  riskLevel?: string;
-  externalDecisionId?: string;
   evidenceHash: string;
-  metadata?: Record<string, unknown>;
-  occurredAt: string; // ISO 8601
-}
-
-/**
- * Push governance evidence to Strix Platform API.
- *
- * - Non-blocking (fire-and-forget in caller)
- * - Fail-open (catch silently — local evidence is source of truth)
- * - 3s timeout via AbortController
- * - HMAC-SHA256 signature for payload integrity
- */
-export async function pushEvidenceToStrix(records: EvidencePushRecord[]): Promise<void> {
-  const platformUrl = process.env.STRIX_PLATFORM_API_URL;
-  const apiKey = process.env.STRIX_API_KEY;
-  const tenantId = process.env.STRIX_TENANT_ID;
-
-  if (!platformUrl || !apiKey || !tenantId) return;
-
-  // Don't push if circuit breaker is open (avoid piling onto a dead endpoint)
-  if (isCircuitOpen()) return;
-
-  const body = JSON.stringify({
-    tenantId,
-    sourceApp: 'academy-platform',
-    records,
-  });
-
-  const timestamp = String(Date.now());
-
-  // HMAC signature: HMAC-SHA256(timestamp.body, secret)
-  const { createHmac } = await import('crypto');
-  const internalToken = process.env.STRIX_INTERNAL_TOKEN ?? apiKey;
-  const signature = createHmac('sha256', internalToken)
-    .update(`${timestamp}.${body}`)
-    .digest('hex');
+  externalDecisionId?: string | null;
+  metadata?: Record<string, unknown> | null;
+}): Promise<void> {
+  if (!PLATFORM_API_URL || !INTERNAL_TOKEN) return;
 
   try {
-    await fetchWithTimeout(`${platformUrl}/api/evidence/ingest`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Strix-Auth': apiKey,
-        'X-Strix-Signature': signature,
-        'X-Strix-Timestamp': timestamp,
-      },
-      body,
+    const { createHmac } = await import("crypto");
+
+    const payload = JSON.stringify({
+      records: [
+        {
+          tenantId: process.env.STRIX_TENANT_ID ?? "academy",
+          capabilityId: evidence.capabilityId,
+          actorId: evidence.actorId,
+          actorRole: evidence.actorRole,
+          actorEmail: evidence.actorEmail ?? undefined,
+          decision: evidence.action,
+          reason: evidence.reason ?? undefined,
+          source: evidence.source,
+          evidenceHash: evidence.evidenceHash,
+          externalDecisionId: evidence.externalDecisionId ?? undefined,
+          metadata: evidence.metadata ?? undefined,
+          timestamp: new Date().toISOString(),
+        },
+      ],
     });
-    // Don't call recordSuccess() — this is a different endpoint than the SDK
-  } catch {
-    // Fire-and-forget — local evidence is the source of truth
-    logger.warn('[strix] Evidence push to Platform API failed (non-blocking)');
+
+    const signature = createHmac("sha256", INTERNAL_TOKEN)
+      .update(payload)
+      .digest("hex");
+
+    await fetchWithTimeout(`${PLATFORM_API_URL}/api/evidence/ingest`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${INTERNAL_TOKEN}`,
+        "X-Signature": signature,
+      },
+      body: payload,
+    });
+  } catch (err) {
+    // Fire-and-forget — never block the mutation
+    logger.warn("[strix] Evidence push to Platform API failed:", err);
   }
 }
