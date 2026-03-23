@@ -19,7 +19,7 @@
     "ably": "^2.21.0",
     "date-fns": "^4.1.0",
     "expo": "~54.0.33",
-    "expo-auth-session": "^7.0.10",
+    "expo-auth-session": "^55.0.9",
     "expo-av": "^16.0.8",
     "expo-build-properties": "^55.0.9",
     "expo-calendar": "^55.0.9",
