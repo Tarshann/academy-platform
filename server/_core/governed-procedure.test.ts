@@ -59,10 +59,12 @@ vi.mock("./trpc", () => ({
 const mockEvaluate = vi.fn();
 const mockIsCircuitOpen = vi.fn().mockReturnValue(false);
 const mockGetStrixClient = vi.fn().mockReturnValue(null);
+const mockIsStrixConfigured = vi.fn().mockReturnValue(true);
 
 vi.mock("./strix", () => ({
   getStrixClient: (...args: any[]) => mockGetStrixClient(...args),
   isStrixCircuitOpen: (...args: any[]) => mockIsCircuitOpen(...args),
+  isStrixConfigured: (...args: any[]) => mockIsStrixConfigured(...args),
 }));
 
 beforeEach(() => {
@@ -71,6 +73,7 @@ beforeEach(() => {
   mockNext.mockResolvedValue({ ok: true });
   mockGetStrixClient.mockReturnValue(null);
   mockIsCircuitOpen.mockReturnValue(false);
+  mockIsStrixConfigured.mockReturnValue(true);
 });
 
 // ---- Helper: Invoke the governed middleware directly ----
@@ -120,6 +123,7 @@ async function invokeGovernedMiddleware(
     vi.doMock("./strix", () => ({
       getStrixClient: (...args: any[]) => mockGetStrixClient(...args),
       isStrixCircuitOpen: (...args: any[]) => mockIsCircuitOpen(...args),
+      isStrixConfigured: (...args: any[]) => mockIsStrixConfigured(...args),
     }));
 
     const mod = await import("./governed-procedure");
@@ -448,6 +452,7 @@ describe("governedProcedure", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: mockGetStrixClient,
       isStrixCircuitOpen: mockIsCircuitOpen,
+      isStrixConfigured: mockIsStrixConfigured,
     }));
 
     const mod = await import("./governed-procedure");
@@ -614,6 +619,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: mockGetStrixClient,
       isStrixCircuitOpen: mockIsCircuitOpen,
+      isStrixConfigured: mockIsStrixConfigured,
     }));
 
     // Ensure governance is disabled
@@ -650,6 +656,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: mockGetStrixClient,
       isStrixCircuitOpen: mockIsCircuitOpen,
+      isStrixConfigured: mockIsStrixConfigured,
     }));
 
     const origEnabled = process.env.STRIX_GOVERNANCE_ENABLED;
@@ -691,6 +698,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: mockGetStrixClient,
       isStrixCircuitOpen: mockIsCircuitOpen,
+      isStrixConfigured: mockIsStrixConfigured,
     }));
 
     const origEnabled = process.env.STRIX_GOVERNANCE_ENABLED;
@@ -740,6 +748,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: (...args: any[]) => mockGetStrixClient(...args),
       isStrixCircuitOpen: (...args: any[]) => mockIsCircuitOpen(...args),
+      isStrixConfigured: (...args: any[]) => mockIsStrixConfigured(...args),
     }));
 
     const origEnabled = process.env.STRIX_GOVERNANCE_ENABLED;
@@ -782,6 +791,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: (...args: any[]) => mockGetStrixClient(...args),
       isStrixCircuitOpen: (...args: any[]) => mockIsCircuitOpen(...args),
+      isStrixConfigured: (...args: any[]) => mockIsStrixConfigured(...args),
     }));
 
     const origEnabled = process.env.STRIX_GOVERNANCE_ENABLED;
@@ -817,6 +827,7 @@ describe("evaluateCronGovernance", () => {
     vi.doMock("./strix", () => ({
       getStrixClient: mockGetStrixClient,
       isStrixCircuitOpen: mockIsCircuitOpen,
+      isStrixConfigured: mockIsStrixConfigured,
     }));
 
     const origEnabled = process.env.STRIX_GOVERNANCE_ENABLED;
