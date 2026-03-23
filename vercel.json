@@ -98,7 +98,7 @@
     { "path": "/api/cron/reengagement", "schedule": "0 15 * * 1" },
     { "path": "/api/cron/parent-digest", "schedule": "0 18 * * 5" },
     { "path": "/api/cron/post-session-content", "schedule": "0 1 * * 2,4,0" },
-    { "path": "/api/cron/ai-smart-notifications", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/ai-smart-notifications", "schedule": "0 3 * * *" },
     { "path": "/api/cron/ai-gallery-capture", "schedule": "0 3 * * *" },
     { "path": "/api/cron/ai-showcase-generator", "schedule": "0 1 * * 1" },
     { "path": "/api/cron/ai-content-autopublish", "schedule": "0 14 * * *" },
