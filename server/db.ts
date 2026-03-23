@@ -2202,8 +2202,13 @@ export async function getAthleteMetrics(athleteId: number) {
       .from(athleteMetrics)
       .where(eq(athleteMetrics.athleteId, athleteId))
       .orderBy(desc(athleteMetrics.sessionDate));
-  } catch (err) {
-    logger.error("[metrics] getAthleteMetrics failed:", err);
+  } catch (err: any) {
+    logger.error("[metrics] getAthleteMetrics failed:", {
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack,
+      athleteId,
+    });
     return [];
   }
 }
@@ -2231,8 +2236,12 @@ export async function getAllMetricsAdmin() {
       .select()
       .from(athleteMetrics)
       .orderBy(desc(athleteMetrics.createdAt));
-  } catch (err) {
-    logger.error("[metrics] getAllMetricsAdmin failed:", err);
+  } catch (err: any) {
+    logger.error("[metrics] getAllMetricsAdmin failed:", {
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack,
+    });
     return [];
   }
 }
@@ -2281,8 +2290,12 @@ export async function getActiveShowcases() {
         )
       )
       .orderBy(desc(athleteShowcases.featuredFrom));
-  } catch (err) {
-    logger.error("[showcases] getActiveShowcases failed:", err);
+  } catch (err: any) {
+    logger.error("[showcases] getActiveShowcases failed:", {
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack,
+    });
     return [];
   }
 }
@@ -2333,8 +2346,12 @@ export async function getUpcomingDrops() {
       .from(merchDrops)
       .where(eq(merchDrops.isSent, false))
       .orderBy(asc(merchDrops.scheduledAt));
-  } catch (err) {
-    logger.error("[merchDrops] getUpcomingDrops failed:", err);
+  } catch (err: any) {
+    logger.error("[merchDrops] getUpcomingDrops failed:", {
+      message: err?.message,
+      code: err?.code,
+      stack: err?.stack,
+    });
     return [];
   }
 }

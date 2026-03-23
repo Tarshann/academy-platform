@@ -1,33 +1,166 @@
 {
   "version": "7",
-  "dialect": "mysql",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
       "version": "5",
       "when": 1770139964874,
-      "tag": "0000_next_miek",
+      "tag": "0000_majestic_celestials",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "5",
-      "when": 1770145247062,
-      "tag": "0001_many_nico_minoru",
+      "when": 1770300000000,
+      "tag": "0008_stripe_webhook_events",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "5",
-      "when": 1770150648458,
-      "tag": "0002_clean_tag",
+      "when": 1770400000000,
+      "tag": "0009_add_device_id_to_push_subscriptions",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "5",
-      "when": 1770152589905,
-      "tag": "0003_yielding_leper_queen",
+      "when": 1770500000000,
+      "tag": "0010_add_imageUrl_to_dmMessages",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1770600000000,
+      "tag": "0011_add_dm_tables_postgresql",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1770600100000,
+      "tag": "0011_add_skills_lab_program",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1770700000000,
+      "tag": "0012_remove_duplicate_skills_lab",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1770800000000,
+      "tag": "0013_add_games_metrics_showcases_drops_social",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1770900000000,
+      "tag": "0014_push_subscription_unique_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1771000000000,
+      "tag": "0015_social_sort_drops_engagement",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1771100000000,
+      "tag": "0016_audit_family_waitlist_referral_onboarding_rbac",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1771200000000,
+      "tag": "0017_gallery_viewcount",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1771300000000,
+      "tag": "0018_seed_basketball_trivia",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1771400000000,
+      "tag": "0019_automation_infrastructure",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1771500000000,
+      "tag": "0020_governance_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1771500100000,
+      "tag": "0020_vision_capture",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1771600000000,
+      "tag": "0021_governance_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1771700000000,
+      "tag": "0022_add_performance_indexes",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1771700100000,
+      "tag": "0022_evidence_hash",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1771800000000,
+      "tag": "0023_gallery_media_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1771900000000,
+      "tag": "0024_seed_ncaa_march_madness_2026_trivia",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1772000000000,
+      "tag": "0025_chat_p1_reactions_unread_prefs",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1772100000000,
+      "tag": "0026_ensure_core_tables",
       "breakpoints": true
     }
   ]
