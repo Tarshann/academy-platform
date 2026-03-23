@@ -24,7 +24,7 @@
     "expo-build-properties": "^55.0.9",
     "expo-calendar": "^55.0.9",
     "expo-clipboard": "^55.0.9",
-    "expo-constants": "^18.0.13",
+    "expo-constants": "^55.0.9",
     "expo-device": "^8.0.10",
     "expo-file-system": "~19.0.17",
     "expo-font": "^55.0.4",
