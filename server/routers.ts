@@ -5,7 +5,7 @@ import { ENV } from "./_core/env";
 import { buildCheckoutUrl, resolveCheckoutOrigin } from "./_core/checkout";
 import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, publicQueryProcedure, publicMutationProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import {
   getAllPrograms,
@@ -115,9 +115,6 @@ import { governedProcedure } from "./_core/governed-procedure";
 import { governanceRouter } from "./governance-router";
 import { invokeLLM } from "./_core/llm";
 import { sendEmail } from "./email";
-
-// Feed table existence cache — probed once per cold start, avoids per-request queries
-const _feedTableCache = { hasRecaps: false, hasMilestones: false, checkedAt: 0 };
 
 // Simple in-memory rate limiter for tRPC public mutations
 const publicMutationRateStore: Record<string, { count: number; resetTime: number }> = {};
@@ -331,7 +328,7 @@ export const appRouter = router({
   governance: governanceRouter,
 
   auth: router({
-    me: publicQueryProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(opts => opts.ctx.user),
     chatToken: protectedProcedure.query(async ({ ctx }) => {
       const appId = ctx.user.loginMethod || ENV.appId || "app";
       const token = await sdk.signSession(
@@ -380,10 +377,10 @@ export const appRouter = router({
   }),
 
   programs: router({
-    list: publicQueryProcedure.query(async () => {
+    list: publicProcedure.query(async () => {
       return await getAllPrograms();
     }),
-    getBySlug: publicQueryProcedure
+    getBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))
       .query(async ({ input }) => {
         return await getProgramBySlug(input.slug);
@@ -461,7 +458,7 @@ export const appRouter = router({
   }),
   // Lead capture — public endpoint for the marketing site (academytn.com)
   leads: router({
-    submit: publicMutationProcedure
+    submit: publicProcedure
       .input(
         z.object({
           name: z.string().max(200).optional(),
@@ -533,7 +530,7 @@ export const appRouter = router({
     }),
 
     // Unsubscribe a lead from nurture emails
-    unsubscribe: publicMutationProcedure
+    unsubscribe: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
         const { getDb } = await import("./db");
@@ -559,7 +556,7 @@ export const appRouter = router({
   }),
 
   contact: router({
-    submit: publicMutationProcedure
+    submit: publicProcedure
       .input(
         z.object({
           name: z.string().min(1).max(200),
@@ -1055,300 +1052,170 @@ export const appRouter = router({
       }),
   }),
 
-  // ========================================================================
-  // CHAT ENHANCEMENTS (P1 Bundle — Reactions, Unread, Room Prefs, Search)
-  // ========================================================================
+  // ─── P1 Chat Enhancements: Reactions, Unread, Notifications, Search ───
   chatEnhanced: router({
-    // --- Emoji Reactions ---
     addReaction: protectedProcedure
-      .input(z.object({
-        messageId: z.number().int().positive(),
-        emoji: z.string().min(1).max(32),
-      }))
+      .input(z.object({ messageId: z.number(), emoji: z.string().max(32) }))
       .mutation(async ({ ctx, input }) => {
+        const { db: database } = await import("./db");
+        const { chatMessageReactions } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
         try {
-          const { chatMessageReactions } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { and, eq } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          // Upsert: insert or ignore if duplicate (unique index handles this)
-          await db.insert(chatMessageReactions).values({
+          await database.insert(chatMessageReactions).values({
             messageId: input.messageId,
-            userId: ctx.user.id,
+            userId,
             emoji: input.emoji,
           }).onConflictDoNothing();
-
-          // Get updated reactions for this message
-          const reactions = await db.select().from(chatMessageReactions)
-            .where(eq(chatMessageReactions.messageId, input.messageId));
-
-          // Broadcast reaction update via SSE + Ably
-          const reactionData = { messageId: input.messageId, reactions, userId: ctx.user.id, emoji: input.emoji, action: "add" };
-          try {
-            const { broadcastToRoom } = await import("./chat-sse");
-            // We need the room — get it from the message
-            const { chatMessages } = await import("../drizzle/schema");
-            const [msg] = await db.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
-            if (msg?.room) {
-              broadcastToRoom(msg.room, "reaction_update", reactionData);
-              try {
-                const { publishChatMessage } = await import("./ably");
-                // Publish reaction event to Ably for mobile
-                const ably = await import("./ably");
-                if ((ably as any).publishToChannel) {
-                  await (ably as any).publishToChannel(`chat:${msg.room}`, "reaction_update", reactionData);
-                }
-              } catch { /* Ably not configured */ }
-            }
-          } catch (e) { logger.error("[Chat] Reaction broadcast failed:", e); }
-
-          return { success: true, reactions };
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.addReaction] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to add reaction" });
+        } catch (err: unknown) {
+          if (err instanceof Error && err.message.includes("duplicate")) return { success: true };
+          throw err;
         }
+        try {
+          const { broadcastToRoom } = await import("./chat-sse");
+          const { chatMessages } = await import("../drizzle/schema");
+          const [msg] = await database.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
+          if (msg?.room) {
+            broadcastToRoom(msg.room, "reaction_update", { messageId: input.messageId, userId, emoji: input.emoji, action: "add" });
+          }
+        } catch { /* SSE broadcast is best-effort */ }
+        return { success: true };
       }),
 
     removeReaction: protectedProcedure
-      .input(z.object({
-        messageId: z.number().int().positive(),
-        emoji: z.string().min(1).max(32),
-      }))
+      .input(z.object({ messageId: z.number(), emoji: z.string().max(32) }))
       .mutation(async ({ ctx, input }) => {
+        const { db: database } = await import("./db");
+        const { chatMessageReactions } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
+        await database.delete(chatMessageReactions).where(
+          and(
+            eq(chatMessageReactions.messageId, input.messageId),
+            eq(chatMessageReactions.userId, userId),
+            eq(chatMessageReactions.emoji, input.emoji),
+          )
+        );
         try {
-          const { chatMessageReactions } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { and, eq } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          await db.delete(chatMessageReactions).where(
-            and(
-              eq(chatMessageReactions.messageId, input.messageId),
-              eq(chatMessageReactions.userId, ctx.user.id),
-              eq(chatMessageReactions.emoji, input.emoji),
-            )
-          );
-
-          const reactions = await db.select().from(chatMessageReactions)
-            .where(eq(chatMessageReactions.messageId, input.messageId));
-
-          // Broadcast reaction removal
-          try {
-            const { broadcastToRoom } = await import("./chat-sse");
-            const { chatMessages } = await import("../drizzle/schema");
-            const [msg] = await db.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
-            if (msg?.room) {
-              broadcastToRoom(msg.room, "reaction_update", { messageId: input.messageId, reactions, userId: ctx.user.id, emoji: input.emoji, action: "remove" });
-            }
-          } catch (e) { logger.error("[Chat] Reaction broadcast failed:", e); }
-
-          return { success: true, reactions };
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.removeReaction] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to remove reaction" });
-        }
+          const { broadcastToRoom } = await import("./chat-sse");
+          const { chatMessages } = await import("../drizzle/schema");
+          const [msg] = await database.select({ room: chatMessages.room }).from(chatMessages).where(eq(chatMessages.id, input.messageId)).limit(1);
+          if (msg?.room) {
+            broadcastToRoom(msg.room, "reaction_update", { messageId: input.messageId, userId, emoji: input.emoji, action: "remove" });
+          }
+        } catch { /* SSE broadcast is best-effort */ }
+        return { success: true };
       }),
 
     getReactions: protectedProcedure
-      .input(z.object({
-        messageIds: z.array(z.number().int().positive()).max(100),
-      }))
+      .input(z.object({ messageIds: z.array(z.number()).max(100) }))
       .query(async ({ input }) => {
-        try {
-          const { chatMessageReactions } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { inArray } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          if (input.messageIds.length === 0) return {};
-
-          const reactions = await db.select().from(chatMessageReactions)
-            .where(inArray(chatMessageReactions.messageId, input.messageIds));
-
-          // Group by messageId
-          const grouped: Record<number, Array<{ userId: number; emoji: string; createdAt: Date }>> = {};
-          for (const r of reactions) {
-            if (!grouped[r.messageId]) grouped[r.messageId] = [];
-            grouped[r.messageId].push({ userId: r.userId, emoji: r.emoji, createdAt: r.createdAt });
-          }
-          return grouped;
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.getReactions] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get reactions" });
+        if (input.messageIds.length === 0) return {};
+        const { db: database } = await import("./db");
+        const { chatMessageReactions } = await import("../drizzle/schema");
+        const { inArray } = await import("drizzle-orm");
+        const rows = await database.select().from(chatMessageReactions)
+          .where(inArray(chatMessageReactions.messageId, input.messageIds));
+        const grouped: Record<number, Array<{ userId: number; emoji: string; createdAt: Date }>> = {};
+        for (const r of rows) {
+          if (!grouped[r.messageId]) grouped[r.messageId] = [];
+          grouped[r.messageId].push({ userId: r.userId, emoji: r.emoji, createdAt: r.createdAt });
         }
+        return grouped;
       }),
 
-    // --- Unread Badge Tracking ---
     markRoomRead: protectedProcedure
-      .input(z.object({
-        room: z.string().min(1).max(100),
-        lastReadMessageId: z.number().int().nonnegative(),
-      }))
+      .input(z.object({ room: z.string().max(100), lastMessageId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        try {
-          const { chatRoomReadStatus } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { sql } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          // Upsert: insert or update the last-read message ID
-          await db.execute(sql`
-            INSERT INTO chat_room_read_status (user_id, room, last_read_message_id, last_read_at)
-            VALUES (${ctx.user.id}, ${input.room}, ${input.lastReadMessageId}, NOW())
-            ON CONFLICT (user_id, room)
-            DO UPDATE SET last_read_message_id = GREATEST(chat_room_read_status.last_read_message_id, ${input.lastReadMessageId}),
-                         last_read_at = NOW()
-          `);
-
-          return { success: true };
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.markRoomRead] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to mark room as read" });
-        }
+        const { db: database } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
+        await database.execute(sql`
+          INSERT INTO chat_room_read_status (user_id, room, last_read_message_id, last_read_at)
+          VALUES (${userId}, ${input.room}, ${input.lastMessageId}, NOW())
+          ON CONFLICT (user_id, room)
+          DO UPDATE SET
+            last_read_message_id = GREATEST(chat_room_read_status.last_read_message_id, ${input.lastMessageId}),
+            last_read_at = NOW()
+        `);
+        return { success: true };
       }),
 
     getUnreadCounts: protectedProcedure
       .query(async ({ ctx }) => {
-        try {
-          const { getDb } = await import("./db");
-          const { sql } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          // Get unread count per room: messages with id > last_read_message_id
-          const result = await db.execute(sql`
-            SELECT r.room, COUNT(cm.id)::int AS unread_count
-            FROM (VALUES ('general'), ('announcements'), ('parents'), ('coaches')) AS r(room)
-            LEFT JOIN chat_room_read_status crs
-              ON crs.room = r.room AND crs.user_id = ${ctx.user.id}
-            LEFT JOIN "chatMessages" cm
-              ON cm.room = r.room AND cm.id > COALESCE(crs.last_read_message_id, 0)
-            GROUP BY r.room
-          `);
-
-          const counts: Record<string, number> = {};
-          for (const row of result.rows as any[]) {
-            counts[row.room] = row.unread_count || 0;
-          }
-          return counts;
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.getUnreadCounts] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get unread counts" });
+        const { db: database } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
+        const result = await database.execute(sql`
+          SELECT
+            rooms.room,
+            COALESCE(MAX(cm.id), 0) AS latest_message_id,
+            COALESCE(rs.last_read_message_id, 0) AS last_read_id,
+            COUNT(cm.id) FILTER (WHERE cm.id > COALESCE(rs.last_read_message_id, 0)) AS unread_count
+          FROM (VALUES ('general'), ('coaches'), ('parents'), ('announcements')) AS rooms(room)
+          LEFT JOIN chat_messages cm ON cm.room = rooms.room
+          LEFT JOIN chat_room_read_status rs ON rs.user_id = ${userId} AND rs.room = rooms.room
+          GROUP BY rooms.room, rs.last_read_message_id
+        `);
+        const counts: Record<string, number> = {};
+        for (const row of result.rows as any[]) {
+          counts[row.room] = Number(row.unread_count) || 0;
         }
+        return counts;
       }),
 
-    // --- Per-Room Notification Preferences ---
     getRoomNotifPrefs: protectedProcedure
       .query(async ({ ctx }) => {
-        try {
-          const { chatRoomNotificationPrefs } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { eq } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          const prefs = await db.select().from(chatRoomNotificationPrefs)
-            .where(eq(chatRoomNotificationPrefs.userId, ctx.user.id));
-
-          const prefsMap: Record<string, string> = {};
-          for (const p of prefs) {
-            prefsMap[p.room] = p.mode;
-          }
-          // Fill defaults
-          for (const room of ["general", "announcements", "parents", "coaches"]) {
-            if (!prefsMap[room]) prefsMap[room] = "all";
-          }
-          return prefsMap;
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.getRoomNotifPrefs] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to get notification preferences" });
-        }
+        const { db: database } = await import("./db");
+        const { chatRoomNotificationPrefs } = await import("../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
+        const rows = await database.select().from(chatRoomNotificationPrefs)
+          .where(eq(chatRoomNotificationPrefs.userId, userId));
+        const prefs: Record<string, string> = {};
+        for (const r of rows) { prefs[r.room] = r.mode; }
+        return prefs;
       }),
 
     setRoomNotifPref: protectedProcedure
-      .input(z.object({
-        room: z.string().min(1).max(100),
-        mode: z.enum(["all", "mentions", "none"]),
-      }))
+      .input(z.object({ room: z.string().max(100), mode: z.enum(["all", "mentions", "none"]) }))
       .mutation(async ({ ctx, input }) => {
-        try {
-          const { getDb } = await import("./db");
-          const { sql } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          await db.execute(sql`
-            INSERT INTO chat_room_notification_prefs (user_id, room, mode, updated_at)
-            VALUES (${ctx.user.id}, ${input.room}, ${input.mode}, NOW())
-            ON CONFLICT (user_id, room)
-            DO UPDATE SET mode = ${input.mode}, updated_at = NOW()
-          `);
-
-          return { success: true };
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.setRoomNotifPref] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to set notification preference" });
-        }
+        const { db: database } = await import("./db");
+        const { sql } = await import("drizzle-orm");
+        const userId = ctx.user!.id;
+        await database.execute(sql`
+          INSERT INTO chat_room_notification_prefs (user_id, room, mode, updated_at)
+          VALUES (${userId}, ${input.room}, ${input.mode}, NOW())
+          ON CONFLICT (user_id, room)
+          DO UPDATE SET mode = ${input.mode}, updated_at = NOW()
+        `);
+        return { success: true };
       }),
 
-    // --- Room Message Search ---
     searchMessages: protectedProcedure
-      .input(z.object({
-        room: z.string().min(1).max(100).optional(),
-        query: z.string().min(1).max(200),
-        limit: z.number().int().min(1).max(50).default(20),
-      }))
+      .input(z.object({ room: z.string().max(100), query: z.string().min(1).max(200), limit: z.number().min(1).max(50).default(20) }))
       .query(async ({ input }) => {
-        try {
-          const { chatMessages } = await import("../drizzle/schema");
-          const { getDb } = await import("./db");
-          const { desc, eq, and, ilike } = await import("drizzle-orm");
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database not available" });
-
-          // Escape LIKE wildcards to prevent injection
-          const escaped = input.query.replace(/[%_\\]/g, "\\$&");
-
-          const conditions = [ilike(chatMessages.message, `%${escaped}%`)];
-          if (input.room) {
-            conditions.push(eq(chatMessages.room, input.room));
-          }
-
-          const results = await db.select().from(chatMessages)
-            .where(and(...conditions))
-            .orderBy(desc(chatMessages.createdAt))
-            .limit(input.limit);
-
-          return results;
-        } catch (error) {
-          if (error instanceof TRPCError) throw error;
-          logger.error("[chatEnhanced.searchMessages] Error:", error);
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to search messages" });
-        }
+        const { db: database } = await import("./db");
+        const { chatMessages } = await import("../drizzle/schema");
+        const { eq, and, ilike, desc } = await import("drizzle-orm");
+        const safeQuery = input.query.replace(/[%_\\]/g, (ch) => `\\${ch}`);
+        const results = await database.select().from(chatMessages)
+          .where(and(eq(chatMessages.room, input.room), ilike(chatMessages.message, `%${safeQuery}%`)))
+          .orderBy(desc(chatMessages.createdAt))
+          .limit(input.limit);
+        return results;
       }),
   }),
 
   gallery: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllGalleryPhotos } = await import("./db");
         return await getAllGalleryPhotos(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    byCategory: publicQueryProcedure
+    byCategory: publicProcedure
       .input(z.object({
         category: z.string(),
         limit: z.number().int().min(1).max(100).optional(),
@@ -1442,21 +1309,21 @@ export const appRouter = router({
 
   shop: router({
     // Public shop endpoints
-    products: publicQueryProcedure
+    products: publicProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllProducts } = await import("./db");
         return await getAllProducts(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    productById: publicQueryProcedure
+    productById: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const { getProductById } = await import("./db");
         return await getProductById(input.id);
       }),
 
-    campaigns: publicQueryProcedure.query(async () => {
+    campaigns: publicProcedure.query(async () => {
       const { getActiveCampaigns } = await import("./db");
       return await getActiveCampaigns();
     }),
@@ -1669,21 +1536,21 @@ export const appRouter = router({
   }),
 
   videos: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllVideos } = await import("./db");
         return await getAllVideos(true, input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
 
-    byId: publicQueryProcedure
+    byId: publicProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const { getVideoById } = await import("./db");
         return await getVideoById(input.id);
       }),
 
-    byCategory: publicQueryProcedure
+    byCategory: publicProcedure
       .input(z.object({
         category: z.string(),
         limit: z.number().int().min(1).max(100).optional(),
@@ -1694,7 +1561,7 @@ export const appRouter = router({
         return await getVideosByCategory(input.category, true, { limit: input.limit, offset: input.offset });
       }),
 
-    trackView: publicMutationProcedure
+    trackView: publicProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         const { incrementVideoViewCount } = await import("./db");
@@ -1781,7 +1648,7 @@ export const appRouter = router({
         return { url: session.url };
       }),
 
-    createGuestCheckout: publicMutationProcedure
+    createGuestCheckout: publicProcedure
       .input(
         z.object({
           productIds: z.array(z.string()).min(1),
@@ -1851,7 +1718,7 @@ export const appRouter = router({
       return { url: session.url };
     }),
 
-    catalog: publicQueryProcedure.query(async () => {
+    catalog: publicProcedure.query(async () => {
       const { getAllProducts } = await import("./products");
       return getAllProducts();
     }),
@@ -1981,7 +1848,7 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    submitPrivateSessionBooking: publicMutationProcedure
+    submitPrivateSessionBooking: publicProcedure
       .input(
         z.object({
           customerName: z.string().min(1),
@@ -2113,7 +1980,7 @@ export const appRouter = router({
 
   // Location management
   locations: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllLocations } = await import("./db");
@@ -2183,7 +2050,7 @@ export const appRouter = router({
 
   // Coach management
   coaches: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(paginationSchema)
       .query(async ({ input }) => {
         const { getAllCoaches } = await import("./db");
@@ -2616,7 +2483,7 @@ export const appRouter = router({
       }),
 
     // Get VAPID public key for push subscription
-    getVapidPublicKey: publicQueryProcedure.query(async () => {
+    getVapidPublicKey: publicProcedure.query(async () => {
       // Return the VAPID public key from environment
       return { publicKey: ENV.vapidPublicKey || null };
     }),
@@ -2689,7 +2556,7 @@ export const appRouter = router({
 
   // Blog routes (public)
   blog: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(
         z
           .object({
@@ -2702,7 +2569,7 @@ export const appRouter = router({
         const { getAllPublishedBlogPosts } = await import("./db");
         return await getAllPublishedBlogPosts(input ? { limit: input.limit, offset: input.offset } : undefined);
       }),
-    getBySlug: publicQueryProcedure
+    getBySlug: publicProcedure
       .input(z.object({ slug: z.string() }))
       .query(async ({ input }) => {
         const { getBlogPostBySlug } = await import("./db");
@@ -2787,7 +2654,7 @@ export const appRouter = router({
   }),
 
   feed: router({
-    list: publicQueryProcedure
+    list: publicProcedure
       .input(
         z.object({
           limit: z.number().int().min(1).max(50).optional(),
@@ -2815,21 +2682,17 @@ export const appRouter = router({
             ? sql`AND "category" = ${category}`
             : sql``;
 
-          // Check which optional tables exist — cached after first probe per cold start
-          // (tables don't appear/disappear at runtime, so one check is sufficient)
-          if (_feedTableCache.checkedAt === 0) {
-            try {
-              await db.execute(sql`SELECT 1 FROM "session_recaps" LIMIT 0`);
-              _feedTableCache.hasRecaps = true;
-            } catch { /* table doesn't exist yet */ }
-            try {
-              await db.execute(sql`SELECT 1 FROM "milestones" LIMIT 0`);
-              _feedTableCache.hasMilestones = true;
-            } catch { /* table doesn't exist yet */ }
-            _feedTableCache.checkedAt = Date.now();
-          }
-          const hasRecaps = _feedTableCache.hasRecaps;
-          const hasMilestones = _feedTableCache.hasMilestones;
+          // Check which optional tables exist (session_recaps, milestones may not be migrated yet)
+          let hasRecaps = false;
+          let hasMilestones = false;
+          try {
+            await db.execute(sql`SELECT 1 FROM "session_recaps" LIMIT 0`);
+            hasRecaps = true;
+          } catch { /* table doesn't exist yet */ }
+          try {
+            await db.execute(sql`SELECT 1 FROM "milestones" LIMIT 0`);
+            hasMilestones = true;
+          } catch { /* table doesn't exist yet */ }
 
           // Build UNION ALL query — core tables always included, optional tables only if they exist
           const recapUnion = hasRecaps ? sql`
@@ -3678,7 +3541,7 @@ export const appRouter = router({
         return referral;
       }),
 
-    validateCode: publicQueryProcedure
+    validateCode: publicProcedure
       .input(z.object({ code: z.string().max(20) }))
       .query(async ({ input }) => {
         const referral = await getReferralByCode(input.code);
@@ -4014,7 +3877,7 @@ export const appRouter = router({
           .orderBy(desc(milestones.createdAt));
       }),
 
-    recent: publicQueryProcedure
+    recent: publicProcedure
       .input(z.object({ limit: z.number().int().min(1).max(20).optional() }).optional())
       .query(async ({ input }) => {
         const limit = input?.limit ?? 10;
@@ -4067,18 +3930,23 @@ export const appRouter = router({
   // ============================================================================
 
   socialPosts: router({
-    list: publicQueryProcedure.query(async () => {
+    list: publicProcedure.query(async () => {
       try {
         return await getVisibleSocialPosts();
-      } catch (err) {
-        logger.error("[socialPosts.list] Unhandled error:", err);
+      } catch (error) {
+        logger.error("[socialPosts] list query failed:", error);
         return [];
       }
     }),
 
     admin: router({
       list: adminProcedure.query(async () => {
-        return await getAllSocialPostsAdmin();
+        try {
+          return await getAllSocialPostsAdmin();
+        } catch (error) {
+          logger.error("[socialPosts] admin list query failed:", error);
+          return [];
+        }
       }),
 
       create: governedProcedure("socialPosts.admin.create")
@@ -4093,10 +3961,15 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ ctx, input }) => {
-          return await createSocialPost({
-            ...input,
-            addedBy: ctx.user.id,
-          });
+          try {
+            return await createSocialPost({
+              ...input,
+              addedBy: ctx.user.id,
+            });
+          } catch (error) {
+            logger.error("[socialPosts] create failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create social post" });
+          }
         }),
 
       update: governedProcedure("socialPosts.admin.update")
@@ -4111,28 +3984,48 @@ export const appRouter = router({
           })
         )
         .mutation(async ({ input }) => {
-          const { id, ...data } = input;
-          return await updateSocialPost(id, data);
+          try {
+            const { id, ...data } = input;
+            return await updateSocialPost(id, data);
+          } catch (error) {
+            logger.error("[socialPosts] update failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to update social post" });
+          }
         }),
 
       toggleVisibility: governedProcedure("socialPosts.admin.toggleVisibility")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          return await toggleSocialPostVisibility(input.id);
+          try {
+            return await toggleSocialPostVisibility(input.id);
+          } catch (error) {
+            logger.error("[socialPosts] toggleVisibility failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to toggle visibility" });
+          }
         }),
 
       reorder: governedProcedure("socialPosts.admin.reorder")
         .input(z.object({ orderedIds: z.array(z.number()) }))
         .mutation(async ({ input }) => {
-          await reorderSocialPosts(input.orderedIds);
-          return { success: true };
+          try {
+            await reorderSocialPosts(input.orderedIds);
+            return { success: true };
+          } catch (error) {
+            logger.error("[socialPosts] reorder failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to reorder social posts" });
+          }
         }),
 
       delete: governedProcedure("socialPosts.admin.delete")
         .input(z.object({ id: z.number() }))
         .mutation(async ({ input }) => {
-          await deleteSocialPost(input.id);
-          return { success: true };
+          try {
+            await deleteSocialPost(input.id);
+            return { success: true };
+          } catch (error) {
+            logger.error("[socialPosts] delete failed:", error);
+            throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to delete social post" });
+          }
         }),
     }),
   }),

@@ -54,12 +54,7 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://analytics.academytn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.clerk.com https://*.clerk.accounts.dev https://api.stripe.com wss://*.ably.io https://analytics.academytn.com; frame-src https://checkout.stripe.com https://js.stripe.com; object-src 'none'; base-uri 'self'" },
-        { "key": "Cross-Origin-Embedder-Policy", "value": "credentialless" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
-        { "key": "X-Permitted-Cross-Domain-Policies", "value": "none" }
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" }
       ]
     },
     {
@@ -103,7 +98,7 @@
     { "path": "/api/cron/reengagement", "schedule": "0 15 * * 1" },
     { "path": "/api/cron/parent-digest", "schedule": "0 18 * * 5" },
     { "path": "/api/cron/post-session-content", "schedule": "0 1 * * 2,4,0" },
-    { "path": "/api/cron/ai-smart-notifications", "schedule": "0 22 * * *" },
+    { "path": "/api/cron/ai-smart-notifications", "schedule": "0 3 * * *" },
     { "path": "/api/cron/ai-gallery-capture", "schedule": "0 3 * * *" },
     { "path": "/api/cron/ai-showcase-generator", "schedule": "0 1 * * 1" },
     { "path": "/api/cron/ai-content-autopublish", "schedule": "0 14 * * *" },

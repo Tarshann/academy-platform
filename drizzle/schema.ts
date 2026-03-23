@@ -1340,29 +1340,18 @@ export const governanceEvidence = pgTable("governance_evidence", {
 export type GovernanceEvidenceRow = typeof governanceEvidence.$inferSelect;
 export type InsertGovernanceEvidence = typeof governanceEvidence.$inferInsert;
 
-// ============================================================================
-// CHAT ENHANCEMENT TABLES (P1 Bundle — Reactions, Unread, Room Prefs)
-// ============================================================================
+// ─── P1 Chat Enhancements ───
 
-/**
- * Chat message reactions — emoji reactions on room chat messages.
- * Unique constraint: one reaction per user per emoji per message.
- */
 export const chatMessageReactions = pgTable("chat_message_reactions", {
   id: serial("id").primaryKey(),
   messageId: integer("message_id").notNull(),
   userId: integer("user_id").notNull(),
-  emoji: varchar("emoji", { length: 32 }).notNull(), // Unicode emoji or shortcode
+  emoji: varchar("emoji", { length: 32 }).notNull(),
   createdAt: timestamp("created_at", { mode: 'date' }).defaultNow().notNull(),
 });
-
 export type ChatMessageReaction = typeof chatMessageReactions.$inferSelect;
 export type InsertChatMessageReaction = typeof chatMessageReactions.$inferInsert;
 
-/**
- * Chat room read status — tracks last-read message per user per room.
- * Used to calculate unread badge counts.
- */
 export const chatRoomReadStatus = pgTable("chat_room_read_status", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -1370,22 +1359,13 @@ export const chatRoomReadStatus = pgTable("chat_room_read_status", {
   lastReadMessageId: integer("last_read_message_id").notNull().default(0),
   lastReadAt: timestamp("last_read_at", { mode: 'date' }).defaultNow().notNull(),
 });
-
 export type ChatRoomReadStatus = typeof chatRoomReadStatus.$inferSelect;
-export type InsertChatRoomReadStatus = typeof chatRoomReadStatus.$inferInsert;
 
-/**
- * Chat room notification preferences — per-user, per-room notification settings.
- * Overrides the global notificationSettings for specific rooms.
- * mode: "all" | "mentions" | "none"
- */
 export const chatRoomNotificationPrefs = pgTable("chat_room_notification_prefs", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   room: varchar("room", { length: 100 }).notNull(),
-  mode: varchar("mode", { length: 20 }).notNull().default("all"), // "all" | "mentions" | "none"
+  mode: varchar("mode", { length: 20 }).notNull().default("all"),
   updatedAt: timestamp("updated_at", { mode: 'date' }).defaultNow().notNull(),
 });
-
 export type ChatRoomNotificationPref = typeof chatRoomNotificationPrefs.$inferSelect;
-export type InsertChatRoomNotificationPref = typeof chatRoomNotificationPrefs.$inferInsert;

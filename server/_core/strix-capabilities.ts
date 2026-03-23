@@ -38,8 +38,6 @@ export interface Capability {
   risk: "critical" | "high" | "medium" | "low";
   approvalsRequired: number;
   description: string;
-  /** Pre-registered capabilities not yet wired to any cron/mutation code */
-  preRegistered?: boolean;
 }
 
 export const CAPABILITIES: Capability[] = [
@@ -195,12 +193,12 @@ export const CAPABILITIES: Capability[] = [
   // ---- AI AGENT ACTIONS ----
   { id: "ai.generateNotification", label: "AI: Generate Notification", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a personalized push notification for a member based on behavior signals" },
   { id: "ai.sendBulkNotifications", label: "AI: Send Bulk Notifications", domain: "ai", risk: "critical", approvalsRequired: 2, description: "AI sends batch push notifications to multiple members — requires owner authorization" },
-  { id: "ai.generateSessionRecap", label: "AI: Generate Session Recap", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a session recap from attendance and session data", preRegistered: true },
-  { id: "ai.generateSocialCaption", label: "AI: Generate Social Caption", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates social media caption for session photos", preRegistered: true },
-  { id: "ai.generateProgressInsight", label: "AI: Generate Progress Insight", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI analyzes athlete metrics trends and generates insight text", preRegistered: true },
+  { id: "ai.generateSessionRecap", label: "AI: Generate Session Recap", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates a session recap from attendance and session data" },
+  { id: "ai.generateSocialCaption", label: "AI: Generate Social Caption", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates social media caption for session photos" },
+  { id: "ai.generateProgressInsight", label: "AI: Generate Progress Insight", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI analyzes athlete metrics trends and generates insight text" },
   { id: "ai.publishContent", label: "AI: Auto-Publish Content", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI publishes generated content to feed without manual review" },
-  { id: "ai.personalizeRecommendation", label: "AI: Personalize Recommendation", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI generates personalized training or program recommendation for a member", preRegistered: true },
-  { id: "ai.flagMetricAnomaly", label: "AI: Flag Metric Anomaly", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI detects concerning metric trend and flags for coach/parent review", preRegistered: true },
+  { id: "ai.personalizeRecommendation", label: "AI: Personalize Recommendation", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI generates personalized training or program recommendation for a member" },
+  { id: "ai.flagMetricAnomaly", label: "AI: Flag Metric Anomaly", domain: "ai", risk: "high", approvalsRequired: 1, description: "AI detects concerning metric trend and flags for coach/parent review" },
   { id: "ai.classifyMedia", label: "AI: Classify Media", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI evaluates whether a chat image is gallery-worthy" },
   { id: "ai.generateShowcase", label: "AI: Generate Showcase", domain: "ai", risk: "medium", approvalsRequired: 0, description: "AI generates athlete of the week showcase content from metrics and attendance data" },
   { id: "ai.generateAnnouncement", label: "AI: Generate Announcement Draft", domain: "ai", risk: "low", approvalsRequired: 0, description: "AI drafts an announcement from a platform event (not auto-published)" },
@@ -218,12 +216,4 @@ export function getCapabilitiesByDomain(domain: string): Capability[] {
 }
 export function getCapabilitiesByRisk(risk: Capability["risk"]): Capability[] {
   return CAPABILITIES.filter((c) => c.risk === risk);
-}
-/** Capabilities actively wired to mutations/crons (excludes pre-registered stubs) */
-export function getActiveCapabilities(): Capability[] {
-  return CAPABILITIES.filter((c) => !c.preRegistered);
-}
-/** Pre-registered capabilities awaiting future wiring */
-export function getPreRegisteredCapabilities(): Capability[] {
-  return CAPABILITIES.filter((c) => c.preRegistered === true);
 }

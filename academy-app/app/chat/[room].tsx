@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   FlatList,
@@ -11,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { trpc } from '../../lib/trpc';
 import { getAblyClient, subscribeToChatRoom, subscribeToTyping } from '../../lib/realtime';
 import { MessageBubble } from '../../components/MessageBubble';
@@ -25,6 +24,7 @@ import {
 } from '../../lib/chat-images';
 import { trackMessageSent } from '../../lib/rating-prompt';
 import { colors } from '../../lib/theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -34,6 +34,12 @@ const ROOM_TITLES: Record<string, string> = {
   parents: '#Parents',
   announcements: '#Announcements',
 };
+
+const NOTIF_OPTIONS = [
+  { mode: 'all' as const, label: 'All messages' },
+  { mode: 'mentions' as const, label: 'Mentions only' },
+  { mode: 'none' as const, label: 'Muted' },
+];
 
 interface ChatMessage {
   id?: number;
@@ -46,9 +52,16 @@ interface ChatMessage {
   createdAt: string;
 }
 
-interface Reaction {
+interface RawReaction {
   userId: number;
   emoji: string;
+  createdAt: Date;
+}
+
+interface ReactionGroup {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
 }
 
 export default function ChatRoomScreen() {
@@ -61,7 +74,7 @@ export default function ChatRoomScreen() {
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [connected, setConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<{ userId: number; name: string }[]>([]);
-  const [messageReactions, setMessageReactions] = useState<Record<number, Reaction[]>>({});
+  const [rawReactions, setRawReactions] = useState<Record<number, RawReaction[]>>({});
   const flatListRef = useRef<FlatList>(null);
   const typingRef = useRef<{ enter: (data: any) => void; leave: () => void; unsubscribe: () => void } | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,25 +86,142 @@ export default function ChatRoomScreen() {
   // Get user info for identifying own messages
   const meQuery = trpc.auth.me.useQuery();
 
-  // Reactions mutations
-  const addReactionMutation = trpc.chatEnhanced.addReaction.useMutation();
-  const removeReactionMutation = trpc.chatEnhanced.removeReaction.useMutation();
-  const getReactionsMutation = trpc.chatEnhanced.getReactions.useQuery(
-    { messageIds: messages.filter((m) => m.id).map((m) => m.id!) },
-    { enabled: messages.length > 0 }
+  const myUserId = meQuery.data?.id;
+
+  // ─── Chat Enhancement Queries ───
+  const utils = trpc.useUtils();
+  const markRoomReadMut = trpc.chatEnhanced.markRoomRead.useMutation();
+  const addReactionMut = trpc.chatEnhanced.addReaction.useMutation();
+  const removeReactionMut = trpc.chatEnhanced.removeReaction.useMutation();
+  const setNotifPrefMut = trpc.chatEnhanced.setRoomNotifPref.useMutation();
+
+  // Notification preferences
+  const notifPrefsQuery = trpc.chatEnhanced.getRoomNotifPrefs.useQuery();
+  const currentNotifMode = notifPrefsQuery.data?.[room!] ?? 'all';
+
+  // Mark room as read when messages load or new ones arrive
+  const markRead = useCallback(() => {
+    if (!messages.length || !room) return;
+    const lastMsg = messages[messages.length - 1];
+    if (lastMsg?.id) {
+      markRoomReadMut.mutate(
+        { room, lastMessageId: lastMsg.id },
+        {
+          onSuccess: () => {
+            utils.chatEnhanced.getUnreadCounts.invalidate();
+          },
+        }
+      );
+    }
+  }, [messages, room]);
+
+  useEffect(() => {
+    if (!isLoading && messages.length > 0) {
+      markRead();
+    }
+  }, [messages.length, isLoading]);
+
+  // Fetch reactions for visible messages
+  const messageIds = useMemo(
+    () => messages.filter((m) => m.id).map((m) => m.id!),
+    [messages]
   );
 
-  // Mark room as read mutation
-  const markRoomReadMutation = trpc.chatEnhanced.markRoomRead.useMutation();
+  const reactionsQuery = trpc.chatEnhanced.getReactions.useQuery(
+    { messageIds },
+    { enabled: messageIds.length > 0, staleTime: 15000 }
+  );
 
-  // Room notification preferences
-  const getRoomNotifPrefQuery = trpc.chatEnhanced.getRoomNotifPrefs.useQuery({ room: room! }, { enabled: !!room });
-  const setRoomNotifPrefMutation = trpc.chatEnhanced.setRoomNotifPref.useMutation();
+  useEffect(() => {
+    if (reactionsQuery.data) {
+      setRawReactions((prev) => ({ ...prev, ...reactionsQuery.data }));
+    }
+  }, [reactionsQuery.data]);
 
-  const myUserId = meQuery.data?.id;
-  const currentNotifPref = getRoomNotifPrefQuery.data?.[room!] || 'all';
+  const groupReactions = useCallback(
+    (messageId: number): ReactionGroup[] => {
+      const raw = rawReactions[messageId];
+      if (!raw || raw.length === 0) return [];
+      const grouped: Record<string, { count: number; userReacted: boolean }> = {};
+      for (const r of raw) {
+        if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, userReacted: false };
+        grouped[r.emoji].count++;
+        if (r.userId === myUserId) grouped[r.emoji].userReacted = true;
+      }
+      return Object.entries(grouped).map(([emoji, data]) => ({
+        emoji,
+        count: data.count,
+        userReacted: data.userReacted,
+      }));
+    },
+    [rawReactions, myUserId]
+  );
 
-  // Load message history using the chat token (same token type the server expects)
+  const handleAddReaction = useCallback(
+    (messageId: number, emoji: string) => {
+      if (!myUserId || !messageId) return;
+      setRawReactions((prev) => {
+        const existing = prev[messageId] ?? [];
+        if (existing.some((r) => r.userId === myUserId && r.emoji === emoji)) return prev;
+        return { ...prev, [messageId]: [...existing, { userId: myUserId, emoji, createdAt: new Date() }] };
+      });
+      addReactionMut.mutate(
+        { messageId, emoji },
+        {
+          onError: () => {
+            setRawReactions((prev) => ({
+              ...prev,
+              [messageId]: (prev[messageId] ?? []).filter((r) => !(r.userId === myUserId && r.emoji === emoji)),
+            }));
+          },
+        }
+      );
+    },
+    [myUserId]
+  );
+
+  const handleRemoveReaction = useCallback(
+    (messageId: number, emoji: string) => {
+      if (!myUserId || !messageId) return;
+      const removed = rawReactions[messageId]?.find((r) => r.userId === myUserId && r.emoji === emoji);
+      setRawReactions((prev) => ({
+        ...prev,
+        [messageId]: (prev[messageId] ?? []).filter((r) => !(r.userId === myUserId && r.emoji === emoji)),
+      }));
+      removeReactionMut.mutate(
+        { messageId, emoji },
+        {
+          onError: () => {
+            if (removed) {
+              setRawReactions((prev) => ({ ...prev, [messageId]: [...(prev[messageId] ?? []), removed] }));
+            }
+          },
+        }
+      );
+    },
+    [myUserId, rawReactions]
+  );
+
+  const handleNotifPref = useCallback(() => {
+    Alert.alert(
+      'Notification Preferences',
+      `Currently: ${currentNotifMode === 'all' ? 'All messages' : currentNotifMode === 'mentions' ? 'Mentions only' : 'Muted'}`,
+      NOTIF_OPTIONS.map((opt) => ({
+        text: opt.label,
+        onPress: () => {
+          setNotifPrefMut.mutate(
+            { room: room!, mode: opt.mode },
+            {
+              onSuccess: () => { notifPrefsQuery.refetch(); },
+              onError: () => { Alert.alert('Error', 'Failed to update preference'); },
+            }
+          );
+        },
+      }))
+    );
+  }, [room, currentNotifMode]);
+
+  // Load message history using the chat token
   const loadHistory = useCallback(async (token?: string) => {
     const chatToken = token || chatTokenQuery.data?.token;
     if (!chatToken) return;
@@ -102,31 +232,13 @@ export default function ChatRoomScreen() {
       if (response.ok) {
         const history = await response.json();
         setMessages(history);
-
-        // Mark room as read with the last message ID
-        if (history.length > 0) {
-          const lastMessage = history[history.length - 1];
-          if (lastMessage.id) {
-            markRoomReadMutation.mutate(
-              { room: room!, lastMessageId: lastMessage.id },
-              { onError: (err) => console.error('[Chat] Failed to mark read:', err) }
-            );
-          }
-        }
       }
     } catch (error) {
       console.error('[Chat] Failed to load history:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [room, chatTokenQuery.data?.token, markRoomReadMutation]);
-
-  // Update reactions when getReactionsMutation data changes
-  useEffect(() => {
-    if (getReactionsMutation.data) {
-      setMessageReactions(getReactionsMutation.data);
-    }
-  }, [getReactionsMutation.data]);
+  }, [room, chatTokenQuery.data?.token]);
 
   // Initialize: load history + connect Ably
   useEffect(() => {
@@ -147,21 +259,11 @@ export default function ChatRoomScreen() {
 
       const unsubscribe = subscribeToChatRoom(client, room!, (msg: ChatMessage) => {
         setMessages((prev) => {
-          // Deduplicate
           if (msg.id && prev.some((m) => m.id === msg.id)) return prev;
-          const updated = [...prev, msg];
-          // Mark room as read with the new message ID
-          if (msg.id) {
-            markRoomReadMutation.mutate(
-              { room: room!, lastMessageId: msg.id },
-              { onError: (err) => console.error('[Chat] Failed to mark read:', err) }
-            );
-          }
-          return updated;
+          return [...prev, msg];
         });
       });
 
-      // Subscribe to typing presence
       const typing = subscribeToTyping(
         client,
         `chat:${room}`,
@@ -174,10 +276,34 @@ export default function ChatRoomScreen() {
         typing.unsubscribe();
         // Don't call closeAbly() — it destroys the global singleton which
         // breaks Ably for other screens (chat tab, DM conversations).
-        // Just unsubscribe from this room's channel.
       };
     }
-  }, [room, ablyTokenQuery.data, chatTokenQuery.data?.token, loadHistory, markRoomReadMutation]);
+  }, [room, ablyTokenQuery.data, chatTokenQuery.data?.token, loadHistory]);
+
+  // Listen for reaction_update events from Ably
+  useEffect(() => {
+    if (!ablyTokenQuery.data) return;
+    const client = getAblyClient(async () => ablyTokenQuery.data as any);
+    const channel = client.channels.get(`chat:${room}`);
+
+    const handleReactionUpdate = (msg: any) => {
+      const data = msg.data;
+      if (!data?.messageId || !data?.emoji || !data?.userId) return;
+      setRawReactions((prev) => {
+        const existing = prev[data.messageId] ?? [];
+        if (data.action === 'add') {
+          if (existing.some((r: RawReaction) => r.userId === data.userId && r.emoji === data.emoji)) return prev;
+          return { ...prev, [data.messageId]: [...existing, { userId: data.userId, emoji: data.emoji, createdAt: new Date() }] };
+        } else if (data.action === 'remove') {
+          return { ...prev, [data.messageId]: existing.filter((r: RawReaction) => !(r.userId === data.userId && r.emoji === data.emoji)) };
+        }
+        return prev;
+      });
+    };
+
+    channel.subscribe('reaction_update', handleReactionUpdate);
+    return () => { channel.unsubscribe('reaction_update', handleReactionUpdate); };
+  }, [room, ablyTokenQuery.data]);
 
   // Send text message via REST (server will publish to Ably)
   const handleSend = async (text: string) => {
@@ -226,21 +352,19 @@ export default function ChatRoomScreen() {
     setUploadProgress(null);
 
     try {
-      // Upload image
       const result = await uploadChatImage(
         uri,
         chatTokenQuery.data.token,
         (progress) => setUploadProgress(progress)
       );
 
-      // Send message with image URL
       const response = await fetch(`${API_URL}/api/chat/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: chatTokenQuery.data.token,
           room,
-          message: ' ', // Minimal message (required by server)
+          message: ' ',
           imageUrl: result.url,
           imageKey: result.key,
         }),
@@ -283,44 +407,11 @@ export default function ChatRoomScreen() {
     }
   };
 
-  const handleNotificationPrefPress = () => {
-    Alert.alert(
-      'Notifications',
-      'Choose notification preference for this channel',
-      [
-        {
-          text: 'All messages',
-          onPress: () => {
-            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'all' });
-          },
-        },
-        {
-          text: 'Mentions only',
-          onPress: () => {
-            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'mentions' });
-          },
-        },
-        {
-          text: 'None',
-          onPress: () => {
-            setRoomNotifPrefMutation.mutate({ room: room!, mode: 'none' });
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
-  const getBellIcon = (): keyof typeof Ionicons.glyphMap => {
-    switch (currentNotifPref) {
-      case 'none':
-        return 'bell-off-outline';
-      case 'mentions':
-        return 'notifications-outline';
-      default:
-        return 'bell-outline';
-    }
-  };
+  const bellIconName = currentNotifMode === 'none'
+    ? 'notifications-off-outline'
+    : currentNotifMode === 'mentions'
+    ? 'notifications-outline'
+    : 'notifications';
 
   if (isLoading) {
     return (
@@ -357,16 +448,12 @@ export default function ChatRoomScreen() {
           headerRight: () => (
             <View style={styles.headerRight}>
               <TouchableOpacity
-                onPress={handleNotificationPrefPress}
-                style={styles.bellButton}
+                onPress={handleNotifPref}
+                style={styles.headerButton}
                 accessibilityLabel="Notification preferences"
                 accessibilityRole="button"
               >
-                <Ionicons
-                  name={getBellIcon()}
-                  size={20}
-                  color={colors.gold}
-                />
+                <Ionicons name={bellIconName as any} size={22} color={currentNotifMode === 'none' ? colors.textMuted : colors.gold} />
               </TouchableOpacity>
               <View style={[styles.statusDot, connected && styles.statusDotConnected]} />
             </View>
@@ -395,7 +482,7 @@ export default function ChatRoomScreen() {
           renderItem={({ item, index }) => {
             const isOwn = item.userId === myUserId;
             const showSender = index === 0 || messages[index - 1]?.userId !== item.userId;
-            const reactions = item.id ? messageReactions[item.id] || [] : [];
+            const reactions = item.id ? groupReactions(item.id) : [];
             return (
               <MessageBubble
                 message={item.message}
@@ -405,42 +492,8 @@ export default function ChatRoomScreen() {
                 showSender={showSender}
                 imageUrl={item.imageUrl}
                 reactions={reactions}
-                currentUserId={myUserId}
-                onReact={(emoji) => {
-                  if (!item.id || !myUserId) return;
-                  addReactionMutation.mutate(
-                    { messageId: item.id, emoji },
-                    {
-                      onSuccess: () => {
-                        // Optimistic update
-                        setMessageReactions((prev) => ({
-                          ...prev,
-                          [item.id!]: [
-                            ...(prev[item.id!] || []),
-                            { userId: myUserId, emoji },
-                          ],
-                        }));
-                      },
-                    }
-                  );
-                }}
-                onRemoveReact={(emoji) => {
-                  if (!item.id || !myUserId) return;
-                  removeReactionMutation.mutate(
-                    { messageId: item.id, emoji },
-                    {
-                      onSuccess: () => {
-                        // Optimistic update
-                        setMessageReactions((prev) => ({
-                          ...prev,
-                          [item.id!]: (prev[item.id!] || []).filter(
-                            (r) => !(r.userId === myUserId && r.emoji === emoji)
-                          ),
-                        }));
-                      },
-                    }
-                  );
-                }}
+                onReact={item.id ? (emoji) => handleAddReaction(item.id!, emoji) : undefined}
+                onRemoveReact={item.id ? (emoji) => handleRemoveReaction(item.id!, emoji) : undefined}
               />
             );
           }}
@@ -503,11 +556,10 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginRight: 8,
+    gap: 10,
   },
-  bellButton: {
-    padding: 8,
+  headerButton: {
+    padding: 4,
     minWidth: 44,
     minHeight: 44,
     justifyContent: 'center',
@@ -518,6 +570,7 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     backgroundColor: '#ff6b6b',
+    marginRight: 12,
   },
   statusDotConnected: {
     backgroundColor: '#51cf66',

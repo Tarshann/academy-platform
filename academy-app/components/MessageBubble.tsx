@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, GestureResponderEvent } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { ImageViewer } from './ImageViewer';
-import { colors, spacing } from '../lib/theme';
+import { colors } from '../lib/theme';
 
-interface Reaction {
-  userId: number;
+const REACTION_PRESETS = ['👍', '❤️', '🔥', '👏', '😂', '💪'];
+
+interface ReactionGroup {
   emoji: string;
+  count: number;
+  userReacted: boolean;
 }
 
 interface MessageBubbleProps {
@@ -17,8 +20,7 @@ interface MessageBubbleProps {
   isOwn: boolean;
   showSender: boolean;
   imageUrl?: string | null;
-  reactions?: Reaction[];
-  currentUserId?: number;
+  reactions?: ReactionGroup[];
   onReact?: (emoji: string) => void;
   onRemoveReact?: (emoji: string) => void;
 }
@@ -30,8 +32,7 @@ export function MessageBubble({
   isOwn,
   showSender,
   imageUrl,
-  reactions = [],
-  currentUserId,
+  reactions,
   onReact,
   onRemoveReact,
 }: MessageBubbleProps) {
@@ -40,37 +41,6 @@ export function MessageBubble({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
 
-  const REACTION_PRESETS = ['👍', '❤️', '🔥', '👏', '😂', '💪'];
-
-  // Group reactions by emoji
-  const reactionGroups = reactions.reduce((acc, r) => {
-    const existing = acc.find((g) => g.emoji === r.emoji);
-    if (existing) {
-      existing.count += 1;
-      existing.userIds.add(r.userId);
-    } else {
-      acc.push({ emoji: r.emoji, count: 1, userIds: new Set([r.userId]) });
-    }
-    return acc;
-  }, [] as Array<{ emoji: string; count: number; userIds: Set<number> }>);
-
-  const handleLongPress = () => {
-    setShowReactionPicker(true);
-  };
-
-  const handleReactionSelect = (emoji: string) => {
-    const hasReacted = reactionGroups.some(
-      (g) => g.emoji === emoji && g.userIds.has(currentUserId!)
-    );
-
-    if (hasReacted) {
-      onRemoveReact?.(emoji);
-    } else {
-      onReact?.(emoji);
-    }
-    setShowReactionPicker(false);
-  };
-
   const time = new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit',
@@ -78,98 +48,110 @@ export function MessageBubble({
 
   const hasImage = !!imageUrl;
   const isImageOnly = hasImage && (!message || message === ' ');
+  const hasReactions = reactions && reactions.length > 0;
+
+  const handleReactionTap = (emoji: string, userReacted: boolean) => {
+    if (userReacted && onRemoveReact) {
+      onRemoveReact(emoji);
+    } else if (!userReacted && onReact) {
+      onReact(emoji);
+    }
+  };
 
   return (
     <View style={[styles.container, isOwn ? styles.ownContainer : styles.otherContainer]}>
-      {/* Long-press overlay for reaction picker */}
-      {showReactionPicker && (
-        <View style={styles.reactionPickerOverlay}>
-          <View style={styles.reactionPickerContainer}>
-            {REACTION_PRESETS.map((emoji) => (
-              <TouchableOpacity
-                key={emoji}
-                style={styles.reactionOption}
-                onPress={() => handleReactionSelect(emoji)}
-              >
-                <Text style={styles.reactionEmoji}>{emoji}</Text>
-              </TouchableOpacity>
-            ))}
+      <Pressable
+        onLongPress={() => setShowReactionPicker(true)}
+        delayLongPress={400}
+        style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}
+      >
+        {!isOwn && showSender && (
+          <Text style={styles.senderName}>{senderName}</Text>
+        )}
+
+        {/* Image with skeleton loading, error state, and tap-to-fullscreen */}
+        {hasImage && !imageError && (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setViewerVisible(true)}
+            style={styles.imageWrapper}
+          >
+            {!imageLoaded && (
+              <View style={styles.imageSkeleton}>
+                <Ionicons name="image-outline" size={32} color={colors.textMuted} />
+              </View>
+            )}
+            <Image
+              source={{ uri: imageUrl }}
+              style={[styles.image, !imageLoaded && styles.imageHidden]}
+              contentFit="cover"
+              transition={200}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+          </TouchableOpacity>
+        )}
+
+        {/* Error state for failed image load */}
+        {hasImage && imageError && (
+          <View style={styles.imageErrorContainer}>
+            <Ionicons name="alert-circle-outline" size={24} color={colors.textSecondary} />
+            <Text style={styles.imageErrorText}>Image failed to load</Text>
           </View>
+        )}
+
+        {/* Text message (hide if image-only message) */}
+        {!isImageOnly && (
+          <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
+            {message}
+          </Text>
+        )}
+
+        <Text style={[styles.timestamp, isOwn && styles.ownTimestamp]}>{time}</Text>
+      </Pressable>
+
+      {/* Reaction chips below the bubble */}
+      {hasReactions && (
+        <View style={[styles.reactionsRow, isOwn ? styles.reactionsRowOwn : styles.reactionsRowOther]}>
+          {reactions.map((r) => (
+            <TouchableOpacity
+              key={r.emoji}
+              style={[styles.reactionChip, r.userReacted && styles.reactionChipActive]}
+              onPress={() => handleReactionTap(r.emoji, r.userReacted)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.reactionEmoji}>{r.emoji}</Text>
+              <Text style={[styles.reactionCount, r.userReacted && styles.reactionCountActive]}>
+                {r.count}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
 
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onLongPress={handleLongPress}
-        delayLongPress={500}
-      >
-        <View style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}>
-          {!isOwn && showSender && (
-            <Text style={styles.senderName}>{senderName}</Text>
-          )}
-
-          {/* Image with skeleton loading, error state, and tap-to-fullscreen */}
-          {hasImage && !imageError && (
+      {/* Long-press reaction picker */}
+      {showReactionPicker && (
+        <View style={[styles.reactionPicker, isOwn ? styles.reactionPickerOwn : styles.reactionPickerOther]}>
+          {REACTION_PRESETS.map((emoji) => (
             <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setViewerVisible(true)}
-              style={styles.imageWrapper}
+              key={emoji}
+              style={styles.reactionPickerItem}
+              onPress={() => {
+                if (onReact) onReact(emoji);
+                setShowReactionPicker(false);
+              }}
+              activeOpacity={0.6}
             >
-              {/* Skeleton placeholder shown while loading */}
-              {!imageLoaded && (
-                <View style={styles.imageSkeleton}>
-                  <Ionicons name="image-outline" size={32} color={colors.textMuted} />
-                </View>
-              )}
-              <Image
-                source={{ uri: imageUrl }}
-                style={[styles.image, !imageLoaded && styles.imageHidden]}
-                contentFit="cover"
-                transition={200}
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
-              />
+              <Text style={styles.reactionPickerEmoji}>{emoji}</Text>
             </TouchableOpacity>
-          )}
-
-          {/* Error state for failed image load */}
-          {hasImage && imageError && (
-            <View style={styles.imageErrorContainer}>
-              <Ionicons name="alert-circle-outline" size={24} color={colors.textSecondary} />
-              <Text style={styles.imageErrorText}>Image failed to load</Text>
-            </View>
-          )}
-
-          {/* Text message (hide if image-only message) */}
-          {!isImageOnly && (
-            <Text style={[styles.messageText, isOwn && styles.ownMessageText]}>
-              {message}
-            </Text>
-          )}
-
-          <Text style={[styles.timestamp, isOwn && styles.ownTimestamp]}>{time}</Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Reaction chips */}
-      {reactionGroups.length > 0 && (
-        <View style={[styles.reactionsContainer, isOwn && styles.reactionsContainerOwn]}>
-          {reactionGroups.map((group) => {
-            const userHasReacted = group.userIds.has(currentUserId!);
-            return (
-              <TouchableOpacity
-                key={group.emoji}
-                style={[
-                  styles.reactionChip,
-                  userHasReacted && styles.reactionChipActive,
-                ]}
-                onPress={() => handleReactionSelect(group.emoji)}
-              >
-                <Text style={styles.reactionChipEmoji}>{group.emoji}</Text>
-                <Text style={styles.reactionChipCount}>{group.count}</Text>
-              </TouchableOpacity>
-            );
-          })}
+          ))}
+          <TouchableOpacity
+            style={styles.reactionPickerItem}
+            onPress={() => setShowReactionPicker(false)}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="close-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
       )}
 
@@ -269,63 +251,73 @@ const styles = StyleSheet.create({
   ownTimestamp: {
     color: 'rgba(255,255,255,0.6)',
   },
-  reactionPickerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  reactionPickerContainer: {
+  reactionsRow: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    gap: 4,
-    ...StyleSheet.absoluteFill,
-  },
-  reactionOption: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reactionEmoji: {
-    fontSize: 24,
-  },
-  reactionsContainer: {
-    flexDirection: 'row',
-    marginTop: 4,
-    marginLeft: 12,
-    gap: 4,
     flexWrap: 'wrap',
+    marginTop: 2,
+    gap: 4,
+    maxWidth: '80%',
   },
-  reactionsContainerOwn: {
+  reactionsRowOwn: {
     justifyContent: 'flex-end',
-    marginRight: 12,
-    marginLeft: 0,
+  },
+  reactionsRowOther: {
+    justifyContent: 'flex-start',
   },
   reactionChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: colors.surface,
-    borderRadius: 10,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'transparent',
   },
   reactionChipActive: {
-    backgroundColor: colors.goldMuted,
     borderColor: colors.gold,
+    backgroundColor: 'rgba(207, 184, 124, 0.15)',
   },
-  reactionChipEmoji: {
+  reactionEmoji: {
     fontSize: 14,
+    marginRight: 3,
   },
-  reactionChipCount: {
-    fontSize: 10,
+  reactionCount: {
+    fontSize: 12,
     color: colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  reactionCountActive: {
+    color: colors.gold,
+  },
+  reactionPicker: {
+    flexDirection: 'row',
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    marginTop: 4,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    gap: 2,
+  },
+  reactionPickerOwn: {
+    alignSelf: 'flex-end',
+  },
+  reactionPickerOther: {
+    alignSelf: 'flex-start',
+  },
+  reactionPickerItem: {
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 18,
+  },
+  reactionPickerEmoji: {
+    fontSize: 22,
   },
 });

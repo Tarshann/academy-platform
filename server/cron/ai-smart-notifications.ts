@@ -13,7 +13,7 @@
  *   - Upcoming sessions (personalized reminders)
  *   - New content (social posts, gallery, blog)
  *
- * Schedule: Daily at 5 PM CT (22:00 UTC) — peak engagement window
+ * Schedule: Daily at 10 PM CT (03:00 UTC) — peak engagement window
  *
  * Governance capabilities used:
  *   - cron.aiSmartNotifications (cron-level gate)
@@ -318,6 +318,7 @@ export async function run() {
   logger.info(`[cron/ai-smart-notifications] Detected ${allSignals.length} signals`);
 
   if (allSignals.length === 0) {
+    logger.info("[cron/ai-smart-notifications] No signals detected — exiting early");
     return { signalsDetected: 0, notificationsGenerated: 0, notificationsSent: 0 };
   }
 
@@ -334,6 +335,7 @@ export async function run() {
   logger.info(`[cron/ai-smart-notifications] Generated ${notifications.length} notifications`);
 
   if (notifications.length === 0) {
+    logger.info("[cron/ai-smart-notifications] No notifications generated from signals — exiting early");
     return { signalsDetected: allSignals.length, notificationsGenerated: 0, notificationsSent: 0 };
   }
 

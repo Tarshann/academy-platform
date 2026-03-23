@@ -6,12 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle, Image as ImageIcon, AtSign, Bell, BellOff, Search, SmilePlus } from "lucide-react";
+import { Send, Hash, Users, Megaphone, UserCheck, Menu, X, Circle, Image as ImageIcon, AtSign, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { trpc } from "@/lib/trpc";
@@ -26,23 +21,6 @@ interface Message {
   imageUrl?: string;
   mentions?: number[];
   createdAt: Date | string;
-}
-
-interface ReactionGroup {
-  emoji: string;
-  count: number;
-  userReacted: boolean;
-}
-
-interface RawReaction {
-  userId: number;
-  emoji: string;
-  createdAt: Date;
-}
-
-interface RoomNotifPref {
-  room: string;
-  preference: "all" | "mentions" | "none";
 }
 
 interface ChatRoom {
@@ -94,11 +72,6 @@ export default function Chat() {
       return new Set();
     }
   });
-  const [rawReactions, setRawReactions] = useState<Record<number, RawReaction[]>>({});
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Message[]>([]);
-  const [openNotifPopover, setOpenNotifPopover] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -139,66 +112,6 @@ export default function Chat() {
   const { data: announcements } = trpc.announcements.list.useQuery(undefined, {
     enabled: isAuthenticated,
   });
-
-  // Chat enhancements: unread counts, reactions, notification prefs, search
-  const { data: unreadCounts, refetch: refetchUnreadCounts } = trpc.chatEnhanced.getUnreadCounts.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchInterval: 5000, // Poll every 5s
-  });
-
-  const { data: roomNotifPref } = trpc.chatEnhanced.getRoomNotifPrefs.useQuery(undefined, {
-    enabled: isAuthenticated,
-  });
-
-  const markRoomReadMutation = trpc.chatEnhanced.markRoomRead.useMutation();
-  const addReactionMutation = trpc.chatEnhanced.addReaction.useMutation();
-  const removeReactionMutation = trpc.chatEnhanced.removeReaction.useMutation();
-  const setRoomNotifPrefMutation = trpc.chatEnhanced.setRoomNotifPref.useMutation();
-
-  // Debounced search query
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
-
-  const { data: searchData } = trpc.chatEnhanced.searchMessages.useQuery(
-    { room: currentRoom, query: debouncedSearch },
-    {
-      enabled: isAuthenticated && showSearch && debouncedSearch.length > 0,
-    }
-  );
-
-  // Batch-fetch reactions for current messages
-  const messageIds = messages
-    .filter((m) => m.id)
-    .map((m) => m.id!)
-    .slice(-50); // Last 50 messages
-
-  const { data: reactionsData } = trpc.chatEnhanced.getReactions.useQuery(
-    { messageIds },
-    {
-      enabled: isAuthenticated && messageIds.length > 0,
-    }
-  );
-
-  // Update reactions state when data arrives
-  useEffect(() => {
-    if (reactionsData) {
-      setRawReactions(reactionsData as Record<number, RawReaction[]>);
-    }
-  }, [reactionsData]);
-
-  // Transform raw reactions into grouped display format
-  const groupReactions = useCallback((raw: RawReaction[]): ReactionGroup[] => {
-    const groups: Record<string, { count: number; userReacted: boolean }> = {};
-    for (const r of raw) {
-      if (!groups[r.emoji]) groups[r.emoji] = { count: 0, userReacted: false };
-      groups[r.emoji].count++;
-      if (r.userId === user?.id) groups[r.emoji].userReacted = true;
-    }
-    return Object.entries(groups).map(([emoji, data]) => ({ emoji, ...data }));
-  }, [user?.id]);
 
   const visibleAnnouncements = announcements?.filter(
     (a: any) => !dismissedAnnouncements.has(a.id)
@@ -265,18 +178,8 @@ export default function Chat() {
   useEffect(() => {
     if (!user || !chatTokenQuery.data?.token) return;
 
-    // Mark room as read when switching
-    const lastMsg = messages[messages.length - 1];
-    if (lastMsg && lastMsg.id) {
-      markRoomReadMutation.mutate({ room: currentRoom, lastMessageId: lastMsg.id });
-    }
-
     // Clear stale messages from previous room before loading new room
     setMessages([]);
-    setReactions({});
-    setShowSearch(false);
-    setSearchQuery("");
-    setSearchResults([]);
 
     // Load initial history (replace mode — fresh room)
     fetchMessageHistory(currentRoom, true);
@@ -308,21 +211,7 @@ export default function Chat() {
       channel.subscribe("message", (msg) => {
         const incomingMessage = msg.data as Message;
         setMessages(prev => dedupeAndSort([...prev, incomingMessage]));
-        // Mark as read when new message arrives in current room
-        if (incomingMessage.id) {
-          markRoomReadMutation.mutate({ room: currentRoom, lastMessageId: incomingMessage.id });
-        }
       });
-
-      // Listen for reaction updates
-      channel.subscribe("reaction_update", (msg) => {
-        const reactionUpdate = msg.data as { messageId: number; reactions: RawReaction[] };
-        setRawReactions(prev => ({
-          ...prev,
-          [reactionUpdate.messageId]: reactionUpdate.reactions,
-        }));
-      });
-
       channelRef.current = channel;
 
       return () => {
@@ -340,7 +229,7 @@ export default function Chat() {
     }, 3000);
 
     return () => clearInterval(pollInterval);
-  }, [user, chatTokenQuery.data?.token, ablyTokenQuery.data, currentRoom, fetchMessageHistory, messages]);
+  }, [user, chatTokenQuery.data?.token, ablyTokenQuery.data, currentRoom, fetchMessageHistory]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -514,92 +403,15 @@ export default function Chat() {
     setShowMentions(false);
   };
 
-  // Emoji picker presets
-  const EMOJI_PRESETS = ["👍", "❤️", "🔥", "👏", "😂", "💪"];
-
-  // Handle adding a reaction
-  const handleAddReaction = (messageId: number, emoji: string) => {
-    if (!user) return;
-    // Optimistic update on raw reactions
-    setRawReactions(prev => ({
-      ...prev,
-      [messageId]: [
-        ...(prev[messageId] || []),
-        { userId: user.id, emoji, createdAt: new Date() },
-      ],
-    }));
-
-    addReactionMutation.mutate(
-      { messageId, emoji },
-      {
-        onError: () => {
-          // Revert on error
-          setRawReactions(prev => ({
-            ...prev,
-            [messageId]: (prev[messageId] || []).filter(
-              r => !(r.userId === user.id && r.emoji === emoji)
-            ),
-          }));
-          toast.error("Failed to add reaction");
-        },
-      }
-    );
-  };
-
-  // Handle removing a reaction
-  const handleRemoveReaction = (messageId: number, emoji: string) => {
-    if (!user) return;
-    // Optimistic update
-    setRawReactions(prev => ({
-      ...prev,
-      [messageId]: (prev[messageId] || []).filter(
-        r => !(r.userId === user.id && r.emoji === emoji)
-      ),
-    }));
-
-    removeReactionMutation.mutate(
-      { messageId, emoji },
-      {
-        onError: () => {
-          toast.error("Failed to remove reaction");
-        },
-      }
-    );
-  };
-
-  // Handle setting room notification preference
-  const handleSetNotifPref = (room: string, mode: "all" | "mentions" | "none") => {
-    setRoomNotifPrefMutation.mutate(
-      { room, mode },
-      {
-        onSuccess: () => {
-          toast.success(`Notifications set to "${preference}"`);
-        },
-        onError: () => {
-          toast.error("Failed to update notification preference");
-        },
-      }
-    );
-  };
-
-  // Get current room's notification preference
-  const currentRoomNotifPref = roomNotifPref?.[currentRoom] || "all";
-
   const switchRoom = (roomId: string) => {
     setCurrentRoom(roomId);
     setIsLoadingHistory(true);
     setMobileMenuOpen(false);
+    // Clear unread count for new room
+    setRooms(prev => prev.map(r =>
+      r.id === roomId ? { ...r, unreadCount: 0 } : r
+    ));
   };
-
-  // Update room unread counts from server
-  useEffect(() => {
-    if (unreadCounts) {
-      setRooms(prev => prev.map(r => ({
-        ...r,
-        unreadCount: unreadCounts[r.id] || 0,
-      })));
-    }
-  }, [unreadCounts]);
 
   const currentRoomData = rooms.find(r => r.id === currentRoom);
   const totalUnread = rooms.reduce((sum, r) => sum + r.unreadCount, 0);
@@ -794,57 +606,6 @@ export default function Chat() {
                     </p>
                   </div>
 
-                  {/* Search button */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowSearch(!showSearch)}
-                    className={showSearch ? "bg-muted" : ""}
-                    title="Search messages"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-
-                  {/* Room notification preference */}
-                  <Popover open={openNotifPopover === currentRoom} onOpenChange={(open) => setOpenNotifPopover(open ? currentRoom : null)}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={`Notifications: ${currentRoomNotifPref}`}
-                      >
-                        {currentRoomNotifPref === "none" ? (
-                          <BellOff className="h-4 w-4" />
-                        ) : (
-                          <Bell className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-40">
-                      <div className="space-y-2">
-                        <p className="text-sm font-semibold">Notifications</p>
-                        {(["all", "mentions", "none"] as const).map((pref) => (
-                          <button
-                            key={pref}
-                            onClick={() => {
-                              handleSetNotifPref(currentRoom, pref);
-                              setOpenNotifPopover(null);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded text-sm capitalize transition-colors ${
-                              currentRoomNotifPref === pref
-                                ? "bg-primary text-primary-foreground"
-                                : "hover:bg-muted"
-                            }`}
-                          >
-                            {pref === "all" && "All messages"}
-                            {pref === "mentions" && "Mentions only"}
-                            {pref === "none" && "None"}
-                          </button>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-
                   <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
                     <Circle className={`h-2 w-2 ${connectionStatus === 'connected' ? 'fill-green-500 text-green-500' : connectionStatus === 'connecting' ? 'fill-yellow-500 text-yellow-500' : 'fill-red-500 text-red-500'}`} />
                     {connectionStatus === 'connected' ? 'Connected' : connectionStatus === 'connecting' ? 'Connecting...' : 'Disconnected'}
@@ -853,29 +614,6 @@ export default function Chat() {
               </CardHeader>
 
               <CardContent className="flex-1 flex flex-col min-h-0 relative">
-                {/* Search bar */}
-                {showSearch && (
-                  <div className="mb-3 flex gap-2">
-                    <Input
-                      placeholder="Search messages..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      autoFocus
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setShowSearch(false);
-                        setSearchQuery("");
-                      }}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-
                 {/* Messages Area */}
                 <ScrollArea className="flex-1 pr-4 mb-4" ref={scrollRef}>
                   <div className="space-y-4">
@@ -884,12 +622,7 @@ export default function Chat() {
                         <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                         <p className="text-sm">Loading messages...</p>
                       </div>
-                    ) : searchQuery && searchResults.length === 0 ? (
-                      <div className="text-center text-muted-foreground py-12">
-                        <Hash className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p className="text-sm">No results for "{searchQuery}"</p>
-                      </div>
-                    ) : messages.length === 0 && !searchQuery ? (
+                    ) : messages.length === 0 ? (
                       <div className="text-center text-muted-foreground py-12">
                         <Hash className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p className="text-lg font-medium">Welcome to #{currentRoomData?.name}</p>
@@ -897,7 +630,7 @@ export default function Chat() {
                         <p className="text-sm mt-2">Be the first to send a message!</p>
                       </div>
                     ) : (
-                      (searchQuery && searchResults.length > 0 ? searchResults : messages).map((msg, index) => {
+                      messages.map((msg, index) => {
                         const isOwnMessage = msg.userId === user.id;
                         const prev = messages[index - 1];
                         const sameUser = prev && prev.userId === msg.userId;
@@ -905,94 +638,38 @@ export default function Chat() {
                         const closeInTime = sameUser && prev &&
                           Math.abs(new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()) < 5 * 60 * 1000;
                         const showAvatar = !sameUser || !closeInTime;
-                        const messageReactions = msg.id ? groupReactions(rawReactions[msg.id] || []) : [];
 
                         return (
                           <div
                             key={msg.id || index}
                             className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}
                           >
-                            <div>
-                              <div
-                                className={`max-w-[80%] md:max-w-[70%] rounded-lg p-3 ${
-                                  isOwnMessage
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-muted"
-                                }`}
-                              >
-                                {showAvatar && (
-                                  <p className={`text-xs font-semibold mb-1 ${isOwnMessage ? "opacity-70" : ""}`}>
-                                    {msg.userName || "Unknown"}
-                                  </p>
-                                )}
-                                {msg.imageUrl && (
-                                  <img
-                                    src={msg.imageUrl}
-                                    alt="Shared image"
-                                    className="max-w-full rounded mb-2"
-                                  />
-                                )}
-                                <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
-                                <p className="text-xs opacity-70 mt-1">
-                                  {new Date(msg.createdAt).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
+                            <div
+                              className={`max-w-[80%] md:max-w-[70%] rounded-lg p-3 ${
+                                isOwnMessage
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted"
+                              }`}
+                            >
+                              {showAvatar && (
+                                <p className={`text-xs font-semibold mb-1 ${isOwnMessage ? "opacity-70" : ""}`}>
+                                  {msg.userName || "Unknown"}
                                 </p>
-                              </div>
-
-                              {/* Reactions bar */}
-                              {msg.id && (
-                                <div className="flex gap-1 mt-1 flex-wrap items-center">
-                                  {messageReactions.map((reaction) => (
-                                    <button
-                                      key={reaction.emoji}
-                                      onClick={() => {
-                                        if (reaction.userReacted) {
-                                          handleRemoveReaction(msg.id!, reaction.emoji);
-                                        } else {
-                                          handleAddReaction(msg.id!, reaction.emoji);
-                                        }
-                                      }}
-                                      className={`inline-flex items-center gap-1 px-2 py-1 rounded text-sm transition-colors ${
-                                        reaction.userReacted
-                                          ? "bg-primary/20"
-                                          : "hover:bg-muted"
-                                      }`}
-                                    >
-                                      <span>{reaction.emoji}</span>
-                                      <span className="text-xs">{reaction.count}</span>
-                                    </button>
-                                  ))}
-
-                                  {/* Emoji picker popover */}
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 w-6 p-0"
-                                        title="Add reaction"
-                                      >
-                                        <SmilePlus className="h-3 w-3" />
-                                      </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-40 p-2">
-                                      <div className="grid grid-cols-3 gap-1">
-                                        {EMOJI_PRESETS.map((emoji) => (
-                                          <button
-                                            key={emoji}
-                                            onClick={() => handleAddReaction(msg.id!, emoji)}
-                                            className="text-2xl hover:bg-muted p-1 rounded transition-colors"
-                                          >
-                                            {emoji}
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                </div>
                               )}
+                              {msg.imageUrl && (
+                                <img
+                                  src={msg.imageUrl}
+                                  alt="Shared image"
+                                  className="max-w-full rounded mb-2"
+                                />
+                              )}
+                              <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                              <p className="text-xs opacity-70 mt-1">
+                                {new Date(msg.createdAt).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </p>
                             </div>
                           </div>
                         );
