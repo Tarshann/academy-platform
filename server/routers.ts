@@ -1189,7 +1189,7 @@ export const appRouter = router({
     markRoomRead: protectedProcedure
       .input(z.object({
         room: z.string().min(1).max(100),
-        lastReadMessageId: z.number().int().nonnegative(),
+        lastMessageId: z.number().int().nonnegative(),
       }))
       .mutation(async ({ ctx, input }) => {
         try {
@@ -1202,9 +1202,9 @@ export const appRouter = router({
           // Upsert: insert or update the last-read message ID
           await db.execute(sql`
             INSERT INTO chat_room_read_status (user_id, room, last_read_message_id, last_read_at)
-            VALUES (${ctx.user.id}, ${input.room}, ${input.lastReadMessageId}, NOW())
+            VALUES (${ctx.user.id}, ${input.room}, ${input.lastMessageId}, NOW())
             ON CONFLICT (user_id, room)
-            DO UPDATE SET last_read_message_id = GREATEST(chat_room_read_status.last_read_message_id, ${input.lastReadMessageId}),
+            DO UPDATE SET last_read_message_id = GREATEST(chat_room_read_status.last_read_message_id, ${input.lastMessageId}),
                          last_read_at = NOW()
           `);
 
